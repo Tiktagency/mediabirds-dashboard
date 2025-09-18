@@ -9,7 +9,7 @@ const ChatWidget = () => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Array<{ id: number; text: string; sender: 'user' | 'bot' }>>([
-    { id: 1, text: 'Alle vragen over tikt kunnen hier worden beantwoord ;)', sender: 'bot' }
+    { id: 1, text: 'Voorbeeld: Mediabirds, Pakket B, 10-2-2025, 10-5-2025', sender: 'bot' }
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
