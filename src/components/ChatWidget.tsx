@@ -45,7 +45,7 @@ const ChatWidget = () => {
       
       // Send to webhook
       try {
-        const response = await fetch('https://tikt.app.n8n.cloud/webhook-test/31605fee-d222-4693-accb-69e6ca4cdffd', {
+        const response = await fetch('https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
