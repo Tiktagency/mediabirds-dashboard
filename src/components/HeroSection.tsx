@@ -18,14 +18,8 @@ const HeroSection = () => {
             <h1 
               className={`hero-title text-white mb-6 ${isVisible ? 'fade-in-up delay-1' : ''}`}
             >
-              Kennisbank Tikt
+              Monday planning Mediabirds
             </h1>
-            
-            <p 
-              className={`hero-subtitle text-lg mb-8 ${isVisible ? 'fade-in-up delay-2' : ''}`}
-            >
-              Chat met de kennisbank van Tikt.ai
-            </p>
           </div>
         </div>
       </div>
