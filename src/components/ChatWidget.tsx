@@ -63,17 +63,47 @@ const ChatWidget = () => {
         if (responseText) {
           try {
             const responseData = JSON.parse(responseText);
-            // Add bot response from webhook
-            if (responseData.output) {
+            let botMessage = '';
+            
+            // Handle error responses
+            if (responseData.code === 0 && responseData.message) {
+              botMessage = `Fout: ${responseData.message}`;
+            }
+            // Handle successful responses with message structure
+            else if (responseData.message?.content) {
+              if (typeof responseData.message.content === 'string') {
+                botMessage = responseData.message.content;
+              } else if (responseData.message.content.Error) {
+                botMessage = `Fout: ${responseData.message.content.Error}`;
+              } else {
+                botMessage = JSON.stringify(responseData.message.content, null, 2);
+              }
+            }
+            // Handle direct output field
+            else if (responseData.output) {
+              botMessage = responseData.output;
+            }
+            // Fallback for other response structures
+            else {
+              botMessage = 'Onbekende respons ontvangen';
+            }
+            
+            if (botMessage) {
               const botResponse = { 
                 id: Date.now() + 1, 
-                text: responseData.output, 
+                text: botMessage, 
                 sender: 'bot' as const 
               };
               setMessages(prev => [...prev, botResponse]);
             }
           } catch (parseError) {
             console.error('Error parsing JSON response:', parseError);
+            const errorResponse = { 
+              id: Date.now() + 1, 
+              text: 'Fout bij het verwerken van de respons', 
+              sender: 'bot' as const 
+            };
+            setMessages(prev => [...prev, errorResponse]);
           }
         }
       } catch (error) {
