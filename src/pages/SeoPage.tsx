@@ -78,11 +78,11 @@ const SeoPage = () => {
       {/* Main content centered in screen */}
       <div className="min-h-screen flex flex-col items-center justify-center px-6">
         <h1 className="text-4xl font-bold text-center mb-4 text-white">
-          SEO blogteskten
+          SEO blog teksten
         </h1>
         
         <p className="text-center text-muted-foreground mb-16 text-lg">
-          Klik op start om de SEO blogtekst automatisering te activeren.
+          Klik op start om de SEO blog tekst automatisering te activeren
         </p>
         
         <div className="flex flex-col items-center space-y-8">
