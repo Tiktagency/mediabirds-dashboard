@@ -136,7 +136,7 @@ const ChatWidget = () => {
         <Card className="fixed bottom-6 right-6 w-96 h-[32rem] z-50 shadow-2xl border-0 flex flex-col">
           <CardHeader className="bg-primary text-white rounded-t-lg flex-shrink-0">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg text-white">Tikt Support</CardTitle>
+              <CardTitle className="text-lg text-white">Chatbot</CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
