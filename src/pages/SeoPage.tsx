@@ -2,32 +2,61 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 const SeoPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { toast } = useToast();
 
-  const handleStartClick = () => {
+  const handleStartClick = async () => {
     setIsLoading(true);
     setProgress(0);
-  };
+    
+    try {
+      // Start progress animation
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => Math.min(prev + 1, 95)); // Stop at 95% until response
+      }, 50);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isLoading) {
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            setIsLoading(false);
-            return 100;
-          }
-          return prev + 2; // Verhoog met 2% elke 100ms = 5 seconden totaal
-        });
-      }, 100);
+      // Send POST request to webhook
+      const response = await fetch('https://tikt.app.n8n.cloud/webhook/f1bb199e-ee0c-4cb1-b085-557ea22fa79f', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'seo_text_generation',
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      clearInterval(progressInterval);
+      
+      if (response.ok) {
+        setProgress(100);
+        setTimeout(() => {
+          setIsLoading(false);
+          toast({
+            title: "Succesvol!",
+            description: "SEO tekst succesvol aangemaakt",
+            duration: 5000,
+          });
+        }, 500);
+      } else {
+        throw new Error('Webhook request failed');
+      }
+    } catch (error) {
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Er is iets misgegaan bij het aanmaken van de SEO tekst",
+        variant: "destructive",
+        duration: 5000,
+      });
     }
-    return () => clearInterval(interval);
-  }, [isLoading]);
+  };
   return (
     <div className="min-h-screen bg-background relative">
       {/* Back to home button */}
