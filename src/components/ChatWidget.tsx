@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 
 const ChatWidget = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Array<{ id: number; text: string; sender: 'user' | 'bot' }>>([
@@ -121,55 +121,80 @@ const ChatWidget = () => {
   };
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/4 z-50">
-      <h2 className="text-2xl font-bold text-white text-center mb-4">Chatbot</h2>
-      <Card className="w-96 h-[32rem] shadow-2xl border-0 flex flex-col">
-        <CardContent className="flex-1 p-4 overflow-y-auto bg-white min-h-0">
-        <div className="space-y-3">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                  msg.sender === 'user'
-                    ? 'bg-primary text-white'
-                    : 'bg-muted text-foreground'
-                }`}
+    <>
+      {/* Chat Trigger Button */}
+      <Button
+        onClick={() => setIsOpen(true)}
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 hover:scale-110 transition-all duration-200 shadow-lg z-50 ${isOpen ? 'hidden' : ''}`}
+        size="icon"
+      >
+        <MessageCircle className="h-6 w-6 text-white" />
+      </Button>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <Card className="fixed bottom-6 right-6 w-96 h-[32rem] z-50 shadow-2xl border-0 flex flex-col">
+          <CardHeader className="bg-primary text-white rounded-t-lg flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg text-white">Chatbot</CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+                className="text-white hover:bg-white/20"
               >
-                {msg.text}
-              </div>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-           ))}
-           {isTyping && (
-             <div className="flex justify-start">
-               <div className="max-w-[80%] p-3 rounded-lg text-sm bg-muted text-foreground">
-                 <span className="italic text-muted-foreground">aan het typen...</span>
-               </div>
-             </div>
-           )}
-           <div ref={messagesEndRef} />
-        </div>
-      </CardContent>
-      
-      <CardFooter className="p-4 border-t flex-shrink-0">
-        <div className="flex w-full gap-2">
-          <Input
-            ref={inputRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Typ je bericht..."
-            className="flex-1"
-          />
-          <Button onClick={handleSendMessage} size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
-    </div>
+          </CardHeader>
+          
+          <CardContent className="flex-1 p-4 overflow-y-auto bg-background min-h-0">
+            <div className="space-y-3">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                      msg.sender === 'user'
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+               ))}
+               {isTyping && (
+                 <div className="flex justify-start">
+                   <div className="max-w-[80%] p-3 rounded-lg text-sm bg-muted text-foreground">
+                     <span className="italic text-muted-foreground">aan het typen...</span>
+                   </div>
+                 </div>
+               )}
+               <div ref={messagesEndRef} />
+            </div>
+          </CardContent>
+          
+          <CardFooter className="p-4 border-t flex-shrink-0">
+            <div className="flex w-full gap-2">
+              <Input
+                ref={inputRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Typ je bericht..."
+                className="flex-1"
+              />
+              <Button onClick={handleSendMessage} size="icon">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      )}
+    </>
   );
 };
 
