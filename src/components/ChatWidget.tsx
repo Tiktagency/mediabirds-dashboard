@@ -121,12 +121,10 @@ const ChatWidget = () => {
   };
 
   return (
-    <Card className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-[32rem] z-50 shadow-2xl border-0 flex flex-col">
-      <CardHeader className="bg-primary text-white rounded-t-lg flex-shrink-0">
-        <CardTitle className="text-lg text-white text-center">Chatbot</CardTitle>
-      </CardHeader>
-      
-      <CardContent className="flex-1 p-4 overflow-y-auto bg-background min-h-0">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/4 z-50">
+      <h2 className="text-2xl font-bold text-white text-center mb-4">Chatbot</h2>
+      <Card className="w-96 h-[32rem] shadow-2xl border-0 flex flex-col">
+        <CardContent className="flex-1 p-4 overflow-y-auto bg-white min-h-0">
         <div className="space-y-3">
           {messages.map((msg) => (
             <div
@@ -171,6 +169,7 @@ const ChatWidget = () => {
         </div>
       </CardFooter>
     </Card>
+    </div>
   );
 };
 
