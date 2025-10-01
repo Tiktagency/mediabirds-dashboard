@@ -28,13 +28,13 @@ const Blogs = () => {
       if (response.ok) {
         toast({
           title: "Response ontvangen",
-          description: JSON.stringify(data, null, 2),
+          description: data.output || "Geen output beschikbaar",
           duration: 10000,
         });
       } else {
         toast({
           title: "Response ontvangen",
-          description: JSON.stringify(data, null, 2),
+          description: data.output || data.Error || "Er ging iets mis",
           duration: 10000,
           variant: "destructive",
         });
