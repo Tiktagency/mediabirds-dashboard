@@ -26,7 +26,7 @@ const Index = () => {
             size="lg"
             asChild
           >
-            <a href="https://seo-interface.lovable.app/" target="_blank" rel="noopener noreferrer">
+            <a href="https://seo-interface.lovable.app/" rel="noopener noreferrer">
               Zoekwoord onderzoek
             </a>
           </Button>
