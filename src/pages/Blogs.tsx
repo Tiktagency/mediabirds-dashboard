@@ -1,7 +1,48 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const Blogs = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStartClick = async () => {
+    setIsLoading(true);
+    console.log("Triggering n8n webhook");
+
+    try {
+      const response = await fetch('https://tikt.app.n8n.cloud/webhook/f1bb199e-ee0c-4cb1-b085-557ea22fa79f', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          triggered_from: 'blogs_page',
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Succesvol verzonden",
+          description: "De blog generatie is gestart.",
+        });
+      } else {
+        throw new Error('Failed to trigger webhook');
+      }
+    } catch (error) {
+      console.error("Error triggering webhook:", error);
+      toast({
+        title: "Fout",
+        description: "Er is iets misgegaan. Probeer het opnieuw.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
       <div className="absolute top-6 left-6 z-10">
@@ -28,8 +69,10 @@ const Blogs = () => {
         <Button 
           size="lg" 
           className="px-12 py-6 text-lg h-auto"
+          onClick={handleStartClick}
+          disabled={isLoading}
         >
-          Start
+          {isLoading ? 'Bezig...' : 'Start'}
         </Button>
       </div>
     </div>
