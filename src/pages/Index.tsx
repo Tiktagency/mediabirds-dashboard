@@ -3,7 +3,20 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
-    <div className="min-h-screen hero-gradient">
+    <div className="min-h-screen hero-gradient relative">
+      {/* Dashboard button */}
+      <div className="absolute top-6 left-6 z-10">
+        <a href="https://mediabirds-dashboard.lovable.app/" target="_blank" rel="noopener noreferrer">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            Dashboard
+          </Button>
+        </a>
+      </div>
+      
       <div className="max-w-4xl mx-auto px-6 py-16">
         <h1 className="text-4xl font-bold text-center mb-12 text-white">
           Mediabirds Dashboard
