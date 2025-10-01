@@ -14,11 +14,8 @@ const Blogs = () => {
       <Button 
         size="lg" 
         className="px-12 py-6 text-lg h-auto"
-        asChild
       >
-        <a href="https://seo-interface.lovable.app/" target="_blank" rel="noopener noreferrer">
-          Start
-        </a>
+        Start
       </Button>
     </div>
   );
