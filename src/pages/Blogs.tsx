@@ -23,13 +23,21 @@ const Blogs = () => {
         }),
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
         toast({
-          title: "Succesvol verzonden",
-          description: "De blog generatie is gestart.",
+          title: "Response ontvangen",
+          description: JSON.stringify(data, null, 2),
+          duration: 10000,
         });
       } else {
-        throw new Error('Failed to trigger webhook');
+        toast({
+          title: "Response ontvangen",
+          description: JSON.stringify(data, null, 2),
+          duration: 10000,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error triggering webhook:", error);
