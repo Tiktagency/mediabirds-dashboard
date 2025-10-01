@@ -6,7 +6,10 @@ const Blogs = () => {
     <div className="min-h-screen hero-gradient flex flex-col">
       <div className="px-6 py-6">
         <Link to="/">
-          <Button variant="outline">
+          <Button 
+            variant="outline" 
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
             ← Terug naar Dashboard
           </Button>
         </Link>
