@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { DashboardButton } from '@/components/dashboard/DashboardButton';
 
 const Index = () => {
   return (
@@ -10,44 +9,26 @@ const Index = () => {
         </h1>
         
         <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
-          {/* Button 1 - Monday Planning */}
-          <Link to="/monday-planning">
-            <Button 
-              className="w-full h-32 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
-              size="lg"
-            >
-              Monday planning
-            </Button>
-          </Link>
-          
-          {/* Button 2 - SEO */}
-          <Link to="/seo">
-            <Button 
-              className="w-full h-32 text-lg font-semibold rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground"
-              size="lg"
-            >
-              Zoekwoord onderzoek
-            </Button>
-          </Link>
-          
-          {/* Button 3 - Blogs */}
-          <Link to="/blogs">
-            <Button 
-              className="w-full h-32 text-lg font-semibold rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground"
-              size="lg"
-            >
-              Blogs
-            </Button>
-          </Link>
-          
-          {/* Button 4 - Empty */}
-          <Button 
-            className="w-full h-32 text-lg font-semibold rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground"
-            size="lg"
-            disabled
-          >
-            
-          </Button>
+          <DashboardButton 
+            to="/monday-planning" 
+            label="Monday planning" 
+            variant="primary" 
+          />
+          <DashboardButton 
+            to="/seo" 
+            label="Zoekwoord onderzoek" 
+            variant="secondary" 
+          />
+          <DashboardButton 
+            to="/blogs" 
+            label="Blogs" 
+            variant="accent" 
+          />
+          <DashboardButton 
+            label="" 
+            variant="muted" 
+            disabled 
+          />
         </div>
       </div>
     </div>
