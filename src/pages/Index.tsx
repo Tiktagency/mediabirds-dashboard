@@ -31,14 +31,15 @@ const Index = () => {
             </a>
           </Button>
           
-          {/* Button 3 - Empty */}
-          <Button 
-            className="w-full h-32 text-lg font-semibold rounded-xl bg-muted hover:bg-muted/80 text-muted-foreground"
-            size="lg"
-            disabled
-          >
-            
-          </Button>
+          {/* Button 3 - Blogs */}
+          <Link to="/blogs">
+            <Button 
+              className="w-full h-32 text-lg font-semibold rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground"
+              size="lg"
+            >
+              Blogs
+            </Button>
+          </Link>
           
           {/* Button 4 - Empty */}
           <Button 
