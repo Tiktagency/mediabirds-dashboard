@@ -21,15 +21,14 @@ const Index = () => {
           </Link>
           
           {/* Button 2 - SEO */}
-          <Button 
-            className="w-full h-32 text-lg font-semibold rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground"
-            size="lg"
-            asChild
-          >
-            <a href="https://seo-interface.lovable.app/" rel="noopener noreferrer">
+          <Link to="/seo">
+            <Button 
+              className="w-full h-32 text-lg font-semibold rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+              size="lg"
+            >
               Zoekwoord onderzoek
-            </a>
-          </Button>
+            </Button>
+          </Link>
           
           {/* Button 3 - Blogs */}
           <Link to="/blogs">
