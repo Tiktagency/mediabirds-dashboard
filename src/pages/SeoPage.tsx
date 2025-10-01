@@ -1,6 +1,20 @@
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+
 const SeoPage = () => {
   return (
     <div className="fixed inset-0 w-screen h-screen">
+      <div className="absolute top-6 left-6 z-10">
+        <Link to="/">
+          <Button 
+            variant="outline" 
+            size="sm"
+          >
+            Dashboard
+          </Button>
+        </Link>
+      </div>
+      
       {/* Fullscreen iframe */}
       <iframe
         src="https://seo-interface.lovable.app/"
