@@ -16,9 +16,14 @@ const Blogs = () => {
         </h1>
         
         <div className="bg-white rounded-lg p-8">
-          <p className="text-center text-muted-foreground">
-            Blog content komt hier...
+          <p className="text-center text-muted-foreground mb-6">
+            Druk op de start knop om blogs te genereren
           </p>
+          <div className="flex justify-center">
+            <Button size="lg">
+              Start
+            </Button>
+          </div>
         </div>
       </div>
     </div>
