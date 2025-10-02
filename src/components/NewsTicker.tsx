@@ -2,7 +2,8 @@ const NewsTicker = () => {
   const newsItems = [
     "SEO automatisering staat nu live",
     "Monday planner agent is gaande",
-    "Blog content word nu gegenereerd door AI"
+    "Blog content word nu gegenereerd door AI",
+    "Email agent geeft een label aan alle inkomende emails"
   ];
 
   // Duplicate content for seamless loop
