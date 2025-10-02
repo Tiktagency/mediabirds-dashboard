@@ -6,8 +6,8 @@ const NewsTicker = () => {
     "Email agent geeft een label aan alle inkomende emails"
   ];
 
-  // Duplicate content for seamless loop
-  const repeatedContent = Array(3).fill(newsItems).flat();
+  // Create enough duplicates for seamless infinite scroll
+  const repeatedContent = Array(6).fill(newsItems).flat();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-muted/80 backdrop-blur-sm border-t border-border">

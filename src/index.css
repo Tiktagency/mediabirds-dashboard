@@ -196,13 +196,13 @@ All colors MUST be HSL.
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-33.333%);
+    transform: translateX(-50%);
   }
 }
 
 @layer components {
   .ticker-content {
-    animation: ticker-scroll 30s linear infinite;
+    animation: ticker-scroll 60s linear infinite;
   }
 
   .live-dot {
