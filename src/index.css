@@ -190,3 +190,22 @@ All colors MUST be HSL.
     transform: translateY(0);
   }
 }
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+@layer components {
+  .ticker-content {
+    animation: ticker-scroll 30s linear infinite;
+  }
+
+  .live-dot {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
