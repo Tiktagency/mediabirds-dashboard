@@ -2,16 +2,22 @@ import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
+import logoImage from '@/assets/mediabirds-logo.png';
 
 const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
-      <header className="w-full h-48 overflow-hidden">
+      <header className="w-full h-48 overflow-hidden relative">
         <img 
           src={bannerImage} 
           alt="Mediabirds Banner" 
           className="w-full h-full object-cover"
+        />
+        <img 
+          src={logoImage} 
+          alt="Mediabirds Logo" 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-auto"
         />
       </header>
 
