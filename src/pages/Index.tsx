@@ -32,12 +32,13 @@ const Index = () => {
           Mediabirds
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
-          <span className="text-white text-sm">{user?.email}</span>
+          <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
           <Button 
             onClick={signOut}
             variant="outline"
             size="sm"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="bg-white/10 border-white/20 hover:bg-white/20"
+            style={{ color: '#232323' }}
           >
             <LogOut className="w-4 h-4 mr-2" />
             Uitloggen
