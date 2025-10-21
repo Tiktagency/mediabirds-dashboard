@@ -67,18 +67,6 @@ const Blogs = () => {
     }
   };
 
-  const addNotification = async (message: string, status: 'success' | 'error') => {
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        message,
-        status,
-      });
-
-    if (error) {
-      console.error('Error saving notification:', error);
-    }
-  };
 
   const unreadCount = notifications.filter(
     n => !lastReadTime || new Date(n.created_at) > new Date(lastReadTime)
@@ -97,77 +85,43 @@ const Blogs = () => {
 
   const handleStartClick = async () => {
     setIsLoading(true);
-    console.log("Triggering n8n webhook");
-
-    // Create AbortController with 180 second timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 seconds
+    console.log("Triggering blog generation via Edge Function");
 
     try {
-      const response = await fetch('https://tikt.app.n8n.cloud/webhook/f1bb199e-ee0c-4cb1-b085-557ea22fa79f', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          triggered_from: 'blogs_page',
-        }),
-        signal: controller.signal,
+      const { data, error } = await supabase.functions.invoke('trigger-blog-generation', {
+        body: {},
       });
 
-      clearTimeout(timeoutId);
-
-      let message = 'Geen bericht beschikbaar';
-      
-      try {
-        const text = await response.text();
-        
-        if (text) {
-          try {
-            const data = JSON.parse(text);
-            // Extract all values from the response object
-            const values = Object.values(data).filter(v => typeof v === 'string');
-            message = values.join(' ') || JSON.stringify(data);
-          } catch {
-            // If not valid JSON, use the text directly
-            message = text;
-          }
-        }
-      } catch (parseError) {
-        console.error("Error parsing response:", parseError);
+      if (error) {
+        throw error;
       }
-      
-      if (response.ok) {
+
+      console.log("Edge Function response:", data);
+
+      if (data.success) {
         toast({
-          title: "Response ontvangen",
-          description: message,
+          title: "Succes!",
+          description: data.message,
           duration: 10000,
         });
-        addNotification(message, 'success');
       } else {
         toast({
           title: "Fout",
-          description: message,
+          description: data.error || "Er is iets misgegaan",
           duration: 10000,
           variant: "destructive",
         });
-        addNotification(message, 'error');
       }
     } catch (error) {
-      console.error("Error triggering webhook:", error);
+      console.error("Error calling Edge Function:", error);
       
-      let errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
-      if (error instanceof Error && error.name === 'AbortError') {
-        errorMessage = "De aanvraag duurde te lang (meer dan 3 minuten). Probeer het opnieuw.";
-      }
+      const errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
       
       toast({
         title: "Fout",
         description: errorMessage,
         variant: "destructive",
       });
-      addNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
