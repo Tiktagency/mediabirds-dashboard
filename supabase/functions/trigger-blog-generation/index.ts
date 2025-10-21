@@ -22,8 +22,22 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!n8nWebhookUrl || !authToken) {
-      throw new Error('Missing required environment variables');
+    if (!n8nWebhookUrl) {
+      console.error('N8N_WEBHOOK secret is missing');
+      throw new Error('N8N_WEBHOOK configuratie ontbreekt');
+    }
+
+    if (!authToken) {
+      console.error('N8N_WEBHOOK_AUTH_TOKEN secret is missing');
+      throw new Error('N8N_WEBHOOK_AUTH_TOKEN configuratie ontbreekt');
+    }
+
+    // Validate that webhook URL is actually a valid URL
+    try {
+      new URL(n8nWebhookUrl);
+    } catch {
+      console.error('N8N_WEBHOOK is not a valid URL');
+      throw new Error('N8N_WEBHOOK configuratie is ongeldig');
     }
 
     // Initialize Supabase client
@@ -99,7 +113,8 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in trigger-blog-generation function:', error);
+    // NEVER log the full error as it might contain secrets
+    console.error('Error in trigger-blog-generation function');
     
     let errorMessage = 'Er is een fout opgetreden';
     let errorStatus = 'error';
@@ -109,7 +124,12 @@ serve(async (req) => {
         errorMessage = 'De aanvraag duurde te lang (meer dan 3 minuten)';
         errorStatus = 'timeout';
       } else {
-        errorMessage = error.message;
+        // Only use the error message if it's a safe, user-defined message
+        if (error.message && !error.message.includes('Invalid URL')) {
+          errorMessage = error.message;
+        }
+        // Log error type for debugging but not the full message
+        console.error('Error type:', error.name);
       }
     }
 
