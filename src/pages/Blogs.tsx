@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface Notification {
   id: string;
@@ -17,12 +18,24 @@ interface Notification {
 
 const Blogs = () => {
   const { toast, dismiss } = useToast();
+  const { isLoading: authLoading } = useAdminAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Load notifications from database
   useEffect(() => {

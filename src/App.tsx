@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import MondayPlanning from "./pages/MondayPlanning";
 import SeoPage from "./pages/SeoPage";
 import Blogs from "./pages/Blogs";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,6 +19,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<Index />} />
           <Route path="/monday-planning" element={<MondayPlanning />} />
           <Route path="/seo" element={<SeoPage />} />
