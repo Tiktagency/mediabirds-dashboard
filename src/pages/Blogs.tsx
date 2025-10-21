@@ -26,19 +26,25 @@ const Blogs = () => {
     localStorage.getItem('notifications_last_read')
   );
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Load notifications from database
   useEffect(() => {
+    const loadNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error loading notifications:', error);
+        return;
+      }
+
+      if (data) {
+        setNotifications(data as Notification[]);
+      }
+    };
+
     loadNotifications();
 
     // Set up realtime subscription
@@ -63,23 +69,16 @@ const Blogs = () => {
     };
   }, []);
 
-  const loadNotifications = async () => {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20);
-
-    if (error) {
-      console.error('Error loading notifications:', error);
-      return;
-    }
-
-    if (data) {
-      setNotifications(data as Notification[]);
-    }
-  };
-
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   const unreadCount = notifications.filter(
     n => !lastReadTime || new Date(n.created_at) > new Date(lastReadTime)
