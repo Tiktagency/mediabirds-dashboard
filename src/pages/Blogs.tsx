@@ -15,7 +15,7 @@ interface Notification {
 }
 
 const Blogs = () => {
-  const { toast } = useToast();
+  const { toast, toasts, dismiss } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -119,7 +119,10 @@ const Blogs = () => {
           variant="outline"
           size="sm"
           className="bg-white/10 border-white/20 text-white hover:bg-white/20 relative"
-          onClick={() => setIsPanelOpen(!isPanelOpen)}
+          onClick={() => {
+            setIsPanelOpen(!isPanelOpen);
+            dismiss();
+          }}
         >
           <Bell className="h-4 w-4" />
           {notifications.length > 0 && (
@@ -184,7 +187,7 @@ const Blogs = () => {
                 >
                   <p className="text-sm mb-2 text-gray-900 dark:text-gray-100">{notification.message}</p>
                   <p className="text-xs text-gray-700 dark:text-gray-300">
-                    {format(notification.timestamp, 'dd MMM yyyy HH:mm:ss', { locale: nl })}
+                    {format(notification.timestamp, 'dd-MM-yyyy HH:mm', { locale: nl })}
                   </p>
                 </div>
               ))
