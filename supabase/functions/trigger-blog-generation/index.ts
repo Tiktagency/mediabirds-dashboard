@@ -129,22 +129,33 @@ serve(async (req) => {
     console.log(`Webhook response status: ${response.status}`);
 
     let message = 'Geen bericht beschikbaar';
-    let status = 'success';
+    let status = response.ok ? 'success' : 'error';
     
-    if (response.ok) {
+    try {
       const data = await response.json();
       console.log("Webhook response data:", data);
       
+      // Try to extract message from various possible keys
       if (data.message) {
         message = data.message;
+      } else if (data.Goed) {
+        message = data.Goed;
+      } else if (data.Error) {
+        message = data.Error;
+      } else if (data.error) {
+        message = data.error;
       } else if (data.status) {
-        message = `Status: ${data.status}`;
+        message = data.status;
+      } else if (typeof data === 'string') {
+        message = data;
+      } else {
+        // If we can't find a message, stringify the whole response
+        message = JSON.stringify(data);
       }
-    } else {
-      status = 'error';
-      const errorText = await response.text().catch(() => 'no response body');
-      console.error("Webhook error response:", errorText);
-      message = `Webhook fout: ${response.status} ${response.statusText}`;
+    } catch (parseError) {
+      console.error("Failed to parse webhook response:", parseError);
+      const textResponse = await response.text().catch(() => 'no response body');
+      message = textResponse || `Webhook response: ${response.status} ${response.statusText}`;
     }
 
     // Save notification to database
