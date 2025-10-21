@@ -16,14 +16,25 @@ serve(async (req) => {
   try {
     console.log("Starting blog generation trigger");
     
-    // Get environment variables
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK');
-    const authToken = Deno.env.get('authorization');
+    // Get environment variables (with fallbacks and trimming)
+    const rawWebhook =
+      Deno.env.get('N8N_WEBHOOK') ??
+      Deno.env.get('N8N_WEBHOOK_URL') ??
+      Deno.env.get('N8N_webhook_url') ??
+      Deno.env.get('WEBHOOK_URL');
+
+    const rawAuth =
+      Deno.env.get('authorization') ??
+      Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ??
+      Deno.env.get('N8N_AUTH_TOKEN');
+
+    const n8nWebhookUrl = rawWebhook?.trim();
+    const authToken = rawAuth?.trim();
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!n8nWebhookUrl) {
-      console.error('N8N_WEBHOOK secret is missing');
+      console.error('Webhook URL secret is missing');
       throw new Error('N8N_WEBHOOK configuratie ontbreekt');
     }
 
@@ -34,9 +45,12 @@ serve(async (req) => {
 
     // Validate that webhook URL is actually a valid URL
     try {
-      new URL(n8nWebhookUrl);
+      const parsed = new URL(n8nWebhookUrl);
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        throw new Error('invalid protocol');
+      }
     } catch {
-      console.error('N8N_WEBHOOK is not a valid URL');
+      console.error('Webhook URL is not a valid URL');
       throw new Error('N8N_WEBHOOK configuratie is ongeldig');
     }
 
