@@ -2,3 +2,6 @@ project_id = "audrvgrsuleruuspwnhf"
 
 [functions.trigger-blog-generation]
 verify_jwt = false
+
+[functions.update-automation-status]
+verify_jwt = false

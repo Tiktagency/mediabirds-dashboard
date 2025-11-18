@@ -4,9 +4,11 @@ import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users, LogOu
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Button } from '@/components/ui/button';
+import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 
 const Index = () => {
   const { isLoading, signOut, user } = useAdminAuth();
+  const { statuses } = useAutomationStatus();
 
   if (isLoading) {
     return (
@@ -54,18 +56,24 @@ const Index = () => {
             label="Monday planning" 
             variant="primary"
             icon={CalendarDays}
+            automationName="monday-planning"
+            status={statuses['monday-planning']}
           />
           <DashboardButton 
             to="/seo" 
             label="Zoekwoord onderzoek" 
             variant="secondary"
             icon={Search}
+            automationName="seo"
+            status={statuses['seo']}
           />
           <DashboardButton 
             to="/blogs" 
             label="Blogs" 
             variant="accent"
             icon={FileText}
+            automationName="blogs"
+            status={statuses['blogs']}
           />
           <DashboardButton 
             label="" 

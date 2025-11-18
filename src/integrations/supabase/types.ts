@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_status: {
+        Row: {
+          automation_name: string
+          created_at: string
+          id: string
+          last_run: string | null
+          last_updated: string
+          status: string
+        }
+        Insert: {
+          automation_name: string
+          created_at?: string
+          id?: string
+          last_run?: string | null
+          last_updated?: string
+          status: string
+        }
+        Update: {
+          automation_name?: string
+          created_at?: string
+          id?: string
+          last_run?: string | null
+          last_updated?: string
+          status?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
