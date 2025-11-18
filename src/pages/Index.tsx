@@ -1,6 +1,6 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users, LogOut } from 'lucide-react';
+import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users, LogOut, Image } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Button } from '@/components/ui/button';
@@ -76,10 +76,12 @@ const Index = () => {
             status={statuses['blogs']}
           />
           <DashboardButton 
-            label="" 
-            variant="muted"
-            icon={Mail}
-            disabled 
+            to="/wordpress-alt-text"
+            label="Alt-tekst afbeeldingen wordpress" 
+            variant="primary"
+            icon={Image}
+            automationName="wordpress-alt-text"
+            status={statuses['wordpress-alt-text']}
           />
           <DashboardButton 
             label="" 
