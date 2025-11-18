@@ -77,7 +77,7 @@ const Index = () => {
           />
           <DashboardButton 
             to="/wordpress-alt-text"
-            label="Alt-tekst afbeeldingen wordpress" 
+            label="Alt-tekst wordpress" 
             variant="primary"
             icon={Image}
             automationName="wordpress-alt-text"
