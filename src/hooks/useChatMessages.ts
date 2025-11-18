@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ChatMessage {
   id: number;
@@ -77,19 +78,43 @@ export const useChatMessages = () => {
     return 'Onbekende respons ontvangen';
   };
 
+  const updateAutomationStatus = async (status: 'active' | 'running' | 'inactive') => {
+    try {
+      await supabase.functions.invoke('update-automation-status', {
+        body: {
+          automation_name: 'monday-planning',
+          status,
+          last_run: status === 'active' ? new Date().toISOString() : undefined
+        }
+      });
+    } catch (error) {
+      console.error('Error updating automation status:', error);
+    }
+  };
+
   const handleSendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
 
     addMessage(messageText, 'user');
     setIsTyping(true);
+    
+    // Update status to running
+    await updateAutomationStatus('running');
 
     try {
       const botResponse = await sendMessageToWebhook(messageText);
       if (botResponse) {
         addMessage(botResponse, 'bot');
+        // Update status to active on success
+        await updateAutomationStatus('active');
+      } else {
+        // Update status to inactive if no response
+        await updateAutomationStatus('inactive');
       }
     } catch (error) {
       addMessage('Fout bij het verwerken van de respons', 'bot');
+      // Update status to inactive on error
+      await updateAutomationStatus('inactive');
     } finally {
       setIsTyping(false);
     }
