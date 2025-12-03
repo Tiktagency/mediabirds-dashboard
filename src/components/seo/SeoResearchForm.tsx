@@ -116,6 +116,7 @@ const SeoResearchForm = () => {
       toast({
         title: 'SEO Onderzoek gestart',
         description: 'Je aanvraag is succesvol verzonden. Het onderzoek wordt nu uitgevoerd.',
+        duration: 7000,
       });
 
       // Reset form after successful submission
@@ -132,6 +133,7 @@ const SeoResearchForm = () => {
         title: 'Er is iets misgegaan',
         description: 'Het SEO onderzoek kon niet worden gestart. Probeer het opnieuw.',
         variant: 'destructive',
+        duration: 7000,
       });
     } finally {
       setIsSubmitting(false);
@@ -184,33 +186,33 @@ const SeoResearchForm = () => {
           </div>
         ) : (
           /* Summary Screen */
-          <div className="space-y-8">
-            <div className="space-y-3 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+          <div className="space-y-4">
+            <div className="space-y-2 text-center">
+              <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
                 Overzicht
               </h2>
-              <p className="text-white/60 text-lg font-light tracking-wide">
+              <p className="text-white/60 text-base font-light tracking-wide">
                 Controleer je invoer voordat je het onderzoek start
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               {steps.map((step) => (
                 <div 
                   key={step.id}
-                  className="p-5 bg-white/5 rounded-xl border border-white/10"
+                  className="p-3 bg-white/5 rounded-lg border border-white/10"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-white/80 tracking-wide uppercase">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xs font-semibold text-white/80 tracking-wide uppercase">
                           {step.title}
                         </h3>
                         {step.optional && (
                           <span className="text-xs text-white/40">(Optioneel)</span>
                         )}
                       </div>
-                      <p className="text-white/90 text-base leading-relaxed break-words">
+                      <p className="text-white/90 text-sm leading-relaxed break-words line-clamp-2">
                         {formData[step.field] || (
                           <span className="text-white/30 italic">Niet ingevuld</span>
                         )}
@@ -218,7 +220,7 @@ const SeoResearchForm = () => {
                     </div>
                     <button
                       onClick={() => setCurrentStep(step.id)}
-                      className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors shrink-0"
+                      className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors shrink-0"
                     >
                       Wijzig
                     </button>
@@ -230,7 +232,7 @@ const SeoResearchForm = () => {
         )}
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-10 pt-8 border-t border-white/10">
+        <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -265,9 +267,9 @@ const SeoResearchForm = () => {
                   Bezig...
                 </>
               ) : (
-                <>
+              <>
                   <Sparkles className="w-4 h-4" />
-                  Start SEO Onderzoek
+                  Start SEO onderzoek
                 </>
               )}
             </Button>
