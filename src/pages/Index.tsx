@@ -60,8 +60,8 @@ const Index = () => {
             status={statuses['monday-planning']}
           />
           <DashboardButton 
-            to="/seo" 
-            label="Zoekwoord onderzoek" 
+            to="/zoekwoord-onderzoek" 
+            label="Zoekwoord onderzoek"
             variant="secondary"
             icon={Search}
             automationName="seo"

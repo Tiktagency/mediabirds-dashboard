@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
-const SeoPage = () => {
+const ZoekwoordOnderzoek = () => {
   const { isLoading } = useAdminAuth();
 
   if (isLoading) {
@@ -17,7 +17,7 @@ const SeoPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen">
+    <div className="min-h-screen hero-gradient">
       <div className="absolute top-6 left-6 z-10">
         <Link to="/">
           <Button 
@@ -29,15 +29,15 @@ const SeoPage = () => {
         </Link>
       </div>
       
-      {/* Fullscreen iframe */}
-      <iframe
-        src="https://seo-interface.lovable.app/"
-        className="w-full h-full border-0"
-        title="Zoekwoord onderzoek"
-        allow="clipboard-read; clipboard-write"
-      />
+      <div className="h-full w-full flex flex-col items-center justify-start pt-32 px-6">
+        <h1 className="hero-title text-white mb-12 fade-in-up">
+          Zoekwoord onderzoek
+        </h1>
+        
+        {/* Content komt hier later */}
+      </div>
     </div>
   );
 };
 
-export default SeoPage;
+export default ZoekwoordOnderzoek;
