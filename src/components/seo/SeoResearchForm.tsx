@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Sparkles, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface FormData {
   blogTopic: string;
@@ -55,6 +56,7 @@ const SeoResearchForm = () => {
     extraInstructions: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const totalSteps = steps.length + 1; // +1 for summary
   const progress = (currentStep / totalSteps) * 100;
@@ -92,11 +94,48 @@ const SeoResearchForm = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    // TODO: Implement actual submission logic
-    console.log('Submitting SEO Research:', formData);
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          blogTopic: formData.blogTopic,
+          audienceIntent: formData.audienceIntent,
+          businessDescription: formData.businessDescription,
+          extraInstructions: formData.extraInstructions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Webhook request failed');
+      }
+
+      toast({
+        title: 'SEO Onderzoek gestart',
+        description: 'Je aanvraag is succesvol verzonden. Het onderzoek wordt nu uitgevoerd.',
+      });
+
+      // Reset form after successful submission
+      setFormData({
+        blogTopic: '',
+        audienceIntent: '',
+        businessDescription: '',
+        extraInstructions: '',
+      });
+      setCurrentStep(1);
+    } catch (error) {
+      console.error('Error submitting SEO research:', error);
+      toast({
+        title: 'Er is iets misgegaan',
+        description: 'Het SEO onderzoek kon niet worden gestart. Probeer het opnieuw.',
+        variant: 'destructive',
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 2000);
+    }
   };
 
   return (
