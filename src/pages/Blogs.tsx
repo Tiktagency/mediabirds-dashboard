@@ -99,6 +99,16 @@ const Blogs = () => {
     setIsPanelOpen(!isPanelOpen);
   };
 
+  const saveNotification = async (message: string, status: 'success' | 'error') => {
+    if (!user) return;
+    
+    await supabase.from('notifications').insert({
+      message,
+      status,
+      user_id: user.id,
+    });
+  };
+
   const handleStartClick = async () => {
     setIsLoading(true);
     console.log("Triggering blog generation via Edge Function");
@@ -115,18 +125,22 @@ const Blogs = () => {
       console.log("Edge Function response:", data);
 
       if (data.success) {
+        const message = data.message || "Blog generatie succesvol gestart";
         toast({
           title: "Succes!",
-          description: data.message,
+          description: message,
           duration: 10000,
         });
+        await saveNotification(message, 'success');
       } else {
+        const message = data.error || "Er is iets misgegaan";
         toast({
           title: "Fout",
-          description: data.error || "Er is iets misgegaan",
+          description: message,
           duration: 10000,
           variant: "destructive",
         });
+        await saveNotification(message, 'error');
       }
     } catch (error) {
       console.error("Error calling Edge Function:", error);
@@ -138,6 +152,7 @@ const Blogs = () => {
         description: errorMessage,
         variant: "destructive",
       });
+      await saveNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
