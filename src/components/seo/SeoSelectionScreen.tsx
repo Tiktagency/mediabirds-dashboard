@@ -27,9 +27,11 @@ const SeoSelectionScreen = ({ onSelectResearch }: SeoSelectionScreenProps) => {
         throw new Error('Webhook request failed');
       }
 
+      const data = await response.json();
+
       toast({
-        title: 'Subzoekwoorden gestart',
-        description: 'De subzoekwoorden worden nu gegenereerd.',
+        title: 'Subzoekwoorden',
+        description: data.Output || 'Actie voltooid.',
         duration: 7000,
       });
     } catch (error) {
