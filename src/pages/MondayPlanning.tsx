@@ -175,7 +175,7 @@ const MondayPlanning = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+    <div className="min-h-screen bg-[#121212] relative">
       <div className="absolute top-6 left-6 z-10">
         <Link to="/">
           <Button 
