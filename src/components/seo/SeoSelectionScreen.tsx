@@ -6,9 +6,10 @@ import { useState } from 'react';
 interface SeoSelectionScreenProps {
   onSelectResearch: () => void;
   subkeywordsWebhook: string;
+  companyName: string;
 }
 
-const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook }: SeoSelectionScreenProps) => {
+const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook, companyName }: SeoSelectionScreenProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -95,7 +96,7 @@ const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook }: SeoSelecti
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-white group-hover:text-purple-300 transition-colors">
-                  Subzoekwoorden
+                  Subzoekwoorden <span className="text-sm font-normal text-white/50">- {companyName}</span>
                 </h3>
                 <p className="text-white/50 text-sm mt-1">
                   Genereer subzoekwoorden voor bestaande onderzoeken
