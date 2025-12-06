@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import SeoResearchForm from '@/components/seo/SeoResearchForm';
 import SeoSelectionScreen from '@/components/seo/SeoSelectionScreen';
+import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 
 const ZoekwoordOnderzoek = () => {
   const { isLoading } = useAdminAuth();
   const [showForm, setShowForm] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   if (isLoading) {
     return (
@@ -22,7 +24,8 @@ const ZoekwoordOnderzoek = () => {
 
   return (
     <div className="min-h-screen seo-page-gradient">
-      <div className="absolute top-6 left-6 z-10">
+      {/* Top navigation bar */}
+      <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-center">
         <Link to="/">
           <Button 
             variant="outline" 
@@ -32,6 +35,11 @@ const ZoekwoordOnderzoek = () => {
             Dashboard
           </Button>
         </Link>
+        
+        <CompanySelector 
+          selectedCompany={selectedCompany} 
+          onCompanyChange={setSelectedCompany} 
+        />
       </div>
       
       <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6">
@@ -45,10 +53,19 @@ const ZoekwoordOnderzoek = () => {
           }
         </p>
         
-        {showForm ? (
-          <SeoResearchForm />
+        {selectedCompany ? (
+          showForm ? (
+            <SeoResearchForm seoResearchWebhook={selectedCompany.seo_research_webhook} />
+          ) : (
+            <SeoSelectionScreen 
+              onSelectResearch={() => setShowForm(true)} 
+              subkeywordsWebhook={selectedCompany.subkeywords_webhook}
+            />
+          )
         ) : (
-          <SeoSelectionScreen onSelectResearch={() => setShowForm(true)} />
+          <div className="text-white/50 text-center">
+            <p>Selecteer een bedrijf rechtsboven om te beginnen...</p>
+          </div>
         )}
       </div>
     </div>
