@@ -2,14 +2,16 @@ import { Button } from '@/components/ui/button';
 import { Search, GitBranch } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SeoSelectionScreenProps {
   onSelectResearch: () => void;
   subkeywordsWebhook: string;
   companyName: string;
+  authTokenSecretName: string | null;
 }
 
-const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook, companyName }: SeoSelectionScreenProps) => {
+const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook, companyName, authTokenSecretName }: SeoSelectionScreenProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,25 +19,25 @@ const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook, companyName 
     setIsLoading(true);
     
     try {
-      const response = await fetch(subkeywordsWebhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
+        body: {
+          webhookUrl: subkeywordsWebhook,
+          authTokenSecretName: authTokenSecretName,
+          action: 'subkeywords',
         },
-        body: JSON.stringify('GO'),
       });
 
-      if (!response.ok) {
-        throw new Error('Webhook request failed');
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Subzoekwoorden',
+          description: data.message || 'Actie voltooid.',
+          duration: 7000,
+        });
+      } else {
+        throw new Error(data.error || 'Webhook request failed');
       }
-
-      const data = await response.json();
-
-      toast({
-        title: 'Subzoekwoorden',
-        description: data.Output || 'Actie voltooid.',
-        duration: 7000,
-      });
     } catch (error) {
       console.error('Error triggering subzoekwoorden:', error);
       toast({
