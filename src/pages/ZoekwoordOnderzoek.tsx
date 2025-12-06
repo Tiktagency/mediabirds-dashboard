@@ -55,11 +55,15 @@ const ZoekwoordOnderzoek = () => {
         
         {selectedCompany ? (
           showForm ? (
-            <SeoResearchForm seoResearchWebhook={selectedCompany.seo_research_webhook} />
+            <SeoResearchForm 
+              seoResearchWebhook={selectedCompany.seo_research_webhook} 
+              companyName={selectedCompany.name}
+            />
           ) : (
             <SeoSelectionScreen 
               onSelectResearch={() => setShowForm(true)} 
               subkeywordsWebhook={selectedCompany.subkeywords_webhook}
+              companyName={selectedCompany.name}
             />
           )
         ) : (
