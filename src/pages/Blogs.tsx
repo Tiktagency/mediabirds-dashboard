@@ -8,6 +8,7 @@ import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 
 interface Notification {
   id: string;
@@ -22,6 +23,7 @@ const Blogs = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
@@ -110,12 +112,22 @@ const Blogs = () => {
   };
 
   const handleStartClick = async () => {
+    if (!selectedCompany?.blogs_webhook) {
+      toast({
+        title: "Fout",
+        description: "Geen webhook geconfigureerd voor dit bedrijf",
+        variant: "destructive",
+        duration: 7000,
+      });
+      return;
+    }
+
     setIsLoading(true);
-    console.log("Triggering blog generation via Edge Function");
+    console.log("Triggering blog generation via Edge Function for", selectedCompany.name);
 
     try {
       const { data, error } = await supabase.functions.invoke('trigger-blog-generation', {
-        body: {},
+        body: { webhookUrl: selectedCompany.blogs_webhook },
       });
 
       if (error) {
@@ -172,7 +184,11 @@ const Blogs = () => {
         </Link>
       </div>
 
-      <div className="absolute top-6 right-6 z-10">
+      <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
+        <CompanySelector 
+          selectedCompany={selectedCompany} 
+          onCompanyChange={setSelectedCompany} 
+        />
         <Button
           variant="outline"
           size="sm"
@@ -203,14 +219,24 @@ const Blogs = () => {
           </p>
         )}
         
-        <Button 
-          size="lg" 
-          className="px-12 py-6 text-lg h-auto"
-          onClick={handleStartClick}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Bezig...' : 'Start'}
-        </Button>
+        {selectedCompany ? (
+          <Button 
+            size="lg" 
+            className="px-12 py-6 text-lg h-auto"
+            onClick={handleStartClick}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Bezig...' : (
+              <>
+                Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
+              </>
+            )}
+          </Button>
+        ) : (
+          <p className="text-white/50 text-center">
+            Selecteer een bedrijf rechtsboven om te beginnen...
+          </p>
+        )}
       </div>
 
       {/* Notification Panel */}
