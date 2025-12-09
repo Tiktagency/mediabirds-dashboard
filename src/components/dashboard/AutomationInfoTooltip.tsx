@@ -40,7 +40,7 @@ const impactLabels: Record<ImpactLevel, string> = {
 };
 
 const formatLastRun = (lastRun?: string | null): string => {
-  if (!lastRun) return 'Never';
+  if (!lastRun) return 'Nooit';
   
   const date = new Date(lastRun);
   const now = new Date();
@@ -49,10 +49,13 @@ const formatLastRun = (lastRun?: string | null): string => {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  if (diffMins < 1) return 'Zojuist';
+  if (diffMins === 1) return '1 minuut geleden';
+  if (diffMins < 60) return `${diffMins} minuten geleden`;
+  if (diffHours === 1) return '1 uur geleden';
+  if (diffHours < 24) return `${diffHours} uur geleden`;
+  if (diffDays === 1) return '1 dag geleden';
+  if (diffDays < 7) return `${diffDays} dagen geleden`;
   
   return date.toLocaleDateString('nl-NL', {
     day: 'numeric',
@@ -102,10 +105,10 @@ export const AutomationInfoTooltip = ({
               </p>
             </div>
 
-            {/* Last Successful Run */}
+            {/* Laatste succesvol uitgevoerd */}
             <div>
               <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
-                Last Successful Run
+                Laatste succesvol uitgevoerd
               </p>
               <p className="text-sm text-white/80">
                 {formatLastRun(lastRun)}
