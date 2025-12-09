@@ -12,6 +12,7 @@ const Index = () => {
   const { isLoading, signOut, user } = useAdminAuth();
   const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
   const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
+  const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
   const { lastRuns } = useAutomationStatus();
 
   if (isLoading) {
@@ -80,6 +81,7 @@ const Index = () => {
             icon={FileText}
             description="Schrijft SEO-blogs op basis van zoekwoorden uit de Google sheets."
             impact="high"
+            lastRun={lastRuns['blogs']}
           />
           <DashboardButton 
             to="/wordpress-alt-text"
@@ -88,6 +90,7 @@ const Index = () => {
             icon={Image}
             description="Automatisch alt-teksten genereren voor WordPress afbeeldingen."
             impact="medium"
+            lastRun={altTextLastRun}
           />
           <DashboardButton 
             to="/chatbot"
