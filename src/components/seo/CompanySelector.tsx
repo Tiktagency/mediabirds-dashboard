@@ -16,6 +16,9 @@ export interface Company {
   subkeywords_webhook: string;
   blogs_webhook: string | null;
   auth_token_secret_name: string | null;
+  seo_research_n8n_name: string | null;
+  subkeywords_n8n_name: string | null;
+  blogs_n8n_name: string | null;
 }
 
 interface CompanySelectorProps {
