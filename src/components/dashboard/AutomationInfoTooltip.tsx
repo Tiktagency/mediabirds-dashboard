@@ -17,19 +17,19 @@ interface AutomationInfoTooltipProps {
 
 const impactStyles: Record<ImpactLevel, { bg: string; text: string; glow: string }> = {
   high: {
-    bg: 'bg-emerald-500/20',
-    text: 'text-emerald-400',
-    glow: 'shadow-[0_0_8px_rgba(16,185,129,0.4)]',
+    bg: 'bg-red-500/20',
+    text: 'text-red-400',
+    glow: 'shadow-[0_0_8px_rgba(239,68,68,0.4)]',
   },
   medium: {
-    bg: 'bg-amber-500/20',
-    text: 'text-amber-400',
-    glow: 'shadow-[0_0_8px_rgba(245,158,11,0.3)]',
+    bg: 'bg-yellow-500/20',
+    text: 'text-yellow-400',
+    glow: 'shadow-[0_0_8px_rgba(234,179,8,0.3)]',
   },
   low: {
-    bg: 'bg-zinc-500/20',
-    text: 'text-zinc-400',
-    glow: 'shadow-[0_0_8px_rgba(113,113,122,0.2)]',
+    bg: 'bg-gray-500/20',
+    text: 'text-gray-400',
+    glow: 'shadow-[0_0_8px_rgba(107,114,128,0.2)]',
   },
 };
 
