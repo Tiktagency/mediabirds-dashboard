@@ -10,20 +10,35 @@ import { Badge } from '@/components/ui/badge';
 import { StatusToggle } from './StatusToggle';
 import type { AutomationSetting, ImpactLevel, AutomationStatusType } from '@/hooks/useAutomationSettings';
 
+interface ImpactColors {
+  high: string;
+  medium: string;
+  low: string;
+}
+
 interface AutomationCardProps {
   setting: AutomationSetting;
   onUpdate: (id: string, updates: Partial<AutomationSetting>) => Promise<void>;
+  impactColors?: ImpactColors;
 }
 
 const CATEGORIES = ['Planning', 'SEO', 'Content', 'Klantenservice', 'Marketing', 'Anders'];
 
-const impactColors: Record<ImpactLevel, string> = {
-  high: 'bg-red-500/20 text-red-400 border-red-500/30',
-  medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  low: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+const defaultImpactColors: ImpactColors = {
+  high: '#ef4444',
+  medium: '#eab308',
+  low: '#6b7280',
 };
 
-export const AutomationCard = ({ setting, onUpdate }: AutomationCardProps) => {
+// Helper to convert hex to rgba
+const hexToRgba = (hex: string, alpha: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpactColors }: AutomationCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localSetting, setLocalSetting] = useState(setting);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,6 +63,15 @@ export const AutomationCard = ({ setting, onUpdate }: AutomationCardProps) => {
     setLocalSetting(prev => ({ ...prev, status }));
   };
 
+  const getImpactStyle = (level: ImpactLevel) => {
+    const color = impactColors[level];
+    return {
+      backgroundColor: hexToRgba(color, 0.2),
+      color: color,
+      borderColor: hexToRgba(color, 0.3),
+    };
+  };
+
   return (
     <Card className="bg-card/50 border-border/30">
       <CardHeader 
@@ -57,7 +81,10 @@ export const AutomationCard = ({ setting, onUpdate }: AutomationCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CardTitle className="text-lg">{setting.display_name}</CardTitle>
-            <Badge variant="outline" className={impactColors[setting.impact_level]}>
+            <Badge 
+              variant="outline" 
+              style={getImpactStyle(setting.impact_level)}
+            >
               {setting.impact_level}
             </Badge>
             <Badge variant="outline" className="text-muted-foreground">
@@ -132,19 +159,28 @@ export const AutomationCard = ({ setting, onUpdate }: AutomationCardProps) => {
               <SelectContent>
                 <SelectItem value="high">
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <span 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: impactColors.high }}
+                    />
                     High
                   </span>
                 </SelectItem>
                 <SelectItem value="medium">
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                    <span 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: impactColors.medium }}
+                    />
                     Medium
                   </span>
                 </SelectItem>
                 <SelectItem value="low">
                   <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-gray-500" />
+                    <span 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: impactColors.low }}
+                    />
                     Low
                   </span>
                 </SelectItem>
