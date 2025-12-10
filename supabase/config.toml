@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.get-n8n-executions]
 verify_jwt = false
+
+[functions.get-n8n-logs]
+verify_jwt = false
