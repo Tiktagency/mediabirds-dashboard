@@ -3,7 +3,6 @@ import { useAutomationSettings } from '@/hooks/useAutomationSettings';
 import { TileOrganizer } from './TileOrganizer';
 import { ColorCustomizer } from './ColorCustomizer';
 import { ThemeSwitch } from './ThemeSwitch';
-import { TooltipEditor } from './TooltipEditor';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const DashboardTab = () => {
@@ -12,7 +11,6 @@ export const DashboardTab = () => {
     isLoading, 
     updateTileOrder, 
     updateCustomLabel,
-    updateCustomTooltip, 
     updateImpactColors, 
     updateTheme 
   } = useDashboardSettings();
@@ -32,7 +30,7 @@ export const DashboardTab = () => {
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground">Dashboard Instellingen</h3>
         <p className="text-sm text-muted-foreground">
-          Pas de volgorde, kleuren en teksten van je dashboard aan.
+          Pas de volgorde en kleuren van je dashboard aan.
         </p>
       </div>
 
@@ -56,12 +54,6 @@ export const DashboardTab = () => {
           />
         </div>
       </div>
-
-      <TooltipEditor
-        automations={automations}
-        customTooltips={settings.custom_tooltips}
-        onUpdate={updateCustomTooltip}
-      />
     </div>
   );
 };
