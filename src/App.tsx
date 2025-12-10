@@ -10,6 +10,7 @@ import Blogs from "./pages/Blogs";
 import WordpressAltText from "./pages/WordpressAltText";
 import Chatbot from "./pages/Chatbot";
 import Login from "./pages/Login";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
           <Route path="/chatbot" element={<Chatbot />} />
+          <Route path="/admin" element={<AdminPanel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
