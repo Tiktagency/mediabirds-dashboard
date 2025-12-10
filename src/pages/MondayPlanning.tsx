@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,15 +17,6 @@ import { supabase } from '@/integrations/supabase/client';
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd';
 const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
 
-const FASES = [
-  { id: 'kickoff', label: 'Kickoff' },
-  { id: 'webdesign', label: 'Webdesign' },
-  { id: 'development', label: 'Development' },
-  { id: 'testen-feedback', label: 'Testen & feedback' },
-  { id: 'marketing', label: 'Marketing' },
-  { id: 'livegang', label: 'Livegang' },
-];
-
 const MondayPlanning = () => {
   const { isLoading: authLoading, user } = useAdminAuth();
   const { toast } = useToast();
@@ -34,21 +24,11 @@ const MondayPlanning = () => {
   const [bedrijfsnaam, setBedrijfsnaam] = useState('');
   const [pakket, setPakket] = useState('');
   const [startDatum, setStartDatum] = useState<Date>();
-  const [selectedFases, setSelectedFases] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormValid = bedrijfsnaam.trim() !== '' && 
                       pakket !== '' && 
-                      startDatum !== undefined && 
-                      selectedFases.length > 0;
-
-  const handleFaseToggle = (faseId: string) => {
-    setSelectedFases(prev => 
-      prev.includes(faseId) 
-        ? prev.filter(id => id !== faseId)
-        : [...prev, faseId]
-    );
-  };
+                      startDatum !== undefined;
 
   const saveNotification = async (message: string, status: 'success' | 'error') => {
     if (!user) return;
@@ -80,11 +60,7 @@ const MondayPlanning = () => {
     setIsSubmitting(true);
     await updateAutomationStatus('running');
 
-    const faseLabels = selectedFases.map(id => 
-      FASES.find(f => f.id === id)?.label
-    ).filter(Boolean);
-
-    const messageContent = `Nodige gegeven:\n${bedrijfsnaam}, Pakket ${pakket}, ${format(startDatum!, 'dd-MM-yyyy', { locale: nl })}\n\nFases:\n${faseLabels.join(', ')}`;
+    const messageContent = `Nodige gegeven:\n${bedrijfsnaam}, Pakket ${pakket}, ${format(startDatum!, 'dd-MM-yyyy', { locale: nl })}`;
 
     try {
       const response = await fetch(WEBHOOK_URL, {
@@ -100,7 +76,6 @@ const MondayPlanning = () => {
           bedrijfsnaam,
           pakket,
           startDatum: format(startDatum!, 'yyyy-MM-dd'),
-          fases: faseLabels,
         }),
       });
 
@@ -136,7 +111,6 @@ const MondayPlanning = () => {
         setBedrijfsnaam('');
         setPakket('');
         setStartDatum(undefined);
-        setSelectedFases([]);
       } else {
         const errorMessage = responseText || 'Er is iets misgegaan bij het verzenden';
         toast({
@@ -250,29 +224,6 @@ const MondayPlanning = () => {
                   />
                 </PopoverContent>
               </Popover>
-            </div>
-
-            {/* Fases */}
-            <div className="space-y-3">
-              <Label className="text-white">Fases (selecteer minimaal 1)</Label>
-              <div className="space-y-2">
-                {FASES.filter(fase => fase.id !== 'kickoff' || pakket === 'A').map((fase) => (
-                  <div key={fase.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={fase.id}
-                      checked={selectedFases.includes(fase.id)}
-                      onCheckedChange={() => handleFaseToggle(fase.id)}
-                      className="border-white/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
-                    <Label 
-                      htmlFor={fase.id} 
-                      className="text-white/80 cursor-pointer"
-                    >
-                      {fase.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Submit Button */}
