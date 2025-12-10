@@ -60,8 +60,10 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
     setIsSaving(false);
   };
 
-  const handleStatusChange = (status: AutomationStatusType) => {
+  const handleStatusChange = async (status: AutomationStatusType) => {
     setLocalSetting(prev => ({ ...prev, status }));
+    // Auto-save status changes immediately
+    await onUpdate(setting.id, { status });
   };
 
   const getImpactStyle = (level: ImpactLevel) => {
