@@ -56,6 +56,7 @@ export type Database = {
           display_name: string
           id: string
           impact_level: Database["public"]["Enums"]["impact_level"]
+          n8n_workflow_name: string | null
           status: Database["public"]["Enums"]["automation_status_type"]
           updated_at: string
           webhook_backup_url: string | null
@@ -69,6 +70,7 @@ export type Database = {
           display_name: string
           id?: string
           impact_level?: Database["public"]["Enums"]["impact_level"]
+          n8n_workflow_name?: string | null
           status?: Database["public"]["Enums"]["automation_status_type"]
           updated_at?: string
           webhook_backup_url?: string | null
@@ -82,6 +84,7 @@ export type Database = {
           display_name?: string
           id?: string
           impact_level?: Database["public"]["Enums"]["impact_level"]
+          n8n_workflow_name?: string | null
           status?: Database["public"]["Enums"]["automation_status_type"]
           updated_at?: string
           webhook_backup_url?: string | null
