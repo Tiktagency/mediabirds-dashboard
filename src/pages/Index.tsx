@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ProfileModal } from '@/components/ProfileModal';
+import { useNavigate } from 'react-router-dom';
 
 
 const Index = () => {
@@ -14,6 +18,8 @@ const Index = () => {
   const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
   const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
   const { lastRuns } = useAutomationStatus();
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -40,6 +46,36 @@ const Index = () => {
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
           <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="bg-white/10 border-white/20 hover:bg-white/20"
+                style={{ color: '#232323' }}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-card border-border">
+              <DropdownMenuItem 
+                onClick={() => navigate('/admin')}
+                className="cursor-pointer"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Admin panel
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setProfileModalOpen(true)}
+                className="cursor-pointer"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Mijn profiel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button 
             onClick={signOut}
             variant="outline"
@@ -122,6 +158,12 @@ const Index = () => {
         </div>
       </div>
       <NewsTicker />
+      
+      <ProfileModal 
+        open={profileModalOpen} 
+        onOpenChange={setProfileModalOpen} 
+        user={user} 
+      />
     </div>
   );
 };
