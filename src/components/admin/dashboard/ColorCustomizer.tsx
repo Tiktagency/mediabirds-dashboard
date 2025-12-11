@@ -39,81 +39,75 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="color-high">High Impact</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="color-high"
-                type="color"
-                value={colors.high}
-                onChange={(e) => onUpdate({ high: e.target.value })}
-                className="w-12 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                value={colors.high}
-                onChange={(e) => onUpdate({ high: e.target.value })}
-                className="flex-1 bg-background/50 font-mono text-sm"
-              />
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-                style={getTagStyle(colors.high)}
-              >
-                High
-              </span>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="color-high">High Impact</Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="color-high"
+              type="color"
+              value={colors.high}
+              onChange={(e) => onUpdate({ high: e.target.value })}
+              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+            />
+            <Input
+              value={colors.high}
+              onChange={(e) => onUpdate({ high: e.target.value })}
+              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+            />
+            <span
+              className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
+              style={getTagStyle(colors.high)}
+            >
+              High
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="color-medium">Medium Impact</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="color-medium"
-                type="color"
-                value={colors.medium}
-                onChange={(e) => onUpdate({ medium: e.target.value })}
-                className="w-12 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                value={colors.medium}
-                onChange={(e) => onUpdate({ medium: e.target.value })}
-                className="flex-1 bg-background/50 font-mono text-sm"
-              />
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-                style={getTagStyle(colors.medium)}
-              >
-                Medium
-              </span>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="color-medium">Medium Impact</Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="color-medium"
+              type="color"
+              value={colors.medium}
+              onChange={(e) => onUpdate({ medium: e.target.value })}
+              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+            />
+            <Input
+              value={colors.medium}
+              onChange={(e) => onUpdate({ medium: e.target.value })}
+              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+            />
+            <span
+              className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
+              style={getTagStyle(colors.medium)}
+            >
+              Medium
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="color-low">Low Impact</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="color-low"
-                type="color"
-                value={colors.low}
-                onChange={(e) => onUpdate({ low: e.target.value })}
-                className="w-12 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                value={colors.low}
-                onChange={(e) => onUpdate({ low: e.target.value })}
-                className="flex-1 bg-background/50 font-mono text-sm"
-              />
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
-                style={getTagStyle(colors.low)}
-              >
-                Low
-              </span>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="color-low">Low Impact</Label>
+          <div className="flex items-center gap-3">
+            <Input
+              id="color-low"
+              type="color"
+              value={colors.low}
+              onChange={(e) => onUpdate({ low: e.target.value })}
+              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+            />
+            <Input
+              value={colors.low}
+              onChange={(e) => onUpdate({ low: e.target.value })}
+              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+            />
+            <span
+              className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
+              style={getTagStyle(colors.low)}
+            >
+              Low
+            </span>
           </div>
         </div>
       </CardContent>
