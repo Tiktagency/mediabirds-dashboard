@@ -71,6 +71,23 @@ const Index = () => {
   const navigate = useNavigate();
   const { setTheme } = useTheme();
 
+  // Get all connected n8n workflow names for saved hours calculation
+  const connectedWorkflowNames = useMemo(() => {
+    const names: string[] = [];
+    Object.values(tileConfigMap).forEach(config => {
+      if (config.n8nWorkflow) {
+        names.push(config.n8nWorkflow);
+      }
+    });
+    // Also add workflow names from automation settings
+    automationSettings.forEach(setting => {
+      if (setting.n8n_workflow_name && !names.includes(setting.n8n_workflow_name)) {
+        names.push(setting.n8n_workflow_name);
+      }
+    });
+    return names;
+  }, [automationSettings]);
+
   // Apply theme from settings
   useEffect(() => {
     if (dashboardSettings?.theme) {
@@ -150,23 +167,6 @@ const Index = () => {
   };
   
   const orderedItems = getOrderedItems();
-
-  // Get all connected n8n workflow names for saved hours calculation
-  const connectedWorkflowNames = useMemo(() => {
-    const names: string[] = [];
-    Object.values(tileConfigMap).forEach(config => {
-      if (config.n8nWorkflow) {
-        names.push(config.n8nWorkflow);
-      }
-    });
-    // Also add workflow names from automation settings
-    automationSettings.forEach(setting => {
-      if (setting.n8n_workflow_name && !names.includes(setting.n8n_workflow_name)) {
-        names.push(setting.n8n_workflow_name);
-      }
-    });
-    return names;
-  }, [automationSettings]);
 
   // Impact colors from dashboard settings
   const impactColors = dashboardSettings.impact_colors || {
