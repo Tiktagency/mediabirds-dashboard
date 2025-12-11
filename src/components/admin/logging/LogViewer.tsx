@@ -12,6 +12,8 @@ import type { AutomationLog } from '@/hooks/useLogSettings';
 
 interface LogViewerProps {
   logs: AutomationLog[];
+  allAutomationNames: string[];
+  isRefreshing?: boolean;
   onFilter: (filters?: { automation?: string; status?: string; limit?: number }) => Promise<void>;
   onExport: (format: 'csv' | 'json') => void;
 }
@@ -23,7 +25,7 @@ const statusColors: Record<string, string> = {
   info: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
 };
 
-export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
+export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, onExport }: LogViewerProps) => {
   const [automationFilter, setAutomationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,8 +42,6 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
     log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
     log.automation_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const uniqueAutomations = [...new Set(logs.map(l => l.automation_name))];
 
   return (
     <Card className="bg-card/50 border-border/30">
@@ -82,7 +82,7 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle automations</SelectItem>
-              {uniqueAutomations.map(name => (
+              {allAutomationNames.map(name => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
               ))}
             </SelectContent>
@@ -99,8 +99,8 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
               <SelectItem value="info">Info</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={handleFilter}>
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="outline" size="icon" onClick={handleFilter} disabled={isRefreshing}>
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
