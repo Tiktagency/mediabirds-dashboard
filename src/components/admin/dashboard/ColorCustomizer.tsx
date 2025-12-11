@@ -52,7 +52,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
             <Input
               value={colors.high}
               onChange={(e) => onUpdate({ high: e.target.value })}
-              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+              className="flex-1 bg-background/50 font-mono text-sm"
             />
             <span
               className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
@@ -76,7 +76,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
             <Input
               value={colors.medium}
               onChange={(e) => onUpdate({ medium: e.target.value })}
-              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+              className="flex-1 bg-background/50 font-mono text-sm"
             />
             <span
               className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
@@ -100,7 +100,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
             <Input
               value={colors.low}
               onChange={(e) => onUpdate({ low: e.target.value })}
-              className="w-28 bg-background/50 font-mono text-sm shrink-0"
+              className="flex-1 bg-background/50 font-mono text-sm"
             />
             <span
               className="w-20 text-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
