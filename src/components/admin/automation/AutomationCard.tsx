@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Globe, Save, Workflow } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Globe, Save, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,6 +56,7 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
       webhook_url: localSetting.webhook_url,
       webhook_backup_url: localSetting.webhook_backup_url,
       n8n_workflow_name: localSetting.n8n_workflow_name,
+      time_saved_per_execution: localSetting.time_saved_per_execution,
     });
     setIsSaving(false);
   };
@@ -189,6 +190,28 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="border-t border-border/30 pt-4 mt-4">
+            <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Tijdsbesparing
+            </h4>
+            <div className="space-y-2">
+              <Label htmlFor={`time-saved-${setting.id}`}>Tijdsbesparing per execution (minuten)</Label>
+              <Input
+                id={`time-saved-${setting.id}`}
+                type="number"
+                min="0"
+                value={localSetting.time_saved_per_execution ?? 5}
+                onChange={(e) => setLocalSetting(prev => ({ ...prev, time_saved_per_execution: parseInt(e.target.value) || 0 }))}
+                className="bg-background/50 w-32"
+                placeholder="5"
+              />
+              <p className="text-xs text-muted-foreground">
+                Aantal minuten dat per succesvolle execution wordt bespaard.
+              </p>
+            </div>
           </div>
 
           <div className="border-t border-border/30 pt-4 mt-4">

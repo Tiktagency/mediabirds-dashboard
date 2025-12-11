@@ -16,6 +16,7 @@ export interface AutomationSetting {
   webhook_url: string | null;
   webhook_backup_url: string | null;
   n8n_workflow_name: string | null;
+  time_saved_per_execution: number | null;
   created_at: string;
   updated_at: string;
 }
