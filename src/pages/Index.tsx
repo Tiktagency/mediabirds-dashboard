@@ -163,8 +163,15 @@ const Index = () => {
       }
       return items.slice(0, GRID_SIZE);
     }
-    // Default: all tiles + empty placeholders
-    const defaultTiles = Object.keys(tileConfigMap);
+    // Default: saved-hours first, then other tiles + empty placeholders
+    const defaultTiles = [
+      'saved-hours',
+      'monday-planning',
+      'zoekwoord-onderzoek',
+      'blogs',
+      'wordpress-alt-text',
+      'chatbot',
+    ];
     while (defaultTiles.length < GRID_SIZE) {
       defaultTiles.push(`__empty_${defaultTiles.length}`);
     }
