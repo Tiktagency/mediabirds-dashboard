@@ -5,40 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { z } from 'zod';
-
-const WHITELISTED_EMAILS = [
-  'lotte.seinen@mediabirds.nl',
-  'joost.van.milligen@mediabirds.nl',
-  'isabelle.rutten@mediabirds.nl',
-  'hello@tikt.ai'
-];
-
-const passwordSchema = z.string()
-  .min(8, { message: "Wachtwoord moet minimaal 8 tekens bevatten" })
-  .regex(/[A-Z]/, { message: "Wachtwoord moet minimaal één hoofdletter bevatten" })
-  .regex(/[a-z]/, { message: "Wachtwoord moet minimaal één kleine letter bevatten" })
-  .regex(/[0-9]/, { message: "Wachtwoord moet minimaal één cijfer bevatten" });
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Ongeldig e-mailadres" }),
-  password: z.string().min(1, { message: "Wachtwoord is verplicht" }), // Less strict for login
-});
-
-const signupSchema = z.object({
-  email: z.string().email({ message: "Ongeldig e-mailadres" }),
-  password: passwordSchema,
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Wachtwoorden komen niet overeen",
-  path: ["confirmPassword"],
+  password: z.string().min(1, { message: "Wachtwoord is verplicht" }),
 });
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,15 +24,13 @@ const Login = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if user is admin
+        // Check if user has any role
         const { data: roles } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
+          .eq('user_id', session.user.id);
 
-        if (roles) {
+        if (roles && roles.length > 0) {
           navigate('/');
         }
       }
@@ -105,13 +79,11 @@ const Login = () => {
       }
 
       if (data.session) {
-        // Check if user has admin role
+        // Check if user has any role
         const { data: roles, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', data.session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
+          .eq('user_id', data.session.user.id);
 
         if (roleError) {
           console.error('Role check error:', roleError);
@@ -124,19 +96,20 @@ const Login = () => {
           return;
         }
 
-        if (!roles) {
+        if (!roles || roles.length === 0) {
           await supabase.auth.signOut();
           toast({
             variant: "destructive",
             title: "Toegang geweigerd",
-            description: "Je hebt geen admin-rechten",
+            description: "Je hebt geen toegangsrechten. Neem contact op met een admin.",
           });
           return;
         }
 
+        const roleNames = roles.map(r => r.role).join(', ');
         toast({
           title: "Inloggen gelukt",
-          description: "Welkom terug!",
+          description: `Welkom terug! (${roleNames})`,
         });
         navigate('/');
       }
@@ -151,190 +124,53 @@ const Login = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate input
-    const validation = signupSchema.safeParse({ email, password, confirmPassword });
-    if (!validation.success) {
-      toast({
-        variant: "destructive",
-        title: "Validatiefout",
-        description: validation.error.errors[0].message,
-      });
-      return;
-    }
-
-    // Check whitelist
-    if (!WHITELISTED_EMAILS.includes(email.toLowerCase().trim())) {
-      toast({
-        variant: "destructive",
-        title: "Toegang geweigerd",
-        description: "Dit email adres is niet geautoriseerd voor registratie",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        }
-      });
-
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          toast({
-            variant: "destructive",
-            title: "Registratie mislukt",
-            description: "Dit email adres is al geregistreerd",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Fout",
-            description: error.message,
-          });
-        }
-        return;
-      }
-
-      if (data.session) {
-        toast({
-          title: "Registratie gelukt",
-          description: "Je account is aangemaakt en je bent ingelogd!",
-        });
-        navigate('/');
-      } else {
-        toast({
-          title: "Registratie gelukt",
-          description: "Je account is aangemaakt. Je kunt nu inloggen.",
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Fout",
-        description: "Er is iets misgegaan bij de registratie",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20">
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-xl shadow-lg border border-border">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">Mediabirds</h1>
-          <p className="mt-2 text-muted-foreground">Admin Toegang</p>
+          <p className="mt-2 text-muted-foreground">Dashboard Toegang</p>
         </div>
         
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Inloggen</TabsTrigger>
-            <TabsTrigger value="signup">Registreren</TabsTrigger>
-          </TabsList>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="login-email">E-mailadres</Label>
+            <Input
+              id="login-email"
+              type="email"
+              placeholder="jouw@email.nl"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </div>
           
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">E-mailadres</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Wachtwoord</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'Inloggen...' : 'Inloggen'}
-              </Button>
-            </form>
-          </TabsContent>
+          <div className="space-y-2">
+            <Label htmlFor="login-password">Wachtwoord</Label>
+            <Input
+              id="login-password"
+              type="password"
+              placeholder="••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </div>
           
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">E-mailadres</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="jouw@email.nl"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Alleen geautoriseerde email adressen kunnen registreren
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Wachtwoord</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Min. 8 tekens, met hoofdletter, kleine letter en cijfer
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm-password">Bevestig wachtwoord</Label>
-                <Input
-                  id="signup-confirm-password"
-                  type="password"
-                  placeholder="••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'Registreren...' : 'Registreren'}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Inloggen...' : 'Inloggen'}
+          </Button>
+        </form>
+        
+        <p className="text-xs text-center text-muted-foreground">
+          Geen account? Neem contact op met een admin om toegang te krijgen.
+        </p>
       </div>
     </div>
   );
