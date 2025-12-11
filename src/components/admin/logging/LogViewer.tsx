@@ -109,7 +109,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
         </div>
 
         <div className="border border-border/30 rounded-lg overflow-hidden">
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="h-[500px] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
                 <TableRow className="bg-background/30">
