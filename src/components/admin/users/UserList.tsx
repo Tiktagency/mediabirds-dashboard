@@ -24,12 +24,12 @@ const roleConfig: Record<AppRole, { label: string; icon: React.ReactNode; color:
   operator: { 
     label: 'Operator', 
     icon: <Play className="w-3 h-3" />, 
-    color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' 
+    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
   },
   viewer: { 
     label: 'Viewer', 
     icon: <Eye className="w-3 h-3" />, 
-    color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+    color: 'bg-green-500/20 text-green-400 border-green-500/30' 
   },
 };
 
