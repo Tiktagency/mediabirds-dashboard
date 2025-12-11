@@ -53,12 +53,11 @@ serve(async (req) => {
     const workflowsData = await workflowsResponse.json();
     console.log(`Found ${workflowsData.data?.length || 0} workflows`);
 
-    // Calculate date range for past month
+    // Calculate date range for past month (filter client-side)
     const now = new Date();
     const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-    const startedAfter = oneMonthAgo.toISOString();
 
-    let totalSavedMinutes = 0;
+    let totalSuccessfulExecutions = 0;
 
     // For each workflow name, find matching workflow and get executions
     for (const workflowName of workflowNames) {
@@ -73,20 +72,21 @@ serve(async (req) => {
 
       console.log(`Found workflow: ${workflow.name} (ID: ${workflow.id})`);
 
-      // Get all successful executions for this workflow in the past month
-      const executionsResponse = await fetch(
-        `https://tikt.app.n8n.cloud/api/v1/executions?workflowId=${workflow.id}&status=success&startedAfter=${startedAfter}&limit=100`,
-        {
-          method: 'GET',
-          headers: {
-            'X-N8N-API-KEY': n8nApiKey,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Get executions WITHOUT startedAfter filter (causes issues with n8n API)
+      const executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?workflowId=${workflow.id}&status=success&limit=100`;
+      console.log(`Fetching executions from: ${executionsUrl}`);
+      
+      const executionsResponse = await fetch(executionsUrl, {
+        method: 'GET',
+        headers: {
+          'X-N8N-API-KEY': n8nApiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!executionsResponse.ok) {
-        console.error(`Failed to fetch executions for workflow ${workflow.name}`);
+        const errorText = await executionsResponse.text();
+        console.error(`Failed to fetch executions for workflow ${workflow.name}:`, errorText);
         continue;
       }
 
@@ -94,25 +94,28 @@ serve(async (req) => {
       const executions = executionsData.data || [];
       console.log(`Found ${executions.length} successful executions for ${workflow.name}`);
 
-      // Sum up saved_minutes from execution data
-      for (const execution of executions) {
-        // Check if execution has saved_minutes in its data
-        // This could be in different places depending on workflow structure
-        const savedMinutes = extractSavedMinutes(execution);
-        if (savedMinutes > 0) {
-          totalSavedMinutes += savedMinutes;
-          console.log(`Execution ${execution.id}: ${savedMinutes} saved minutes`);
-        }
-      }
+      // Filter executions from past month (client-side filtering)
+      const recentExecutions = executions.filter((exec: any) => {
+        const execDate = new Date(exec.startedAt || exec.createdAt);
+        return execDate >= oneMonthAgo;
+      });
+      
+      console.log(`${recentExecutions.length} executions from past month for ${workflow.name}`);
+      totalSuccessfulExecutions += recentExecutions.length;
     }
 
-    const totalHours = Math.round((totalSavedMinutes / 60) * 10) / 10; // Round to 1 decimal
-    console.log(`Total saved: ${totalSavedMinutes} minutes = ${totalHours} hours`);
+    // Calculate saved hours: assume 5 minutes saved per successful execution
+    const MINUTES_PER_EXECUTION = 5;
+    const totalSavedMinutes = totalSuccessfulExecutions * MINUTES_PER_EXECUTION;
+    const totalHours = Math.round((totalSavedMinutes / 60) * 10) / 10;
+    
+    console.log(`Total: ${totalSuccessfulExecutions} executions × ${MINUTES_PER_EXECUTION} min = ${totalSavedMinutes} minutes = ${totalHours} hours`);
 
     return new Response(
       JSON.stringify({
         totalHours,
         totalMinutes: totalSavedMinutes,
+        executionCount: totalSuccessfulExecutions,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -125,48 +128,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper function to extract saved_minutes from execution data
-function extractSavedMinutes(execution: any): number {
-  try {
-    // Check various possible locations for saved_minutes
-    // In the execution result data
-    if (execution.data?.resultData?.runData) {
-      const runData = execution.data.resultData.runData;
-      for (const nodeName of Object.keys(runData)) {
-        const nodeRuns = runData[nodeName];
-        if (Array.isArray(nodeRuns)) {
-          for (const run of nodeRuns) {
-            if (run.data?.main) {
-              for (const mainData of run.data.main) {
-                if (Array.isArray(mainData)) {
-                  for (const item of mainData) {
-                    if (item.json?.saved_minutes) {
-                      return Number(item.json.saved_minutes) || 0;
-                    }
-                    if (item.json?.savedMinutes) {
-                      return Number(item.json.savedMinutes) || 0;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    // Direct property check
-    if (execution.saved_minutes) {
-      return Number(execution.saved_minutes) || 0;
-    }
-    if (execution.savedMinutes) {
-      return Number(execution.savedMinutes) || 0;
-    }
-
-    return 0;
-  } catch (e) {
-    console.error('Error extracting saved_minutes:', e);
-    return 0;
-  }
-}
