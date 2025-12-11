@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Loader2, Copy, Check, Mail, AlertCircle } from 'lucide-react';
+import { UserPlus, Loader2, Copy, Check } from 'lucide-react';
 import { AppRole } from '@/hooks/useUserManagement';
 
 interface InviteUserModalProps {
@@ -21,8 +21,6 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
   const [isLoading, setIsLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleInvite = async () => {
@@ -37,14 +35,8 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
 
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke('invite-user', {
-        body: { 
-          email: email.trim(), 
-          role,
-          redirectUrl: window.location.origin 
-        },
+        body: { email: email.trim(), role },
       });
 
       if (response.error) {
@@ -56,14 +48,10 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
       }
 
       setTempPassword(response.data.tempPassword);
-      setEmailSent(response.data.emailSent || false);
-      setEmailError(response.data.emailError || null);
       
       toast({
         title: 'Succes',
-        description: response.data.emailSent 
-          ? `Gebruiker ${email} is uitgenodigd en e-mail is verzonden`
-          : `Gebruiker ${email} is aangemaakt`,
+        description: `Gebruiker ${email} is aangemaakt`,
       });
 
       onSuccess();
@@ -92,8 +80,6 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
     setRole('viewer');
     setTempPassword(null);
     setCopied(false);
-    setEmailSent(false);
-    setEmailError(null);
     onOpenChange(false);
   };
 
@@ -109,40 +95,12 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
 
         {tempPassword ? (
           <div className="space-y-4">
-            {/* Email status */}
-            {emailSent ? (
-              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Mail className="h-4 w-4 text-green-400" />
-                  <p className="text-sm text-green-400 font-medium">
-                    E-mail verzonden!
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  De uitnodiging is verstuurd naar het opgegeven e-mailadres met inloggegevens.
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-400" />
-                  <p className="text-sm text-yellow-400 font-medium">
-                    Gebruiker aangemaakt, e-mail niet verzonden
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {emailError || 'Deel het wachtwoord handmatig met de gebruiker.'}
-                </p>
-              </div>
-            )}
-
-            {/* Password section */}
             <div className="rounded-lg bg-muted/50 border border-border p-4">
               <p className="text-sm font-medium mb-2">
-                Tijdelijk wachtwoord (backup)
+                Tijdelijk wachtwoord
               </p>
               <p className="text-xs text-muted-foreground mb-3">
-                De gebruiker kan dit wachtwoord wijzigen na inloggen.
+                Deel dit wachtwoord met de gebruiker. Ze kunnen het wijzigen na inloggen.
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 bg-background/50 px-3 py-2 rounded text-sm font-mono">
