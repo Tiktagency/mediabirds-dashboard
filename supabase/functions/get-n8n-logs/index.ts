@@ -51,9 +51,9 @@ serve(async (req) => {
       );
     }
 
-    const { limit = 100, workflowNames } = await req.json().catch(() => ({}));
+    const { limit = 100, workflowNames, automationFilter, statusFilter } = await req.json().catch(() => ({}));
     
-    console.log(`Fetching n8n logs, limit: ${limit}`);
+    console.log(`Fetching n8n logs, limit: ${limit}, automationFilter: ${automationFilter}, statusFilter: ${statusFilter}`);
 
     // Fetch all workflows
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -95,6 +95,23 @@ serve(async (req) => {
       });
     }
 
+    // If automationFilter is specified, find the matching workflow ID
+    if (automationFilter) {
+      const matchingWorkflow = workflows.find((w: any) => w.name === automationFilter);
+      if (matchingWorkflow) {
+        // Override targetWorkflowIds with just this one workflow
+        targetWorkflowIds = [matchingWorkflow.id];
+        console.log(`Filtering to workflow: ${automationFilter} (ID: ${matchingWorkflow.id})`);
+      } else {
+        console.log(`No exact match for automationFilter: ${automationFilter}`);
+        // If no exact match, return empty logs
+        return new Response(
+          JSON.stringify({ logs: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Fetch all recent executions (n8n API has a max limit of 250)
     const apiLimit = Math.min(limit, 250);
     let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=${apiLimit}`;
@@ -126,10 +143,11 @@ serve(async (req) => {
     // Filter by workflow IDs if specified
     if (targetWorkflowIds.length > 0) {
       executions = executions.filter(e => targetWorkflowIds.includes(e.workflowId));
+      console.log(`Filtered to ${executions.length} executions for target workflows`);
     }
 
     // Transform executions to log entries
-    const logs: LogEntry[] = executions.map(exec => {
+    let logs: LogEntry[] = executions.map(exec => {
       const workflowName = workflowMap.get(exec.workflowId) || `Workflow ${exec.workflowId}`;
       const startTime = new Date(exec.startedAt).getTime();
       const endTime = exec.stoppedAt ? new Date(exec.stoppedAt).getTime() : null;
@@ -166,6 +184,12 @@ serve(async (req) => {
         },
       };
     });
+
+    // Apply status filter server-side
+    if (statusFilter) {
+      logs = logs.filter(log => log.status === statusFilter);
+      console.log(`Filtered to ${logs.length} logs with status: ${statusFilter}`);
+    }
 
     // Sort by created_at descending
     logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
