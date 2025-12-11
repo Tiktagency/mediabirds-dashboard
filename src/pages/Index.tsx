@@ -27,6 +27,11 @@ interface TileConfig {
 }
 
 const tileConfigMap: Record<string, TileConfig> = {
+  'saved-hours': {
+    to: '',
+    icon: CalendarDays, // Not used for saved-hours
+    variant: 'primary',
+  },
   'monday-planning': {
     to: '/monday-planning',
     icon: CalendarDays,
@@ -242,10 +247,7 @@ const Index = () => {
 
       <div className="max-w-5xl mx-auto px-6 py-16">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {/* Saved Hours Tile - always first */}
-          <SavedHoursTile workflowNames={connectedWorkflowNames} />
-          
-          {orderedItems.slice(0, 8).map((item, index) => {
+          {orderedItems.map((item, index) => {
             const isEmpty = !item || item.startsWith('__empty_') || !tileConfigMap[item];
             
             // Render placeholder for empty slots
@@ -259,6 +261,11 @@ const Index = () => {
                   disabled 
                 />
               );
+            }
+            
+            // Render SavedHoursTile for saved-hours
+            if (item === 'saved-hours') {
+              return <SavedHoursTile key={item} workflowNames={connectedWorkflowNames} />;
             }
             
             // Render actual tile
