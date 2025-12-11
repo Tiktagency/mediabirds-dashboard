@@ -110,9 +110,10 @@ const Index = () => {
     );
   }
 
-  // Get ordered tiles from dashboard settings
+  // Get ordered tiles from dashboard settings (filter out empty slots and invalid names)
   const orderedTiles = dashboardSettings.tile_order?.length 
-    ? dashboardSettings.tile_order.filter(name => tileConfigMap[name])
+    ? dashboardSettings.tile_order
+        .filter(name => name && !name.startsWith('__empty_') && tileConfigMap[name])
     : Object.keys(tileConfigMap);
 
   // Impact colors from dashboard settings
