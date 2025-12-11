@@ -105,48 +105,50 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
         </div>
 
         <div className="border border-border/30 rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-background/30">
-                <TableHead className="w-[180px]">Tijdstip</TableHead>
-                <TableHead className="w-[150px]">Automation</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
-                <TableHead>Bericht</TableHead>
-                <TableHead className="w-[100px]">Duur</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Geen logs gevonden
-                  </TableCell>
+          <div className="max-h-[400px] overflow-y-auto">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+                <TableRow className="bg-background/30">
+                  <TableHead className="w-[180px]">Tijdstip</TableHead>
+                  <TableHead className="w-[150px]">Automation</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead>Bericht</TableHead>
+                  <TableHead className="w-[100px]">Duur</TableHead>
                 </TableRow>
-              ) : (
-                filteredLogs.slice(0, 100).map(log => (
-                  <TableRow key={log.id} className="hover:bg-background/20">
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(log.created_at), 'dd MMM HH:mm:ss', { locale: nl })}
-                    </TableCell>
-                    <TableCell className="font-medium text-sm">
-                      {log.automation_name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusColors[log.status] || statusColors.info}>
-                        {log.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm max-w-[400px] truncate">
-                      {log.message}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {log.execution_time_ms ? `${log.execution_time_ms}ms` : '-'}
+              </TableHeader>
+              <TableBody>
+                {filteredLogs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Geen logs gevonden
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredLogs.slice(0, 100).map(log => (
+                    <TableRow key={log.id} className="hover:bg-background/20">
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(log.created_at), 'dd MMM HH:mm:ss', { locale: nl })}
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {log.automation_name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={statusColors[log.status] || statusColors.info}>
+                          {log.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm max-w-[400px] truncate">
+                        {log.message}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {log.execution_time_ms ? `${log.execution_time_ms}ms` : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         {filteredLogs.length > 100 && (
