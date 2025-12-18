@@ -276,20 +276,19 @@ const ZoekwoordOnderzoek = () => {
           description: message,
           duration: 7000,
         });
-        await saveNotification(message, 'success');
+        // Notification is already saved by the edge function
       } else {
         throw new Error(data.error || 'Webhook request failed');
       }
     } catch (error) {
       console.error('Error submitting SEO research:', error);
-      const errorMessage = 'Het SEO onderzoek kon niet worden gestart. Probeer het opnieuw.';
       toast({
         title: 'Er is iets misgegaan',
-        description: errorMessage,
+        description: 'Het SEO onderzoek kon niet worden gestart. Probeer het opnieuw.',
         variant: 'destructive',
         duration: 7000,
       });
-      await saveNotification(errorMessage, 'error');
+      // Error notification is already saved by the edge function
     } finally {
       setIsSubmitting(false);
     }
@@ -321,20 +320,19 @@ const ZoekwoordOnderzoek = () => {
           description: message,
           duration: 7000,
         });
-        await saveNotification(message, 'success');
+        // Notification is already saved by the edge function
       } else {
         throw new Error(data.error || 'Webhook request failed');
       }
     } catch (error) {
       console.error('Error triggering subzoekwoorden:', error);
-      const errorMessage = 'De subzoekwoorden konden niet worden gestart. Probeer het opnieuw.';
       toast({
         title: 'Er is iets misgegaan',
-        description: errorMessage,
+        description: 'De subzoekwoorden konden niet worden gestart. Probeer het opnieuw.',
         variant: 'destructive',
         duration: 7000,
       });
-      await saveNotification(errorMessage, 'error');
+      // Error notification is already saved by the edge function
     } finally {
       setIsSubkeywordsLoading(false);
     }
