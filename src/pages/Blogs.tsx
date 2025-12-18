@@ -326,7 +326,7 @@ const Blogs = () => {
       const { data, error } = await supabase.functions.invoke('trigger-blog-generation', {
         body: { 
           webhookUrl: FIXED_WEBHOOK_URL,
-          authTokenSecretName: selectedCompany?.auth_token_secret_name || 'N8N_WEBHOOK_AUTH_TOKEN',
+          authTokenSecretName: selectedCompany?.auth_token_secret_name || 'BLOG_WEBHOOK_AUTH_TOKEN',
           blogData: payload,
         },
       });
