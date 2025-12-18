@@ -303,10 +303,7 @@ const Blogs = () => {
   ) => {
     const isEditing = editingField === field;
     const value = formData[field as keyof typeof formData];
-    const canEdit = isAdmin;
-
-    // Hide admin-only fields from non-admins
-    if (adminOnly && !isAdmin) return null;
+    const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
 
     return (
       <div className="space-y-2">
@@ -451,15 +448,13 @@ const Blogs = () => {
             {renderField('aantal_woorden', 'Aantal woorden', 'number')}
             {renderField('taal', 'Taal', 'select')}
             
-            {/* Admin-only fields */}
-            {isAdmin && (
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-sm text-yellow-400/80 mb-4">Admin instellingen</p>
-                {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true)}
-                {renderField('get_afbeelding_url', 'GET afbeelding URL', 'text', true)}
-                {renderField('post_blog_url', 'POST blog URL', 'text', true)}
-              </div>
-            )}
+            {/* Admin-only fields - visible to all, editable by admins only */}
+            <div className="pt-4 border-t border-white/10">
+              <p className="text-sm text-yellow-400/80 mb-4">Admin instellingen</p>
+              {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true)}
+              {renderField('get_afbeelding_url', 'POST afbeelding URL', 'text', true)}
+              {renderField('post_blog_url', 'POST blog URL', 'text', true)}
+            </div>
 
             {/* Start button */}
             <div className="pt-6">
