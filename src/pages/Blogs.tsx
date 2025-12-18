@@ -53,7 +53,8 @@ const Blogs = () => {
     schrijfstijl: '',
     aantal_woorden: [500, 1500] as [number, number], // Range slider values
     taal: '',
-    afbeelding_prompt: '',
+    achtergrond_kleur: '',
+    hoofdaccent_gradient: '',
     get_afbeelding_url: '',
     post_blog_url: '',
   });
@@ -90,7 +91,8 @@ const Blogs = () => {
         schrijfstijl: settings.schrijfstijl || '',
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
-        afbeelding_prompt: settings.afbeelding_prompt || '',
+        achtergrond_kleur: settings.achtergrond_kleur || '',
+        hoofdaccent_gradient: settings.hoofdaccent_gradient || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
       });
@@ -101,7 +103,8 @@ const Blogs = () => {
         schrijfstijl: '',
         aantal_woorden: [500, 1500],
         taal: '',
-        afbeelding_prompt: '',
+        achtergrond_kleur: '',
+        hoofdaccent_gradient: '',
         get_afbeelding_url: '',
         post_blog_url: '',
       });
@@ -192,7 +195,7 @@ const Blogs = () => {
 
   const isFormComplete = () => {
     const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
-    const adminFields = ['afbeelding_prompt', 'get_afbeelding_url', 'post_blog_url'];
+    const adminFields = ['achtergrond_kleur', 'hoofdaccent_gradient', 'get_afbeelding_url', 'post_blog_url'];
     
     for (const field of requiredStringFields) {
       if (!formData[field as keyof typeof formData]) return false;
@@ -260,7 +263,8 @@ const Blogs = () => {
         schrijfstijl: settings.schrijfstijl || '',
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
-        afbeelding_prompt: settings.afbeelding_prompt || '',
+        achtergrond_kleur: settings.achtergrond_kleur || '',
+        hoofdaccent_gradient: settings.hoofdaccent_gradient || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
       });
@@ -288,7 +292,8 @@ const Blogs = () => {
         schrijfstijl: formData.schrijfstijl,
         aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
         taal: formData.taal,
-        afbeelding_prompt: formData.afbeelding_prompt,
+        achtergrond_kleur: formData.achtergrond_kleur,
+        hoofdaccent_gradient: formData.hoofdaccent_gradient,
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         timestamp: new Date().toISOString(),
@@ -612,7 +617,8 @@ const Blogs = () => {
             {/* Admin-only fields - visible to all, editable by admins only */}
             <div className="pt-6 border-t border-white/10 space-y-6">
               <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-              {renderField('Afbeelding prompt', 'afbeelding_prompt', 'textarea', undefined, true)}
+              {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, true)}
+              {renderField('Hoofdaccent gradient', 'hoofdaccent_gradient', 'text', undefined, true)}
               {renderField('GET afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
               {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             </div>
