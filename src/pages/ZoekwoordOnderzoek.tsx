@@ -339,6 +339,7 @@ const ZoekwoordOnderzoek = () => {
     hasGradientBorder: boolean = false
   ) => {
     const isEditing = editingField === field;
+    const isExpanded = expandedField === field;
     const value = formData[field];
     const canEdit = isAdmin;
 
@@ -371,28 +372,42 @@ const ZoekwoordOnderzoek = () => {
               <XCircle className="h-4 w-4" />
             </Button>
           </div>
-        ) : (
-          // VIEW MODE
-          <div className="flex items-center gap-2">
-            <div 
-              className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis ${
-                hasGradientBorder 
-                  ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
-                  : 'bg-white/5 border border-white/10'
-              }`}
-            >
+        ) : isExpanded ? (
+          // EXPANDED MODE - show text + pencil inside
+          <div className="expanded-field-container relative">
+            <div className={`px-3 py-2 pr-12 rounded-md text-white/80 min-h-[40px] ${
+              hasGradientBorder 
+                ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+                : 'bg-white/5 border border-white/10'
+            }`}>
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
-                onClick={() => setEditingField(field)}
+                className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedField(null);
+                  setEditingField(field);
+                }}
               >
                 <Pencil className="h-4 w-4" />
               </Button>
             )}
+          </div>
+        ) : (
+          // COLLAPSED MODE - clickable to expand
+          <div 
+            className={`px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
+              hasGradientBorder 
+                ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+                : 'bg-white/5 border border-white/10'
+            }`}
+            onClick={() => setExpandedField(field)}
+          >
+            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
           </div>
         )}
       </div>
