@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Bell, X, Pencil, Check, XCircle } from 'lucide-react';
@@ -49,7 +50,7 @@ const Blogs = () => {
     bedrijfsnaam: '',
     bedrijfsomschrijving: '',
     schrijfstijl: '',
-    aantal_woorden: '',
+    aantal_woorden: [500, 1500] as [number, number], // Range slider values
     taal: '',
     afbeelding_prompt: '',
     get_afbeelding_url: '',
@@ -58,6 +59,16 @@ const Blogs = () => {
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
 
+  // Helper to parse range string to array
+  const parseRangeString = (rangeStr: string | null): [number, number] => {
+    if (!rangeStr) return [500, 1500];
+    const parts = rangeStr.split('-');
+    if (parts.length === 2) {
+      return [parseInt(parts[0]) || 500, parseInt(parts[1]) || 1500];
+    }
+    return [500, 1500];
+  };
+
   // Load settings into form when they change
   useEffect(() => {
     if (settings) {
@@ -65,7 +76,7 @@ const Blogs = () => {
         bedrijfsnaam: settings.bedrijfsnaam || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
         schrijfstijl: settings.schrijfstijl || '',
-        aantal_woorden: settings.aantal_woorden?.toString() || '',
+        aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
         afbeelding_prompt: settings.afbeelding_prompt || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
@@ -76,7 +87,7 @@ const Blogs = () => {
         bedrijfsnaam: '',
         bedrijfsomschrijving: '',
         schrijfstijl: '',
-        aantal_woorden: '',
+        aantal_woorden: [500, 1500],
         taal: '',
         afbeelding_prompt: '',
         get_afbeelding_url: '',
@@ -168,12 +179,15 @@ const Blogs = () => {
   };
 
   const isFormComplete = () => {
-    const requiredFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'aantal_woorden', 'taal'];
+    const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
     const adminFields = ['afbeelding_prompt', 'get_afbeelding_url', 'post_blog_url'];
     
-    for (const field of requiredFields) {
+    for (const field of requiredStringFields) {
       if (!formData[field as keyof typeof formData]) return false;
     }
+    
+    // Check range slider has valid values
+    if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
     
     // Admin fields must also be filled (they're stored in DB by admin)
     for (const field of adminFields) {
@@ -187,7 +201,8 @@ const Blogs = () => {
     const updateData: any = {};
     
     if (field === 'aantal_woorden') {
-      updateData[field] = parseInt(formData[field as keyof typeof formData]) || null;
+      // Convert array to string format "min-max"
+      updateData[field] = `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`;
     } else {
       updateData[field] = formData[field as keyof typeof formData] || null;
     }
@@ -218,7 +233,7 @@ const Blogs = () => {
         bedrijfsnaam: settings.bedrijfsnaam || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
         schrijfstijl: settings.schrijfstijl || '',
-        aantal_woorden: settings.aantal_woorden?.toString() || '',
+        aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
         afbeelding_prompt: settings.afbeelding_prompt || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
@@ -246,7 +261,7 @@ const Blogs = () => {
         bedrijfsnaam: formData.bedrijfsnaam,
         bedrijfsomschrijving: formData.bedrijfsomschrijving,
         schrijfstijl: formData.schrijfstijl,
-        aantal_woorden: parseInt(formData.aantal_woorden),
+        aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
         taal: formData.taal,
         afbeelding_prompt: formData.afbeelding_prompt,
         get_afbeelding_url: formData.get_afbeelding_url,
@@ -296,13 +311,13 @@ const Blogs = () => {
   };
 
   const renderField = (
-    field: string,
+    field: 'bedrijfsnaam' | 'bedrijfsomschrijving' | 'schrijfstijl' | 'taal' | 'afbeelding_prompt' | 'get_afbeelding_url' | 'post_blog_url',
     label: string,
-    type: 'text' | 'textarea' | 'number' | 'select' = 'text',
+    type: 'text' | 'textarea' | 'select' = 'text',
     adminOnly: boolean = false
   ) => {
     const isEditing = editingField === field;
-    const value = formData[field as keyof typeof formData];
+    const value = formData[field];
     const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
 
     return (
@@ -322,13 +337,6 @@ const Blogs = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
                 className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 rows={3}
-              />
-            ) : type === 'number' ? (
-              <Input
-                type="number"
-                value={value}
-                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             ) : type === 'select' ? (
               <Select
@@ -381,6 +389,77 @@ const Blogs = () => {
                 variant="ghost"
                 className="text-white/60 hover:text-white hover:bg-white/10"
                 onClick={() => setEditingField(field)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRangeField = () => {
+    const isEditing = editingField === 'aantal_woorden';
+    const [min, max] = formData.aantal_woorden;
+    const canEdit = isAdmin;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-white/90">Aantal woorden</Label>
+        </div>
+        
+        {isEditing && canEdit ? (
+          <div className="space-y-4">
+            <div className="px-2">
+              <Slider
+                value={formData.aantal_woorden}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, aantal_woorden: value as [number, number] }))}
+                min={0}
+                max={3000}
+                step={50}
+                className="w-full"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-white/50">
+              <span>0</span>
+              <span>3000</span>
+            </div>
+            <div className="text-center text-white/80 font-medium">
+              {min} - {max} woorden
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                onClick={() => handleSaveField('aantal_woorden')}
+                disabled={settingsLoading}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                onClick={handleCancelEdit}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+              {min} - {max} woorden
+            </div>
+            {canEdit && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white/60 hover:text-white hover:bg-white/10"
+                onClick={() => setEditingField('aantal_woorden')}
               >
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -445,7 +524,7 @@ const Blogs = () => {
             {renderField('bedrijfsnaam', 'Bedrijfsnaam')}
             {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea')}
             {renderField('schrijfstijl', 'Schrijfstijl')}
-            {renderField('aantal_woorden', 'Aantal woorden', 'number')}
+            {renderRangeField()}
             {renderField('taal', 'Taal', 'select')}
             
             {/* Admin-only fields - visible to all, editable by admins only */}
