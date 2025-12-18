@@ -187,9 +187,9 @@ export type Database = {
           id: string
           name: string
           seo_research_n8n_name: string | null
-          seo_research_webhook: string
+          seo_research_webhook: string | null
           subkeywords_n8n_name: string | null
-          subkeywords_webhook: string
+          subkeywords_webhook: string | null
         }
         Insert: {
           auth_token_secret_name?: string | null
@@ -199,9 +199,9 @@ export type Database = {
           id?: string
           name: string
           seo_research_n8n_name?: string | null
-          seo_research_webhook: string
+          seo_research_webhook?: string | null
           subkeywords_n8n_name?: string | null
-          subkeywords_webhook: string
+          subkeywords_webhook?: string | null
         }
         Update: {
           auth_token_secret_name?: string | null
@@ -211,9 +211,9 @@ export type Database = {
           id?: string
           name?: string
           seo_research_n8n_name?: string | null
-          seo_research_webhook?: string
+          seo_research_webhook?: string | null
           subkeywords_n8n_name?: string | null
-          subkeywords_webhook?: string
+          subkeywords_webhook?: string | null
         }
         Relationships: []
       }
