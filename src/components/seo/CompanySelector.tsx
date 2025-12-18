@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, Building2, Plus } from 'lucide-react';
+import { ChevronDown, Building2, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -15,6 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
@@ -42,6 +52,8 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newCompany, setNewCompany] = useState({
     name: '',
     seo_research_webhook: '',
@@ -106,6 +118,49 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
   const handleSelectCompany = (company: Company) => {
     localStorage.setItem('selectedCompanyId', company.id);
     onCompanyChange(company);
+  };
+
+  const handleDeleteCompany = async () => {
+    if (!companyToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // First delete blog_settings for this company (cascade)
+      await supabase
+        .from('blog_settings')
+        .delete()
+        .eq('company_id', companyToDelete.id);
+
+      // Then delete the company
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Bedrijf verwijderd',
+        description: `${companyToDelete.name} is succesvol verwijderd`,
+      });
+
+      // If the deleted company was selected, select another one
+      if (selectedCompany?.id === companyToDelete.id) {
+        localStorage.removeItem('selectedCompanyId');
+      }
+
+      setCompanyToDelete(null);
+      await fetchCompanies();
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      toast({
+        title: 'Fout bij verwijderen',
+        description: 'Er ging iets mis bij het verwijderen van het bedrijf',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAddCompany = async () => {
@@ -205,12 +260,23 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
             <DropdownMenuItem
               key={company.id}
               onClick={() => handleSelectCompany(company)}
-              className={`text-white/80 hover:text-white hover:bg-white/10 cursor-pointer ${
+              className={`group text-white/80 hover:text-white hover:bg-white/10 cursor-pointer flex items-center justify-between ${
                 selectedCompany?.id === company.id ? 'bg-white/10 text-white' : ''
               }`}
             >
-              <Building2 className="w-4 h-4 mr-2" />
-              {company.name}
+              <div className="flex items-center">
+                <Building2 className="w-4 h-4 mr-2" />
+                {company.name}
+              </div>
+              {isAdmin && (
+                <Trash2
+                  className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 ml-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCompanyToDelete(company);
+                  }}
+                />
+              )}
             </DropdownMenuItem>
           ))}
           {isAdmin && (
@@ -330,6 +396,31 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!companyToDelete} onOpenChange={(open) => !open && setCompanyToDelete(null)}>
+        <AlertDialogContent className="bg-slate-900 border-white/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              Weet je zeker dat je {companyToDelete?.name} wilt verwijderen?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Dit verwijdert ook alle bijbehorende blog instellingen. Deze actie kan niet ongedaan worden gemaakt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">
+              Annuleren
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCompany}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? 'Verwijderen...' : 'Verwijderen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
