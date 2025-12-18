@@ -21,6 +21,8 @@ interface Notification {
   status: 'success' | 'error';
 }
 
+const FIXED_SEO_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953';
+
 const ZoekwoordOnderzoek = () => {
   const { toast, dismiss } = useToast();
   const { isLoading: authLoading, user, isAdmin } = useAuth();
@@ -251,10 +253,11 @@ const ZoekwoordOnderzoek = () => {
     try {
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
         body: {
-          webhookUrl: selectedCompany.seo_research_webhook,
+          webhookUrl: FIXED_SEO_WEBHOOK_URL,
           authTokenSecretName: selectedCompany.auth_token_secret_name,
           action: 'research',
           formData: {
+            bedrijfsnaam: formData.bedrijfsnaam,
             blogTopic: formData.blog_onderwerp,
             audienceIntent: formData.doelgroep_intentie,
             businessDescription: formData.bedrijfsomschrijving,
