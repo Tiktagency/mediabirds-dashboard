@@ -301,6 +301,47 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_settings: {
+        Row: {
+          bedrijfsomschrijving: string | null
+          blog_onderwerp: string | null
+          company_id: string
+          created_at: string
+          doelgroep_intentie: string | null
+          extra_instructies: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bedrijfsomschrijving?: string | null
+          blog_onderwerp?: string | null
+          company_id: string
+          created_at?: string
+          doelgroep_intentie?: string | null
+          extra_instructies?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bedrijfsomschrijving?: string | null
+          blog_onderwerp?: string | null
+          company_id?: string
+          created_at?: string
+          doelgroep_intentie?: string | null
+          extra_instructies?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_automation_permissions: {
         Row: {
           automation_name: string
