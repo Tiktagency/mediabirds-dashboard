@@ -477,6 +477,7 @@ const Blogs = () => {
   const renderRangeField = () => {
     const [min, max] = formData.aantal_woorden;
     const canEdit = isAdmin;
+    const isExpanded = expandedField === 'aantal_woorden';
 
     const handleSliderChange = (value: number[]) => {
       setFormData(prev => ({ ...prev, aantal_woorden: value as [number, number] }));
@@ -488,33 +489,48 @@ const Blogs = () => {
       }
     };
 
+    const handleExpand = () => {
+      if (canEdit) {
+        setExpandedField('aantal_woorden');
+      }
+    };
+
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-white/90">Aantal woorden</Label>
         </div>
         
-        <div className="space-y-4 p-4 rounded-md bg-white/5 border border-white/10">
-          <div className="px-2">
-            <Slider
-              value={formData.aantal_woorden}
-              onValueChange={handleSliderChange}
-              onValueCommit={handleSliderCommit}
-              min={0}
-              max={3000}
-              step={50}
-              className="w-full"
-              disabled={!canEdit}
-            />
+        {isExpanded ? (
+          <div className="space-y-4 p-4 rounded-md bg-white/5 border border-white/10">
+            <div className="px-2">
+              <Slider
+                value={formData.aantal_woorden}
+                onValueChange={handleSliderChange}
+                onValueCommit={handleSliderCommit}
+                min={0}
+                max={3000}
+                step={50}
+                className="w-full"
+                disabled={!canEdit}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-white/50">
+              <span>0</span>
+              <span>3000</span>
+            </div>
+            <div className="text-center text-white/80 font-medium">
+              {min} - {max} woorden
+            </div>
           </div>
-          <div className="flex justify-between text-xs text-white/50">
-            <span>0</span>
-            <span>3000</span>
+        ) : (
+          <div 
+            className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis ${canEdit ? 'cursor-pointer hover:bg-white/10' : ''} transition-colors`}
+            onClick={handleExpand}
+          >
+            {min}-{max} woorden
           </div>
-          <div className="text-center text-white/80 font-medium">
-            {min} - {max} woorden
-          </div>
-        </div>
+        )}
       </div>
     );
   };
