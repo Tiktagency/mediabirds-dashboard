@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BlogSettings {
@@ -51,7 +51,7 @@ export const useBlogSettings = (companyId: string | null) => {
     fetchSettings();
   }, [companyId]);
 
-  const saveSettings = async (newSettings: Partial<Omit<BlogSettings, 'id' | 'created_at' | 'updated_at'>>) => {
+  const saveSettings = useCallback(async (newSettings: Partial<Omit<BlogSettings, 'id' | 'created_at' | 'updated_at'>>) => {
     if (!companyId) return { success: false, error: 'No company selected' };
 
     setIsSaving(true);
@@ -95,7 +95,7 @@ export const useBlogSettings = (companyId: string | null) => {
       setIsSaving(false);
       return { success: false, error: err.message };
     }
-  };
+  }, [companyId, settings?.id]);
 
   return {
     settings,
