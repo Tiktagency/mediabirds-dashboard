@@ -318,7 +318,8 @@ const Blogs = () => {
   ) => {
     const isEditing = editingField === field;
     const value = formData[field];
-    const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
+    const canEdit = adminOnly ? isAdmin : isAdmin;
+    const isScrollableTextarea = type === 'textarea';
 
     return (
       <div className="space-y-2">
@@ -335,7 +336,7 @@ const Blogs = () => {
               <Textarea
                 value={value}
                 onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 max-h-[100px] overflow-y-auto resize-none"
                 rows={3}
               />
             ) : type === 'select' ? (
@@ -379,15 +380,17 @@ const Blogs = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+          <div className="flex items-start gap-2">
+            <div className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
+              isScrollableTextarea ? 'max-h-[100px] overflow-y-auto whitespace-pre-wrap' : 'min-h-[40px] flex items-center'
+            }`}>
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
+                className="text-white/60 hover:text-white hover:bg-white/10 flex-shrink-0"
                 onClick={() => setEditingField(field)}
               >
                 <Pencil className="h-4 w-4" />
@@ -519,24 +522,38 @@ const Blogs = () => {
             <p className="mt-4 text-white/60">Instellingen laden...</p>
           </div>
         ) : (
-          <div className="w-full max-w-2xl space-y-6">
-            {/* Regular fields */}
-            {renderField('bedrijfsnaam', 'Bedrijfsnaam')}
+          <div className="w-full max-w-3xl space-y-4">
+            {/* Row 1: Bedrijfsnaam + Taal */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>{renderField('bedrijfsnaam', 'Bedrijfsnaam')}</div>
+              <div>{renderField('taal', 'Taal', 'select')}</div>
+            </div>
+
+            {/* Row 2: Bedrijfsomschrijving (full width, scrollable) */}
             {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea')}
-            {renderField('schrijfstijl', 'Schrijfstijl')}
-            {renderRangeField()}
-            {renderField('taal', 'Taal', 'select')}
+
+            {/* Row 3: Schrijfstijl + Aantal woorden */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>{renderField('schrijfstijl', 'Schrijfstijl')}</div>
+              <div>{renderRangeField()}</div>
+            </div>
             
-            {/* Admin-only fields - visible to all, editable by admins only */}
+            {/* Admin-only fields */}
             <div className="pt-4 border-t border-white/10">
               <p className="text-sm text-yellow-400/80 mb-4">Admin instellingen</p>
+              
+              {/* Afbeelding prompt (full width, scrollable) */}
               {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true)}
-              {renderField('get_afbeelding_url', 'POST afbeelding URL', 'text', true)}
-              {renderField('post_blog_url', 'POST blog URL', 'text', true)}
+              
+              {/* URL fields side by side */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>{renderField('get_afbeelding_url', 'POST afbeelding URL', 'text', true)}</div>
+                <div>{renderField('post_blog_url', 'POST blog URL', 'text', true)}</div>
+              </div>
             </div>
 
             {/* Start button */}
-            <div className="pt-6">
+            <div className="pt-4">
               {isSubmitting && (
                 <p className="text-center text-white/80 text-sm mb-4">
                   Dit kan enkele minuten duren, even geduld...
