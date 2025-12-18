@@ -1,14 +1,19 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, Pencil, Check, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
+import { useBlogSettings } from '@/hooks/useBlogSettings';
 
 interface Notification {
   id: string;
@@ -17,16 +22,69 @@ interface Notification {
   status: 'success' | 'error';
 }
 
+const FIXED_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2-44fb-88bf-50e0c16f17ac';
+
+const TAAL_OPTIONS = [
+  { value: 'Nederlands', label: 'Nederlands' },
+  { value: 'Engels', label: 'Engels' },
+  { value: 'Duits', label: 'Duits' },
+  { value: 'Frans', label: 'Frans' },
+  { value: 'Spaans', label: 'Spaans' },
+];
+
 const Blogs = () => {
   const { toast, dismiss } = useToast();
-  const { isLoading: authLoading, user } = useAdminAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading: authLoading, user, isAdmin } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
+
+  // Form state
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    bedrijfsnaam: '',
+    bedrijfsomschrijving: '',
+    schrijfstijl: '',
+    aantal_woorden: '',
+    taal: '',
+    afbeelding_prompt: '',
+    get_afbeelding_url: '',
+    post_blog_url: '',
+  });
+
+  const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
+
+  // Load settings into form when they change
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        bedrijfsnaam: settings.bedrijfsnaam || '',
+        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
+        schrijfstijl: settings.schrijfstijl || '',
+        aantal_woorden: settings.aantal_woorden?.toString() || '',
+        taal: settings.taal || '',
+        afbeelding_prompt: settings.afbeelding_prompt || '',
+        get_afbeelding_url: settings.get_afbeelding_url || '',
+        post_blog_url: settings.post_blog_url || '',
+      });
+    } else {
+      setFormData({
+        bedrijfsnaam: '',
+        bedrijfsomschrijving: '',
+        schrijfstijl: '',
+        aantal_woorden: '',
+        taal: '',
+        afbeelding_prompt: '',
+        get_afbeelding_url: '',
+        post_blog_url: '',
+      });
+    }
+    setEditingField(null);
+  }, [settings]);
 
   // Load notifications from database
   useEffect(() => {
@@ -52,7 +110,6 @@ const Blogs = () => {
 
     loadNotifications();
 
-    // Set up realtime subscription filtered by user_id
     const channel = supabase
       .channel('notifications_channel')
       .on(
@@ -92,7 +149,6 @@ const Blogs = () => {
 
   const handlePanelToggle = () => {
     if (!isPanelOpen) {
-      // Opening panel - mark all as read
       const now = new Date().toISOString();
       setLastReadTime(now);
       localStorage.setItem('notifications_last_read', now);
@@ -111,33 +167,101 @@ const Blogs = () => {
     });
   };
 
-  const handleStartClick = async () => {
-    if (!selectedCompany?.blogs_webhook) {
+  const isFormComplete = () => {
+    const requiredFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'aantal_woorden', 'taal'];
+    const adminFields = ['afbeelding_prompt', 'get_afbeelding_url', 'post_blog_url'];
+    
+    for (const field of requiredFields) {
+      if (!formData[field as keyof typeof formData]) return false;
+    }
+    
+    // Admin fields must also be filled (they're stored in DB by admin)
+    for (const field of adminFields) {
+      if (!formData[field as keyof typeof formData]) return false;
+    }
+    
+    return true;
+  };
+
+  const handleSaveField = async (field: string) => {
+    const updateData: any = {};
+    
+    if (field === 'aantal_woorden') {
+      updateData[field] = parseInt(formData[field as keyof typeof formData]) || null;
+    } else {
+      updateData[field] = formData[field as keyof typeof formData] || null;
+    }
+
+    const result = await saveSettings(updateData);
+    
+    if (result.success) {
+      toast({
+        title: "Opgeslagen",
+        description: "Veld succesvol opgeslagen",
+        duration: 3000,
+      });
+      setEditingField(null);
+    } else {
       toast({
         title: "Fout",
-        description: "Geen webhook geconfigureerd voor dit bedrijf",
+        description: result.error || "Kon niet opslaan",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset to saved values
+    if (settings) {
+      setFormData({
+        bedrijfsnaam: settings.bedrijfsnaam || '',
+        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
+        schrijfstijl: settings.schrijfstijl || '',
+        aantal_woorden: settings.aantal_woorden?.toString() || '',
+        taal: settings.taal || '',
+        afbeelding_prompt: settings.afbeelding_prompt || '',
+        get_afbeelding_url: settings.get_afbeelding_url || '',
+        post_blog_url: settings.post_blog_url || '',
+      });
+    }
+    setEditingField(null);
+  };
+
+  const handleStartClick = async () => {
+    if (!isFormComplete()) {
+      toast({
+        title: "Fout",
+        description: "Vul eerst alle velden in",
         variant: "destructive",
         duration: 7000,
       });
       return;
     }
 
-    setIsLoading(true);
-    console.log("Triggering blog generation via Edge Function for", selectedCompany.name);
+    setIsSubmitting(true);
 
     try {
+      const payload = {
+        bedrijfsnaam: formData.bedrijfsnaam,
+        bedrijfsomschrijving: formData.bedrijfsomschrijving,
+        schrijfstijl: formData.schrijfstijl,
+        aantal_woorden: parseInt(formData.aantal_woorden),
+        taal: formData.taal,
+        afbeelding_prompt: formData.afbeelding_prompt,
+        get_afbeelding_url: formData.get_afbeelding_url,
+        post_blog_url: formData.post_blog_url,
+        timestamp: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase.functions.invoke('trigger-blog-generation', {
         body: { 
-          webhookUrl: selectedCompany.blogs_webhook,
-          authTokenSecretName: selectedCompany.auth_token_secret_name,
+          webhookUrl: FIXED_WEBHOOK_URL,
+          blogData: payload,
         },
       });
 
-      if (error) {
-        throw error;
-      }
-
-      console.log("Edge Function response:", data);
+      if (error) throw error;
 
       if (data.success) {
         const message = data.message || "Blog generatie succesvol gestart";
@@ -159,9 +283,7 @@ const Blogs = () => {
       }
     } catch (error) {
       console.error("Error calling Edge Function:", error);
-      
       const errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
-      
       toast({
         title: "Fout",
         description: errorMessage,
@@ -169,8 +291,107 @@ const Blogs = () => {
       });
       await saveNotification(errorMessage, 'error');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const renderField = (
+    field: string,
+    label: string,
+    type: 'text' | 'textarea' | 'number' | 'select' = 'text',
+    adminOnly: boolean = false
+  ) => {
+    const isEditing = editingField === field;
+    const value = formData[field as keyof typeof formData];
+    const canEdit = isAdmin;
+
+    // Hide admin-only fields from non-admins
+    if (adminOnly && !isAdmin) return null;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-white/90">{label}</Label>
+          {adminOnly && (
+            <span className="text-xs text-yellow-400/80 bg-yellow-400/10 px-2 py-0.5 rounded">Admin only</span>
+          )}
+        </div>
+        
+        {isEditing && canEdit ? (
+          <div className="flex gap-2">
+            {type === 'textarea' ? (
+              <Textarea
+                value={value}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                rows={3}
+              />
+            ) : type === 'number' ? (
+              <Input
+                type="number"
+                value={value}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+              />
+            ) : type === 'select' ? (
+              <Select
+                value={value}
+                onValueChange={(val) => setFormData(prev => ({ ...prev, [field]: val }))}
+              >
+                <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Selecteer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAAL_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                type="text"
+                value={value}
+                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+              />
+            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+              onClick={() => handleSaveField(field)}
+              disabled={settingsLoading}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+              onClick={handleCancelEdit}
+            >
+              <XCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            </div>
+            {canEdit && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white/60 hover:text-white hover:bg-white/10"
+                onClick={() => setEditingField(field)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -207,38 +428,67 @@ const Blogs = () => {
         </Button>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <h1 className="text-5xl font-bold text-center mb-8 text-white">
+      <div className="flex-1 flex flex-col items-center pt-24 pb-12 px-6 overflow-y-auto">
+        <h1 className="text-4xl font-bold text-center mb-8 text-white">
           Blogs
         </h1>
-        
-        <p className="text-center text-white/90 text-lg mb-8">
-          Druk op de start knop om blogs te genereren
-        </p>
-        
-        {isLoading && (
-          <p className="text-center text-white/80 text-sm mb-4">
-            Dit kan enkele minuten duren, even geduld...
-          </p>
-        )}
-        
-        {selectedCompany ? (
-          <Button 
-            size="lg" 
-            className="px-12 py-6 text-lg h-auto"
-            onClick={handleStartClick}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Bezig...' : (
-              <>
-                Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
-              </>
-            )}
-          </Button>
-        ) : (
+
+        {!selectedCompany ? (
           <p className="text-white/50 text-center">
             Selecteer een bedrijf rechtsboven om te beginnen...
           </p>
+        ) : settingsLoading ? (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+            <p className="mt-4 text-white/60">Instellingen laden...</p>
+          </div>
+        ) : (
+          <div className="w-full max-w-2xl space-y-6">
+            {/* Regular fields */}
+            {renderField('bedrijfsnaam', 'Bedrijfsnaam')}
+            {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea')}
+            {renderField('schrijfstijl', 'Schrijfstijl')}
+            {renderField('aantal_woorden', 'Aantal woorden', 'number')}
+            {renderField('taal', 'Taal', 'select')}
+            
+            {/* Admin-only fields */}
+            {isAdmin && (
+              <div className="pt-4 border-t border-white/10">
+                <p className="text-sm text-yellow-400/80 mb-4">Admin instellingen</p>
+                {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true)}
+                {renderField('get_afbeelding_url', 'GET afbeelding URL', 'text', true)}
+                {renderField('post_blog_url', 'POST blog URL', 'text', true)}
+              </div>
+            )}
+
+            {/* Start button */}
+            <div className="pt-6">
+              {isSubmitting && (
+                <p className="text-center text-white/80 text-sm mb-4">
+                  Dit kan enkele minuten duren, even geduld...
+                </p>
+              )}
+              
+              <Button 
+                size="lg" 
+                className="w-full py-6 text-lg h-auto"
+                onClick={handleStartClick}
+                disabled={isSubmitting || !isFormComplete()}
+              >
+                {isSubmitting ? 'Bezig...' : (
+                  <>
+                    Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
+                  </>
+                )}
+              </Button>
+              
+              {!isFormComplete() && (
+                <p className="text-center text-white/50 text-sm mt-2">
+                  Alle velden moeten ingevuld zijn om te starten
+                </p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
