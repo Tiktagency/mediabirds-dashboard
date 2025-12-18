@@ -642,12 +642,36 @@ const Blogs = () => {
             {/* Afbeelding section - accessible to all users */}
             <div className="pt-6 border-t border-white/10 space-y-4">
               <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
-              {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
+                </div>
+                <div 
+                  className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                  style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
+                />
+              </div>
               <div className="space-y-2">
                 <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
                 <div className="grid grid-cols-2 gap-4">
-                  {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
-                  {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                      style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
+                    />
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                      style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -655,7 +679,7 @@ const Blogs = () => {
             {/* Admin-only fields - visible to all, editable by admins only */}
             <div className="pt-6 border-t border-white/10 space-y-6">
               <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-              {renderField('GET afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
+              {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
               {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             </div>
 
