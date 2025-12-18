@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +37,7 @@ const ZoekwoordOnderzoek = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
   const [formData, setFormData] = useState({
+    bedrijfsnaam: '',
     blog_onderwerp: '',
     doelgroep_intentie: '',
     bedrijfsomschrijving: '',
@@ -59,6 +61,7 @@ const ZoekwoordOnderzoek = () => {
   useEffect(() => {
     if (settings) {
       setFormData({
+        bedrijfsnaam: selectedCompany?.name || '',
         blog_onderwerp: settings.blog_onderwerp || '',
         doelgroep_intentie: settings.doelgroep_intentie || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
@@ -66,6 +69,7 @@ const ZoekwoordOnderzoek = () => {
       });
     } else {
       setFormData({
+        bedrijfsnaam: selectedCompany?.name || '',
         blog_onderwerp: '',
         doelgroep_intentie: '',
         bedrijfsomschrijving: '',
@@ -73,7 +77,7 @@ const ZoekwoordOnderzoek = () => {
       });
     }
     setEditingField(null);
-  }, [settings]);
+  }, [settings, selectedCompany]);
 
   // Load notifications from database
   useEffect(() => {
@@ -167,6 +171,33 @@ const ZoekwoordOnderzoek = () => {
   };
 
   const handleSaveField = async (field: string) => {
+    // Special handling for bedrijfsnaam - update companies table
+    if (field === 'bedrijfsnaam' && selectedCompany) {
+      const { error: companyError } = await supabase
+        .from('companies')
+        .update({ name: formData.bedrijfsnaam })
+        .eq('id', selectedCompany.id);
+      
+      if (!companyError) {
+        // Update the selectedCompany state to reflect the new name
+        setSelectedCompany(prev => prev ? { ...prev, name: formData.bedrijfsnaam } : null);
+        toast({
+          title: "Opgeslagen",
+          description: "Bedrijfsnaam succesvol opgeslagen",
+          duration: 3000,
+        });
+        setEditingField(null);
+      } else {
+        toast({
+          title: "Fout",
+          description: "Kon bedrijfsnaam niet opslaan",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+      return;
+    }
+
     const updateData: any = {
       [field]: formData[field as keyof typeof formData] || null,
     };
@@ -194,6 +225,7 @@ const ZoekwoordOnderzoek = () => {
     // Reset to saved values
     if (settings) {
       setFormData({
+        bedrijfsnaam: selectedCompany?.name || '',
         blog_onderwerp: settings.blog_onderwerp || '',
         doelgroep_intentie: settings.doelgroep_intentie || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
@@ -299,6 +331,72 @@ const ZoekwoordOnderzoek = () => {
     } finally {
       setIsSubkeywordsLoading(false);
     }
+  };
+
+  const renderInputField = (
+    label: string,
+    field: keyof typeof formData,
+    hasGradientBorder: boolean = false
+  ) => {
+    const isEditing = editingField === field;
+    const value = formData[field];
+    const canEdit = isAdmin;
+
+    return (
+      <div className="space-y-2">
+        <Label className="text-white/70 text-sm">{label}</Label>
+        
+        {isEditing && canEdit ? (
+          // EDITING MODE
+          <div className="flex gap-2 items-center">
+            <Input
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+              className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+              onClick={() => handleSaveField(field)}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              onClick={handleCancelEdit}
+            >
+              <XCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          // VIEW MODE
+          <div className="flex items-center gap-2">
+            <div 
+              className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis ${
+                hasGradientBorder 
+                  ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+                  : 'bg-white/5 border border-white/10'
+              }`}
+            >
+              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            </div>
+            {canEdit && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white/60 hover:text-white hover:bg-white/10"
+                onClick={() => setEditingField(field)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderTextField = (
@@ -489,6 +587,8 @@ const ZoekwoordOnderzoek = () => {
               ) : (
                 <>
                   {/* Form Fields */}
+                  {renderInputField('Bedrijf', 'bedrijfsnaam', true)}
+                  
                   {renderTextField(
                     'Blog Onderwerp',
                     'blog_onderwerp',
