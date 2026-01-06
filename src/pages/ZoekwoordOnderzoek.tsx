@@ -270,13 +270,15 @@ const ZoekwoordOnderzoek = () => {
       if (error) throw error;
 
       if (data.success) {
-        const message = data.message || 'SEO onderzoek succesvol gestart';
-        toast({
-          title: 'SEO Onderzoek gestart',
-          description: message,
-          duration: 7000,
-        });
-        // Notification is already saved by the edge function
+        // Only show toast if there's an actual message from the webhook
+        if (data.hasMessage && data.message) {
+          toast({
+            title: 'SEO Onderzoek voltooid',
+            description: data.message,
+            duration: 7000,
+          });
+        }
+        // If no message, the automation is still running - notification will come via realtime
       } else {
         throw new Error(data.error || 'Webhook request failed');
       }
@@ -314,13 +316,15 @@ const ZoekwoordOnderzoek = () => {
       if (error) throw error;
 
       if (data.success) {
-        const message = data.message || 'Subzoekwoorden actie voltooid';
-        toast({
-          title: 'Subzoekwoorden',
-          description: message,
-          duration: 7000,
-        });
-        // Notification is already saved by the edge function
+        // Only show toast if there's an actual message from the webhook
+        if (data.hasMessage && data.message) {
+          toast({
+            title: 'Subzoekwoorden voltooid',
+            description: data.message,
+            duration: 7000,
+          });
+        }
+        // If no message, the automation is still running - notification will come via realtime
       } else {
         throw new Error(data.error || 'Webhook request failed');
       }
