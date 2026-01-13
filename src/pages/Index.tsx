@@ -117,9 +117,16 @@ const Index = () => {
     if (!config) return null;
     
     if (config.n8nWorkflow) {
-      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') return chatbotLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') return mondayLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') return altTextLastRun;
+      let n8nResult: string | null = null;
+      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') n8nResult = chatbotLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') n8nResult = mondayLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') n8nResult = altTextLastRun;
+      
+      // Als n8n resultaat beschikbaar is, gebruik dat
+      if (n8nResult) return n8nResult;
+      
+      // Fallback naar automation_status tabel
+      return lastRuns[automationName] || null;
     }
     
     if (config.statusKey) {
