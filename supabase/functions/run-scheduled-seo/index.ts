@@ -7,17 +7,14 @@ const corsHeaders = {
 
 const FIXED_SEO_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953';
 
-// Calculate the next trigger date based on schedule settings
+// Calculate the next trigger date by adding interval to current next_trigger_at
+// This preserves the original time and prevents timezone drift
 function calculateNextTrigger(
   frequency: string,
-  dayOfWeek: number,
-  timeOfDay: string
+  currentNextTriggerAt: string
 ): Date {
-  const now = new Date();
-  const [hours, minutes] = timeOfDay.split(':').map(Number);
-  
-  let next = new Date(now);
-  next.setHours(hours, minutes, 0, 0);
+  // Start from the current scheduled time to preserve timezone/time consistency
+  const next = new Date(currentNextTriggerAt);
   
   if (frequency === 'daily') {
     next.setDate(next.getDate() + 1);
@@ -121,33 +118,49 @@ Deno.serve(async (req) => {
         const responseText = await webhookResponse.text();
         console.log(`trigger-seo-webhook response for ${company.name}:`, responseText);
 
-        // Calculate next trigger
-        const nextTrigger = calculateNextTrigger(
-          schedule.frequency,
-          schedule.day_of_week,
-          schedule.time_of_day
-        );
-
-        // Update schedule with last_triggered_at and next_trigger_at
-        const { error: updateError } = await supabase
-          .from('seo_schedules')
-          .update({
-            last_triggered_at: new Date().toISOString(),
-            next_trigger_at: nextTrigger.toISOString(),
-          })
-          .eq('id', schedule.id);
-
-        if (updateError) {
-          console.error(`Error updating schedule for ${company.name}:`, updateError);
+        // Parse the response to check if it was successful
+        let triggerSuccess = false;
+        try {
+          const responseData = JSON.parse(responseText);
+          triggerSuccess = responseData.success === true;
+        } catch {
+          // If we can't parse, consider it failed
+          triggerSuccess = false;
         }
 
-        // Note: automation_logs are now handled by trigger-seo-webhook
+        if (triggerSuccess) {
+          // Only update schedule on success
+          const nextTrigger = calculateNextTrigger(
+            schedule.frequency,
+            schedule.next_trigger_at
+          );
 
-        results.push({
-          company: company.name,
-          success: webhookResponse.ok,
-          nextTrigger: nextTrigger.toISOString(),
-        });
+          const { error: updateError } = await supabase
+            .from('seo_schedules')
+            .update({
+              last_triggered_at: new Date().toISOString(),
+              next_trigger_at: nextTrigger.toISOString(),
+            })
+            .eq('id', schedule.id);
+
+          if (updateError) {
+            console.error(`Error updating schedule for ${company.name}:`, updateError);
+          }
+
+          results.push({
+            company: company.name,
+            success: true,
+            nextTrigger: nextTrigger.toISOString(),
+          });
+        } else {
+          // Failed - do NOT update schedule, so it will retry next time
+          console.error(`Trigger failed for ${company.name}, not updating schedule:`, responseText);
+          results.push({
+            company: company.name,
+            success: false,
+            error: responseText,
+          });
+        }
 
       } catch (companyError) {
         console.error(`Error processing schedule for ${company.name}:`, companyError);

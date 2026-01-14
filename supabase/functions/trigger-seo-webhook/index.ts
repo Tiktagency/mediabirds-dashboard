@@ -66,16 +66,25 @@ serve(async (req) => {
     
     const token = authHeader.replace('Bearer ', '').trim();
     
-    // Create admin client and get user from token
-    const adminClient = createClient(supabaseUrl!, supabaseServiceKey!);
-    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
+    // Check if this is an internal call using service role key
+    const isInternalCall = token === supabaseServiceKey;
+    let userId: string | null = null;
     
-    if (userError || !user) {
-      console.error('Failed to get user:', userError);
-      throw new Error('Ongeldige gebruiker');
+    if (isInternalCall) {
+      console.log('Internal call detected (service role key), skipping user validation');
+      // userId remains null - this is allowed since notifications.user_id is nullable
+    } else {
+      // External call - validate user JWT
+      const adminClient = createClient(supabaseUrl!, supabaseServiceKey!);
+      const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
+      
+      if (userError || !user) {
+        console.error('Failed to get user:', userError);
+        throw new Error('Ongeldige gebruiker');
+      }
+      
+      userId = user.id;
     }
-    
-    const userId = user.id;
     
     // Parse request body
     const body = await req.json();
