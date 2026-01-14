@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, X, Pencil, Check, XCircle, Sparkles, GitBranch } from 'lucide-react';
+import { Bell, X, Pencil, Check, XCircle, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
+import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 
 interface Notification {
   id: string;
@@ -22,13 +23,11 @@ interface Notification {
 }
 
 const FIXED_SEO_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953';
-const FIXED_SUBKEYWORDS_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/64e96f60-f941-4cd6-8f14-a9ab91c9dc67';
 
 const ZoekwoordOnderzoek = () => {
   const { toast, dismiss } = useToast();
   const { isLoading: authLoading, user, isAdmin } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubkeywordsLoading, setIsSubkeywordsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -293,52 +292,6 @@ const ZoekwoordOnderzoek = () => {
       // Error notification is already saved by the edge function
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSubzoekwoorden = async () => {
-    if (!selectedCompany) return;
-    
-    setIsSubkeywordsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
-        body: {
-          webhookUrl: FIXED_SUBKEYWORDS_WEBHOOK_URL,
-          authTokenSecretName: 'SEO_WEBHOOK_AUTH_TOKEN',
-          action: 'subkeywords',
-          formData: {
-            bedrijfsnaam: selectedCompany.name,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        // Only show toast if there's an actual message from the webhook
-        if (data.hasMessage && data.message) {
-          toast({
-            title: 'Subzoekwoorden voltooid',
-            description: data.message,
-            duration: 7000,
-          });
-        }
-        // If no message, the automation is still running - notification will come via realtime
-      } else {
-        throw new Error(data.error || 'Webhook request failed');
-      }
-    } catch (error) {
-      console.error('Error triggering subzoekwoorden:', error);
-      toast({
-        title: 'Er is iets misgegaan',
-        description: 'De subzoekwoorden konden niet worden gestart. Probeer het opnieuw.',
-        variant: 'destructive',
-        duration: 7000,
-      });
-      // Error notification is already saved by the edge function
-    } finally {
-      setIsSubkeywordsLoading(false);
     }
   };
 
@@ -638,8 +591,14 @@ const ZoekwoordOnderzoek = () => {
                     true
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="pt-6 border-t border-white/10 space-y-4">
+                  {/* Automatic Trigger Section */}
+                  <ScheduleTrigger
+                    companyId={selectedCompany?.id || null}
+                    isAdmin={isAdmin}
+                  />
+
+                  {/* Action Button */}
+                  <div className="pt-6 border-t border-white/10">
                     <Button
                       onClick={handleStartResearch}
                       disabled={isSubmitting || !isFormComplete()}
@@ -654,25 +613,6 @@ const ZoekwoordOnderzoek = () => {
                         <>
                           <Sparkles className="w-4 h-4" />
                           Start SEO onderzoek - {selectedCompany.name}
-                        </>
-                      )}
-                    </Button>
-                    
-                    <Button
-                      onClick={handleSubzoekwoorden}
-                      disabled={isSubkeywordsLoading}
-                      variant="outline"
-                      className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10 gap-2"
-                    >
-                      {isSubkeywordsLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Bezig...
-                        </>
-                      ) : (
-                        <>
-                          <GitBranch className="w-4 h-4" />
-                          Subzoekwoorden - {selectedCompany.name}
                         </>
                       )}
                     </Button>
