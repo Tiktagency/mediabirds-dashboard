@@ -95,35 +95,31 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Get auth token
-        const authToken = Deno.env.get('SEO_WEBHOOK_AUTH_TOKEN');
-
-        // Prepare webhook payload
-        const payload = {
-          action: 'research',
-          formData: {
-            bedrijfsnaam: company.name,
-            blogTopic: seoSettings?.blog_onderwerp || '',
-            audienceIntent: seoSettings?.doelgroep_intentie || '',
-            businessDescription: seoSettings?.bedrijfsomschrijving || '',
-            extraInstructions: seoSettings?.extra_instructies || '',
-          },
-          triggeredBy: 'scheduled',
-          scheduleId: schedule.id,
-        };
-
-        // Call the webhook
-        const webhookResponse = await fetch(FIXED_SEO_WEBHOOK_URL, {
+        // Call trigger-seo-webhook edge function (same as manual button)
+        console.log(`Calling trigger-seo-webhook for ${company.name}`);
+        
+        const webhookResponse = await fetch(`${supabaseUrl}/functions/v1/trigger-seo-webhook`, {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
             'Content-Type': 'application/json',
-            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            webhookUrl: FIXED_SEO_WEBHOOK_URL,
+            authTokenSecretName: 'SEO_WEBHOOK_AUTH_TOKEN',
+            action: 'research',
+            formData: {
+              bedrijfsnaam: company.name,
+              blogTopic: seoSettings?.blog_onderwerp || '',
+              audienceIntent: seoSettings?.doelgroep_intentie || '',
+              businessDescription: seoSettings?.bedrijfsomschrijving || '',
+              extraInstructions: seoSettings?.extra_instructies || '',
+            },
+          }),
         });
 
         const responseText = await webhookResponse.text();
-        console.log(`Webhook response for ${company.name}:`, responseText);
+        console.log(`trigger-seo-webhook response for ${company.name}:`, responseText);
 
         // Calculate next trigger
         const nextTrigger = calculateNextTrigger(
@@ -145,18 +141,7 @@ Deno.serve(async (req) => {
           console.error(`Error updating schedule for ${company.name}:`, updateError);
         }
 
-        // Log success to automation_logs
-        await supabase.from('automation_logs').insert({
-          automation_name: 'seo-research-scheduled',
-          message: `Automatisch SEO onderzoek uitgevoerd voor ${company.name}`,
-          status: webhookResponse.ok ? 'success' : 'error',
-          metadata: {
-            company_id: company.id,
-            company_name: company.name,
-            schedule_id: schedule.id,
-            webhook_status: webhookResponse.status,
-          },
-        });
+        // Note: automation_logs are now handled by trigger-seo-webhook
 
         results.push({
           company: company.name,
