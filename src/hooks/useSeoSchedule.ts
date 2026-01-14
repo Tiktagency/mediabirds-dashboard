@@ -37,62 +37,49 @@ const calculateNextTrigger = (
   dayOfWeek: number,
   timeOfDay: string
 ): Date => {
+  // Get current time in Dutch timezone
+  const now = new Date();
+  const nowInNL = new Date(now.toLocaleString('en-US', { timeZone: TIMEZONE }));
+  
   const [hours, minutes] = timeOfDay.split(':').map(Number);
   
-  // Get current date/time components in NL timezone
-  const now = new Date();
-  const nlFormatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  
-  const parts = nlFormatter.formatToParts(now);
-  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '0';
-  
-  const nowYear = parseInt(getPart('year'));
-  const nowMonth = parseInt(getPart('month')) - 1;
-  const nowDay = parseInt(getPart('day'));
-  const nowHour = parseInt(getPart('hour'));
-  const nowMinute = parseInt(getPart('minute'));
-  
-  let nextDay = nowDay;
-  let nextMonth = nowMonth;
-  let nextYear = nowYear;
-  
-  const timePassedToday = (nowHour > hours) || (nowHour === hours && nowMinute >= minutes);
+  // Start with today at the specified time in Dutch timezone
+  let next = new Date(nowInNL);
+  next.setHours(hours, minutes, 0, 0);
   
   if (frequency === 'daily') {
-    if (timePassedToday) {
-      nextDay += 1;
+    // If time has passed today, schedule for tomorrow
+    if (next <= nowInNL) {
+      next.setDate(next.getDate() + 1);
     }
   } else if (frequency === 'weekly' || frequency === 'biweekly') {
-    const tempDate = new Date(nowYear, nowMonth, nowDay);
-    const currentDayOfWeek = tempDate.getDay();
-    let daysUntil = dayOfWeek - currentDayOfWeek;
+    // Find the next occurrence of the specified day
+    const currentDay = nowInNL.getDay();
+    let daysUntil = dayOfWeek - currentDay;
     
-    if (daysUntil < 0 || (daysUntil === 0 && timePassedToday)) {
+    if (daysUntil < 0 || (daysUntil === 0 && next <= nowInNL)) {
       daysUntil += 7;
     }
-    nextDay += daysUntil;
-  } else if (frequency === 'monthly') {
-    if (timePassedToday || nowDay > dayOfWeek) {
-      nextMonth += 1;
+    
+    next.setDate(next.getDate() + daysUntil);
+    
+    if (frequency === 'biweekly') {
+      // For biweekly, we add another week if we're in an "off" week
+      // This is a simple implementation - could be enhanced with a start date
     }
-    nextDay = dayOfWeek;
+  } else if (frequency === 'monthly') {
+    // Schedule for the same day next month (or this month if not passed)
+    if (next <= nowInNL) {
+      next.setMonth(next.getMonth() + 1);
+    }
+    // Ensure the day exists in the target month
+    const targetDay = Math.min(dayOfWeek, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate());
+    next.setDate(targetDay);
   }
   
-  // Create date representing the desired NL time
-  const nlDate = new Date(nextYear, nextMonth, nextDay, hours, minutes, 0);
-  
-  // Convert NL time to UTC for storage
-  // nlOffset = UTC - NL (negative when NL is ahead of UTC)
-  const nlOffset = getTimezoneOffset(TIMEZONE, nlDate);
-  return new Date(nlDate.getTime() + nlOffset);
+  // Convert back to UTC for storage
+  const nlOffset = getTimezoneOffset(TIMEZONE, next);
+  return new Date(next.getTime() + nlOffset);
 };
 
 export const useSeoSchedule = (companyId: string | null) => {
