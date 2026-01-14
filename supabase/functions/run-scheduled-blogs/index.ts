@@ -30,6 +30,8 @@ function calculateNextTrigger(
 }
 
 Deno.serve(async (req) => {
+  console.log(`[run-scheduled-blogs] Cron call received at ${new Date().toISOString()}`);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -39,45 +41,52 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get all schedules that are due
+    // Get all schedules that are due (without embedded join to avoid relation issues)
     const now = new Date().toISOString();
+    console.log(`[run-scheduled-blogs] Checking for schedules due before: ${now}`);
+    
     const { data: dueSchedules, error: fetchError } = await supabase
       .from('blog_schedules')
-      .select(`
-        *,
-        companies (
-          id,
-          name
-        )
-      `)
+      .select('*')
       .eq('enabled', true)
       .lte('next_trigger_at', now);
 
     if (fetchError) {
-      console.error('Error fetching blog schedules:', fetchError);
+      console.error('[run-scheduled-blogs] Error fetching blog schedules:', fetchError);
       throw fetchError;
     }
 
     if (!dueSchedules || dueSchedules.length === 0) {
-      console.log('No blog schedules due at this time');
+      console.log('[run-scheduled-blogs] No blog schedules due at this time');
       return new Response(
         JSON.stringify({ success: true, message: 'No schedules due', processed: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Found ${dueSchedules.length} blog schedules to process`);
+    console.log(`[run-scheduled-blogs] Found ${dueSchedules.length} blog schedules to process`);
 
     const results: any[] = [];
 
     for (const schedule of dueSchedules) {
-      const company = schedule.companies;
+      // Fetch company separately to avoid relation issues
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('id, name')
+        .eq('id', schedule.company_id)
+        .maybeSingle();
+      
+      if (companyError) {
+        console.error(`[run-scheduled-blogs] Error fetching company for schedule ${schedule.id}:`, companyError);
+        continue;
+      }
+      
       if (!company) {
-        console.error(`No company found for schedule ${schedule.id}`);
+        console.error(`[run-scheduled-blogs] No company found for schedule ${schedule.id} (company_id: ${schedule.company_id})`);
         continue;
       }
 
-      console.log(`Processing blog schedule for company: ${company.name}`);
+      console.log(`[run-scheduled-blogs] Processing blog schedule for company: ${company.name} (id: ${company.id})`);
 
       try {
         // Fetch blog settings for this company
@@ -88,12 +97,12 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (blogError) {
-          console.error(`Error fetching blog settings for ${company.name}:`, blogError);
+          console.error(`[run-scheduled-blogs] Error fetching blog settings for ${company.name}:`, blogError);
           continue;
         }
 
         if (!blogSettings) {
-          console.error(`No blog settings found for ${company.name}`);
+          console.error(`[run-scheduled-blogs] No blog settings found for ${company.name}`);
           continue;
         }
 
@@ -115,7 +124,9 @@ Deno.serve(async (req) => {
         // Get auth token for blog webhook
         const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN');
 
-        console.log(`Calling blog webhook for ${company.name}`);
+        console.log(`[run-scheduled-blogs] Calling blog webhook for ${company.name}...`);
+        console.log(`[run-scheduled-blogs] Webhook URL: ${FIXED_BLOG_WEBHOOK_URL}`);
+        console.log(`[run-scheduled-blogs] Payload: ${JSON.stringify(blogPayload)}`);
         
         const webhookResponse = await fetch(FIXED_BLOG_WEBHOOK_URL, {
           method: 'POST',
@@ -127,7 +138,8 @@ Deno.serve(async (req) => {
         });
 
         const responseText = await webhookResponse.text();
-        console.log(`Blog webhook response for ${company.name}:`, responseText);
+        console.log(`[run-scheduled-blogs] Blog webhook response status: ${webhookResponse.status}`);
+        console.log(`[run-scheduled-blogs] Blog webhook response for ${company.name}:`, responseText.substring(0, 500));
 
         // Parse the response to check if it was successful
         let triggerSuccess = webhookResponse.ok;
