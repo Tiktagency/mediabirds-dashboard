@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -58,9 +59,6 @@ const FREQUENCIES = [
   { value: 'monthly', label: 'Maandelijks' },
 ];
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => 
-  `${i.toString().padStart(2, '0')}:00`
-);
 
 export const ScheduleTrigger = ({ 
   companyId, 
@@ -108,6 +106,7 @@ export const ScheduleTrigger = ({
   };
 
   const handleTimeChange = async (newTime: string) => {
+    if (!newTime) return;
     setTimeOfDay(newTime);
     await updateSchedule({ time_of_day: `${newTime}:00` });
   };
@@ -208,22 +207,13 @@ export const ScheduleTrigger = ({
                   <Clock className="h-3 w-3" />
                   Tijd
                 </Label>
-                <Select
+                <Input
+                  type="time"
                   value={timeOfDay}
-                  onValueChange={handleTimeChange}
+                  onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={!isAdmin || isSaving}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  className="bg-white/5 border-white/20 text-white text-sm h-9 [&::-webkit-calendar-picker-indicator]:invert"
+                />
               </div>
             </div>
 
