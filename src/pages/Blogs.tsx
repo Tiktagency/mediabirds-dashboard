@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Bell, X, Pencil, Check, XCircle } from 'lucide-react';
+import { Bell, X, Pencil, Check, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,7 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
-
+import { useBlogSchedule } from '@/hooks/useBlogSchedule';
+import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 interface Notification {
   id: string;
   message: string;
@@ -71,6 +72,14 @@ const Blogs = () => {
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
+  const { 
+    schedule: blogSchedule, 
+    isLoading: scheduleLoading, 
+    isSaving: scheduleSaving, 
+    updateSchedule, 
+    getNextTriggerDisplay 
+  } = useBlogSchedule(selectedCompany?.id || null);
+  const isScheduleEnabled = blogSchedule?.enabled || false;
 
   // Helper to parse range string to array
   const parseRangeString = (rangeStr: string | null): [number, number] => {
@@ -683,6 +692,16 @@ const Blogs = () => {
               {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             </div>
 
+            {/* Automatic Trigger Section */}
+            <ScheduleTrigger
+              companyId={selectedCompany?.id || null}
+              isAdmin={isAdmin}
+              schedule={blogSchedule}
+              isLoading={scheduleLoading}
+              isSaving={scheduleSaving}
+              updateSchedule={updateSchedule}
+              getNextTriggerDisplay={getNextTriggerDisplay}
+            />
 
             {/* Start button */}
             <div className="pt-6">
@@ -696,16 +715,21 @@ const Blogs = () => {
                 size="lg" 
                 className="w-full py-6 text-lg h-auto"
                 onClick={handleStartClick}
-                disabled={isSubmitting || !isFormComplete()}
+                disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
               >
-                {isSubmitting ? 'Bezig...' : (
+                {isScheduleEnabled ? (
+                  <>
+                    <Clock className="h-5 w-5 mr-2" />
+                    Automatische trigger actief
+                  </>
+                ) : isSubmitting ? 'Bezig...' : (
                   <>
                     Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
                   </>
                 )}
               </Button>
               
-              {!isFormComplete() && (
+              {!isFormComplete() && !isScheduleEnabled && (
                 <p className="text-center text-white/50 text-sm mt-2">
                   Alle velden moeten ingevuld zijn om te starten
                 </p>
