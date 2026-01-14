@@ -6,8 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import MondayPlanning from "./pages/MondayPlanning";
-import ZoekwoordOnderzoek from "./pages/ZoekwoordOnderzoek";
-import Blogs from "./pages/Blogs";
+import SeoBlog from "./pages/SeoBlog";
 import WordpressAltText from "./pages/WordpressAltText";
 import Chatbot from "./pages/Chatbot";
 import Login from "./pages/Login";
@@ -27,8 +26,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Index />} />
             <Route path="/monday-planning" element={<MondayPlanning />} />
-            <Route path="/zoekwoord-onderzoek" element={<ZoekwoordOnderzoek />} />
-            <Route path="/blogs" element={<Blogs />} />
+            <Route path="/seo-blog" element={<SeoBlog />} />
             <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/admin" element={<AdminPanel />} />
