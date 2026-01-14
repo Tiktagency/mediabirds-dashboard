@@ -19,7 +19,7 @@ export interface DashboardSettings {
 }
 
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
-  tile_order: ['monday-planning', 'chatbot', 'wordpress-alt-text', 'zoekwoord-onderzoek', 'blogs'],
+  tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot'],
   custom_labels: {},
   theme: 'dark',
   custom_tooltips: {},
