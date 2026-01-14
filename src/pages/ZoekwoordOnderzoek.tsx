@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, X, Pencil, Check, XCircle, Sparkles } from 'lucide-react';
+import { Bell, X, Pencil, Check, XCircle, Sparkles, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
+import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 
 interface Notification {
@@ -58,6 +59,8 @@ const ZoekwoordOnderzoek = () => {
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useSeoSettings(selectedCompany?.id || null);
+  const { schedule: seoSchedule } = useSeoSchedule(selectedCompany?.id || null);
+  const isScheduleEnabled = seoSchedule?.enabled || false;
 
   // Load settings into form when they change
   useEffect(() => {
@@ -599,23 +602,28 @@ const ZoekwoordOnderzoek = () => {
 
                   {/* Action Button */}
                   <div className="pt-6 border-t border-white/10">
-                    <Button
-                      onClick={handleStartResearch}
-                      disabled={isSubmitting || !isFormComplete()}
-                      className="w-full seo-button-primary gap-2"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Bezig...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          Start SEO onderzoek - {selectedCompany.name}
-                        </>
-                      )}
-                    </Button>
+              <Button
+                onClick={handleStartResearch}
+                disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+                className="w-full seo-button-primary gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Bezig...
+                  </>
+                ) : isScheduleEnabled ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    Automatische trigger actief
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Start SEO onderzoek - {selectedCompany.name}
+                  </>
+                )}
+              </Button>
                   </div>
                 </>
               )}
