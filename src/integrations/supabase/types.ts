@@ -130,6 +130,8 @@ export type Database = {
           enabled: boolean
           frequency: string
           id: string
+          interval_unit: string
+          interval_value: number
           last_triggered_at: string | null
           next_trigger_at: string | null
           time_of_day: string
@@ -142,6 +144,8 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          interval_unit?: string
+          interval_value?: number
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
@@ -154,6 +158,8 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          interval_unit?: string
+          interval_value?: number
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
@@ -356,6 +362,8 @@ export type Database = {
           enabled: boolean
           frequency: string
           id: string
+          interval_unit: string
+          interval_value: number
           last_triggered_at: string | null
           next_trigger_at: string | null
           time_of_day: string
@@ -368,6 +376,8 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          interval_unit?: string
+          interval_value?: number
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
@@ -380,6 +390,8 @@ export type Database = {
           enabled?: boolean
           frequency?: string
           id?: string
+          interval_unit?: string
+          interval_value?: number
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
