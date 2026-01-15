@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import { SavedHoursTile } from '@/components/dashboard/SavedHoursTile';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, LucideIcon } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
@@ -66,6 +66,12 @@ const tileConfigMap: Record<string, TileConfig> = {
     icon: MessageCircle,
     variant: 'secondary',
     n8nWorkflow: 'MEDIABIRDS klantenservice chatbot',
+  },
+  'copyright-branding': {
+    to: '/copyright-branding',
+    icon: Sparkles,
+    variant: 'accent',
+    statusKey: 'copyright-branding',
   },
 };
 
