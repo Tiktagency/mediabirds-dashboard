@@ -273,37 +273,40 @@ const SeoBlog = () => {
           </button>
         </div>
 
-        {/* Form content area */}
-        {activeView !== 'none' && (
-          <div className="w-full max-w-2xl mx-auto animate-fade-in">
-            <div className="seo-card p-8 md:p-10">
-              {activeView === 'keyword' && (
-                <KeywordResearchForm
-                  selectedCompany={selectedCompany}
-                  setSelectedCompany={setSelectedCompany}
-                  isAdmin={isAdmin}
-                  user={user}
-                  saveNotification={saveNotification}
-                />
-              )}
-              {activeView === 'blog' && (
-                <BlogGenerationForm
-                  selectedCompany={selectedCompany}
-                  setSelectedCompany={setSelectedCompany}
-                  isAdmin={isAdmin}
-                  user={user}
-                  saveNotification={saveNotification}
-                />
-              )}
+        {/* Form content area - beide forms altijd gemount om flikkering te voorkomen */}
+        <div className="w-full max-w-2xl mx-auto min-h-[400px]">
+          {activeView === 'none' && (
+            <div className="text-white/40 text-center py-8">
+              <p>Selecteer hierboven een optie om te beginnen</p>
             </div>
+          )}
+          
+          <div className={cn(
+            "seo-card p-8 md:p-10 transition-opacity duration-200",
+            activeView === 'keyword' ? "opacity-100" : "hidden"
+          )}>
+            <KeywordResearchForm
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
+              isAdmin={isAdmin}
+              user={user}
+              saveNotification={saveNotification}
+            />
           </div>
-        )}
-
-        {activeView === 'none' && (
-          <div className="text-white/40 text-center py-8">
-            <p>Selecteer hierboven een optie om te beginnen</p>
+          
+          <div className={cn(
+            "seo-card p-8 md:p-10 transition-opacity duration-200",
+            activeView === 'blog' ? "opacity-100" : "hidden"
+          )}>
+            <BlogGenerationForm
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
+              isAdmin={isAdmin}
+              user={user}
+              saveNotification={saveNotification}
+            />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Overlay when panel is open */}
