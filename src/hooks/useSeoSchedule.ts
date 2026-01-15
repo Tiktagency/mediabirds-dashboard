@@ -7,7 +7,9 @@ interface SeoSchedule {
   company_id: string;
   enabled: boolean;
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
-  day_of_week: number; // 0=Sunday, 1=Monday, etc.
+  interval_value: number;
+  interval_unit: 'days' | 'weeks' | 'months';
+  day_of_week: number; // 0=Sunday, 1=Monday, etc. OR day of month (1-31)
   time_of_day: string; // HH:MM:SS format
   last_triggered_at: string | null;
   next_trigger_at: string | null;
@@ -18,13 +20,16 @@ interface SeoSchedule {
 interface UpdateScheduleData {
   enabled?: boolean;
   frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  interval_value?: number;
+  interval_unit?: 'days' | 'weeks' | 'months';
   day_of_week?: number;
   time_of_day?: string;
   next_trigger_at?: string;
 }
 
 const calculateNextTrigger = (
-  frequency: string,
+  intervalValue: number,
+  intervalUnit: 'days' | 'weeks' | 'months',
   dayOfWeek: number,
   timeOfDay: string
 ): Date => {
@@ -35,13 +40,13 @@ const calculateNextTrigger = (
   let next = new Date(now);
   next.setHours(hours, minutes, 0, 0);
   
-  if (frequency === 'daily') {
-    // If time has passed today, schedule for tomorrow
+  if (intervalUnit === 'days') {
+    // Simple day-based interval
     if (next <= now) {
       next.setDate(next.getDate() + 1);
     }
-  } else if (frequency === 'weekly' || frequency === 'biweekly') {
-    // Find the next occurrence of the specified day
+  } else if (intervalUnit === 'weeks') {
+    // Week-based interval - find next occurrence of dayOfWeek
     const currentDay = now.getDay();
     let daysUntil = dayOfWeek - currentDay;
     
@@ -50,19 +55,17 @@ const calculateNextTrigger = (
     }
     
     next.setDate(next.getDate() + daysUntil);
+  } else if (intervalUnit === 'months') {
+    // Monthly - dayOfWeek represents day of month (1-31)
+    const targetDay = Math.min(dayOfWeek, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate());
+    next.setDate(targetDay);
     
-    if (frequency === 'biweekly') {
-      // For biweekly, we add another week if we're in an "off" week
-      // This is a simple implementation - could be enhanced with a start date
-    }
-  } else if (frequency === 'monthly') {
-    // Schedule for the same day next month (or this month if not passed)
     if (next <= now) {
       next.setMonth(next.getMonth() + 1);
+      // Recalculate for the new month's max days
+      const newMaxDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+      next.setDate(Math.min(dayOfWeek, newMaxDay));
     }
-    // Ensure the day exists in the target month
-    const targetDay = Math.min(dayOfWeek, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate());
-    next.setDate(targetDay);
   }
   
   return next;
@@ -109,11 +112,12 @@ export const useSeoSchedule = (companyId: string | null) => {
     // Calculate next trigger if settings change
     let nextTriggerAt: string | undefined;
     if (updates.enabled !== false) {
-      const frequency = updates.frequency || schedule?.frequency || 'weekly';
+      const intervalValue = updates.interval_value ?? schedule?.interval_value ?? 1;
+      const intervalUnit = updates.interval_unit ?? schedule?.interval_unit ?? 'weeks';
       const dayOfWeek = updates.day_of_week ?? schedule?.day_of_week ?? 1;
       const timeOfDay = updates.time_of_day || schedule?.time_of_day || '10:00:00';
       
-      const nextTrigger = calculateNextTrigger(frequency, dayOfWeek, timeOfDay);
+      const nextTrigger = calculateNextTrigger(intervalValue, intervalUnit, dayOfWeek, timeOfDay);
       nextTriggerAt = nextTrigger.toISOString();
     }
 
@@ -173,7 +177,6 @@ export const useSeoSchedule = (companyId: string | null) => {
     if (!schedule?.enabled || !schedule?.next_trigger_at) return null;
     
     const nextTrigger = new Date(schedule.next_trigger_at);
-    const now = new Date();
     
     // Format nicely in Dutch
     const options: Intl.DateTimeFormatOptions = {
