@@ -5,6 +5,11 @@ import { AutomationInfoTooltip, ImpactLevel, ImpactColors } from './AutomationIn
 
 type AutomationStatus = 'active' | 'inactive' | 'testmode';
 
+interface MultipleLastRun {
+  label: string;
+  time: string | null;
+}
+
 interface DashboardButtonProps {
   to?: string;
   label: string;
@@ -13,6 +18,7 @@ interface DashboardButtonProps {
   icon?: LucideIcon;
   description?: string;
   lastRun?: string | null;
+  multipleLastRuns?: MultipleLastRun[];
   impact?: ImpactLevel;
   impactColors?: ImpactColors;
   status?: AutomationStatus;
@@ -39,6 +45,7 @@ export const DashboardButton = ({
   icon: Icon,
   description,
   lastRun,
+  multipleLastRuns,
   impact,
   impactColors,
   status,
@@ -59,6 +66,7 @@ export const DashboardButton = ({
         <AutomationInfoTooltip
           description={description}
           lastRun={lastRun}
+          multipleLastRuns={multipleLastRuns}
           impact={impact}
           impactColors={impactColors}
         />

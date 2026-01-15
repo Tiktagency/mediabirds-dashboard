@@ -15,9 +15,15 @@ export interface ImpactColors {
   low: string;
 }
 
+interface MultipleLastRun {
+  label: string;
+  time: string | null;
+}
+
 interface AutomationInfoTooltipProps {
   description: string;
   lastRun?: string | null;
+  multipleLastRuns?: MultipleLastRun[];
   impact: ImpactLevel;
   impactColors?: ImpactColors;
 }
@@ -70,10 +76,15 @@ const hexToRgba = (hex: string, alpha: number): string => {
 export const AutomationInfoTooltip = ({
   description,
   lastRun,
+  multipleLastRuns,
   impact,
   impactColors = defaultImpactColors,
 }: AutomationInfoTooltipProps) => {
   const color = impactColors[impact];
+  
+  // Check if any multiple last runs have data
+  const hasMultipleLastRunsData = multipleLastRuns?.some(item => item.time);
+  const hasSingleLastRunData = formatLastRun(lastRun);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -109,8 +120,26 @@ export const AutomationInfoTooltip = ({
               </p>
             </div>
 
-            {/* Laatste succesvol uitgevoerd - alleen tonen als er data is */}
-            {formatLastRun(lastRun) && (
+            {/* Laatste succesvol uitgevoerd - meerdere entries of enkele */}
+            {hasMultipleLastRunsData && multipleLastRuns && (
+              <div>
+                <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
+                  Laatste succesvol uitgevoerd
+                </p>
+                <div className="space-y-1">
+                  {multipleLastRuns.map((item, index) => (
+                    item.time && (
+                      <p key={index} className="text-sm text-white/80">
+                        <span className="text-white/60">{item.label}:</span> {formatLastRun(item.time)}
+                      </p>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback naar enkele lastRun als geen multipleLastRuns */}
+            {!hasMultipleLastRunsData && hasSingleLastRunData && (
               <div>
                 <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
                   Laatste succesvol uitgevoerd
