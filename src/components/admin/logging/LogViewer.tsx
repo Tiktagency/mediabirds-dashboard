@@ -134,17 +134,18 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
             <Table>
               <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
                 <TableRow className="bg-background/30">
-                  <TableHead className="w-[180px]">Tijdstip</TableHead>
+                  <TableHead className="w-[160px]">Tijdstip</TableHead>
                   <TableHead className="w-[150px]">Automation</TableHead>
-                  <TableHead className="w-[100px]">Status</TableHead>
+                  <TableHead className="w-[80px]">Status</TableHead>
                   <TableHead>Bericht</TableHead>
-                  <TableHead className="w-[100px]">Duur</TableHead>
+                  <TableHead className="w-[80px]">Duur</TableHead>
+                  <TableHead className="w-[80px]">Bespaard</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {isRefreshing ? 'Laden...' : 'Geen logs gevonden'}
                     </TableCell>
                   </TableRow>
@@ -166,7 +167,10 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
                         {log.message}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {log.execution_time_ms ? `${log.execution_time_ms}ms` : '-'}
+                        {log.execution_time_ms ? `${(log.execution_time_ms / 1000).toFixed(1)}s` : '-'}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {log.time_saved_minutes ? `${log.time_saved_minutes} min` : '-'}
                       </TableCell>
                     </TableRow>
                   ))
