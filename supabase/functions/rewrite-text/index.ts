@@ -48,11 +48,17 @@ serve(async (req) => {
 
 Je schrijft altijd in het Nederlands tenzij anders aangegeven.
 
+KRITIEKE REGEL - WOORDLIMIET:
+- De gebruiker heeft een MAXIMUM van ${wordCount} woorden opgegeven
+- Je mag dit aantal NOOIT overschrijden
+- Tel je woorden zorgvuldig en blijf ONDER de limiet
+- Het is beter om iets korter te schrijven dan over de limiet te gaan
+
 Je schrijft teksten die:
 - Authentiek en natuurlijk klinken
 - Passen bij de gekozen persoonlijkheidstype(s)
 - Geschikt zijn voor het gekozen type content
-- Het juiste aantal woorden bevatten (±10%)
+- STRIKT binnen het maximum aantal woorden blijven
 
 Persoonlijkheidskenmerken:
 - Professioneel: Formeel, betrouwbaar, expert-niveau taalgebruik
@@ -74,7 +80,7 @@ Persoonlijkheidskenmerken:
       userPrompt = `Herschrijf de volgende tekst in een ${selectedPersonalities} stijl, geschikt voor een ${postTypeLabel}.
 
 Onderwerp: ${subject}
-Gewenst aantal woorden: ongeveer ${wordCount} woorden
+MAXIMUM aantal woorden: ${wordCount} (NIET overschrijden!)
 ${extraDescription ? `Extra instructies: ${extraDescription}` : ""}
 
 Originele tekst om te herschrijven:
@@ -82,14 +88,16 @@ Originele tekst om te herschrijven:
 ${oldText}
 """
 
-Herschrijf deze tekst met behoud van de kernboodschap, maar pas de toon en stijl aan naar ${selectedPersonalities}. Geef alleen de herschreven tekst terug, zonder uitleg of commentaar.`;
+Herschrijf deze tekst met behoud van de kernboodschap, maar pas de toon en stijl aan naar ${selectedPersonalities}. 
+BELANGRIJK: Blijf STRIKT onder de ${wordCount} woorden. Geef alleen de herschreven tekst terug, zonder uitleg of commentaar.`;
     } else {
       userPrompt = `Schrijf een ${postTypeLabel} over "${subject}" in een ${selectedPersonalities} stijl.
 
-Gewenst aantal woorden: ongeveer ${wordCount} woorden
+MAXIMUM aantal woorden: ${wordCount} (NIET overschrijden!)
 ${extraDescription ? `Extra instructies: ${extraDescription}` : ""}
 
-Schrijf alleen de tekst, zonder titels, headers of extra uitleg. De tekst moet direct bruikbaar zijn.`;
+Schrijf alleen de tekst, zonder titels, headers of extra uitleg. De tekst moet direct bruikbaar zijn.
+BELANGRIJK: Blijf STRIKT onder de ${wordCount} woorden.`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
