@@ -28,6 +28,7 @@ interface LogEntry {
   status: string;
   message: string;
   execution_time_ms: number | null;
+  time_saved_minutes: number | null;
   created_at: string;
   metadata: {
     workflowId: string;
@@ -43,6 +44,9 @@ serve(async (req) => {
 
   try {
     const n8nApiKey = Deno.env.get('N8N_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
     if (!n8nApiKey) {
       console.error('N8N_API_KEY not configured');
       return new Response(
@@ -51,9 +55,33 @@ serve(async (req) => {
       );
     }
 
-    const { limit = 100, workflowNames, automationFilter, statusFilter } = await req.json().catch(() => ({}));
+    const { limit = 100, automationFilter, statusFilter } = await req.json().catch(() => ({}));
     
-    console.log(`Fetching n8n logs, limit: ${limit}, automationFilter: ${automationFilter}, statusFilter: ${statusFilter}`);
+    console.log(`Fetching ALL n8n logs, limit: ${limit}, automationFilter: ${automationFilter}, statusFilter: ${statusFilter}`);
+    
+    // Fetch time_saved_per_execution from automation_settings
+    let timeSavedMap: Record<string, number> = {};
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/automation_settings?select=n8n_workflow_name,time_saved_per_execution`, {
+          headers: {
+            'apikey': supabaseServiceKey,
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+        });
+        if (response.ok) {
+          const settings = await response.json();
+          settings.forEach((s: any) => {
+            if (s.n8n_workflow_name && s.time_saved_per_execution) {
+              timeSavedMap[s.n8n_workflow_name.toLowerCase()] = s.time_saved_per_execution;
+            }
+          });
+          console.log('Time saved map:', timeSavedMap);
+        }
+      } catch (e) {
+        console.error('Error fetching automation_settings:', e);
+      }
+    }
 
     // Fetch all workflows
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -83,34 +111,22 @@ serve(async (req) => {
       workflowMap.set(w.id, w.name);
     });
 
-    // Filter workflows if specific names are requested
+    // Only filter by specific workflow if automationFilter is specified
     let targetWorkflowIds: string[] = [];
-    if (workflowNames && workflowNames.length > 0) {
-      workflows.forEach((w: any) => {
-        if (workflowNames.some((name: string) => 
-          w.name.toLowerCase().includes(name.toLowerCase())
-        )) {
-          targetWorkflowIds.push(w.id);
-        }
-      });
-    }
-
-    // If automationFilter is specified, find the matching workflow ID
     if (automationFilter) {
       const matchingWorkflow = workflows.find((w: any) => w.name === automationFilter);
       if (matchingWorkflow) {
-        // Override targetWorkflowIds with just this one workflow
         targetWorkflowIds = [matchingWorkflow.id];
         console.log(`Filtering to workflow: ${automationFilter} (ID: ${matchingWorkflow.id})`);
       } else {
         console.log(`No exact match for automationFilter: ${automationFilter}`);
-        // If no exact match, return empty logs
         return new Response(
           JSON.stringify({ logs: [] }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
+    // If no automationFilter, show ALL workflows (no filtering)
 
     // Fetch more executions than needed to ensure we have enough after filtering
     // n8n API has a max limit of 250, so we fetch max to ensure we get 100 after filtering
@@ -171,12 +187,26 @@ serve(async (req) => {
         status = 'info';
       }
 
+      // Calculate time saved for successful executions
+      let timeSavedMinutes: number | null = null;
+      if (exec.status === 'success') {
+        const workflowNameLower = workflowName.toLowerCase();
+        // Check for exact match or partial match
+        for (const [key, value] of Object.entries(timeSavedMap)) {
+          if (workflowNameLower.includes(key) || key.includes(workflowNameLower)) {
+            timeSavedMinutes = value;
+            break;
+          }
+        }
+      }
+
       return {
         id: exec.id,
         automation_name: workflowName,
         status: status,
         message: message,
         execution_time_ms: executionTime,
+        time_saved_minutes: timeSavedMinutes,
         created_at: exec.stoppedAt || exec.startedAt,
         metadata: {
           workflowId: exec.workflowId,
