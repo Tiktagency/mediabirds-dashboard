@@ -192,7 +192,7 @@ export const CopyrightBrandingForm = () => {
               value={wordCount}
               onValueChange={setWordCount}
               min={50}
-              max={1000}
+              max={3000}
               step={50}
               className="w-full"
             />
