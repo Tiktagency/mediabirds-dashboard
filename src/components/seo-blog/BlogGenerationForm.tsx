@@ -6,12 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Clock } from 'lucide-react';
+import { Pencil, Check, XCircle, Clock, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
 import { useBlogSchedule } from '@/hooks/useBlogSchedule';
+import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
+import { CategoryManager } from '@/components/seo-blog/CategoryManager';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 interface BlogGenerationFormProps {
   selectedCompany: Company | null;
@@ -23,12 +27,6 @@ interface BlogGenerationFormProps {
 
 const FIXED_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2-44fb-88bf-50e0c16f17ac';
 
-const CATEGORY_OPTIONS = [
-  { label: 'Begrijpen / uitleg (ID 6)', value: 'begrijpen_uitleg_6' },
-  { label: 'Toepassen / stappen / how-to (ID 7)', value: 'toepassen_stappen_7' },
-  { label: 'Resultaat / waarde / ROI (ID 1)', value: 'resultaat_waarde_1' },
-];
-
 export const BlogGenerationForm = ({
   selectedCompany,
   setSelectedCompany,
@@ -38,6 +36,7 @@ export const BlogGenerationForm = ({
 }: BlogGenerationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminSettingsOpen, setAdminSettingsOpen] = useState(false);
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -71,6 +70,7 @@ export const BlogGenerationForm = ({
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
+  const { categories: blogCategories, isLoading: categoriesLoading } = useBlogCategories(selectedCompany?.id || null);
   const { 
     schedule: blogSchedule, 
     isLoading: scheduleLoading, 
@@ -545,7 +545,7 @@ export const BlogGenerationForm = ({
       {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
       {renderRangeField()}
       {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
-      {renderField('Categorie', 'category', 'select', CATEGORY_OPTIONS.map(opt => opt.label))}
+      {renderField('Categorie', 'category', 'select', blogCategories.map(cat => cat.label))}
       
       {/* Afbeelding section */}
       <div className="pt-6 border-t border-white/10 space-y-4">
@@ -589,15 +589,32 @@ export const BlogGenerationForm = ({
         {renderField('Status', 'status', 'select', ['Draft', 'Publish'])}
       </div>
       
-      {/* Admin-only fields */}
+      {/* Admin-only fields - Collapsible */}
       {isAdmin && (
-        <div className="pt-6 border-t border-white/10 space-y-6">
-          <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-          {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
-          {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
-          {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, true)}
-          {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, true)}
-        </div>
+        <Collapsible 
+          open={adminSettingsOpen} 
+          onOpenChange={setAdminSettingsOpen}
+          className="pt-6 border-t border-white/10"
+        >
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 hover:bg-white/5 rounded-md px-2 transition-colors">
+            <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
+            <ChevronDown className={cn(
+              "h-4 w-4 text-yellow-400/80 transition-transform duration-200",
+              adminSettingsOpen && "rotate-180"
+            )} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-6 pt-4">
+            {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
+            {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
+            {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, true)}
+            {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, true)}
+            
+            <CategoryManager 
+              companyId={selectedCompany?.id || null}
+              isAdmin={isAdmin}
+            />
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       <ScheduleTrigger
