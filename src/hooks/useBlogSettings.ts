@@ -13,6 +13,7 @@ export interface BlogSettings {
   hoofdaccent_gradient: string | null;
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
+  status: string | null;
   created_at: string;
   updated_at: string;
 }
