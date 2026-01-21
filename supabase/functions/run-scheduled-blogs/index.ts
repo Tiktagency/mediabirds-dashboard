@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
           status: blogSettings.status || 'Draft',
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
+          category: blogSettings.category || '',
           timestamp: new Date().toISOString(),
           triggered_from: 'scheduled',
         };
