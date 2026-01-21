@@ -105,6 +105,16 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Fetch all categories for this company
+        const { data: blogCategories, error: categoriesError } = await supabase
+          .from('blog_categories')
+          .select('label, value')
+          .eq('company_id', company.id);
+
+        if (categoriesError) {
+          console.error(`[run-scheduled-blogs] Error fetching categories for ${company.name}:`, categoriesError);
+        }
+
         // Prepare blog payload (same as manual trigger)
         const blogPayload = {
           bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
@@ -119,7 +129,7 @@ Deno.serve(async (req) => {
           status: blogSettings.status || 'Draft',
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
-          category: blogSettings.category || '',
+          categories: blogCategories || [],
           timestamp: new Date().toISOString(),
           triggered_from: 'scheduled',
         };
