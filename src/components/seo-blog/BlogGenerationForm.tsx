@@ -48,6 +48,8 @@ export const BlogGenerationForm = ({
     get_afbeelding_url: '',
     post_blog_url: '',
     status: 'Draft',
+    google_sheet_id: '',
+    google_slides_id: '',
   });
 
   // Click outside handler to collapse expanded field
@@ -107,6 +109,8 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'Draft',
+        google_sheet_id: settings.google_sheet_id || '',
+        google_slides_id: settings.google_slides_id || '',
       });
     } else {
       setFormData({
@@ -121,6 +125,8 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: '',
         post_blog_url: '',
         status: 'Draft',
+        google_sheet_id: '',
+        google_slides_id: '',
       });
     }
     setEditingField(null);
@@ -201,6 +207,8 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'Draft',
+        google_sheet_id: settings.google_sheet_id || '',
+        google_slides_id: settings.google_slides_id || '',
       });
     }
     setEditingField(null);
@@ -568,11 +576,15 @@ export const BlogGenerationForm = ({
       </div>
       
       {/* Admin-only fields */}
-      <div className="pt-6 border-t border-white/10 space-y-6">
-        <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-        {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
-        {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
-      </div>
+      {isAdmin && (
+        <div className="pt-6 border-t border-white/10 space-y-6">
+          <p className="text-sm text-yellow-400/80">Admin instellingen</p>
+          {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
+          {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
+          {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, true)}
+          {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, true)}
+        </div>
+      )}
 
       <ScheduleTrigger
         companyId={selectedCompany?.id || null}
