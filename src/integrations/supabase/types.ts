@@ -418,6 +418,8 @@ export type Database = {
           created_at: string
           doelgroep_intentie: string | null
           extra_instructies: string | null
+          google_sheet_id: string | null
+          google_slides_id: string | null
           id: string
           updated_at: string
         }
@@ -428,6 +430,8 @@ export type Database = {
           created_at?: string
           doelgroep_intentie?: string | null
           extra_instructies?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           id?: string
           updated_at?: string
         }
@@ -438,6 +442,8 @@ export type Database = {
           created_at?: string
           doelgroep_intentie?: string | null
           extra_instructies?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           id?: string
           updated_at?: string
         }
