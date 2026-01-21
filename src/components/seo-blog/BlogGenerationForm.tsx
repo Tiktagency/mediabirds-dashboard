@@ -128,7 +128,6 @@ export const BlogGenerationForm = ({
 
   const isFormComplete = () => {
     const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
-    const imageFields = ['achtergrond_kleur', 'hoofdaccent_gradient_1', 'hoofdaccent_gradient_2'];
     const adminFields = ['get_afbeelding_url', 'post_blog_url'];
     
     for (const field of requiredStringFields) {
@@ -137,9 +136,7 @@ export const BlogGenerationForm = ({
     
     if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
     
-    for (const field of imageFields) {
-      if (!formData[field as keyof typeof formData]) return false;
-    }
+    // Image fields (achtergrond_kleur, gradient colors) are optional
     
     for (const field of adminFields) {
       if (!formData[field as keyof typeof formData]) return false;
