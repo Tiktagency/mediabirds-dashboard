@@ -70,7 +70,7 @@ export const BlogGenerationForm = ({
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
-  const { categories: blogCategories, isLoading: categoriesLoading } = useBlogCategories(selectedCompany?.id || null);
+  const { categories: blogCategories, isLoading: categoriesLoading, refetch: refetchCategories } = useBlogCategories(selectedCompany?.id || null);
   const { 
     schedule: blogSchedule, 
     isLoading: scheduleLoading, 
@@ -612,6 +612,7 @@ export const BlogGenerationForm = ({
             <CategoryManager 
               companyId={selectedCompany?.id || null}
               isAdmin={isAdmin}
+              onCategoryChange={refetchCategories}
             />
           </CollapsibleContent>
         </Collapsible>
