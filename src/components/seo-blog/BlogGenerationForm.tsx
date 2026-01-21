@@ -239,6 +239,8 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         status: formData.status,
+        google_sheet_id: formData.google_sheet_id,
+        google_slides_id: formData.google_slides_id,
         timestamp: new Date().toISOString(),
       };
 
