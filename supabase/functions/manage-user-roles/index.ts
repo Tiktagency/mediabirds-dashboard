@@ -6,6 +6,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation helpers
+function validateAction(action: unknown): 'assign-role' | 'remove-role' | 'delete-user' {
+  if (typeof action !== 'string') {
+    throw new Error('Action must be a string');
+  }
+  const validActions = ['assign-role', 'remove-role', 'delete-user'];
+  if (!validActions.includes(action)) {
+    throw new Error(`Action must be one of: ${validActions.join(', ')}`);
+  }
+  return action as 'assign-role' | 'remove-role' | 'delete-user';
+}
+
+function validateUUID(uuid: unknown, fieldName: string): string {
+  if (typeof uuid !== 'string') {
+    throw new Error(`${fieldName} must be a string`);
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(uuid)) {
+    throw new Error(`${fieldName} must be a valid UUID`);
+  }
+  return uuid;
+}
+
+function validateRole(role: unknown): 'admin' | 'operator' | 'viewer' {
+  if (typeof role !== 'string') {
+    throw new Error('Role must be a string');
+  }
+  const validRoles = ['admin', 'operator', 'viewer'];
+  if (!validRoles.includes(role)) {
+    throw new Error(`Role must be one of: ${validRoles.join(', ')}`);
+  }
+  return role as 'admin' | 'operator' | 'viewer';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -55,11 +89,15 @@ serve(async (req) => {
       });
     }
 
-    const { action, userId, role } = await req.json();
-    console.log(`Action: ${action}, UserId: ${userId}, Role: ${role}`);
+    // Parse and validate input
+    const body = await req.json();
+    const action = validateAction(body.action);
+    const userId = validateUUID(body.userId, 'userId');
 
     switch (action) {
       case 'assign-role': {
+        const role = validateRole(body.role);
+        
         // First remove existing roles
         await supabaseAdmin
           .from('user_roles')
@@ -72,7 +110,7 @@ serve(async (req) => {
           .insert({ user_id: userId, role });
 
         if (insertError) {
-          console.error('Insert error:', insertError);
+          console.error('Insert error');
           throw insertError;
         }
 
@@ -82,6 +120,8 @@ serve(async (req) => {
       }
 
       case 'remove-role': {
+        const role = validateRole(body.role);
+        
         const { error: deleteError } = await supabaseAdmin
           .from('user_roles')
           .delete()
@@ -117,7 +157,7 @@ serve(async (req) => {
         // Delete auth user
         const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (authDeleteError) {
-          console.error('Auth delete error:', authDeleteError);
+          console.error('Auth delete error');
           throw authDeleteError;
         }
 
@@ -133,8 +173,8 @@ serve(async (req) => {
         });
     }
   } catch (error) {
-    console.error('Error in manage-user-roles:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error in manage-user-roles');
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
