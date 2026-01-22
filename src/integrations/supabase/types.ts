@@ -533,6 +533,7 @@ export type Database = {
           created_at: string
           custom_labels: Json | null
           custom_tooltips: Json | null
+          dashboard_colors: Json | null
           id: string
           impact_colors: Json | null
           theme: string
@@ -544,6 +545,7 @@ export type Database = {
           created_at?: string
           custom_labels?: Json | null
           custom_tooltips?: Json | null
+          dashboard_colors?: Json | null
           id?: string
           impact_colors?: Json | null
           theme?: string
@@ -555,6 +557,7 @@ export type Database = {
           created_at?: string
           custom_labels?: Json | null
           custom_tooltips?: Json | null
+          dashboard_colors?: Json | null
           id?: string
           impact_colors?: Json | null
           theme?: string
