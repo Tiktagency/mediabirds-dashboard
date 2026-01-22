@@ -8,8 +8,10 @@ export interface SeoSettings {
   doelgroep_intentie: string | null;
   bedrijfsomschrijving: string | null;
   extra_instructies: string | null;
-  google_sheet_id: string | null;
-  google_slides_id: string | null;
+  hoofd_google_sheet_id: string | null;
+  hoofd_google_slides_id: string | null;
+  nieuw_google_sheet_id: string | null;
+  nieuw_google_slides_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -40,7 +42,7 @@ export const useSeoSettings = (companyId: string | null) => {
         console.error('Error fetching SEO settings:', fetchError);
         setError(fetchError.message);
       } else {
-        setSettings(data as SeoSettings | null);
+        setSettings(data as unknown as SeoSettings | null);
       }
 
       setIsLoading(false);
@@ -69,7 +71,7 @@ export const useSeoSettings = (companyId: string | null) => {
           .single();
 
         if (updateError) throw updateError;
-        setSettings(data as SeoSettings);
+        setSettings(data as unknown as SeoSettings);
       } else {
         // Insert new
         const { data, error: insertError } = await supabase
@@ -82,7 +84,7 @@ export const useSeoSettings = (companyId: string | null) => {
           .single();
 
         if (insertError) throw insertError;
-        setSettings(data as SeoSettings);
+        setSettings(data as unknown as SeoSettings);
       }
 
       setIsSaving(false);

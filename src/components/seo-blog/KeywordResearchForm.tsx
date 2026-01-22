@@ -40,8 +40,10 @@ export const KeywordResearchForm = ({
     doelgroep_intentie: '',
     bedrijfsomschrijving: '',
     extra_instructies: '',
-    google_sheet_id: '',
-    google_slides_id: '',
+    hoofd_google_sheet_id: '',
+    hoofd_google_slides_id: '',
+    nieuw_google_sheet_id: '',
+    nieuw_google_slides_id: '',
   });
 
   // Click outside handler to collapse expanded field
@@ -74,8 +76,10 @@ export const KeywordResearchForm = ({
         doelgroep_intentie: settings.doelgroep_intentie || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
         extra_instructies: settings.extra_instructies || '',
-        google_sheet_id: settings.google_sheet_id || '',
-        google_slides_id: settings.google_slides_id || '',
+        hoofd_google_sheet_id: settings.hoofd_google_sheet_id || '',
+        hoofd_google_slides_id: settings.hoofd_google_slides_id || '',
+        nieuw_google_sheet_id: settings.nieuw_google_sheet_id || '',
+        nieuw_google_slides_id: settings.nieuw_google_slides_id || '',
       });
     } else {
       setFormData({
@@ -84,8 +88,10 @@ export const KeywordResearchForm = ({
         doelgroep_intentie: '',
         bedrijfsomschrijving: '',
         extra_instructies: '',
-        google_sheet_id: '',
-        google_slides_id: '',
+        hoofd_google_sheet_id: '',
+        hoofd_google_slides_id: '',
+        nieuw_google_sheet_id: '',
+        nieuw_google_slides_id: '',
       });
     }
     setEditingField(null);
@@ -156,8 +162,10 @@ export const KeywordResearchForm = ({
         doelgroep_intentie: settings.doelgroep_intentie || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
         extra_instructies: settings.extra_instructies || '',
-        google_sheet_id: settings.google_sheet_id || '',
-        google_slides_id: settings.google_slides_id || '',
+        hoofd_google_sheet_id: settings.hoofd_google_sheet_id || '',
+        hoofd_google_slides_id: settings.hoofd_google_slides_id || '',
+        nieuw_google_sheet_id: settings.nieuw_google_sheet_id || '',
+        nieuw_google_slides_id: settings.nieuw_google_slides_id || '',
       });
     }
     setEditingField(null);
@@ -188,8 +196,10 @@ export const KeywordResearchForm = ({
             audienceIntent: formData.doelgroep_intentie,
             businessDescription: formData.bedrijfsomschrijving,
             extraInstructions: formData.extra_instructies,
-            googleSheetId: formData.google_sheet_id,
-            googleSlidesId: formData.google_slides_id,
+            hoofdGoogleSheetId: formData.hoofd_google_sheet_id,
+            hoofdGoogleSlidesId: formData.hoofd_google_slides_id,
+            nieuwGoogleSheetId: formData.nieuw_google_sheet_id,
+            nieuwGoogleSlidesId: formData.nieuw_google_slides_id,
           },
         },
       });
@@ -451,8 +461,30 @@ export const KeywordResearchForm = ({
       {isAdmin && (
         <div className="pt-6 border-t border-white/10 space-y-6">
           <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-          {renderInputField('Google Sheet Document ID', 'google_sheet_id')}
-          {renderInputField('Google Slides ID', 'google_slides_id')}
+          
+          {/* Hoofd zoekwoorden sectie */}
+          <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📊</span>
+              <h4 className="text-sm font-semibold text-white/90">Hoofd zoekwoorden</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>{renderInputField('Google Sheet ID', 'hoofd_google_sheet_id')}</div>
+              <div>{renderInputField('Google Slides ID', 'hoofd_google_slides_id')}</div>
+            </div>
+          </div>
+          
+          {/* Nieuwe zoekwoorden sectie */}
+          <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🆕</span>
+              <h4 className="text-sm font-semibold text-white/90">Nieuwe zoekwoorden</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>{renderInputField('Google Sheet ID', 'nieuw_google_sheet_id')}</div>
+              <div>{renderInputField('Google Slides ID', 'nieuw_google_slides_id')}</div>
+            </div>
+          </div>
         </div>
       )}
 

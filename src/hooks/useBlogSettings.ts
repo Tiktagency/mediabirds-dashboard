@@ -14,10 +14,8 @@ export interface BlogSettings {
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
   status: string | null;
-  hoofd_google_sheet_id: string | null;
-  hoofd_google_slides_id: string | null;
-  nieuw_google_sheet_id: string | null;
-  nieuw_google_slides_id: string | null;
+  google_sheet_id: string | null;
+  google_slides_id: string | null;
   category: string | null;
   created_at: string;
   updated_at: string;
@@ -49,7 +47,7 @@ export const useBlogSettings = (companyId: string | null) => {
         console.error('Error fetching blog settings:', fetchError);
         setError(fetchError.message);
       } else {
-        setSettings(data as BlogSettings | null);
+        setSettings(data as unknown as BlogSettings | null);
       }
 
       setIsLoading(false);
@@ -78,7 +76,7 @@ export const useBlogSettings = (companyId: string | null) => {
           .single();
 
         if (updateError) throw updateError;
-        setSettings(data as BlogSettings);
+        setSettings(data as unknown as BlogSettings);
       } else {
         // Insert new
         const { data, error: insertError } = await supabase
@@ -91,7 +89,7 @@ export const useBlogSettings = (companyId: string | null) => {
           .single();
 
         if (insertError) throw insertError;
-        setSettings(data as BlogSettings);
+        setSettings(data as unknown as BlogSettings);
       }
 
       setIsSaving(false);
