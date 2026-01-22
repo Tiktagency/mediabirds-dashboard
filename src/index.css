@@ -23,8 +23,8 @@ All colors MUST be HSL.
     --secondary: 276 85% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 25%;
-    --muted-foreground: 0 0% 75%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
 
     --accent: 276 85% 48%;
     --accent-foreground: 0 0% 100%;
@@ -32,8 +32,8 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 45%;
-    --input: 0 0% 40%;
+    --border: 0 0% 30%;
+    --input: 0 0% 25%;
     --ring: 276 85% 48%;
 
     --radius: 0.5rem;
@@ -68,7 +68,7 @@ All colors MUST be HSL.
 
     --sidebar-accent-foreground: 0 0% 100%;
 
-    --sidebar-border: 0 0% 35%;
+    --sidebar-border: 0 0% 20%;
 
     --sidebar-ring: 276 85% 48%;
   }
@@ -89,8 +89,8 @@ All colors MUST be HSL.
     --secondary: 276 85% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 25%;
-    --muted-foreground: 0 0% 75%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
 
     --accent: 276 85% 48%;
     --accent-foreground: 0 0% 100%;
@@ -98,8 +98,8 @@ All colors MUST be HSL.
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 45%;
-    --input: 0 0% 40%;
+    --border: 0 0% 30%;
+    --input: 0 0% 25%;
     --ring: 276 85% 48%;
     --sidebar-background: 0 0% 7%;
     --sidebar-foreground: 0 0% 100%;
@@ -107,7 +107,7 @@ All colors MUST be HSL.
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 276 85% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 35%;
+    --sidebar-border: 0 0% 20%;
     --sidebar-ring: 276 85% 48%;
   }
 }
@@ -236,8 +236,8 @@ All colors MUST be HSL.
   }
 
   .seo-input {
-    background: hsl(0 0% 20%);
-    border: 1px solid hsl(0 0% 100% / 0.25);
+    background: hsl(0 0% 8%);
+    border: 1px solid hsl(0 0% 100% / 0.1);
     border-radius: 14px;
     padding: 1rem 1.25rem;
     color: hsl(0 0% 100%);
