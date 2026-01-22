@@ -23,8 +23,8 @@ All colors MUST be HSL.
     --secondary: 276 85% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 75%;
 
     --accent: 276 85% 48%;
     --accent-foreground: 0 0% 100%;
@@ -89,8 +89,8 @@ All colors MUST be HSL.
     --secondary: 276 85% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 75%;
 
     --accent: 276 85% 48%;
     --accent-foreground: 0 0% 100%;
@@ -236,7 +236,7 @@ All colors MUST be HSL.
   }
 
   .seo-input {
-    background: hsl(0 0% 8%);
+    background: hsl(0 0% 20%);
     border: 1px solid hsl(0 0% 100% / 0.25);
     border-radius: 14px;
     padding: 1rem 1.25rem;
