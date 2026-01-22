@@ -53,8 +53,10 @@ export const BlogGenerationForm = ({
     get_afbeelding_url: '',
     post_blog_url: '',
     status: 'draft',
-    google_sheet_id: '',
-    google_slides_id: '',
+    hoofd_google_sheet_id: '',
+    hoofd_google_slides_id: '',
+    nieuw_google_sheet_id: '',
+    nieuw_google_slides_id: '',
   });
 
   // Click outside handler to collapse expanded field
@@ -115,8 +117,10 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
-        google_sheet_id: settings.google_sheet_id || '',
-        google_slides_id: settings.google_slides_id || '',
+        hoofd_google_sheet_id: settings.hoofd_google_sheet_id || '',
+        hoofd_google_slides_id: settings.hoofd_google_slides_id || '',
+        nieuw_google_sheet_id: settings.nieuw_google_sheet_id || '',
+        nieuw_google_slides_id: settings.nieuw_google_slides_id || '',
       });
     } else {
       setFormData({
@@ -130,9 +134,11 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: '',
         get_afbeelding_url: '',
         post_blog_url: '',
-        status: 'Draft',
-        google_sheet_id: '',
-        google_slides_id: '',
+        status: 'draft',
+        hoofd_google_sheet_id: '',
+        hoofd_google_slides_id: '',
+        nieuw_google_sheet_id: '',
+        nieuw_google_slides_id: '',
       });
     }
     setEditingField(null);
@@ -213,8 +219,10 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
-        google_sheet_id: settings.google_sheet_id || '',
-        google_slides_id: settings.google_slides_id || '',
+        hoofd_google_sheet_id: settings.hoofd_google_sheet_id || '',
+        hoofd_google_slides_id: settings.hoofd_google_slides_id || '',
+        nieuw_google_sheet_id: settings.nieuw_google_sheet_id || '',
+        nieuw_google_slides_id: settings.nieuw_google_slides_id || '',
       });
     }
     setEditingField(null);
@@ -245,8 +253,10 @@ export const BlogGenerationForm = ({
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         status: formData.status,
-        google_sheet_id: formData.google_sheet_id,
-        google_slides_id: formData.google_slides_id,
+        hoofd_google_sheet_id: formData.hoofd_google_sheet_id,
+        hoofd_google_slides_id: formData.hoofd_google_slides_id,
+        nieuw_google_sheet_id: formData.nieuw_google_sheet_id,
+        nieuw_google_slides_id: formData.nieuw_google_slides_id,
         Category: blogCategories.reduce((acc, cat) => {
           acc[cat.label] = cat.value;
           return acc;
@@ -604,8 +614,30 @@ export const BlogGenerationForm = ({
           <CollapsibleContent className="space-y-6 pt-4">
             {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
             {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
-            {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, true)}
-            {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, true)}
+            
+            {/* Hoofd zoekwoorden sectie */}
+            <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                <h4 className="text-sm font-semibold text-white/90">Hoofd zoekwoorden</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>{renderField('Google Sheet ID', 'hoofd_google_sheet_id', 'text', undefined, true)}</div>
+                <div>{renderField('Google Slides ID', 'hoofd_google_slides_id', 'text', undefined, true)}</div>
+              </div>
+            </div>
+            
+            {/* Nieuwe zoekwoorden sectie */}
+            <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🆕</span>
+                <h4 className="text-sm font-semibold text-white/90">Nieuwe zoekwoorden</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>{renderField('Google Sheet ID', 'nieuw_google_sheet_id', 'text', undefined, true)}</div>
+                <div>{renderField('Google Slides ID', 'nieuw_google_slides_id', 'text', undefined, true)}</div>
+              </div>
+            </div>
             
             <CategoryManager 
               companyId={selectedCompany?.id || null}
