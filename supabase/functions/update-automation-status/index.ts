@@ -7,6 +7,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation helpers
+function validateAutomationName(name: unknown): string {
+  if (typeof name !== 'string' || !name.trim()) {
+    throw new Error('automation_name is required');
+  }
+  // Limit length and sanitize
+  const sanitized = name.trim().slice(0, 100);
+  // Only allow alphanumeric, underscore, hyphen
+  if (!/^[a-zA-Z0-9_-]+$/.test(sanitized)) {
+    throw new Error('automation_name contains invalid characters');
+  }
+  return sanitized;
+}
+
+function validateStatus(status: unknown): string {
+  if (typeof status !== 'string') {
+    throw new Error('status must be a string');
+  }
+  const validStatuses = ['active', 'running', 'inactive'];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+  }
+  return status;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -14,32 +39,48 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Updating automation status");
-    
-    const { automation_name, status, last_run } = await req.json();
-    
-    if (!automation_name || !status) {
-      throw new Error('automation_name and status are required');
-    }
-
-    // Validate status
-    const validStatuses = ['active', 'running', 'inactive'];
-    if (!validStatuses.includes(status)) {
-      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
-    }
-
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       throw new Error('Missing Supabase configuration');
     }
 
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate user token
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse and validate input
+    const body = await req.json();
+    const automation_name = validateAutomationName(body.automation_name);
+    const status = validateStatus(body.status);
+    const last_run = body.last_run;
+
+    // Use service role for database update
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Update or insert automation status
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       automation_name,
       status,
       last_updated: new Date().toISOString(),
@@ -56,11 +97,9 @@ serve(async (req) => {
       });
 
     if (error) {
-      console.error("Error updating automation status:", error);
-      throw error;
+      console.error("Database error");
+      throw new Error('Failed to update status');
     }
-
-    console.log(`Status updated for ${automation_name}: ${status}`);
 
     return new Response(
       JSON.stringify({ 
@@ -75,7 +114,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in update-automation-status function:', error);
+    console.error('Error in update-automation-status function');
     
     return new Response(
       JSON.stringify({ 
