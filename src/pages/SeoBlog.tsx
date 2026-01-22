@@ -113,8 +113,8 @@ const SeoBlog = () => {
 
   return (
     <div className="min-h-screen seo-page-gradient">
-      {/* Top navigation bar */}
-      <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-center">
+      {/* Top navigation bar - Fixed */}
+      <div className="fixed top-0 left-0 right-0 z-30 px-6 py-4 flex justify-between items-center bg-background/80 backdrop-blur-md border-b border-white/10">
         <Link to="/">
           <Button 
             variant="outline" 
