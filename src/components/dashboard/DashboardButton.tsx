@@ -25,14 +25,14 @@ interface DashboardButtonProps {
 }
 
 const variantClasses = {
-  primary: 'bg-primary hover:bg-primary/90 text-primary-foreground',
-  secondary: 'bg-secondary hover:bg-secondary/80 text-secondary-foreground',
-  accent: 'bg-accent hover:bg-accent/90 text-accent-foreground',
+  primary: 'bg-primary hover:bg-primary/90 text-[#002C1F]',
+  secondary: 'bg-secondary hover:bg-secondary/80 text-[#002C1F]',
+  accent: 'bg-accent hover:bg-accent/90 text-[#002C1F]',
   muted: 'bg-muted hover:bg-muted/80 text-muted-foreground',
 };
 
 const statusColors: Record<AutomationStatus, string> = {
-  active: 'bg-green-500',
+  active: 'bg-[#1CC866]',
   inactive: 'bg-red-500',
   testmode: 'bg-yellow-500',
 };
