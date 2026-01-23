@@ -320,7 +320,7 @@ export const ScheduleTrigger = ({
                 <div className="h-px bg-white/10" />
                 <div className="text-sm text-white/60">
                   <span className="text-white/40">Volgende uitvoering:</span>{' '}
-                  <span className="text-purple-400">{nextTrigger}</span>
+                  <span className="text-[#cfddd0]">{nextTrigger}</span>
                 </div>
               </>
             )}
