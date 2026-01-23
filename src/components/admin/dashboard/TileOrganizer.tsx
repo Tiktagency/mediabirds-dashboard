@@ -105,7 +105,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
         <div
           ref={setNodeRef}
           style={style}
-          className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
+          className="h-20 rounded-lg bg-white border border-[#cfddd0]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
@@ -121,20 +121,20 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
               setIsModalOpen(true);
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity z-10"
+            className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#cfddd0]/10 rounded transition-opacity z-10"
           >
-            <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
+            <Pencil className="w-2.5 h-2.5 text-[#cfddd0]" />
           </button>
           
           {/* Drag handle */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-            <GripVertical className="w-4 h-4 text-[#8f13e2]" />
+            <GripVertical className="w-4 h-4 text-[#cfddd0]" />
           </div>
 
           {/* Centered content */}
           <div className="flex flex-col items-center justify-center gap-1">
-            <Clock className="w-4 h-4 text-[#8f13e2]" />
-            <span className="text-[10px] text-[#8f13e2] font-medium leading-tight text-center px-1">
+            <Clock className="w-4 h-4 text-[#cfddd0]" />
+            <span className="text-[10px] text-[#cfddd0] font-medium leading-tight text-center px-1">
               {customLabel || name}
             </span>
           </div>
@@ -209,13 +209,13 @@ const DragOverlayTile = ({ id, name, status }: { id: string; name: string; statu
 
   if (isSavedHours) {
     return (
-      <div className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center shadow-lg relative">
+      <div className="h-20 rounded-lg bg-white border border-[#cfddd0]/30 flex items-center justify-center shadow-lg relative">
         {status && (
           <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
         <div className="flex flex-col items-center justify-center gap-1">
-          <Clock className="w-4 h-4 text-[#8f13e2]" />
-          <span className="text-[10px] text-[#8f13e2] font-medium leading-tight">{name}</span>
+          <Clock className="w-4 h-4 text-[#cfddd0]" />
+          <span className="text-[10px] text-[#cfddd0] font-medium leading-tight">{name}</span>
         </div>
       </div>
     );
