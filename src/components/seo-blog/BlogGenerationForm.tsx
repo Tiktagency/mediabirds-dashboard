@@ -50,6 +50,7 @@ export const BlogGenerationForm = ({
     achtergrond_kleur: '',
     hoofdaccent_gradient_1: '',
     hoofdaccent_gradient_2: '',
+    folder_id: '',
     get_afbeelding_url: '',
     post_blog_url: '',
     status: 'draft',
@@ -112,6 +113,7 @@ export const BlogGenerationForm = ({
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
+        folder_id: settings.folder_id || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
@@ -128,6 +130,7 @@ export const BlogGenerationForm = ({
         achtergrond_kleur: '',
         hoofdaccent_gradient_1: '',
         hoofdaccent_gradient_2: '',
+        folder_id: '',
         get_afbeelding_url: '',
         post_blog_url: '',
         status: 'draft',
@@ -213,6 +216,7 @@ export const BlogGenerationForm = ({
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
+        folder_id: settings.folder_id || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
@@ -245,6 +249,7 @@ export const BlogGenerationForm = ({
         taal: formData.taal,
         achtergrond_kleur: formData.achtergrond_kleur,
         hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
+        folder_id: formData.folder_id,
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         status: formData.status,
@@ -583,6 +588,7 @@ export const BlogGenerationForm = ({
             </div>
           </div>
         </div>
+        {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
       </div>
       
       {/* Status sectie */}
