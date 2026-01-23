@@ -41,7 +41,7 @@ interface GridTileProps {
 }
 
 const statusColors = {
-  active: 'bg-green-500',
+  active: 'bg-[#1CC866]',
   inactive: 'bg-red-500',
   testmode: 'bg-yellow-500',
 };
@@ -57,9 +57,9 @@ const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secon
 };
 
 const variantClasses = {
-  primary: 'bg-primary text-primary-foreground',
-  secondary: 'bg-secondary text-secondary-foreground',
-  accent: 'bg-accent text-accent-foreground',
+  primary: 'bg-primary text-[#002C1F]',
+  secondary: 'bg-secondary text-[#002C1F]',
+  accent: 'bg-accent text-[#002C1F]',
   muted: 'bg-muted text-muted-foreground',
 };
 
@@ -123,18 +123,18 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
             onPointerDown={(e) => e.stopPropagation()}
             className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#cfddd0]/10 rounded transition-opacity z-10"
           >
-            <Pencil className="w-2.5 h-2.5 text-[#cfddd0]" />
+            <Pencil className="w-2.5 h-2.5 text-[#002C1F]" />
           </button>
           
           {/* Drag handle */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-            <GripVertical className="w-4 h-4 text-[#cfddd0]" />
+            <GripVertical className="w-4 h-4 text-[#002C1F]" />
           </div>
 
           {/* Centered content */}
           <div className="flex flex-col items-center justify-center gap-1">
-            <Clock className="w-4 h-4 text-[#cfddd0]" />
-            <span className="text-[10px] text-[#cfddd0] font-medium leading-tight text-center px-1">
+            <Clock className="w-4 h-4 text-[#002C1F]" />
+            <span className="text-[10px] text-[#002C1F] font-medium leading-tight text-center px-1">
               {customLabel || name}
             </span>
           </div>
@@ -214,8 +214,8 @@ const DragOverlayTile = ({ id, name, status }: { id: string; name: string; statu
           <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
         <div className="flex flex-col items-center justify-center gap-1">
-          <Clock className="w-4 h-4 text-[#cfddd0]" />
-          <span className="text-[10px] text-[#cfddd0] font-medium leading-tight">{name}</span>
+          <Clock className="w-4 h-4 text-[#002C1F]" />
+          <span className="text-[10px] text-[#002C1F] font-medium leading-tight">{name}</span>
         </div>
       </div>
     );
