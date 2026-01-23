@@ -222,6 +222,7 @@ export type Database = {
           google_slides_id: string | null
           hoofdaccent_gradient: string | null
           id: string
+          image_type: string | null
           post_blog_url: string | null
           schrijfstijl: string | null
           status: string | null
@@ -242,6 +243,7 @@ export type Database = {
           google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
+          image_type?: string | null
           post_blog_url?: string | null
           schrijfstijl?: string | null
           status?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
+          image_type?: string | null
           post_blog_url?: string | null
           schrijfstijl?: string | null
           status?: string | null
