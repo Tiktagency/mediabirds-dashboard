@@ -46,20 +46,24 @@ export const DashboardTab = () => {
           onUpdateLabel={updateCustomLabel}
         />
         
-        <div className="space-y-6">
-          <ThemeSwitch 
-            theme={settings.theme} 
-            onUpdate={updateTheme} 
-          />
-          <TileColorCustomizer 
-            colors={settings.tile_colors}
-            onUpdate={updateTileColors}
-          />
-          <ColorCustomizer 
-            colors={settings.impact_colors}
-            onUpdate={updateImpactColors}
-          />
-        </div>
+        <TileColorCustomizer 
+          colors={settings.tile_colors}
+          onUpdate={updateTileColors}
+          onReset={async () => {
+            await updateTileColors({ background: '#cfddd0', text: '#002C1F' });
+          }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ThemeSwitch 
+          theme={settings.theme} 
+          onUpdate={updateTheme} 
+        />
+        <ColorCustomizer 
+          colors={settings.impact_colors}
+          onUpdate={updateImpactColors}
+        />
       </div>
     </div>
   );
