@@ -1,59 +1,44 @@
 
 
-# Plan: Info Tooltip voor Bespaard Deze Maand Tile
+# Plan: Correcte Bedrijfs-Breakdown voor Bespaarde Uren
 
-## Huidige Situatie
+## Probleem Analyse
 
-### Data Actualiteit
-De bespaarde uren worden **live berekend** bij elke pageload door de `get-saved-hours` edge function:
-- Haalt alle executies van de afgelopen 30 dagen op via de n8n API
-- Gebruikt cursor-based pagination om ALLE executies te tellen
-- Cachet resultaat lokaal voor 1 uur (voor snellere weergave)
-- Berekening is dus altijd actueel en update bij elke bezoek aan het dashboard
+De huidige tooltip toont alle uren onder "Overig" in plaats van per bedrijf. Dit komt door een matching bug in de edge function:
 
-### Huidige Breakdown
-De edge function retourneert al een breakdown, maar per workflow naam, niet per bedrijf:
-```
-SEO blog: 231 executies × 30 min = 115.5 uur
-SEO zoekwoorden: 166 executies × 30 min = 83 uur
-MEDIABIRDS monday planning: 5 × 45 min = 3.75 uur
-MEDIABIRDS Alt-text Wordpress: 34 × 3 min = 1.7 uur
-```
+### Huidige Data Structuur
 
----
+| Bron | Workflow Namen | Company |
+|------|----------------|---------|
+| **automation_settings** | `SEO blog`, `SEO zoekwoorden` | "Overig" |
+| **companies (Mediabirds)** | `MEDIABIRDS zoekwoorden`, `MEDIABIRDS seo` | Mediabirds |
+| **companies (Tikt)** | `TIKT zoekwoorden`, `TIKT seo` | Tikt |
 
-## Oplossing: Info Tooltip met Bedrijfsoverzicht
+### De Bug
+De n8n workflow `SEO blog` matcht met de automation_settings entry (`seo blog` → "Overig") **voordat** het kan matchen met de company entries (`mediabirds seo`, `tikt seo`).
 
-Voeg een info icoon toe aan de "Bespaard deze maand" tile met een uitgebreide tooltip die:
-1. **Periode** toont (afgelopen 30 dagen)
-2. **Breakdown per bedrijf** met uren en executies
-3. **Breakdown per workflow type** binnen elk bedrijf
-4. **Visuele voortgangsbalkjes** per bedrijf
+De `includes()` check is te breed - `seo blog` bevat `seo`, dus het matcht met de eerste "Overig" entry.
 
 ---
 
-## Tooltip Ontwerp
+## Oplossing
 
-```text
-+--------------------------------------------+
-|  BESPAARD DEZE MAAND                       |
-|  Periode: Afgelopen 30 dagen               |
-|                                            |
-|  MEDIABIRDS                    │ 120.5 uur |
-|  ████████████████████░░░░░░░░░ │ 59%       |
-|  • SEO Blog: 115 uur (180 runs)            |
-|  • Monday Planning: 3.75 uur (5 runs)      |
-|  • Alt-text: 1.75 uur (34 runs)            |
-|                                            |
-|  TIKT                          │  83.5 uur |
-|  ██████████████░░░░░░░░░░░░░░░ │ 41%       |
-|  • SEO Blog: 50 uur (100 runs)             |
-|  • Zoekwoorden: 33.5 uur (66 runs)         |
-|                                            |
-|  ─────────────────────────────             |
-|  Totaal: 204 uur (436 executies)           |
-+--------------------------------------------+
-```
+Verbeter de workflow-naar-bedrijf matching met een **prioriteitsysteem**:
+
+1. **Exacte match eerst** - workflow naam moet exact overeenkomen
+2. **Company-specifieke prefix match** - workflows die beginnen met bedrijfsnaam (MEDIABIRDS, TIKT)
+3. **Fallback naar "Overig"** - alleen als geen company-specifieke match
+
+### Nieuwe Matching Strategie
+
+| n8n Workflow | Matched Entry | Bedrijf |
+|--------------|---------------|---------|
+| `MEDIABIRDS Alt-text Wordpress` | Exact match in automation_settings | Mediabirds (via prefix) |
+| `MEDIABIRDS monday planning` | Exact match | Mediabirds (via prefix) |
+| `SEO blog` | Geen company match → automation_settings | Overig |
+| `TIKT zoekwoorden` | Exact match in companies | Tikt |
+
+**Belangrijke inzicht:** De huidige database heeft `SEO blog` en `SEO zoekwoorden` als generieke workflows in automation_settings, terwijl de company-specifieke workflows andere namen hebben (`MEDIABIRDS seo`, `TIKT seo`).
 
 ---
 
@@ -61,106 +46,120 @@ Voeg een info icoon toe aan de "Bespaard deze maand" tile met een uitgebreide to
 
 ### 1. Edge Function: `supabase/functions/get-saved-hours/index.ts`
 
-Uitbreiden van de response om breakdown per bedrijf te retourneren:
+Herschrijf de matching logica:
 
-| Aanpassing | Details |
-|------------|---------|
-| Workflow-naar-bedrijf mapping | Bij het verwerken van executies, koppel elke workflow aan het juiste bedrijf |
-| Breakdown structuur | Retourneer `breakdownByCompany` naast `breakdown` |
-| Extra metadata | Include periode start/eind datums |
+```text
+Nieuwe aanpak:
+1. Bouw een prioriteits-map met:
+   - Exacte workflow namen → info
+   - Company prefixes → info (MEDIABIRDS*, TIKT*)
+   
+2. Bij het matchen van een n8n workflow:
+   a. Check exacte match in companies tabel entries
+   b. Check exacte match in automation_settings entries
+   c. Check of workflow naam begint met bedrijfsnaam
+   d. Check of workflow naam BEVAT een bekende key
+   e. Fallback naar "Overig"
 
-Nieuwe response structuur:
-```json
-{
-  "totalHours": 204,
-  "totalMinutes": 12237,
-  "executionCount": 436,
-  "periodStart": "2025-12-28T00:00:00Z",
-  "periodEnd": "2026-01-27T00:00:00Z",
-  "breakdownByCompany": {
-    "Mediabirds": {
-      "totalMinutes": 7257,
-      "totalHours": 120.95,
-      "workflows": {
-        "SEO blog": { "executions": 130, "minutesSaved": 3900 },
-        "SEO zoekwoorden": { "executions": 100, "minutesSaved": 3000 },
-        "monday planning": { "executions": 5, "minutesSaved": 225 },
-        "Alt-text Wordpress": { "executions": 34, "minutesSaved": 102 }
-      }
-    },
-    "Tikt": {
-      "totalMinutes": 4980,
-      "totalHours": 83,
-      "workflows": {
-        "SEO blog": { "executions": 101, "minutesSaved": 3030 },
-        "SEO zoekwoorden": { "executions": 66, "minutesSaved": 1980 }
-      }
-    }
-  }
+3. Extracteer bedrijfsnaam uit workflow naam als prefix match:
+   "MEDIABIRDS Alt-text Wordpress" → Bedrijf: "Mediabirds"
+```
+
+### Specifieke Code Wijzigingen
+
+**Probleem 1: Automation settings krijgen "Overig" als company**
+
+Oplossing: Extracteer bedrijfsnaam uit de workflow naam als deze een bedrijfsnaam bevat:
+```typescript
+// Als workflow naam begint met een bekende bedrijfsnaam, gebruik die
+const companyPrefix = extractCompanyFromWorkflowName(workflowName, companies);
+if (companyPrefix) {
+  companyName = companyPrefix;
 }
 ```
 
-### 2. Hook: `src/hooks/useSavedHours.ts`
+**Probleem 2: Matching volgorde is verkeerd**
 
-Uitbreiden om extra data te retourneren:
+Oplossing: Prioriteer exacte matches boven contains:
+```typescript
+// Stap 1: Check exacte match
+if (workflowInfoMap[workflowNameLower]) {
+  return workflowInfoMap[workflowNameLower];
+}
 
-| Aanpassing | Details |
-|------------|---------|
-| Nieuwe state | `breakdownByCompany`, `periodStart`, `periodEnd`, `executionCount` |
-| Cache uitbreiden | Volledige response cachen inclusief breakdown |
-| Types | TypeScript interfaces voor breakdown structuur |
+// Stap 2: Check company prefix match
+for (const company of companies) {
+  if (workflowNameLower.startsWith(company.name.toLowerCase())) {
+    // Bepaal workflow type en return info
+  }
+}
 
-### 3. Component: `src/components/dashboard/SavedHoursInfoTooltip.tsx`
-
-Nieuw component voor de tooltip met bedrijfsoverzicht:
-
-| Element | Beschrijving |
-|---------|-------------|
-| Header | "Bespaard deze maand" + periode |
-| Per bedrijf | Naam, totaal uren, voortgangsbalk (% van totaal) |
-| Workflow details | Lijst met uren en aantal executies |
-| Footer | Totaal uren en executies |
-| Styling | Consistent met `AutomationInfoTooltip` (dark theme, rounded) |
-
-### 4. Component: `src/components/dashboard/SavedHoursTile.tsx`
-
-Info icoon toevoegen met hover tooltip:
-
-| Aanpassing | Details |
-|------------|---------|
-| Import | Nieuwe `SavedHoursInfoTooltip` component |
-| Layout | Relatieve positionering voor info icoon rechtsbovenin |
-| Data | Doorgeven van breakdown data aan tooltip |
+// Stap 3: Contains match (huidige logica)
+```
 
 ---
 
-## Visuele Details Tooltip
+## Verbeterde Tooltip UI
 
-### Voortgangsbalk per Bedrijf
-- Horizontale balk die percentage van totaal toont
-- Kleur: primaire tile tekstkleur (met opacity variaties)
-- Breedte: 100% = bedrijf met meeste uren
+De huidige tooltip UI is al goed opgezet voor meerdere bedrijven. Na de backend fix zal deze correct werken:
 
-### Workflow Details
-- Compacte lijst met bullet points
-- Format: `{workflow naam}: {uren} uur ({aantal} runs)`
-- Kleinere tekst dan bedrijfsnaam
+```text
++--------------------------------------------+
+│  BESPAARD DEZE MAAND                       │
+│  Periode: 28 dec - 27 jan                  │
+│                                            │
+│  MEDIABIRDS                    │ 120.5 uur │
+│  ████████████████████░░░░░░░░░ │   59%     │
+│  • SEO Blog: 58 uur (116 runs)             │
+│  • SEO Zoekwoorden: 50 uur (100 runs)      │
+│  • Monday Planning: 3.75 uur (5 runs)      │
+│  • Alt-text: 1.7 uur (34 runs)             │
+│                                            │
+│  TIKT                          │  83.5 uur │
+│  ██████████████░░░░░░░░░░░░░░░ │   41%     │
+│  • SEO Blog: 57.5 uur (115 runs)           │
+│  • SEO Zoekwoorden: 26 uur (52 runs)       │
+│                                            │
+│  ─────────────────────────────             │
+│  Totaal: 204 uur (436 executies)           │
++--------------------------------------------+
+```
 
-### Styling Consistent met Bestaande Tooltips
-- Donkere achtergrond (`bg-[#151515]`)
-- Afgeronde hoeken (`rounded-2xl`)
-- Subtiele schaduw
-- Fade-in animatie
-- Breedte: 280px (iets breder voor overzichtelijkheid)
+---
+
+## Schaalbare Oplossing voor Meer Bedrijven
+
+De tooltip is al ontworpen om te schalen:
+
+| Eigenschap | Implementatie |
+|------------|---------------|
+| **Sortering** | Bedrijven gesorteerd op meeste uren (grootste eerst) |
+| **Scroll** | Bij veel bedrijven wordt de tooltip scrollbaar |
+| **Compacte weergave** | Voortgangsbalk per bedrijf geeft snel inzicht |
+| **Details on-demand** | Workflow details zijn compact onder elk bedrijf |
+
+### UI Verbeteringen voor Schaalbaarheid
+
+1. **Max hoogte met scroll** - Voeg `max-h-[400px] overflow-y-auto` toe
+2. **Collapsible sections** - Optioneel: workflow details inklapbaar maken
+3. **Top N bedrijven** - Bij >5 bedrijven, toon top 5 met "en X anderen"
 
 ---
 
 ## Bestanden Overzicht
 
-| Bestand | Actie |
-|---------|-------|
-| `supabase/functions/get-saved-hours/index.ts` | Uitbreiden met bedrijfs-breakdown |
-| `src/hooks/useSavedHours.ts` | Uitbreiden met breakdown data |
-| `src/components/dashboard/SavedHoursInfoTooltip.tsx` | Nieuw component |
-| `src/components/dashboard/SavedHoursTile.tsx` | Info icoon toevoegen |
+| Bestand | Wijziging |
+|---------|-----------|
+| `supabase/functions/get-saved-hours/index.ts` | Verbeterde matching logica met bedrijfsnaam extractie |
+| `src/components/dashboard/SavedHoursInfoTooltip.tsx` | Max hoogte + scroll voor schaalbaarheid |
+
+---
+
+## Verwacht Resultaat
+
+Na implementatie:
+- Workflows met bedrijfsnaam in de naam worden correct gekoppeld aan dat bedrijf
+- Generieke workflows (zonder bedrijfsnaam) blijven onder "Overig"
+- Tooltip toont per bedrijf hoeveel uur bespaard is
+- Schaalbaar naar meer bedrijven met scrollbare weergave
 
