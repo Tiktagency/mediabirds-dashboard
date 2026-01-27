@@ -215,6 +215,12 @@ const Index = () => {
     low: '#6b7280',
   };
 
+  // Tile colors from dashboard settings
+  const tileColors = dashboardSettings.tile_colors || {
+    background: '#cfddd0',
+    text: '#002C1F',
+  };
+
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
@@ -312,7 +318,13 @@ const Index = () => {
             
             // Render SavedHoursTile for saved-hours
             if (item === 'saved-hours') {
-              return <SavedHoursTile key={item} workflowNames={connectedWorkflowNames} />;
+              return (
+                <SavedHoursTile 
+                  key={item} 
+                  workflowNames={connectedWorkflowNames} 
+                  tileColors={tileColors}
+                />
+              );
             }
             
             // Render actual tile
@@ -340,6 +352,7 @@ const Index = () => {
                 multipleLastRuns={getMultipleLastRuns(item)}
                 impactColors={impactColors}
                 status={automationSetting?.status}
+                tileColors={tileColors}
               />
             );
           })}

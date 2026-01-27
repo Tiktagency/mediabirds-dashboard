@@ -1,21 +1,35 @@
 import { Clock } from 'lucide-react';
 import { useSavedHours } from '@/hooks/useSavedHours';
+import type { TileColors } from '@/hooks/useDashboardSettings';
 
 interface SavedHoursTileProps {
   workflowNames: string[];
+  tileColors?: TileColors;
 }
 
-export const SavedHoursTile = ({ workflowNames }: SavedHoursTileProps) => {
+const DEFAULT_TILE_COLORS: TileColors = {
+  background: '#cfddd0',
+  text: '#002C1F',
+};
+
+export const SavedHoursTile = ({ workflowNames, tileColors }: SavedHoursTileProps) => {
   const { totalHours, isLoading } = useSavedHours(workflowNames);
+  const colors = tileColors || DEFAULT_TILE_COLORS;
 
   return (
-    <div className="h-32 rounded-xl bg-white border border-[#cfddd0]/30 flex flex-col items-center justify-center gap-2 p-4">
-      <Clock className="w-6 h-6 text-[#002C1F]" />
-      <span className="text-xs text-[#002C1F] font-medium">Bespaard deze maand</span>
+    <div 
+      className="h-32 rounded-xl border flex flex-col items-center justify-center gap-2 p-4"
+      style={{ 
+        backgroundColor: colors.background,
+        borderColor: `${colors.background}40`,
+      }}
+    >
+      <Clock className="w-6 h-6" style={{ color: colors.text }} />
+      <span className="text-xs font-medium" style={{ color: colors.text }}>Bespaard deze maand</span>
       {isLoading ? (
-        <div className="animate-pulse bg-[#cfddd0]/30 h-8 w-16 rounded" />
+        <div className="animate-pulse h-8 w-16 rounded" style={{ backgroundColor: `${colors.text}20` }} />
       ) : (
-        <span className="text-2xl font-bold text-[#002C1F]">{totalHours} uur</span>
+        <span className="text-2xl font-bold" style={{ color: colors.text }}>{totalHours} uur</span>
       )}
     </div>
   );
