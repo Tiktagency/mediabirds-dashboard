@@ -3,7 +3,6 @@ import { useSavedHours } from '@/hooks/useSavedHours';
 import type { TileColors } from '@/hooks/useDashboardSettings';
 
 interface SavedHoursTileProps {
-  workflowNames: string[];
   tileColors?: TileColors;
 }
 
@@ -12,8 +11,8 @@ const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
   text: '#412700',
 };
 
-export const SavedHoursTile = ({ workflowNames, tileColors }: SavedHoursTileProps) => {
-  const { totalHours, isLoading } = useSavedHours(workflowNames);
+export const SavedHoursTile = ({ tileColors }: SavedHoursTileProps) => {
+  const { totalHours, isLoading } = useSavedHours();
   const colors = tileColors || DEFAULT_SAVED_HOURS_COLORS;
 
   return (

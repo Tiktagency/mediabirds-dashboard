@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const CACHE_KEY = 'saved_hours_cache';
 
-export const useSavedHours = (workflowNames: string[]) => {
+export const useSavedHours = () => {
   // Initialize with cached value for instant display
   const getCachedValue = () => {
     try {
@@ -27,17 +27,10 @@ export const useSavedHours = (workflowNames: string[]) => {
 
   useEffect(() => {
     const fetchSavedHours = async () => {
-      if (!workflowNames || workflowNames.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         setError(null);
 
-        const { data, error: fnError } = await supabase.functions.invoke('get-saved-hours', {
-          body: { workflowNames },
-        });
+        const { data, error: fnError } = await supabase.functions.invoke('get-saved-hours');
 
         if (fnError) {
           console.error('Error fetching saved hours:', fnError);
@@ -62,7 +55,7 @@ export const useSavedHours = (workflowNames: string[]) => {
     };
 
     fetchSavedHours();
-  }, [JSON.stringify(workflowNames)]);
+  }, []);
 
   return { totalHours, isLoading, error };
 };
