@@ -211,6 +211,15 @@ Deno.serve(async (req) => {
               onConflict: 'automation_name'
             });
 
+          // Log workflow execution for accurate per-company tracking
+          await supabase.from('workflow_executions').insert({
+            company_id: company.id,
+            workflow_type: 'seo_blog',
+            triggered_by: null, // Scheduled trigger has no user
+            success: true,
+          });
+          console.log(`[run-scheduled-blogs] Logged workflow execution for company: ${company.name}`);
+
           results.push({
             company: company.name,
             success: true,
