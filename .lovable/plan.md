@@ -1,99 +1,154 @@
 
 
-# Plan: Reset Knop en Layout Aanpassing Tile Kleuren
+# Plan: Eigen Kleurenpalet voor "Bespaard deze maand" Tile
 
 ## Overzicht
 
-1. **Reset knop toevoegen** aan de TileColorCustomizer om terug te keren naar standaard kleuren
-2. **Layout herschikken** zodat Tile Kleuren direct rechts van Tile Volgorde staat
-3. **Thema component verplaatsen** naar een andere locatie in de rechterkolom
+De "Bespaard deze maand" tile krijgt een eigen kleurenpalet, onafhankelijk van de andere dashboard tiles. Dit zorgt voor visuele differentiatie tussen de statistiek-tile en de navigatie-tiles.
 
 ---
 
-## Huidige Layout
+## Kleuren Configuratie
 
-```text
-+------------------------+------------------------+
-|                        |  ThemeSwitch           |
-|  TileOrganizer         |  TileColorCustomizer   |
-|  (Tile Volgorde)       |  ColorCustomizer       |
-|                        |  (Impact Kleuren)      |
-+------------------------+------------------------+
-```
-
-## Nieuwe Layout
-
-```text
-+------------------------+------------------------+
-|  TileOrganizer         |  TileColorCustomizer   |
-|  (Tile Volgorde)       |  (met Reset knop)      |
-+------------------------+------------------------+
-|  ThemeSwitch           |  ColorCustomizer       |
-|                        |  (Impact Kleuren)      |
-+------------------------+------------------------+
-```
+| Tile | Achtergrond | Tekst |
+|------|-------------|-------|
+| **Bespaard deze maand** (nieuw) | `#f2eadc` (beige/crème) | `#412700` (donkerbruin) |
+| **Overige tiles** (bestaand) | `#cfddd0` (sage groen) | `#002C1F` (donkergroen) |
 
 ---
 
-## Bestanden die worden aangepast
+## Wat wordt aangepast
+
+### Bestanden die worden aangepast:
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/components/admin/dashboard/TileColorCustomizer.tsx` | Reset knop toevoegen |
-| `src/components/admin/dashboard/DashboardTab.tsx` | Layout herschikken |
+| `src/hooks/useDashboardSettings.ts` | Nieuwe `saved_hours_colors` property toevoegen aan interface en hook |
+| `src/components/admin/dashboard/TileColorCustomizer.tsx` | Tweede sectie met kleurpickers voor SavedHours tile |
+| `src/components/dashboard/SavedHoursTile.tsx` | Nieuwe prop voor eigen kleuren |
+| `src/components/admin/dashboard/TileOrganizer.tsx` | Preview bijwerken met aparte kleuren |
+| `src/components/admin/dashboard/DashboardTab.tsx` | Nieuwe kleuren doorgeven |
+| `src/pages/Index.tsx` | Aparte kleuren doorgeven aan SavedHoursTile |
 
 ---
 
 ## Technische Details
 
-### 1. TileColorCustomizer - Reset Knop
+### 1. Interface Uitbreiden (useDashboardSettings.ts)
 
-Een reset knop toevoegen die de kleuren terugzet naar de standaard waarden:
-- **Achtergrond**: `#cfddd0`
-- **Tekst**: `#002C1F`
+```typescript
+export interface DashboardSettings {
+  // ... bestaande velden
+  tile_colors: TileColors;           // Voor navigatie tiles
+  saved_hours_colors: TileColors;    // NIEUW: Voor "Bespaard deze maand" tile
+}
 
-De reset knop komt onderaan de card, onder de kleur pickers. Bij klikken worden beide kleuren tegelijk gereset.
+const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
+  background: '#f2eadc',
+  text: '#412700',
+};
+```
 
-```tsx
-// Nieuwe prop voor reset functionaliteit
+Nieuwe functie:
+```typescript
+const updateSavedHoursColors = async (colors: { background?: string; text?: string }) => {
+  // Opslaan in dashboard_colors.saved_hours_colors
+};
+```
+
+### 2. TileColorCustomizer Uitbreiden
+
+De component krijgt twee secties:
+
+```text
++----------------------------------------------------+
+|  Tile Kleuren                                      |
+|  Pas de kleuren aan van je dashboard tiles.        |
+|----------------------------------------------------|
+|                                                    |
+|  ▸ BESPAARD DEZE MAAND                             |
+|  Preview: [Mini tile met beige/bruin]              |
+|  Achtergrond: [🎨] [#f2eadc] [██]                  |
+|  Tekst:       [🎨] [#412700] [██]                  |
+|  [↺ Reset naar standaard]                          |
+|                                                    |
+|  ▸ OVERIGE TILES                                   |
+|  Preview: [Mini tile met groen]                    |
+|  Achtergrond: [🎨] [#cfddd0] [██]                  |
+|  Tekst:       [🎨] [#002C1F] [██]                  |
+|  [↺ Reset naar standaard]                          |
++----------------------------------------------------+
+```
+
+Nieuwe props:
+```typescript
 interface TileColorCustomizerProps {
-  colors: TileColors;
-  onUpdate: (colors: { background?: string; text?: string }) => Promise<void>;
-  onReset: () => Promise<void>;  // Nieuwe prop
+  colors: TileColors;                    // Overige tiles
+  savedHoursColors: TileColors;          // Bespaard tile
+  onUpdate: (...) => Promise<void>;
+  onUpdateSavedHours: (...) => Promise<void>;
+  onReset: () => Promise<void>;
+  onResetSavedHours: () => Promise<void>;
 }
 ```
 
-De reset knop krijgt een `RotateCcw` icoon en de tekst "Reset naar standaard".
+### 3. SavedHoursTile Aanpassen
 
-### 2. DashboardTab - Layout Herschikking
+De component krijgt een aparte default:
+```typescript
+const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
+  background: '#f2eadc',
+  text: '#412700',
+};
 
-De grid layout wordt aangepast van een 2-koloms layout naar een meer gestructureerde opzet:
+interface SavedHoursTileProps {
+  workflowNames: string[];
+  tileColors?: TileColors;  // Nu specifiek voor deze tile
+}
+```
 
-**Eerste rij (2 kolommen):**
-- Links: TileOrganizer (Tile volgorde)
-- Rechts: TileColorCustomizer (Tile kleuren met reset)
+### 4. TileOrganizer Preview Aanpassen
 
-**Tweede rij (2 kolommen):**
-- Links: ThemeSwitch (Thema)
-- Rechts: ColorCustomizer (Impact kleuren)
+De drag-and-drop preview toont de "saved-hours" tile met zijn eigen kleuren:
+- Saved-hours tile: gebruikt `savedHoursColors`
+- Andere tiles: gebruiken `tileColors`
+
+### 5. Index.tsx Aanpassen
+
+```typescript
+// In Index component
+const savedHoursColors = dashboardSettings.saved_hours_colors || {
+  background: '#f2eadc',
+  text: '#412700',
+};
+
+// Bij renderen SavedHoursTile
+<SavedHoursTile 
+  workflowNames={connectedWorkflowNames} 
+  tileColors={savedHoursColors}  // Nu aparte kleuren
+/>
+```
 
 ---
 
-## Visueel Ontwerp Reset Knop
+## Visueel Resultaat
 
+Na implementatie:
+
+**Dashboard:**
 ```text
-+----------------------------------------------+
-|  Tile Kleuren                                |
-|  Pas de kleuren aan van je dashboard tiles.  |
-|----------------------------------------------|
-|  Preview: [Mini tile preview]                |
-|                                              |
-|  Achtergrond: [🎨] [#cfddd0] [██]            |
-|  Tekst:       [🎨] [#002C1F] [██]            |
-|                                              |
-|  [↺ Reset naar standaard]                    |
-+----------------------------------------------+
++------------------+------------------+------------------+
+| 🕐 Bespaard      | 📅 Planning      | 📄 Blog          |
+| deze maand       | (groen)          | (groen)          |
+| (beige/bruin)    |                  |                  |
++------------------+------------------+------------------+
+| 🖼 Alt Text      | 💬 Chatbot       | ✨ Copyright     |
+| (groen)          | (groen)          | (groen)          |
++------------------+------------------+------------------+
 ```
 
-De reset knop is een subtiele outline button die past bij de rest van het admin panel design.
+**Admin Panel - Tile Kleuren:**
+- Twee visueel gescheiden secties
+- Elk met eigen preview, kleurpickers en reset knop
+- "Bespaard deze maand" bovenaan voor prominentie
 
