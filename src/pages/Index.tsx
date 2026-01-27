@@ -221,6 +221,12 @@ const Index = () => {
     text: '#002C1F',
   };
 
+  // Saved hours colors from dashboard settings
+  const savedHoursColors = dashboardSettings.saved_hours_colors || {
+    background: '#f2eadc',
+    text: '#412700',
+  };
+
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
@@ -325,7 +331,7 @@ const Index = () => {
                 <SavedHoursTile 
                   key={item} 
                   workflowNames={connectedWorkflowNames} 
-                  tileColors={tileColors}
+                  tileColors={savedHoursColors}
                 />
               );
             }

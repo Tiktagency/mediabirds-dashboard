@@ -7,14 +7,14 @@ interface SavedHoursTileProps {
   tileColors?: TileColors;
 }
 
-const DEFAULT_TILE_COLORS: TileColors = {
-  background: '#cfddd0',
-  text: '#002C1F',
+const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
+  background: '#f2eadc',
+  text: '#412700',
 };
 
 export const SavedHoursTile = ({ workflowNames, tileColors }: SavedHoursTileProps) => {
   const { totalHours, isLoading } = useSavedHours(workflowNames);
-  const colors = tileColors || DEFAULT_TILE_COLORS;
+  const colors = tileColors || DEFAULT_SAVED_HOURS_COLORS;
 
   return (
     <div 
