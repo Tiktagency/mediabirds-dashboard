@@ -331,6 +331,7 @@ export type Database = {
           id: string
           job_title: string
           last_name: string
+          name: string
           profile_photo_url: string | null
           socials: Json | null
           text_color: string
@@ -348,6 +349,7 @@ export type Database = {
           id?: string
           job_title: string
           last_name: string
+          name?: string
           profile_photo_url?: string | null
           socials?: Json | null
           text_color?: string
@@ -365,6 +367,7 @@ export type Database = {
           id?: string
           job_title?: string
           last_name?: string
+          name?: string
           profile_photo_url?: string | null
           socials?: Json | null
           text_color?: string
