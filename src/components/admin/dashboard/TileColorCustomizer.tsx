@@ -77,10 +77,6 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Achtergrond"
               />
-              <div 
-                className="w-8 h-8 rounded border border-border/30 shrink-0"
-                style={{ backgroundColor: savedHoursColors.background }}
-              />
               <span className="text-[10px] text-muted-foreground">Achtergrond</span>
             </div>
             <div className="flex items-center gap-2">
@@ -91,12 +87,6 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Tekst"
               />
-              <div 
-                className="w-8 h-8 rounded border border-border/30 shrink-0 flex items-center justify-center"
-                style={{ backgroundColor: savedHoursColors.background }}
-              >
-                <span className="text-xs font-bold" style={{ color: savedHoursColors.text }}>A</span>
-              </div>
               <span className="text-[10px] text-muted-foreground">Tekst</span>
             </div>
           </div>
@@ -114,10 +104,6 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Achtergrond"
               />
-              <div 
-                className="w-8 h-8 rounded border border-border/30 shrink-0"
-                style={{ backgroundColor: colors.background }}
-              />
               <span className="text-[10px] text-muted-foreground">Achtergrond</span>
             </div>
             <div className="flex items-center gap-2">
@@ -128,12 +114,6 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Tekst"
               />
-              <div 
-                className="w-8 h-8 rounded border border-border/30 shrink-0 flex items-center justify-center"
-                style={{ backgroundColor: colors.background }}
-              >
-                <span className="text-xs font-bold" style={{ color: colors.text }}>A</span>
-              </div>
               <span className="text-[10px] text-muted-foreground">Tekst</span>
             </div>
           </div>
