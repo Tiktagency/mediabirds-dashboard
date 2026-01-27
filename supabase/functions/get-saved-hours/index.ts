@@ -22,6 +22,28 @@ interface WorkflowInfo {
   workflowType: string;
 }
 
+// Helper function to extract company name from workflow name
+function extractCompanyFromWorkflowName(workflowName: string, companyNames: string[]): string | null {
+  const nameLower = workflowName.toLowerCase();
+  for (const companyName of companyNames) {
+    if (nameLower.startsWith(companyName.toLowerCase())) {
+      return companyName;
+    }
+  }
+  return null;
+}
+
+// Helper function to determine workflow type from name
+function determineWorkflowType(workflowName: string): string {
+  const nameLower = workflowName.toLowerCase();
+  if (nameLower.includes('alt-text') || nameLower.includes('alttext')) return 'Alt-text';
+  if (nameLower.includes('monday') || nameLower.includes('planning')) return 'Monday Planning';
+  if (nameLower.includes('blog')) return 'SEO Blog';
+  if (nameLower.includes('zoekwoord') || nameLower.includes('seo')) return 'SEO Zoekwoorden';
+  if (nameLower.includes('subkeyword')) return 'Subkeywords';
+  return 'Overig';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,10 +63,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Build workflow info map: workflow name -> { timeSaved, companyName, workflowType }
-    const workflowInfoMap: Record<string, WorkflowInfo> = {};
-    
-    // Fetch automation_settings for base workflow names and time saved
+    // Fetch automation_settings for time saved values
     const { data: automationSettings, error: settingsError } = await supabase
       .from('automation_settings')
       .select('automation_name, n8n_workflow_name, time_saved_per_execution');
@@ -53,26 +72,30 @@ serve(async (req) => {
       console.error('Error fetching automation settings:', settingsError);
     }
 
-    let zoekwoordTimeSaved = 30; // default
-    let blogsTimeSaved = 30; // default
+    // Build time saved lookup from automation_settings
+    const timeSavedMap: Record<string, number> = {};
+    let defaultZoekwoordTimeSaved = 30;
+    let defaultBlogsTimeSaved = 30;
+    let defaultAltTextTimeSaved = 3;
+    let defaultMondayTimeSaved = 45;
 
     if (automationSettings) {
       for (const setting of automationSettings) {
+        if (setting.n8n_workflow_name && setting.time_saved_per_execution) {
+          timeSavedMap[setting.n8n_workflow_name.toLowerCase()] = setting.time_saved_per_execution;
+        }
+        // Store default times for workflow types
         if (setting.automation_name === 'zoekwoord-onderzoek' && setting.time_saved_per_execution) {
-          zoekwoordTimeSaved = setting.time_saved_per_execution;
+          defaultZoekwoordTimeSaved = setting.time_saved_per_execution;
         }
         if ((setting.automation_name === 'blogs' || setting.automation_name === 'seo-blog') && setting.time_saved_per_execution) {
-          blogsTimeSaved = setting.time_saved_per_execution;
+          defaultBlogsTimeSaved = setting.time_saved_per_execution;
         }
-        
-        // Add base workflows with their time_saved - these are "Overig" company
-        if (setting.n8n_workflow_name && setting.time_saved_per_execution !== null && setting.time_saved_per_execution > 0) {
-          const nameLower = setting.n8n_workflow_name.toLowerCase();
-          workflowInfoMap[nameLower] = {
-            timeSaved: setting.time_saved_per_execution,
-            companyName: 'Overig',
-            workflowType: setting.automation_name || setting.n8n_workflow_name,
-          };
+        if (setting.automation_name === 'alt-text' && setting.time_saved_per_execution) {
+          defaultAltTextTimeSaved = setting.time_saved_per_execution;
+        }
+        if (setting.automation_name === 'monday-planning' && setting.time_saved_per_execution) {
+          defaultMondayTimeSaved = setting.time_saved_per_execution;
         }
       }
     }
@@ -86,31 +109,31 @@ serve(async (req) => {
       console.error('Error fetching companies:', companiesError);
     }
 
+    // Build exact match map from companies table (highest priority)
+    const exactMatchMap: Record<string, WorkflowInfo> = {};
+    const companyNames: string[] = [];
+
     if (companies) {
       for (const company of companies) {
-        // SEO Research workflows
+        companyNames.push(company.name);
+        
         if (company.seo_research_n8n_name) {
-          const nameLower = company.seo_research_n8n_name.toLowerCase();
-          workflowInfoMap[nameLower] = {
-            timeSaved: zoekwoordTimeSaved,
+          exactMatchMap[company.seo_research_n8n_name.toLowerCase()] = {
+            timeSaved: defaultZoekwoordTimeSaved,
             companyName: company.name,
             workflowType: 'SEO Zoekwoorden',
           };
         }
-        // Subkeywords workflows
         if (company.subkeywords_n8n_name) {
-          const nameLower = company.subkeywords_n8n_name.toLowerCase();
-          workflowInfoMap[nameLower] = {
-            timeSaved: zoekwoordTimeSaved,
+          exactMatchMap[company.subkeywords_n8n_name.toLowerCase()] = {
+            timeSaved: defaultZoekwoordTimeSaved,
             companyName: company.name,
             workflowType: 'Subkeywords',
           };
         }
-        // Blogs workflows
         if (company.blogs_n8n_name) {
-          const nameLower = company.blogs_n8n_name.toLowerCase();
-          workflowInfoMap[nameLower] = {
-            timeSaved: blogsTimeSaved,
+          exactMatchMap[company.blogs_n8n_name.toLowerCase()] = {
+            timeSaved: defaultBlogsTimeSaved,
             companyName: company.name,
             workflowType: 'SEO Blog',
           };
@@ -118,7 +141,8 @@ serve(async (req) => {
       }
     }
 
-    console.log('Workflow info map:', JSON.stringify(workflowInfoMap));
+    console.log('Company names:', companyNames);
+    console.log('Exact match map:', JSON.stringify(exactMatchMap));
 
     // Fetch all workflows from n8n
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -142,7 +166,7 @@ serve(async (req) => {
     const workflows = workflowsData.data || [];
     console.log(`Found ${workflows.length} workflows in n8n`);
 
-    // Create a map of workflow IDs to names and info
+    // Create a map of workflow IDs to names and info using priority-based matching
     const workflowIdToName = new Map<string, string>();
     const workflowIdToInfo = new Map<string, WorkflowInfo>();
     
@@ -150,11 +174,60 @@ serve(async (req) => {
       workflowIdToName.set(w.id, w.name);
       const workflowNameLower = w.name.toLowerCase();
       
-      // Find matching workflow info
-      for (const [key, info] of Object.entries(workflowInfoMap)) {
-        if (workflowNameLower.includes(key) || key.includes(workflowNameLower)) {
-          workflowIdToInfo.set(w.id, info);
-          break;
+      // Priority 1: Exact match in companies table
+      if (exactMatchMap[workflowNameLower]) {
+        workflowIdToInfo.set(w.id, exactMatchMap[workflowNameLower]);
+        console.log(`Matched "${w.name}" via exact match -> ${exactMatchMap[workflowNameLower].companyName}`);
+        return;
+      }
+      
+      // Priority 2: Company prefix match (e.g., "MEDIABIRDS Alt-text" -> Mediabirds)
+      const companyFromPrefix = extractCompanyFromWorkflowName(w.name, companyNames);
+      if (companyFromPrefix) {
+        const workflowType = determineWorkflowType(w.name);
+        let timeSaved = timeSavedMap[workflowNameLower];
+        
+        // If no exact time saved, use default based on workflow type
+        if (!timeSaved) {
+          if (workflowType === 'Alt-text') timeSaved = defaultAltTextTimeSaved;
+          else if (workflowType === 'Monday Planning') timeSaved = defaultMondayTimeSaved;
+          else if (workflowType === 'SEO Blog') timeSaved = defaultBlogsTimeSaved;
+          else if (workflowType === 'SEO Zoekwoorden' || workflowType === 'Subkeywords') timeSaved = defaultZoekwoordTimeSaved;
+          else timeSaved = 10; // fallback default
+        }
+        
+        workflowIdToInfo.set(w.id, {
+          timeSaved,
+          companyName: companyFromPrefix,
+          workflowType,
+        });
+        console.log(`Matched "${w.name}" via prefix -> ${companyFromPrefix} (${workflowType})`);
+        return;
+      }
+      
+      // Priority 3: Check automation_settings with time_saved (generic workflows -> "Overig")
+      if (timeSavedMap[workflowNameLower] && timeSavedMap[workflowNameLower] > 0) {
+        const workflowType = determineWorkflowType(w.name);
+        workflowIdToInfo.set(w.id, {
+          timeSaved: timeSavedMap[workflowNameLower],
+          companyName: 'Overig',
+          workflowType,
+        });
+        console.log(`Matched "${w.name}" via automation_settings -> Overig (${workflowType})`);
+        return;
+      }
+      
+      // Priority 4: Contains match for automation_settings entries
+      for (const [key, timeSaved] of Object.entries(timeSavedMap)) {
+        if (timeSaved > 0 && (workflowNameLower.includes(key) || key.includes(workflowNameLower))) {
+          const workflowType = determineWorkflowType(w.name);
+          workflowIdToInfo.set(w.id, {
+            timeSaved,
+            companyName: 'Overig',
+            workflowType,
+          });
+          console.log(`Matched "${w.name}" via contains match -> Overig (${workflowType})`);
+          return;
         }
       }
     });
