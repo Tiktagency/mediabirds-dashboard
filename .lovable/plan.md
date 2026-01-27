@@ -1,86 +1,112 @@
 
+# Plan: Correcte Berekening Bespaarde Uren
 
-# Plan: Compactere Tile Kleuren Layout
+## Probleem Analyse
 
-## Probleem
+De huidige berekening van "Bespaard deze maand" is incorrect door meerdere issues:
 
-De "Tile Kleuren" component is aanzienlijk groter dan de "Tile Volgorde" component door:
-- Twee grote live previews (h-20)
-- Vier kleur-input rijen met dubbele inputs (color picker + hex input + preview)
-- Twee reset knoppen
+### Issue 1: Geen Pagination
+De `get-saved-hours` functie haalt slechts **100 executies per workflow** op (`limit=100`), terwijl er meer executies kunnen zijn. De `get-n8n-logs` functie gebruikt wel cursor-based pagination.
 
-## Oplossing: Compactere Layout
+### Issue 2: Inconsistente Workflow Matching
+De functie matcht workflows op basis van naam inclusie (`includes`), maar de `timeSavedMap` bevat alleen de base workflow namen uit `automation_settings`, niet de company-specifieke workflows.
 
-De component wordt geoptimaliseerd door:
-1. **Kleinere previews** naast elkaar plaatsen
-2. **Inline kleur pickers** zonder aparte hex input velden
-3. **Gecombineerde reset knop** onderaan
+### Issue 3: Mogelijke Dubbeltelling
+Workflows zoals "SEO zoekwoorden" kunnen executies van meerdere company-specifieke workflows bevatten (TIKT, MEDIABIRDS) die mogelijk dubbel geteld worden.
 
 ---
 
-## Nieuwe Compacte Layout
+## Oplossing
+
+Herschrijf de `get-saved-hours` edge function om exact dezelfde logica te gebruiken als `get-n8n-logs`:
+
+| Verbetering | Details |
+|-------------|---------|
+| **Pagination** | Cursor-based pagination om ALLE executies op te halen (max 30 dagen) |
+| **Company workflows** | Haal company-specifieke workflow namen uit de `companies` tabel |
+| **Time saved mapping** | Map company workflows naar de juiste `time_saved_per_execution` waarden |
+| **Filtering op succes** | Alleen succesvolle executies tellen |
+| **Geen input nodig** | De functie bepaalt zelf welke workflows relevant zijn |
+
+---
+
+## Nieuwe Functie Logica
 
 ```text
-+------------------------------------------------+
-|  Tile Kleuren                                  |
-|  Pas de kleuren aan van je dashboard tiles.    |
-|------------------------------------------------|
-|                                                |
-|  +------------------+  +------------------+    |
-|  | 🕐 Bespaard     |  | 📅 Overige      |    |
-|  | deze maand      |  | tiles            |    |
-|  +------------------+  +------------------+    |
-|                                                |
-|  BESPAARD DEZE MAAND    OVERIGE TILES          |
-|  Achtergrond: [🎨][██]  Achtergrond: [🎨][██]  |
-|  Tekst:       [🎨][██]  Tekst:       [🎨][██]  |
-|                                                |
-|  [↺ Reset Bespaard]  [↺ Reset Overige]        |
-+------------------------------------------------+
+1. Haal automation_settings op (base workflow namen + time_saved)
+2. Haal companies op (company-specifieke workflow namen)
+3. Bouw timeSavedMap:
+   - Base workflows: n8n_workflow_name → time_saved_per_execution
+   - Company SEO research → zoekwoord-onderzoek's time_saved
+   - Company blogs → blogs's time_saved
+4. Haal alle n8n workflows op
+5. Filter naar geconfigureerde workflows (exact match of contains)
+6. Fetch ALLE executies met pagination (cursor-based, limit=250 per page)
+7. Filter op succesvolle executies binnen 30 dagen
+8. Bereken totaal: sum(executions × time_saved_per_execution) / 60
 ```
 
 ---
 
-## Technische Wijzigingen
+## Bestanden Wijzigingen
 
-### Bestand: `src/components/admin/dashboard/TileColorCustomizer.tsx`
+### 1. `supabase/functions/get-saved-hours/index.ts`
 
-| Wijziging | Details |
-|-----------|---------|
-| Preview grootte | Van `h-20` naar `h-14` (kleiner) |
-| Preview layout | Twee previews naast elkaar in een grid |
-| Kleur inputs | Verwijder hex input veld, alleen color picker + preview swatch |
-| Labels | Compacter met kleinere spacing |
-| Reset knoppen | Twee kleinere knoppen naast elkaar |
+Volledige herschrijving met:
 
-### Verwachte Hoogte Reductie
+- Cursor-based pagination (identiek aan get-n8n-logs)
+- Company workflow support
+- Correcte time_saved mapping
+- Geen input parameters nodig (bepaalt zelf welke workflows)
 
-| Element | Huidige Hoogte | Nieuwe Hoogte |
-|---------|----------------|---------------|
-| Preview 1 | 80px | 56px |
-| Preview 2 | 80px | 56px (naast preview 1) |
-| Kleur inputs | 4 rijen x ~50px | 4 rijen x ~36px |
-| Reset knoppen | 2 x ~40px | 1 rij x ~36px |
-| **Totaal besparing** | | ~150px minder |
+### 2. `src/hooks/useSavedHours.ts`
+
+Kleine aanpassing:
+- Geen `workflowNames` parameter meer nodig
+- Simpelere API call zonder body
+
+### 3. `src/components/dashboard/SavedHoursTile.tsx`
+
+Kleine aanpassing:
+- `workflowNames` prop verwijderen
+
+### 4. `src/pages/Index.tsx`
+
+Kleine aanpassing:
+- `connectedWorkflowNames` berekening verwijderen
+- `workflowNames` prop niet meer doorgeven aan SavedHoursTile
 
 ---
 
-## Code Aanpassingen
+## Technische Details
 
-De belangrijkste wijzigingen:
+De nieuwe berekening zal:
 
-1. **Previews naast elkaar in een 2-koloms grid**:
-   - Beide tiles in één rij
-   - Kleinere hoogte (h-14 ipv h-20)
+1. **Alle geconfigureerde workflows identificeren:**
+   - automation_settings.n8n_workflow_name (MEDIABIRDS monday planning, MEDIABIRDS Alt-text Wordpress, etc.)
+   - companies.seo_research_n8n_name (MEDIABIRDS zoekwoorden, TIKT zoekwoorden)
+   - companies.subkeywords_n8n_name
+   - companies.blogs_n8n_name (MEDIABIRDS seo, TIKT seo)
 
-2. **Compacte kleur-input rijen**:
-   - Verwijder het hex tekst-input veld
-   - Alleen color picker en preview swatch behouden
-   - Achtergrond en Tekst op één rij per sectie
+2. **Time saved per workflow correct mappen:**
+   - Base workflows → hun eigen time_saved_per_execution
+   - Company SEO research → automation_settings waar automation_name = 'zoekwoord-onderzoek'
+   - Company blogs → automation_settings waar automation_name = 'seo-blog' OF 'blogs'
 
-3. **Reset knoppen naast elkaar**:
-   - Twee kleinere knoppen in een grid
-   - Elk reset knopje voor zijn eigen sectie
+3. **Pagination gebruiken:**
+   - Fetch in batches van 250 executies
+   - Gebruik cursor voor volgende pagina
+   - Stop als executies ouder dan 30 dagen worden
 
-Dit zorgt ervoor dat de "Tile Kleuren" card ongeveer dezelfde hoogte krijgt als de "Tile Volgorde" card met de 3x3 grid van tiles.
+4. **Alleen succesvolle executies tellen:**
+   - Filter op `status=success`
 
+---
+
+## Verwacht Resultaat
+
+Na implementatie zal de "Bespaard deze maand" tile:
+- Altijd actuele data tonen (geen hardcoded limieten)
+- Correcte totalen tonen inclusief alle company-specifieke workflows
+- Consistent zijn met wat de logs tonen
+- Rond de ~50 uur tonen als dat de correcte waarde is
