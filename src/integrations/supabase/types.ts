@@ -600,6 +600,41 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_executions: {
+        Row: {
+          company_id: string
+          id: string
+          success: boolean
+          triggered_at: string
+          triggered_by: string | null
+          workflow_type: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          success?: boolean
+          triggered_at?: string
+          triggered_by?: string | null
+          workflow_type: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          success?: boolean
+          triggered_at?: string
+          triggered_by?: string | null
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
