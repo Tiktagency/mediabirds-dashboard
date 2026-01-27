@@ -334,7 +334,7 @@ export const TileOrganizer = ({
   const activeTile = activeId ? getAutomation(activeId) : null;
 
   return (
-    <Card className="bg-card/50 border-border/30 h-full">
+    <Card className="bg-card/50 border-border/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <LayoutGrid className="w-4 h-4" />
