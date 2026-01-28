@@ -35,6 +35,18 @@ function validateRole(role: unknown): 'admin' | 'operator' | 'viewer' {
   return role as 'admin' | 'operator' | 'viewer';
 }
 
+function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  const length = 16;
+  let password = '';
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+  for (let i = 0; i < length; i++) {
+    password += chars[randomValues[i] % chars.length];
+  }
+  return password;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -97,10 +109,13 @@ serve(async (req) => {
       });
     }
 
-    // Create user with password reset flow instead of temp password
-    // This is more secure as no password is transmitted via webhook
+    // Generate temporary password
+    const tempPassword = generateTempPassword();
+
+    // Create user with temporary password
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
+      password: tempPassword,
       email_confirm: true,
     });
 
@@ -137,8 +152,7 @@ serve(async (req) => {
       console.error('Password reset link generation error');
     }
 
-    // Send invitation data to n8n webhook - WITHOUT the password!
-    // The user will receive a password reset link instead
+    // Send invitation data to n8n webhook with temporary password
     const webhookUrl = 'https://tikt.app.n8n.cloud/webhook/mediabirds-invite';
     try {
       const webhookResponse = await fetch(webhookUrl, {
@@ -147,10 +161,9 @@ serve(async (req) => {
         body: JSON.stringify({
           email,
           role,
-          // Send the secure reset link instead of temp password
+          tempPassword,
           resetLink: resetData?.properties?.action_link || null,
           dashboardUrl
-          // NO tempPassword - this is the security fix!
         })
       });
       console.log('Webhook completed with status:', webhookResponse.status);
@@ -161,8 +174,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Gebruiker aangemaakt. Een wachtwoord reset link is verzonden.',
-      // Return the reset link to admin so they can share it if webhook fails
+      message: 'Gebruiker aangemaakt. Een uitnodiging met tijdelijk wachtwoord is verzonden.',
       resetLink: resetData?.properties?.action_link || null
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
