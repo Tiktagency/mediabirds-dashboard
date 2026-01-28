@@ -1,103 +1,106 @@
 
+# Plan: Webhook Response Altijd Opslaan in Meldingen
 
-# Plan: Tijdelijk Wachtwoord Toevoegen aan Gebruikersuitnodigingen
+## Probleem
 
-## Huidige Situatie
+De `trigger-seo-webhook` edge function filtert bepaalde webhook responses uit en slaat deze niet op als melding. Berichten zoals "Workflow was started" of "OK" worden overgeslagen. De frontend controleert ook de `hasMessage` flag voordat een toast wordt getoond.
 
-De `invite-user` edge function maakt nieuwe gebruikers aan zonder wachtwoord en stuurt alleen een wachtwoord reset link naar de n8n webhook. Dit werd eerder als beveiligingsmaatregel geïmplementeerd.
+**Gewenst gedrag**: ALLE webhook responses moeten worden opgeslagen in de database en getoond aan de gebruiker.
 
-## Gewenste Situatie
+## Huidige Logica (trigger-seo-webhook)
 
-Bij het uitnodigen van een nieuwe gebruiker moet er ook een tijdelijk wachtwoord worden gegenereerd en meegestuurd naar de n8n webhook, zodat de uitnodigingsmail een werkend tijdelijk wachtwoord bevat.
+```typescript
+// Filtert berichten uit:
+if (data.message && data.message !== 'Workflow was started') {
+  // Alleen dan wordt hasActualMessage = true
+}
 
-## Beveiligingsoverweging
-
-Het versturen van tijdelijke wachtwoorden via webhooks is minder veilig dan reset links, maar biedt betere gebruikerservaring. Om het risico te beperken:
-- Genereer een sterk willekeurig wachtwoord (16+ karakters)
-- Stuur het wachtwoord alleen via HTTPS naar de webhook
-- Adviseer gebruikers om het wachtwoord direct te wijzigen na eerste login
+// Slaat alleen op als hasActualMessage true is:
+if (hasActualMessage && message) {
+  await supabase.from('notifications').insert({...});
+}
+```
 
 ## Wijzigingen
 
-### `supabase/functions/invite-user/index.ts`
+### 1. `supabase/functions/trigger-seo-webhook/index.ts`
 
-**Wijziging 1 - Wachtwoordgenerator functie toevoegen (na regel 36):**
+**Verwijder de `hasActualMessage` filtering (regels 147-214):**
+
+De logica wordt vereenvoudigd:
+- Lees altijd de raw response text
+- Probeer JSON te parsen voor specifieke keys
+- Als geen specifieke key gevonden, gebruik de volledige response
+- Sla ALTIJD een melding op (met fallback naar "Geen bericht beschikbaar")
+- Verwijder de `hasMessage` flag uit de response
+
 ```typescript
-function generateTempPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-  const length = 16;
-  let password = '';
-  const randomValues = new Uint8Array(length);
-  crypto.getRandomValues(randomValues);
-  for (let i = 0; i < length; i++) {
-    password += chars[randomValues[i] % chars.length];
+let message = 'Geen bericht beschikbaar';
+let status = response.ok ? 'success' : 'error';
+
+const rawText = await response.text().catch(() => '');
+
+if (rawText && rawText.trim().length > 0) {
+  try {
+    const data = JSON.parse(rawText);
+    // Probeer specifieke keys te vinden
+    if (data.Output) {
+      message = data.Output;
+    } else if (data.message) {
+      message = data.message;
+    } else if (data.Goed) {
+      message = data.Goed;
+    } else if (data.Error || data.error) {
+      message = data.Error || data.error;
+      status = 'error';
+    } else if (typeof data === 'string') {
+      message = data;
+    } else {
+      // Stringify hele response als fallback
+      message = JSON.stringify(data);
+    }
+  } catch {
+    // Niet JSON, gebruik raw text
+    message = rawText;
   }
-  return password;
+}
+
+// ALTIJD melding opslaan
+await supabase.from('notifications').insert({
+  message: message,
+  status: status,
+  user_id: userId,
+});
+```
+
+### 2. `src/components/seo-blog/KeywordResearchForm.tsx`
+
+**Verwijder `hasMessage` check (regels 210-217):**
+
+Van:
+```typescript
+if (data.hasMessage && data.message) {
+  toast({
+    title: 'SEO Onderzoek voltooid',
+    description: data.message,
+    duration: 7000,
+  });
 }
 ```
 
-**Wijziging 2 - Gebruiker aanmaken met tijdelijk wachtwoord (regels 100-105):**
+Naar:
 ```typescript
-// Generate temporary password
-const tempPassword = generateTempPassword();
-
-// Create user with temporary password
-const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-  email,
-  password: tempPassword,
-  email_confirm: true,
+const message = data.message || "SEO onderzoek succesvol gestart";
+toast({
+  title: 'SEO Onderzoek voltooid',
+  description: message,
+  duration: 7000,
 });
 ```
-
-**Wijziging 3 - Tijdelijk wachtwoord meesturen naar webhook (regels 143-155):**
-```typescript
-const webhookResponse = await fetch(webhookUrl, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email,
-    role,
-    tempPassword, // Tijdelijk wachtwoord toevoegen
-    resetLink: resetData?.properties?.action_link || null,
-    dashboardUrl
-  })
-});
-```
-
-**Wijziging 4 - Succes bericht aanpassen (regel 162-167):**
-```typescript
-return new Response(JSON.stringify({ 
-  success: true, 
-  message: 'Gebruiker aangemaakt. Een uitnodiging met tijdelijk wachtwoord is verzonden.',
-  resetLink: resetData?.properties?.action_link || null
-}), {
-  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-});
-```
-
-## Webhook Payload (naar n8n)
-
-Na de wijziging zal de n8n webhook de volgende data ontvangen:
-
-```json
-{
-  "email": "gebruiker@voorbeeld.nl",
-  "role": "viewer",
-  "tempPassword": "AbC3$xYz!KmN9pQr",
-  "resetLink": "https://...",
-  "dashboardUrl": "https://audrvgrsuleruuspwnhf.lovableproject.com"
-}
-```
-
-De n8n workflow kan deze data gebruiken om een uitnodigingsmail te versturen met:
-- Het e-mailadres van de gebruiker
-- Het tijdelijke wachtwoord
-- De link naar het dashboard
-- Instructies om het wachtwoord te wijzigen
 
 ## Resultaat
 
-- Nieuwe gebruikers ontvangen een tijdelijk wachtwoord waarmee ze direct kunnen inloggen
-- De reset link wordt ook nog steeds meegestuurd als backup optie
-- De n8n workflow bepaalt welke informatie in de uitnodigingsmail komt
-
+- Alle webhook responses worden opgeslagen in de `notifications` tabel
+- Alle webhook responses worden getoond in toast meldingen
+- Gebruikers zien altijd feedback, ook bij korte responses zoals "Workflow was started"
+- De `trigger-blog-generation` functie werkt al correct en hoeft niet aangepast te worden
