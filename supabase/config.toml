@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.get-saved-hours]
 verify_jwt = false
+
+[functions.trigger-email-signature]
+verify_jwt = false
