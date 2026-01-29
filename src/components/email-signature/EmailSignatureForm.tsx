@@ -29,6 +29,7 @@ const formSchema = z.object({
     .optional()
     .or(z.literal('')),
   website: z.string().url('Ongeldige URL').optional().or(z.literal('')),
+  location: z.string().optional().or(z.literal('')),
   background_type: z.enum(['gradient', 'solid']),
   background_color: z.string().min(1, 'Achtergrondkleur is verplicht'),
   gradient_end_color: z.string().optional(),
@@ -89,6 +90,7 @@ export const EmailSignatureForm = ({
       job_title: '',
       phone_number: '',
       website: '',
+      location: '',
       background_type: 'solid',
       background_color: '#1a1a2e',
       gradient_end_color: '#16213e',
@@ -120,6 +122,7 @@ export const EmailSignatureForm = ({
           job_title: data.job_title,
           phone_number: data.phone_number || null,
           website: data.website || null,
+          location: data.location || null,
           background_type: data.background_type,
           background_color: data.background_color,
           gradient_end_color: data.background_type === 'gradient' ? data.gradient_end_color || null : null,
@@ -140,7 +143,7 @@ export const EmailSignatureForm = ({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [watchedFields.name, watchedFields.first_name, watchedFields.last_name, watchedFields.email, watchedFields.job_title, watchedFields.phone_number, watchedFields.website, watchedFields.background_type, watchedFields.background_color, watchedFields.gradient_end_color, watchedFields.text_color]);
+  }, [watchedFields.name, watchedFields.first_name, watchedFields.last_name, watchedFields.email, watchedFields.job_title, watchedFields.phone_number, watchedFields.website, watchedFields.location, watchedFields.background_type, watchedFields.background_color, watchedFields.gradient_end_color, watchedFields.text_color]);
 
   // Auto-save bij socials wijziging
   useEffect(() => {
@@ -171,6 +174,7 @@ export const EmailSignatureForm = ({
         job_title: selectedSignature.job_title,
         phone_number: selectedSignature.phone_number || '',
         website: selectedSignature.website || '',
+        location: selectedSignature.location || '',
         background_type: selectedSignature.background_type,
         background_color: selectedSignature.background_color,
         gradient_end_color: selectedSignature.gradient_end_color || '#16213e',
@@ -189,6 +193,7 @@ export const EmailSignatureForm = ({
         job_title: '',
         phone_number: '',
         website: '',
+        location: '',
         background_type: 'solid',
         background_color: '#1a1a2e',
         gradient_end_color: '#16213e',
@@ -245,6 +250,7 @@ export const EmailSignatureForm = ({
       job_title: data.job_title,
       phone_number: data.phone_number || null,
       website: data.website || null,
+      location: data.location || null,
       background_type: data.background_type,
       background_color: data.background_color,
       gradient_end_color: data.background_type === 'gradient' ? data.gradient_end_color || null : null,
@@ -438,6 +444,16 @@ export const EmailSignatureForm = ({
             {errors.website && (
               <p className="text-sm text-red-400">{errors.website.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location" className="text-white">Plaatsnaam (optioneel)</Label>
+            <Input
+              id="location"
+              {...register('location')}
+              className="bg-white/10 border-white/20 text-white"
+              placeholder="Amsterdam"
+            />
           </div>
         </CardContent>
       </Card>
