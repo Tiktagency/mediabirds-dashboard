@@ -279,8 +279,17 @@ export const EmailSignatureForm = ({
         let htmlCode = responseData.rawText;
         try {
           const parsed = JSON.parse(responseData.rawText);
-          // n8n kan HTML teruggeven in verschillende keys
-          htmlCode = parsed.html || parsed.output || parsed.Output || parsed.message || responseData.rawText;
+          
+          // Als het een array is, pak het eerste element
+          const data = Array.isArray(parsed) ? parsed[0] : parsed;
+          
+          // Zoek de HTML in bekende keys (inclusief Emailhandtekening)
+          htmlCode = data?.Emailhandtekening || 
+                     data?.html || 
+                     data?.output || 
+                     data?.Output || 
+                     data?.message || 
+                     responseData.rawText;
         } catch {
           // Gebruik raw text als het geen JSON is (waarschijnlijk pure HTML)
         }
