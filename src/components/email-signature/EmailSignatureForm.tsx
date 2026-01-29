@@ -58,6 +58,8 @@ export const EmailSignatureForm = ({
   const [isUploading, setIsUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSending, setIsSending] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     register,
@@ -86,6 +88,57 @@ export const EmailSignatureForm = ({
   const backgroundColor = watch('background_color');
   const gradientEndColor = watch('gradient_end_color');
   const textColor = watch('text_color');
+  const watchedFields = watch();
+
+  // Auto-save functie
+  const triggerAutoSave = () => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      const data = watchedFields;
+      // Alleen opslaan als verplichte velden zijn ingevuld
+      if (data.name && data.first_name && data.last_name && data.email && data.job_title) {
+        await onSave({
+          name: data.name,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          job_title: data.job_title,
+          website: data.website || null,
+          background_type: data.background_type,
+          background_color: data.background_color,
+          gradient_end_color: data.background_type === 'gradient' ? data.gradient_end_color || null : null,
+          text_color: data.text_color,
+          socials,
+          profile_photo_url: profilePhotoUrl,
+        });
+      }
+    }, 1000); // 1 seconde debounce
+  };
+
+  // Watch voor auto-save bij veldwijzigingen
+  useEffect(() => {
+    triggerAutoSave();
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [watchedFields.name, watchedFields.first_name, watchedFields.last_name, watchedFields.email, watchedFields.job_title, watchedFields.website, watchedFields.background_type, watchedFields.background_color, watchedFields.gradient_end_color, watchedFields.text_color]);
+
+  // Auto-save bij socials wijziging
+  useEffect(() => {
+    triggerAutoSave();
+  }, [socials]);
+
+  // Auto-save bij profielfoto wijziging
+  useEffect(() => {
+    if (profilePhotoUrl !== selectedSignature?.profile_photo_url) {
+      triggerAutoSave();
+    }
+  }, [profilePhotoUrl]);
 
   // Update form when selected signature changes
   useEffect(() => {
@@ -182,7 +235,8 @@ export const EmailSignatureForm = ({
       profile_photo_url: profilePhotoUrl,
     };
 
-    // Stuur naar webhook
+    // Alleen naar webhook sturen, niet opslaan
+    setIsSending(true);
     try {
       const webhookResponse = await fetch(
         'https://tikt.app.n8n.cloud/webhook-test/0d19dda2-8df2-4952-a93a-5c9c49b4edd8',
@@ -201,10 +255,9 @@ export const EmailSignatureForm = ({
       console.log('Webhook response:', webhookData);
     } catch (error) {
       console.error('Error calling webhook:', error);
+    } finally {
+      setIsSending(false);
     }
-
-    // Sla ook op in database
-    await onSave(signatureData);
   };
 
   const getBackgroundStyle = () => {
@@ -482,10 +535,10 @@ export const EmailSignatureForm = ({
       {/* Submit */}
       <Button
         type="submit"
-        disabled={isSaving}
+        disabled={isSending}
         className="w-full bg-primary hover:bg-primary/90"
       >
-        {isSaving ? (
+        {isSending ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Genereren...
