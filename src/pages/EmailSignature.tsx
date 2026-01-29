@@ -53,9 +53,9 @@ const EmailSignature = () => {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-6">
+          <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-[280px_1fr_1fr] gap-6">
             {/* Left: Signature List */}
-            <div className="order-2 lg:order-1">
+            <div className="order-2 md:order-1">
               <SignatureList
                 signatures={signatures}
                 selectedId={selectedSignature?.id || null}
@@ -66,7 +66,7 @@ const EmailSignature = () => {
             </div>
 
             {/* Middle: Form */}
-            <div className="order-1 lg:order-2">
+            <div className="order-1 md:order-2">
               <EmailSignatureForm
                 selectedSignature={selectedSignature}
                 isSaving={isSaving}
