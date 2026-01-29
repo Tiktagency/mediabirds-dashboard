@@ -1,106 +1,103 @@
 
-# Plan: Webhook Response Altijd Opslaan in Meldingen
+# Plan: Email Handtekening Pagina Layout Aanpassen
 
-## Probleem
+## Overzicht
 
-De `trigger-seo-webhook` edge function filtert bepaalde webhook responses uit en slaat deze niet op als melding. Berichten zoals "Workflow was started" of "OK" worden overgeslagen. De frontend controleert ook de `hasMessage` flag voordat een toast wordt getoond.
+De pagina wordt uitgebreid met een nieuw paneel aan de rechterkant waar de gegenereerde HTML code van de handtekening komt te staan. Daarnaast wordt de knoptekst gewijzigd naar "Handtekening genereren".
 
-**Gewenst gedrag**: ALLE webhook responses moeten worden opgeslagen in de database en getoond aan de gebruiker.
+## Visuele Layout
 
-## Huidige Logica (trigger-seo-webhook)
+De nieuwe layout wordt een 3-koloms grid op desktop:
 
-```typescript
-// Filtert berichten uit:
-if (data.message && data.message !== 'Workflow was started') {
-  // Alleen dan wordt hasActualMessage = true
-}
-
-// Slaat alleen op als hasActualMessage true is:
-if (hasActualMessage && message) {
-  await supabase.from('notifications').insert({...});
-}
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Email Handtekening                                │
+│           Genereer een professionele email handtekening                  │
+├──────────────┬──────────────────────────┬───────────────────────────────┤
+│  Signature   │                          │                               │
+│     List     │   Formulier              │   HTML Output                 │
+│              │                          │                               │
+│  [Sig 1]     │   [Naam, Email, etc.]    │   ┌─────────────────────────┐ │
+│  [Sig 2]     │                          │   │                         │ │
+│  [+ Nieuw]   │   [Kleuren]              │   │   <table>               │ │
+│              │                          │   │     <tr>...             │ │
+│              │   [Foto upload]          │   │   </table>              │ │
+│              │                          │   │                         │ │
+│              │   [Handtekening          │   └─────────────────────────┘ │
+│              │    genereren]            │   [Kopieer HTML]              │
+└──────────────┴──────────────────────────┴───────────────────────────────┘
 ```
 
 ## Wijzigingen
 
-### 1. `supabase/functions/trigger-seo-webhook/index.ts`
+### 1. `src/pages/EmailSignature.tsx`
 
-**Verwijder de `hasActualMessage` filtering (regels 147-214):**
+**Grid layout uitbreiden (regel 49):**
+- Van: `grid-cols-1 lg:grid-cols-[300px_1fr]`
+- Naar: `grid-cols-1 lg:grid-cols-[280px_1fr_1fr]`
 
-De logica wordt vereenvoudigd:
-- Lees altijd de raw response text
-- Probeer JSON te parsen voor specifieke keys
-- Als geen specifieke key gevonden, gebruik de volledige response
-- Sla ALTIJD een melding op (met fallback naar "Geen bericht beschikbaar")
-- Verwijder de `hasMessage` flag uit de response
-
+**Nieuw HTML Output paneel toevoegen (na regel 68):**
 ```typescript
-let message = 'Geen bericht beschikbaar';
-let status = response.ok ? 'success' : 'error';
-
-const rawText = await response.text().catch(() => '');
-
-if (rawText && rawText.trim().length > 0) {
-  try {
-    const data = JSON.parse(rawText);
-    // Probeer specifieke keys te vinden
-    if (data.Output) {
-      message = data.Output;
-    } else if (data.message) {
-      message = data.message;
-    } else if (data.Goed) {
-      message = data.Goed;
-    } else if (data.Error || data.error) {
-      message = data.Error || data.error;
-      status = 'error';
-    } else if (typeof data === 'string') {
-      message = data;
-    } else {
-      // Stringify hele response als fallback
-      message = JSON.stringify(data);
-    }
-  } catch {
-    // Niet JSON, gebruik raw text
-    message = rawText;
-  }
-}
-
-// ALTIJD melding opslaan
-await supabase.from('notifications').insert({
-  message: message,
-  status: status,
-  user_id: userId,
-});
+{/* Right: HTML Output */}
+<div className="order-3">
+  <Card className="bg-white/5 border-white/10 h-full">
+    <CardHeader>
+      <CardTitle className="text-white text-lg">HTML Code</CardTitle>
+      <CardDescription className="text-white/50">
+        Kopieer deze code naar je email programma
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[300px] overflow-auto">
+        {/* Leeg vlak voor HTML code */}
+        <span className="text-white/30">
+          Vul het formulier in en klik op "Handtekening genereren" 
+          om de HTML code te zien.
+        </span>
+      </div>
+    </CardContent>
+  </Card>
+</div>
 ```
 
-### 2. `src/components/seo-blog/KeywordResearchForm.tsx`
-
-**Verwijder `hasMessage` check (regels 210-217):**
-
-Van:
+**Imports uitbreiden (regel 2):**
 ```typescript
-if (data.hasMessage && data.message) {
-  toast({
-    title: 'SEO Onderzoek voltooid',
-    description: data.message,
-    duration: 7000,
-  });
-}
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 ```
 
-Naar:
+### 2. `src/components/email-signature/EmailSignatureForm.tsx`
+
+**Knoptekst aanpassen (regels 448-452):**
+- Van: `'Handtekening Bijwerken'` en `'Handtekening Opslaan'`
+- Naar: `'Handtekening genereren'` (voor beide gevallen)
+
 ```typescript
-const message = data.message || "SEO onderzoek succesvol gestart";
-toast({
-  title: 'SEO Onderzoek voltooid',
-  description: message,
-  duration: 7000,
-});
+<Button
+  type="submit"
+  disabled={isSaving}
+  className="w-full bg-primary hover:bg-primary/90"
+>
+  {isSaving ? (
+    <>
+      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      Genereren...
+    </>
+  ) : (
+    'Handtekening genereren'
+  )}
+</Button>
 ```
+
+### 3. Max-width aanpassen
+
+Om ruimte te maken voor de derde kolom:
+- Van: `max-w-5xl` (1024px)
+- Naar: `max-w-7xl` (1280px)
 
 ## Resultaat
 
-- Alle webhook responses worden opgeslagen in de `notifications` tabel
-- Alle webhook responses worden getoond in toast meldingen
-- Gebruikers zien altijd feedback, ook bij korte responses zoals "Workflow was started"
-- De `trigger-blog-generation` functie werkt al correct en hoeft niet aangepast te worden
+- Links: Lijst met opgeslagen handtekeningen (280px breed)
+- Midden: Invulformulier (flex)
+- Rechts: Leeg HTML output paneel (flex) - klaar voor toekomstige HTML generatie
+- Knop heet nu "Handtekening genereren"
+- Responsief: op mobiel stapelen de kolommen verticaal
