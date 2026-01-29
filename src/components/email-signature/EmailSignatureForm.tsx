@@ -49,6 +49,8 @@ interface EmailSignatureFormProps {
     options?: { silent?: boolean }
   ) => Promise<void>;
   onUploadPhoto: (file: File) => Promise<string | null>;
+  onHtmlGenerated?: (html: string) => void;
+  onGeneratingChange?: (generating: boolean) => void;
 }
 
 export const EmailSignatureForm = ({
@@ -56,6 +58,8 @@ export const EmailSignatureForm = ({
   isSaving,
   onSave,
   onUploadPhoto,
+  onHtmlGenerated,
+  onGeneratingChange,
 }: EmailSignatureFormProps) => {
   const { toast } = useToast();
   const [socials, setSocials] = useState<SocialLink[]>([]);
@@ -243,6 +247,7 @@ export const EmailSignatureForm = ({
 
     // Alleen naar webhook sturen via edge function, niet opslaan
     setIsSending(true);
+    onGeneratingChange?.(true);
     try {
       const response = await supabase.functions.invoke('trigger-email-signature', {
         body: signatureData,
@@ -257,21 +262,34 @@ export const EmailSignatureForm = ({
         return;
       }
 
-      const data = response.data;
-      console.log('Webhook response:', data);
+      const responseData = response.data;
+      console.log('Webhook response:', responseData);
 
-      if (!data?.success) {
+      if (!responseData?.success) {
         toast({
-          title: `Webhook fout (${data?.status || 'onbekend'})`,
-          description: data?.rawText || 'Geen response ontvangen',
+          title: `Webhook fout (${responseData?.status || 'onbekend'})`,
+          description: responseData?.rawText || 'Geen response ontvangen',
           variant: 'destructive',
         });
         return;
       }
 
+      // Extract HTML from response
+      if (responseData?.rawText) {
+        let htmlCode = responseData.rawText;
+        try {
+          const parsed = JSON.parse(responseData.rawText);
+          // n8n kan HTML teruggeven in verschillende keys
+          htmlCode = parsed.html || parsed.output || parsed.Output || parsed.message || responseData.rawText;
+        } catch {
+          // Gebruik raw text als het geen JSON is (waarschijnlijk pure HTML)
+        }
+        onHtmlGenerated?.(htmlCode);
+      }
+
       toast({
         title: 'Handtekening gegenereerd',
-        description: 'De webhook is succesvol aangeroepen',
+        description: 'De HTML code is klaar',
       });
     } catch (error) {
       console.error('Error calling webhook:', error);
@@ -282,6 +300,7 @@ export const EmailSignatureForm = ({
       });
     } finally {
       setIsSending(false);
+      onGeneratingChange?.(false);
     }
   };
 
