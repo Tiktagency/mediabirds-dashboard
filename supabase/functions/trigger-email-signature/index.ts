@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRIMARY_WEBHOOK_URL = "https://tikt.app.n8n.cloud/webhook-test/0d19dda2-8df2-4952-a93a-5c9c49b4edd8";
+const PRIMARY_WEBHOOK_URL = "https://tikt.app.n8n.cloud/webhook/0d19dda2-8df2-4952-a93a-5c9c49b4edd8";
 
 async function tryWebhook(url: string, payload: unknown, authToken?: string): Promise<{ ok: boolean; status: number; text: string }> {
   const headers: Record<string, string> = {
