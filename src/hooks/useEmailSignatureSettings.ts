@@ -122,6 +122,13 @@ export const useEmailSignatureSettings = () => {
     setIsCreatingNew(true);
   };
 
+  const cancelNewSignature = () => {
+    setIsCreatingNew(false);
+    if (signatures.length > 0) {
+      setSelectedSignature(signatures[0]);
+    }
+  };
+
   const saveSettings = async (
     newSettings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
     options?: { silent?: boolean }
@@ -263,6 +270,7 @@ export const useEmailSignatureSettings = () => {
     isCreatingNew,
     selectSignature,
     createNewSignature,
+    cancelNewSignature,
     saveSettings,
     deleteSignature,
     refetch: fetchAllSignatures,
