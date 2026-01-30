@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Mail } from 'lucide-react';
+import { Trash2, Mail } from 'lucide-react';
 import { EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 
 interface SignatureListProps {
@@ -8,7 +8,6 @@ interface SignatureListProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onDelete: (id: string) => void;
-  onCreateNew: () => void;
 }
 
 export const SignatureList = ({
@@ -16,23 +15,9 @@ export const SignatureList = ({
   selectedId,
   onSelect,
   onDelete,
-  onCreateNew,
 }: SignatureListProps) => {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Mijn Handtekeningen</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onCreateNew}
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Nieuw
-        </Button>
-      </div>
-
+    <div className="space-y-2">
       {signatures.length === 0 ? (
         <Card className="bg-white/5 border-white/10 p-6">
           <div className="text-center text-white/50">
