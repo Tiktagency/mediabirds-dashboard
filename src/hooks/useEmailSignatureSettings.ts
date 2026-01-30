@@ -15,10 +15,13 @@ export interface EmailSignatureSettings {
   first_name: string;
   last_name: string;
   email: string;
+  emails: string[];
   job_title: string;
   phone_number: string | null;
+  phone_numbers: string[];
   website: string | null;
   location: string | null;
+  locations: string[];
   socials: SocialLink[];
   background_type: 'gradient' | 'solid';
   background_color: string;
@@ -44,9 +47,18 @@ export const useEmailSignatureSettings = () => {
       parsedSocials = data.socials as unknown as SocialLink[];
     }
     
+    // Parse JSONB arrays
+    const parseJsonArray = (value: unknown): string[] => {
+      if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+      return [];
+    };
+    
     return {
       ...data,
       socials: parsedSocials,
+      emails: parseJsonArray(data.emails),
+      phone_numbers: parseJsonArray(data.phone_numbers),
+      locations: parseJsonArray(data.locations),
       background_type: data.background_type as 'gradient' | 'solid',
     };
   };
@@ -117,10 +129,13 @@ export const useEmailSignatureSettings = () => {
             first_name: newSettings.first_name,
             last_name: newSettings.last_name,
             email: newSettings.email,
+            emails: JSON.stringify(newSettings.emails),
             job_title: newSettings.job_title,
             phone_number: newSettings.phone_number,
+            phone_numbers: JSON.stringify(newSettings.phone_numbers),
             website: newSettings.website,
             location: newSettings.location,
+            locations: JSON.stringify(newSettings.locations),
             socials: socialsJson,
             background_type: newSettings.background_type,
             background_color: newSettings.background_color,
@@ -142,10 +157,13 @@ export const useEmailSignatureSettings = () => {
             first_name: newSettings.first_name,
             last_name: newSettings.last_name,
             email: newSettings.email,
+            emails: JSON.stringify(newSettings.emails),
             job_title: newSettings.job_title,
             phone_number: newSettings.phone_number,
+            phone_numbers: JSON.stringify(newSettings.phone_numbers),
             website: newSettings.website,
             location: newSettings.location,
+            locations: JSON.stringify(newSettings.locations),
             socials: socialsJson,
             background_type: newSettings.background_type,
             background_color: newSettings.background_color,
