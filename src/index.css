@@ -17,6 +17,10 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Button colors (overwritten by useApplyButtonColors) */
+    --button-primary-bg: #cfddd0;
+    --button-primary-text: #002C1F;
+
     --background: 0 0% 5%;
     --foreground: 0 0% 100%;
 
