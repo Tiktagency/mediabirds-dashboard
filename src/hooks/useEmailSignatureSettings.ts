@@ -29,6 +29,7 @@ export interface EmailSignatureSettings {
   text_color: string;
   profile_photo_url: string | null;
   company_logo_url: string | null;
+  generated_html: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -151,6 +152,7 @@ export const useEmailSignatureSettings = () => {
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
             company_logo_url: newSettings.company_logo_url,
+            generated_html: newSettings.generated_html,
           })
           .eq('id', selectedSignature.id);
 
@@ -179,6 +181,7 @@ export const useEmailSignatureSettings = () => {
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
             company_logo_url: newSettings.company_logo_url,
+            generated_html: newSettings.generated_html,
           })
           .select()
           .single();
