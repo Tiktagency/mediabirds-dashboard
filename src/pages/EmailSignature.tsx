@@ -77,7 +77,7 @@ const EmailSignature = () => {
             </div>
 
             {/* Right: HTML Output */}
-            <div className="order-3 flex flex-col gap-4 overflow-hidden">
+            <div className="order-3 flex flex-col gap-4">
               {/* HTML Preview */}
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
@@ -106,7 +106,7 @@ const EmailSignature = () => {
               </Card>
 
               {/* HTML Code */}
-              <Card className="bg-white/5 border-white/10 flex-1 flex flex-col">
+              <Card className="bg-white/5 border-white/10">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-white text-lg">HTML Code</CardTitle>
@@ -143,8 +143,8 @@ const EmailSignature = () => {
                     </Button>
                   )}
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                  <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 flex-1 overflow-auto min-h-0">
+                <CardContent>
+                  <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[200px] max-h-[300px] overflow-auto">
                     {isGenerating ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />

@@ -1,61 +1,64 @@
 
-
-# Plan: HTML Code Card Hoogte Beperken tot Formulier
+# Plan: Fix Extra Velden Opslaan en Laden
 
 ## Probleem
 
-De HTML Code card groeit onbeperkt naar beneden door `flex-1`. De gebruiker wil dat deze card eindigt op dezelfde hoogte als het formulier (bij de Afbeeldingen sectie), niet bij de submit-knop.
+Wanneer een gebruiker een tweede email, telefoonnummer of plaatsnaam toevoegt en de pagina verlaat, verdwijnt het extra invulveld. Dit komt doordat:
 
----
-
-## Huidige Situatie
-
-De rechterkolom heeft `flex flex-col` met `flex-1` op de HTML Code card, waardoor deze onbeperkt groeit voorbij de hoogte van het middelste formulier.
+1. De data wordt opgeslagen als `JSON.stringify(array)` → een string in de database
+2. Bij ophalen checkt `parseJsonArray` alleen of de waarde een array is
+3. Als het een string is (de gestringified JSON), wordt een lege array teruggegeven
 
 ---
 
 ## Oplossing
 
-1. Voeg `overflow-hidden` toe aan de rechterkolom container zodat de inhoud wordt beperkt tot de grid cel hoogte
-2. Behoud `flex-1` op de HTML Code card zodat deze de resterende ruimte gebruikt
-3. De grid zorgt ervoor dat kolommen dezelfde hoogte hebben als de hoogste kolom
+Update de `parseJsonArray` functie in `useEmailSignatureSettings.ts` om zowel arrays als gestringified arrays te ondersteunen.
 
 ---
 
 ## Code Wijzigingen
 
-**Bestand: `src/pages/EmailSignature.tsx`**
+**Bestand: `src/hooks/useEmailSignatureSettings.ts`**
 
-### Rechterkolom container aanpassen (regel 80)
+### parseJsonArray functie uitbreiden (regel 51-54)
 
-Van:
-```tsx
-<div className="order-3 flex flex-col gap-4">
+**Huidige code:**
+```typescript
+const parseJsonArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  return [];
+};
 ```
 
-Naar:
-```tsx
-<div className="order-3 flex flex-col gap-4 overflow-hidden">
+**Nieuwe code:**
+```typescript
+const parseJsonArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 ```
 
-### HTML Code inner container min-height toevoegen (regel 147)
+---
 
-Van:
-```tsx
-<div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 flex-1 overflow-auto">
-```
+## Wat dit oplost
 
-Naar:
-```tsx
-<div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 flex-1 overflow-auto min-h-0">
-```
+| Scenario | Voorheen | Na fix |
+|----------|----------|--------|
+| Database retourneert `["a@b.nl", "c@d.nl"]` (array) | ✅ Werkt | ✅ Werkt |
+| Database retourneert `'["a@b.nl", "c@d.nl"]'` (string) | ❌ Lege array | ✅ Parsed correct |
 
 ---
 
 ## Resultaat
 
-- De rechterkolom wordt beperkt tot de hoogte van het formulier
-- De HTML Code card neemt de beschikbare ruimte in (na de Preview)
-- Als de HTML code te lang is, wordt het scrollbaar binnen de card
-- De submit-knop blijft onder het formulier, niet uitgelijnd met de HTML Code card
-
+- Extra emails, telefoonnummers en plaatsnamen blijven behouden na het verlaten van de pagina
+- De extra invulvelden worden correct weergegeven wanneer de handtekening opnieuw wordt geladen
