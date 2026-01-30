@@ -1,82 +1,101 @@
 
-# Plan: Gegenereerde HTML Opslaan
+# Plan: Visueel "Nieuw" Slot Tonen
 
 ## Probleem
 
-Wanneer een gebruiker een email handtekening genereert en vervolgens de pagina verlaat, gaat de gegenereerde HTML code en preview verloren. De gebruiker moet dan de handtekening opnieuw genereren.
+Wanneer je op "+ Nieuw" klikt, wordt de huidige selectie gewist, maar er is geen visuele feedback in de lijst links dat er een nieuwe handtekening wordt aangemaakt.
 
 ---
 
 ## Oplossing
 
-Sla de gegenereerde HTML op in de database bij de handtekening-instellingen, zodat deze automatisch wordt geladen wanneer de gebruiker terugkeert naar de pagina.
+Voeg een visueel leeg slot toe aan de SignatureList wanneer de gebruiker op "+ Nieuw" klikt. Dit slot:
+- Verschijnt bovenaan de lijst
+- Is geselecteerd (met ring styling)
+- Toont placeholder tekst zoals "Nieuwe handtekening"
 
 ---
 
 ## Technische Wijzigingen
 
-### 1. Database Migratie
+### 1. Hook aanpassen (`src/hooks/useEmailSignatureSettings.ts`)
 
-Voeg een nieuwe kolom toe aan de `email_signature_settings` tabel:
-
-```sql
-ALTER TABLE email_signature_settings 
-ADD COLUMN generated_html TEXT DEFAULT NULL;
-```
-
-### 2. Hook Aanpassen (`src/hooks/useEmailSignatureSettings.ts`)
-
-**Interface uitbreiden:**
+Voeg een `isCreatingNew` state toe:
 ```typescript
-export interface EmailSignatureSettings {
-  // ... bestaande velden
-  generated_html: string | null;  // NIEUW
+const [isCreatingNew, setIsCreatingNew] = useState(false);
+
+const createNewSignature = () => {
+  setSelectedSignature(null);
+  setIsCreatingNew(true);  // Activeer "nieuw" modus
+};
+
+const selectSignature = (id: string | null) => {
+  // ... bestaande logica
+  setIsCreatingNew(false);  // Deactiveer bij selectie
+};
+```
+
+Return `isCreatingNew` in de hook.
+
+### 2. SignatureList uitbreiden (`src/components/email-signature/SignatureList.tsx`)
+
+Voeg een `isCreatingNew` prop toe en toon een placeholder card:
+
+```typescript
+interface SignatureListProps {
+  // ... bestaande props
+  isCreatingNew: boolean;
 }
+
+// In de render:
+{isCreatingNew && (
+  <Card className="bg-white/5 border-white/10 p-4 ring-2 ring-primary border-primary">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+        <Plus className="w-5 h-5 text-white/50" />
+      </div>
+      <div>
+        <p className="font-medium text-white">Nieuwe handtekening</p>
+        <p className="text-sm text-white/50">Vul het formulier in</p>
+      </div>
+    </div>
+  </Card>
+)}
 ```
 
-**Parse functie updaten:**
-- `generated_html` toevoegen aan de `parseSignature` functie
+### 3. EmailSignature pagina updaten (`src/pages/EmailSignature.tsx`)
 
-**Save functie updaten:**
-- `generated_html` parameter toevoegen aan de `saveSettings` functie
-- Dit veld meenemen in zowel INSERT als UPDATE queries
+Pass de nieuwe prop door naar SignatureList:
 
-### 3. Pagina Aanpassen (`src/pages/EmailSignature.tsx`)
+```typescript
+const { isCreatingNew, ... } = useEmailSignatureSettings();
 
-**HTML laden bij selectie:**
-- Wanneer `selectedSignature` verandert, de opgeslagen `generated_html` laden in de state
-
-**HTML opslaan na generatie:**
-- Na succesvolle webhook response, de HTML opslaan via een aparte update functie
-
-### 4. Formulier Aanpassen (`src/components/email-signature/EmailSignatureForm.tsx`)
-
-**Callback uitbreiden:**
-- `onHtmlGenerated` callback aanroepen met de gegenereerde HTML
-- De parent component slaat dit vervolgens op
-
----
-
-## Dataflow
-
-```
-1. Gebruiker genereert handtekening
-   ↓
-2. Webhook retourneert HTML
-   ↓
-3. HTML wordt getoond in preview + opgeslagen in database
-   ↓
-4. Gebruiker verlaat pagina
-   ↓
-5. Gebruiker keert terug
-   ↓
-6. Opgeslagen HTML wordt geladen en getoond
+<SignatureList
+  signatures={signatures}
+  selectedId={selectedSignature?.id || null}
+  onSelect={selectSignature}
+  onDelete={deleteSignature}
+  isCreatingNew={isCreatingNew}
+/>
 ```
 
 ---
 
-## Resultaat
+## Visueel Resultaat
 
-- Gegenereerde HTML blijft behouden na het verlaten van de pagina
-- Preview wordt direct getoond bij het selecteren van een bestaande handtekening
-- HTML code is meteen beschikbaar om te kopiëren
+**Voor:**
+- Klik op "+ Nieuw" → selectie verdwijnt, geen visuele feedback
+
+**Na:**
+- Klik op "+ Nieuw" → nieuw leeg slot verschijnt bovenaan met geselecteerde styling
+- Klik op bestaande handtekening → nieuw slot verdwijnt, bestaande wordt geselecteerd
+
+---
+
+## Bestanden die worden aangepast
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/hooks/useEmailSignatureSettings.ts` | `isCreatingNew` state toevoegen |
+| `src/components/email-signature/SignatureList.tsx` | Placeholder card renderen |
+| `src/pages/EmailSignature.tsx` | Nieuwe prop doorgeven |
