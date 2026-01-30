@@ -145,6 +145,7 @@ export const EmailSignatureForm = ({
           socials,
           profile_photo_url: profilePhotoUrl,
           company_logo_url: companyLogoUrl,
+          generated_html: selectedSignature?.generated_html || null,
         }, { silent: true });
       }
     }, 1000); // 1 seconde debounce
@@ -294,6 +295,7 @@ export const EmailSignatureForm = ({
       socials,
       profile_photo_url: profilePhotoUrl,
       company_logo_url: companyLogoUrl,
+      generated_html: null as string | null,
     };
 
     // Alleen naar webhook sturen via edge function, niet opslaan

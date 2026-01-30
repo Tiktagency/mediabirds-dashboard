@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -24,6 +24,15 @@ const EmailSignature = () => {
     saveSettings,
     deleteSignature,
   } = useEmailSignatureSettings();
+
+  // Laad opgeslagen HTML wanneer handtekening wijzigt
+  useEffect(() => {
+    if (selectedSignature?.generated_html) {
+      setGeneratedHtml(selectedSignature.generated_html);
+    } else {
+      setGeneratedHtml(null);
+    }
+  }, [selectedSignature]);
 
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
@@ -86,7 +95,16 @@ const EmailSignature = () => {
                 selectedSignature={selectedSignature}
                 isSaving={isSaving}
                 onSave={saveSettings}
-                onHtmlGenerated={(html) => setGeneratedHtml(html)}
+                onHtmlGenerated={(html) => {
+                  setGeneratedHtml(html);
+                  // Sla HTML op in database
+                  if (selectedSignature) {
+                    saveSettings({
+                      ...selectedSignature,
+                      generated_html: html,
+                    }, { silent: true });
+                  }
+                }}
                 onGeneratingChange={(generating) => setIsGenerating(generating)}
               />
             </div>
