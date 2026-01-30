@@ -674,8 +674,9 @@ export const EmailSignatureForm = ({
       {/* Submit */}
       <Button
         type="submit"
+        variant="primaryCustom"
         disabled={isSending || !isValid}
-        className="w-full bg-primary hover:bg-primary/90"
+        className="w-full"
       >
         {isSending ? (
           <>
