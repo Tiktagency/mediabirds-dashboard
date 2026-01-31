@@ -225,6 +225,7 @@ export const CopyrightBrandingForm = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
+                variant="primaryCustom"
                 className="w-full"
               >
                 {isLoading ? (
@@ -327,6 +328,7 @@ export const CopyrightBrandingForm = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
+                variant="primaryCustom"
                 className="w-full"
               >
                 {isLoading ? (
