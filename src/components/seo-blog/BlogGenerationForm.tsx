@@ -677,8 +677,8 @@ export const BlogGenerationForm = ({
       {/* Google Document IDs - Verplicht voor alle gebruikers */}
       <div className="pt-6 border-t border-white/10 space-y-4">
         <h3 className="text-lg font-semibold text-white">Google Documenten</h3>
-        {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, false)}
-        {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, false)}
+        {renderField('Spreadsheet ID', 'google_sheet_id', 'text', undefined, false)}
+        {renderField('Grid ID', 'google_slides_id', 'text', undefined, false)}
       </div>
       
       {/* Admin-only fields - Collapsible */}
