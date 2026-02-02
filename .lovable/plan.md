@@ -1,61 +1,57 @@
 
-# Plan: Webhook Body Structuur Aanpassen
+# Plan: Button Hover Contrast Fix
 
-## Overzicht
+## Probleem
 
-De webhook payload aanpassen naar het gewenste array-formaat met twee objecten: één voor de URL's en één voor de document IDs.
-
----
-
-## Wijziging in `src/components/seo-blog/PageUrlForm.tsx`
-
-**Huidige payload (regels 134-141):**
-```typescript
-const payload = {
-  bedrijfsnaam: selectedCompany.name,
-  spreadsheet_id: googleSheetId,
-  grid_id: googleFileId,
-  page_urls: urls.filter(url => url.trim()).map(url => url.trim()),
-};
-```
-
-**Nieuwe payload:**
-```typescript
-const payload = [
-  // Object 1: Genummerde URL's
-  urls.reduce((acc, url, index) => {
-    if (url.trim()) {
-      acc[(index + 1).toString()] = url.trim();
-    }
-    return acc;
-  }, {} as Record<string, string>),
-  // Object 2: Document IDs
-  {
-    "Document ID": googleSheetId,
-    "Slide ID": googleFileId,
-  }
-];
-```
+De `outline` en `ghost` button variants in `src/components/ui/button.tsx` gebruiken `hover:text-accent-foreground` voor de hover state. In het huidige donkere thema is `accent-foreground` gedefinieerd als `0 0% 7%` (bijna zwart), waardoor tekst onleesbaar wordt bij hover.
 
 ---
 
-## Resultaat
+## Oplossing
 
-**Nieuwe webhook body structuur:**
-```json
-[
-  {
-    "1": "https://example.com/sitemap1.xml",
-    "2": "https://example.com/sitemap2.xml"
-  },
-  {
-    "Document ID": "1IL1nRE-eiVFw0HtR8CCDiUC-6kBXb6aOOErRnwj3Pfk",
-    "Slide ID": "0"
-  }
-]
+### 1. Aanpassen van button.tsx variants
+
+**Bestand:** `src/components/ui/button.tsx`
+
+| Variant | Huidige hover | Nieuwe hover |
+|---------|---------------|--------------|
+| `outline` | `hover:bg-accent hover:text-accent-foreground` | `hover:bg-white/10` |
+| `ghost` | `hover:bg-accent hover:text-accent-foreground` | `hover:bg-white/10` |
+
+De tekstkleur wordt niet gewijzigd bij hover, zodat de originele tekstkleur behouden blijft.
+
+### 2. Opruimen van redundante classes
+
+Buttons die nu handmatige overrides hebben zoals `hover:text-white hover:bg-white/10` kunnen vereenvoudigd worden na de fix.
+
+---
+
+## Bestanden die aangepast worden
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/components/ui/button.tsx` | Hover states voor `outline` en `ghost` variants |
+| `src/components/seo-blog/PageUrlForm.tsx` | Verwijder redundante hover classes |
+| `src/pages/AdminPanel.tsx` | Voeg `hover:text-white` toe waar nodig |
+| `src/components/seo/CompanySelector.tsx` | Verwijder redundante hover classes |
+
+---
+
+## Technische Details
+
+**Huidige button variants (regels 15-19):**
+```typescript
+outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+ghost: "hover:bg-accent hover:text-accent-foreground",
 ```
 
-| Element | Inhoud |
-|---------|--------|
-| Array[0] | URL's met genummerde keys ("1", "2", ...) |
-| Array[1] | Document ID en Slide ID |
+**Nieuwe button variants:**
+```typescript
+outline: "border border-input bg-background hover:bg-white/10",
+ghost: "hover:bg-white/10",
+```
+
+Dit zorgt ervoor dat:
+- De achtergrond subtiel oplicht bij hover
+- De tekstkleur ongewijzigd blijft (wit blijft wit)
+- Alle knoppen consistent gedrag vertonen
