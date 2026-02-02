@@ -331,4 +331,25 @@ All colors MUST be HSL.
   .animate-fade-in {
     animation: fade-in 0.4s ease-out;
   }
+
+  /* Arrow/Chevron Navigation Tiles */
+  .arrow-tile {
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%);
+    padding-right: 24px;
+  }
+
+  .arrow-tile-first {
+    clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%);
+  }
+
+  .arrow-tile-middle {
+    clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%, 24px 50%);
+    margin-left: -12px;
+  }
+
+  .arrow-tile-last {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 24px 50%);
+    margin-left: -12px;
+  }
 }
