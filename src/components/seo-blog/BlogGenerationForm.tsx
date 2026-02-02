@@ -573,6 +573,7 @@ export const BlogGenerationForm = ({
 
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-white mb-6">Blog generatie instellingen</h2>
       {renderField('Bedrijfsnaam', 'bedrijfsnaam')}
       {renderField('Bedrijfsomschrijving', 'bedrijfsomschrijving', 'textarea')}
       {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
