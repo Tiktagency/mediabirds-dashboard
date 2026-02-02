@@ -114,7 +114,7 @@ const EmailSignature = () => {
             </div>
 
             {/* Right: HTML Output */}
-            <div className="order-3 flex flex-col gap-4 h-full">
+            <div className="order-3 grid grid-rows-[auto_1fr] gap-4 h-full">
               {/* HTML Preview */}
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
