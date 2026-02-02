@@ -1,52 +1,36 @@
 
-# Plan: Arrow-Shaped Navigation Tiles
+# Plan: Tile Achtergrondkleur Aanpassen
 
 ## Overzicht
-De drie navigatie-tiles op de SEO pagina omvormen tot arrow/chevron-vormige elementen die naar rechts wijzen, vergelijkbaar met de referentie-afbeelding.
+De achtergrondkleur van de inactieve arrow tiles wijzigen naar #212122.
 
 ---
 
-## Visueel ontwerp
+## Kleuranalyse
 
-```text
-┌────────────────┐    ┌────────────────┐    ┌────────────────┐
-│                │╲   │                │╲   │                │
-│  1. Pagina URL │ ╲  │ 2. Zoekwoord   │ ╲  │ 3. Blog        │
-│                │  ╲ │    Onderzoek   │  ╲ │    Generatie   │
-│                │  ╱ │                │  ╱ │                │
-│                │ ╱  │                │ ╱  │                │
-└────────────────┘╱   └────────────────┘╱   └────────────────┘
-```
+| Element | Huidige waarde | Nieuwe waarde |
+|---------|----------------|---------------|
+| Inactieve tile achtergrond | `bg-white/5` | `bg-[#212122]` |
+| Hover state | `hover:bg-white/10` | `hover:bg-[#2a2a2b]` |
+| Tekst op inactieve tile | `text-white` | `text-white` (behouden) |
 
-Elke tile krijgt:
-- Een puntige rechterrand (chevron/arrow shape)
-- Nummering om volgorde aan te geven
-- Dezelfde kleurenschema als nu (secondary/accent voor actieve states)
+**Contrast check:** #212122 (donkergrijs) met witte tekst geeft uitstekend contrast (ratio ~15:1), dus tekstkleur hoeft niet aangepast te worden.
 
 ---
 
-## Technische aanpak
+## Technische wijziging
 
 **Bestand:** `src/pages/SeoBlog.tsx`
 
-1. **CSS Pseudo-elements toevoegen** via Tailwind's `before:` en `after:` classes om de arrow-shape te creëren
-2. **Clip-path gebruiken** voor een moderne arrow-vorm, of CSS triangles met borders
-3. **Nummering toevoegen** aan elke tile ("1.", "2.", "3.")
+Drie locaties aanpassen (tiles 1, 2 en 3):
 
-**Alternatief:** Custom CSS classes in `src/index.css` voor de arrow-shape styling
+```typescript
+// Van:
+"bg-white/5 hover:bg-white/10"
 
----
-
-## Implementatie details
-
-### Optie 1: Clip-path (moderne browsers)
-```css
-clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%);
+// Naar:
+"bg-[#212122] hover:bg-[#2a2a2b]"
 ```
-
-### Optie 2: CSS Pseudo-elements
-- `::after` element met border-trick voor de rechter arrow-punt
-- `::before` element voor de linker inham (behalve eerste tile)
 
 ---
 
@@ -54,5 +38,4 @@ clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/pages/SeoBlog.tsx` | Arrow-shape styling en nummering toevoegen |
-| `src/index.css` | (optioneel) Custom arrow-tile classes |
+| `src/pages/SeoBlog.tsx` | Achtergrondkleur van 3 inactieve tiles wijzigen naar #212122 |
