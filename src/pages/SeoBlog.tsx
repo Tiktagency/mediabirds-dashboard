@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 import { KeywordResearchForm } from '@/components/seo-blog/KeywordResearchForm';
 import { BlogGenerationForm } from '@/components/seo-blog/BlogGenerationForm';
+import { PageUrlForm } from '@/components/seo-blog/PageUrlForm';
 import { cn } from '@/lib/utils';
 
 interface Notification {
@@ -19,7 +20,7 @@ interface Notification {
   status: 'success' | 'error';
 }
 
-type ActiveView = 'none' | 'keyword' | 'blog';
+type ActiveView = 'none' | 'keyword' | 'blog' | 'pageurl';
 
 const SeoBlog = () => {
   const { isLoading: authLoading, user, isAdmin } = useAuth();
@@ -196,8 +197,8 @@ const SeoBlog = () => {
           Beheer je zoekwoord onderzoek en blog generatie op één plek
         </p>
         
-        {/* Mini Dashboard - Two buttons */}
-        <div className="grid grid-cols-2 gap-6 w-full max-w-xl mb-12">
+        {/* Mini Dashboard - Three buttons */}
+        <div className="grid grid-cols-3 gap-6 w-full max-w-3xl mb-12">
           <button
             onClick={() => setActiveView('keyword')}
             className={cn(
@@ -271,6 +272,43 @@ const SeoBlog = () => {
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-accent border-r border-b border-accent/50" />
             )}
           </button>
+
+          <button
+            onClick={() => setActiveView('pageurl')}
+            className={cn(
+              "group relative p-6 rounded-xl border transition-all duration-300",
+              activeView === 'pageurl'
+                ? "bg-orange-500 border-orange-500/50 shadow-lg shadow-orange-500/20"
+                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+            )}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className={cn(
+                "p-3 rounded-full transition-colors",
+                activeView === 'pageurl' ? "bg-white/10" : "bg-white/10"
+              )}>
+                <LinkIcon className={cn(
+                  "h-6 w-6",
+                  activeView === 'pageurl' ? "text-white" : "text-white"
+                )} />
+              </div>
+              <span className={cn(
+                "font-semibold",
+                activeView === 'pageurl' ? "text-white" : "text-white"
+              )}>
+                Pagina URL
+              </span>
+              <span className={cn(
+                "text-xs",
+                activeView === 'pageurl' ? "text-white/70" : "text-white/50"
+              )}>
+                Sitemap URLs verzamelen
+              </span>
+            </div>
+            {activeView === 'pageurl' && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-orange-500 border-r border-b border-orange-500/50" />
+            )}
+          </button>
         </div>
 
         {/* Form content area - beide forms altijd gemount om flikkering te voorkomen */}
@@ -299,6 +337,19 @@ const SeoBlog = () => {
             activeView === 'blog' ? "opacity-100" : "hidden"
           )}>
             <BlogGenerationForm
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
+              isAdmin={isAdmin}
+              user={user}
+              saveNotification={saveNotification}
+            />
+          </div>
+          
+          <div className={cn(
+            "seo-card p-8 md:p-10 transition-opacity duration-200",
+            activeView === 'pageurl' ? "opacity-100" : "hidden"
+          )}>
+            <PageUrlForm
               selectedCompany={selectedCompany}
               setSelectedCompany={setSelectedCompany}
               isAdmin={isAdmin}

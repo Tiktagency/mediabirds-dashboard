@@ -464,6 +464,44 @@ export type Database = {
         }
         Relationships: []
       }
+      page_url_settings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          google_file_id: string | null
+          google_sheet_id: string | null
+          id: string
+          page_urls: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          google_file_id?: string | null
+          google_sheet_id?: string | null
+          id?: string
+          page_urls?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          google_file_id?: string | null
+          google_sheet_id?: string | null
+          id?: string
+          page_urls?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_url_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
