@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText, Link as LinkIcon } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +29,7 @@ const SeoBlog = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [activeView, setActiveView] = useState<ActiveView>('none');
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
@@ -131,6 +133,15 @@ const SeoBlog = () => {
             selectedCompany={selectedCompany} 
             onCompanyChange={setSelectedCompany} 
           />
+          
+          {/* Guide Button */}
+          <button
+            onClick={() => setIsGuideOpen(true)}
+            className="relative p-2 rounded-lg bg-white/5 border border-white/20 hover:bg-white/10 transition-colors"
+            title="Handleiding"
+          >
+            <BookOpen className="h-5 w-5 text-white" />
+          </button>
           
           {/* Notification Bell */}
           <button
@@ -385,6 +396,19 @@ const SeoBlog = () => {
           onClick={() => setIsPanelOpen(false)}
         />
       )}
+
+      {/* Guide Sheet */}
+      <Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
+        <SheetContent className="w-[500px] sm:max-w-[500px] bg-card border-border overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-white text-xl">Blog Handleiding</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-6 text-white/80">
+            <p>Hier komt de stap-voor-stap handleiding voor het opzetten van een blog...</p>
+            {/* Placeholder voor latere inhoud */}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
