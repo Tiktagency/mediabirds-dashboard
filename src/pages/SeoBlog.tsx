@@ -200,6 +200,43 @@ const SeoBlog = () => {
         {/* Mini Dashboard - Three buttons */}
         <div className="grid grid-cols-3 gap-6 w-full max-w-3xl mb-12">
           <button
+            onClick={() => setActiveView('pageurl')}
+            className={cn(
+              "group relative p-6 rounded-xl border transition-all duration-300",
+              activeView === 'pageurl'
+                ? "bg-secondary border-secondary/50 shadow-lg shadow-secondary/20"
+                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+            )}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className={cn(
+                "p-3 rounded-full transition-colors",
+                activeView === 'pageurl' ? "bg-secondary-foreground/10" : "bg-white/10"
+              )}>
+                <LinkIcon className={cn(
+                  "h-6 w-6",
+                  activeView === 'pageurl' ? "text-secondary-foreground" : "text-white"
+                )} />
+              </div>
+              <span className={cn(
+                "font-semibold",
+                activeView === 'pageurl' ? "text-secondary-foreground" : "text-white"
+              )}>
+                Pagina URL
+              </span>
+              <span className={cn(
+                "text-xs",
+                activeView === 'pageurl' ? "text-secondary-foreground/70" : "text-white/50"
+              )}>
+                Sitemap URLs verzamelen
+              </span>
+            </div>
+            {activeView === 'pageurl' && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-secondary border-r border-b border-secondary/50" />
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveView('keyword')}
             className={cn(
               "group relative p-6 rounded-xl border transition-all duration-300",
@@ -270,43 +307,6 @@ const SeoBlog = () => {
             </div>
             {activeView === 'blog' && (
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-accent border-r border-b border-accent/50" />
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveView('pageurl')}
-            className={cn(
-              "group relative p-6 rounded-xl border transition-all duration-300",
-              activeView === 'pageurl'
-                ? "bg-secondary border-secondary/50 shadow-lg shadow-secondary/20"
-                : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-            )}
-          >
-            <div className="flex flex-col items-center gap-3">
-              <div className={cn(
-                "p-3 rounded-full transition-colors",
-                activeView === 'pageurl' ? "bg-secondary-foreground/10" : "bg-white/10"
-              )}>
-                <LinkIcon className={cn(
-                  "h-6 w-6",
-                  activeView === 'pageurl' ? "text-secondary-foreground" : "text-white"
-                )} />
-              </div>
-              <span className={cn(
-                "font-semibold",
-                activeView === 'pageurl' ? "text-secondary-foreground" : "text-white"
-              )}>
-                Pagina URL
-              </span>
-              <span className={cn(
-                "text-xs",
-                activeView === 'pageurl' ? "text-secondary-foreground/70" : "text-white/50"
-              )}>
-                Sitemap URLs verzamelen
-              </span>
-            </div>
-            {activeView === 'pageurl' && (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-secondary border-r border-b border-secondary/50" />
             )}
           </button>
         </div>
