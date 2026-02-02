@@ -12,6 +12,9 @@ import {
 import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
 import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
+
+const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
 
 interface PageUrlFormProps {
   selectedCompany: Company | null;
@@ -29,10 +32,12 @@ export const PageUrlForm = ({
   const { settings, isLoading, isSaving, saveSettings } = usePageUrlSettings(
     selectedCompany?.id || null
   );
+  const { toast } = useToast();
 
   const [googleSheetId, setGoogleSheetId] = useState('');
   const [googleFileId, setGoogleFileId] = useState('');
   const [urls, setUrls] = useState<string[]>(['']);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync local state with loaded settings
   useEffect(() => {
@@ -71,25 +76,98 @@ export const PageUrlForm = ({
     setUrls(newUrls);
   };
 
-  const handleSave = async () => {
-    // Convert array to numbered object
+  // Auto-save helper function
+  const autoSave = async (field: 'google_sheet_id' | 'google_file_id' | 'page_urls', value: string | Record<string, string>) => {
+    const result = await saveSettings({ [field]: value });
+    if (result.success) {
+      toast({
+        title: 'Opgeslagen',
+        description: 'Wijzigingen zijn automatisch opgeslagen',
+      });
+    }
+  };
+
+  const handleSpreadsheetIdBlur = () => {
+    if (googleSheetId !== (settings?.google_sheet_id || '')) {
+      autoSave('google_sheet_id', googleSheetId);
+    }
+  };
+
+  const handleGridIdBlur = () => {
+    if (googleFileId !== (settings?.google_file_id || '')) {
+      autoSave('google_file_id', googleFileId);
+    }
+  };
+
+  const handleUrlBlur = () => {
     const pageUrls: Record<string, string> = {};
     urls.forEach((url, index) => {
       if (url.trim()) {
         pageUrls[(index + 1).toString()] = url.trim();
       }
     });
+    
+    const currentUrls = settings?.page_urls || {};
+    if (JSON.stringify(pageUrls) !== JSON.stringify(currentUrls)) {
+      autoSave('page_urls', pageUrls);
+    }
+  };
 
-    const result = await saveSettings({
-      google_sheet_id: googleSheetId,
-      google_file_id: googleFileId,
-      page_urls: pageUrls,
-    });
+  const handleTriggerWebhook = async () => {
+    if (!selectedCompany) return;
 
-    if (result.success) {
-      await saveNotification('Pagina URL instellingen opgeslagen', 'success');
-    } else {
-      await saveNotification('Fout bij opslaan van instellingen', 'error');
+    setIsSubmitting(true);
+    try {
+      // First save all current data
+      const pageUrls: Record<string, string> = {};
+      urls.forEach((url, index) => {
+        if (url.trim()) {
+          pageUrls[(index + 1).toString()] = url.trim();
+        }
+      });
+
+      await saveSettings({
+        google_sheet_id: googleSheetId,
+        google_file_id: googleFileId,
+        page_urls: pageUrls,
+      });
+
+      // Send POST request to webhook
+      const payload = {
+        bedrijfsnaam: selectedCompany.name,
+        spreadsheet_id: googleSheetId,
+        grid_id: googleFileId,
+        page_urls: pageUrls,
+      };
+
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await response.text();
+      let message = responseText;
+      
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        message = jsonResponse.message || jsonResponse.Output || jsonResponse.output || responseText;
+      } catch {
+        // Use raw text if not JSON
+      }
+
+      if (response.ok) {
+        await saveNotification(message || 'URL documentatie gestart', 'success');
+      } else {
+        await saveNotification(`Fout: ${message}`, 'error');
+      }
+    } catch (error) {
+      console.error('Webhook error:', error);
+      await saveNotification('Fout bij het starten van documentatie', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,6 +208,7 @@ export const PageUrlForm = ({
         <Input
           value={googleSheetId}
           onChange={(e) => setGoogleSheetId(e.target.value)}
+          onBlur={handleSpreadsheetIdBlur}
           placeholder="Voer Spreadsheet ID in..."
           className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
           disabled={!isAdmin}
@@ -142,6 +221,7 @@ export const PageUrlForm = ({
         <Input
           value={googleFileId}
           onChange={(e) => setGoogleFileId(e.target.value)}
+          onBlur={handleGridIdBlur}
           placeholder="Voer Grid ID in..."
           className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
           disabled={!isAdmin}
@@ -177,6 +257,7 @@ export const PageUrlForm = ({
                 <Input
                   value={url}
                   onChange={(e) => handleUrlChange(index, e.target.value)}
+                  onBlur={handleUrlBlur}
                   placeholder="https://example.com/sitemap.xml"
                   className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
                   disabled={!isAdmin}
@@ -210,21 +291,21 @@ export const PageUrlForm = ({
         )}
       </div>
 
-      {/* Save/Start Button */}
+      {/* Webhook Trigger Button */}
       {isAdmin && (
         <Button
-          onClick={handleSave}
-          disabled={!hasValidUrl || isSaving}
+          onClick={handleTriggerWebhook}
+          disabled={!hasValidUrl || isSubmitting}
           variant="primaryCustom"
           className="w-full"
         >
-          {isSaving ? (
+          {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Opslaan...
+              Bezig...
             </>
           ) : (
-            'Opslaan'
+            "URL's documenteren"
           )}
         </Button>
       )}
