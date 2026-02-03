@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, Pencil, Save } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -24,7 +24,7 @@ interface Notification {
 type ActiveView = 'none' | 'keyword' | 'blog' | 'pageurl';
 
 const SeoBlog = () => {
-  const { isLoading: authLoading, user, isAdmin, isSuperAdmin } = useAuth();
+  const { isLoading: authLoading, user, isAdmin } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
@@ -33,12 +33,6 @@ const SeoBlog = () => {
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
-  
-  // Editable guide title state
-  const [guideTitle, setGuideTitle] = useState('SEO blog handleiding');
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [isSavingTitle, setIsSavingTitle] = useState(false);
 
   // Load notifications from database
   useEffect(() => {
@@ -85,38 +79,6 @@ const SeoBlog = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
-
-  // Load guide title from database
-  useEffect(() => {
-    const loadGuideTitle = async () => {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'seo_guide_title')
-        .maybeSingle();
-      
-      if (data?.value) {
-        setGuideTitle(data.value);
-      }
-    };
-    loadGuideTitle();
-  }, []);
-
-  const handleSaveTitle = async () => {
-    if (!editedTitle.trim()) return;
-    
-    setIsSavingTitle(true);
-    const { error } = await supabase
-      .from('app_settings')
-      .update({ value: editedTitle.trim(), updated_at: new Date().toISOString() })
-      .eq('key', 'seo_guide_title');
-    
-    if (!error) {
-      setGuideTitle(editedTitle.trim());
-      setIsEditingTitle(false);
-    }
-    setIsSavingTitle(false);
-  };
 
   if (authLoading) {
     return (
@@ -439,47 +401,7 @@ const SeoBlog = () => {
       <Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
         <SheetContent className="w-[500px] sm:max-w-[500px] bg-card border-border overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-white text-xl flex items-center gap-2 group">
-              {isEditingTitle ? (
-                <>
-                  <input
-                    type="text"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:border-white/40 flex-1"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveTitle();
-                      if (e.key === 'Escape') setIsEditingTitle(false);
-                    }}
-                  />
-                  <button
-                    onClick={handleSaveTitle}
-                    disabled={isSavingTitle}
-                    className="p-1 rounded hover:bg-white/10 text-green-400"
-                    title="Opslaan"
-                  >
-                    <Save className="h-4 w-4" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  {guideTitle}
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => {
-                        setEditedTitle(guideTitle);
-                        setIsEditingTitle(true);
-                      }}
-                      className="p-1 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Bewerken"
-                    >
-                      <Pencil className="h-4 w-4 text-white/60" />
-                    </button>
-                  )}
-                </>
-              )}
-            </SheetTitle>
+            <SheetTitle className="text-white text-xl">SEO blog handleiding</SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-8 text-white/80 pb-8">
             {/* Intro */}

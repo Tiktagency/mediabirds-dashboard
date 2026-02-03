@@ -7,14 +7,13 @@ import { InviteUserModal } from './InviteUserModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { UserPlus, Users, Shield, Play, Eye, Crown } from 'lucide-react';
+import { UserPlus, Users, Shield, Play, Eye } from 'lucide-react';
 
 export const UsersTab = () => {
   const { users, permissions, isLoading, updateUserRole, updatePermission, deleteUser, refetch } = useUserManagement();
   const { settings: automations } = useAutomationSettings();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
-  const superAdminCount = users.filter(u => u.roles.includes('super_admin')).length;
   const adminCount = users.filter(u => u.roles.includes('admin')).length;
   const operatorCount = users.filter(u => u.roles.includes('operator')).length;
   const viewerCount = users.filter(u => u.roles.includes('viewer')).length;
@@ -44,7 +43,7 @@ export const UsersTab = () => {
       </div>
 
       {/* User Stats */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card className="bg-card/50 border-border/30">
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -54,19 +53,6 @@ export const UsersTab = () => {
               <div>
                 <p className="text-2xl font-bold">{users.length}</p>
                 <p className="text-xs text-muted-foreground">Totaal</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-border/30">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <Crown className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{superAdminCount}</p>
-                <p className="text-xs text-muted-foreground">Super Admins</p>
               </div>
             </div>
           </CardContent>
