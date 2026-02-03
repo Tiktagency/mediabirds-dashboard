@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export type AppRole = 'admin' | 'operator' | 'viewer';
+export type AppRole = 'super_admin' | 'admin' | 'moderator' | 'user' | 'viewer' | 'operator';
 
 export interface UserProfile {
   id: string;
