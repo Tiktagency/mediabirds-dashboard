@@ -103,6 +103,7 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
                 <SelectItem value="viewer">Viewer - Alleen bekijken</SelectItem>
                 <SelectItem value="operator">Operator - Kan automations uitvoeren</SelectItem>
                 <SelectItem value="admin">Admin - Volledige toegang</SelectItem>
+                <SelectItem value="super_admin">Super Admin - Hoogste toegang</SelectItem>
               </SelectContent>
             </Select>
           </div>
