@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,6 +12,7 @@ const EmailSignature = () => {
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const {
@@ -35,6 +36,20 @@ const EmailSignature = () => {
       setGeneratedHtml(null);
     }
   }, [selectedSignature]);
+
+  // Forceer selecteerbaarheid via JavaScript na render
+  useEffect(() => {
+    if (previewRef.current && generatedHtml) {
+      const allElements = previewRef.current.querySelectorAll('*');
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.setProperty('user-select', 'text', 'important');
+        htmlEl.style.setProperty('-webkit-user-select', 'text', 'important');
+        htmlEl.style.setProperty('cursor', 'text', 'important');
+        htmlEl.style.setProperty('pointer-events', 'auto', 'important');
+      });
+    }
+  }, [generatedHtml]);
 
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
@@ -101,13 +116,6 @@ const EmailSignature = () => {
                 onSave={saveSettings}
                 onHtmlGenerated={(html) => {
                   setGeneratedHtml(html);
-                  // Sla HTML op in database
-                  if (selectedSignature) {
-                    saveSettings({
-                      ...selectedSignature,
-                      generated_html: html,
-                    }, { silent: true });
-                  }
                 }}
                 onGeneratingChange={(generating) => setIsGenerating(generating)}
               />
@@ -128,25 +136,12 @@ const EmailSignature = () => {
                         <span>Preview laden...</span>
                       </div>
                     ) : generatedHtml ? (
-                      <div 
-                        className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
-                        style={{ width: '154%' }}
-                      >
-                        <style>{`
-                          .email-signature-preview * {
-                            user-select: text !important;
-                            -webkit-user-select: text !important;
-                            -moz-user-select: text !important;
-                            -ms-user-select: text !important;
-                            cursor: text !important;
-                            pointer-events: auto !important;
-                          }
-                        `}</style>
-                        <div 
-                          className="email-signature-preview"
-                          dangerouslySetInnerHTML={{ __html: generatedHtml }} 
-                        />
-                      </div>
+                  <div 
+                    ref={previewRef}
+                    className="origin-top-left scale-[0.65] select-text cursor-text"
+                    style={{ width: '154%' }}
+                    dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+                  />
                     ) : (
                       <span className="text-gray-400">
                         Genereer een handtekening om de preview te zien.
