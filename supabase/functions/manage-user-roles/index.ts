@@ -29,15 +29,27 @@ function validateUUID(uuid: unknown, fieldName: string): string {
   return uuid;
 }
 
-function validateRole(role: unknown): 'admin' | 'operator' | 'viewer' {
+// Role hierarchy for permission checks
+const roleHierarchy: Record<string, number> = {
+  'super_admin': 4,
+  'admin': 3,
+  'operator': 2,
+  'viewer': 1,
+};
+
+function getRoleLevel(role: string): number {
+  return roleHierarchy[role] || 0;
+}
+
+function validateRole(role: unknown): 'super_admin' | 'admin' | 'operator' | 'viewer' {
   if (typeof role !== 'string') {
     throw new Error('Role must be a string');
   }
-  const validRoles = ['admin', 'operator', 'viewer'];
+  const validRoles = ['super_admin', 'admin', 'operator', 'viewer'];
   if (!validRoles.includes(role)) {
     throw new Error(`Role must be one of: ${validRoles.join(', ')}`);
   }
-  return role as 'admin' | 'operator' | 'viewer';
+  return role as 'super_admin' | 'admin' | 'operator' | 'viewer';
 }
 
 serve(async (req) => {
@@ -96,6 +108,29 @@ serve(async (req) => {
     switch (action) {
       case 'assign-role': {
         const role = validateRole(body.role);
+        
+        // Check: prevent self-downgrade
+        if (userId === user.id) {
+          const { data: currentRoles } = await supabaseAdmin
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId);
+          
+          const currentLevel = Math.max(
+            ...((currentRoles || []).map(r => getRoleLevel(r.role))),
+            0
+          );
+          const newLevel = getRoleLevel(role);
+          
+          if (newLevel < currentLevel) {
+            return new Response(JSON.stringify({ 
+              error: 'Je kunt je eigen rol niet naar een lager niveau wijzigen' 
+            }), {
+              status: 403,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
         
         // First remove existing roles
         await supabaseAdmin
