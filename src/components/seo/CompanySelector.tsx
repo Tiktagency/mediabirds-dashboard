@@ -63,9 +63,9 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         const { data } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .single();
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'super_admin'])
+        .maybeSingle();
         setIsAdmin(!!data);
       }
     };
