@@ -1,32 +1,24 @@
 
-# Fix: Verwijder "E-mail signature" Overal in HTML
+# Interne Link Toevoegen in SEO Blog Handleiding
 
-## Probleem
-De huidige regex zoekt alleen aan het **begin** van de string (`^E-mail signature`). Maar de tekst staat waarschijnlijk:
-- Ergens in het midden van de HTML content
-- Gewrapt in HTML tags zoals `<p>E-mail signature</p>` of `<div>E-mail signature</div>`
+## Wijziging
+Voeg een klikbare link toe aan "SEO" in Deel 1, punt 1 van de handleiding.
 
-## Oplossing
-Vervang de beperkte `^` regex door een globale regex die "E-mail signature" overal verwijdert, inclusief wanneer het in HTML tags staat.
+**Bestand:** `src/pages/SeoBlog.tsx`
 
-**Bestand:** `src/pages/EmailSignature.tsx`
-
-### Wijzigingen in `cleanHtmlForCopy`:
-
-Voeg deze regels toe:
+### Huidige code (regel 469):
 ```tsx
-// Verwijder "E-mail signature" in HTML tags (p, div, span, etc.)
-cleaned = cleaned.replace(/<(p|div|span)[^>]*>\s*E-mail signature\s*<\/\1>/gi, '');
-
-// Verwijder "E-mail signature" als losse tekst overal in de string
-cleaned = cleaned.replace(/E-mail signature\s*\n?/gi, '');
+<p className="text-sm text-white/70">Zorg voor toegang tot de map <span className="text-blue-300">"SEO"</span> (beheerd door Tikt).</p>
 ```
 
-## Technische Details
-| Regex | Werking |
-|-------|---------|
-| `/<(p\|div\|span)[^>]*>\s*E-mail signature\s*<\/\1>/gi` | Verwijdert `<p>E-mail signature</p>`, `<div>E-mail signature</div>`, etc. |
-| `/E-mail signature\s*\n?/gi` | Verwijdert alle voorkomens van de tekst + eventuele whitespace/newline |
+### Nieuwe code:
+```tsx
+<p className="text-sm text-white/70">Zorg voor toegang tot de map <a href="https://drive.google.com/drive/folders/1u8PyUe6-ZntBG_EhuU_nnkv4YpoWjEst?hl=nl" target="_blank" rel="noopener noreferrer" className="text-blue-300 underline hover:text-blue-200">"SEO"</a> (beheerd door Tikt).</p>
+```
 
-## Resultaat
-De tekst "E-mail signature" wordt volledig verwijderd, ongeacht waar deze in de HTML staat.
+## Details
+- De tekst "SEO" wordt een klikbare link naar de Google Drive map
+- `target="_blank"` opent de link in een nieuw tabblad
+- `rel="noopener noreferrer"` is toegevoegd voor veiligheid
+- Hover-effect toegevoegd (`hover:text-blue-200`) voor betere UX
+- Onderstreping (`underline`) maakt duidelijk dat het een link is
