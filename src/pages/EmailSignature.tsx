@@ -11,8 +11,10 @@ import { Loader2, Copy, Check, Plus } from 'lucide-react';
 const cleanHtmlForCopy = (html: string): string => {
   let cleaned = html;
   
-  // Verwijder "Met vriendelijke groet, Kind Regards" en variaties
-  cleaned = cleaned.replace(/Met vriendelijke groet,?\s*Kind Regards\s*/gi, '');
+  // Verwijder markdown code fences aan begin en einde
+  cleaned = cleaned.replace(/^```html\s*/i, '');
+  cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
+  cleaned = cleaned.replace(/```\s*$/g, '');
   
   // Verwijder lege paragrafen en divs met alleen whitespace
   cleaned = cleaned.replace(/<p[^>]*>\s*(&nbsp;|\s)*\s*<\/p>/gi, '');
