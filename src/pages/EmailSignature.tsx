@@ -129,7 +129,7 @@ const EmailSignature = () => {
                       </div>
                     ) : generatedHtml ? (
                       <div 
-                        className="origin-top-left scale-[0.65]"
+                        className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
                         style={{ width: '154%' }}
                         dangerouslySetInnerHTML={{ __html: generatedHtml }} 
                       />
