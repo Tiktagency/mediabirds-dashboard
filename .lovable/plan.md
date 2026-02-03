@@ -1,106 +1,121 @@
 
-# Plan: Rol Badge met Iconen Links van Email
+# Plan: Voorkom Zelf-Downgrade van Rollen
 
 ## Probleem
-De rol badge in de banner rechtsboven:
-1. Staat rechts van de email (moet links)
-2. Heeft geen iconen (admin panel heeft wel iconen)
+Gebruikers kunnen momenteel hun eigen rol naar een lagere waarde wijzigen. Dit moet worden geblokkeerd.
+
+## Rol Hiërarchie
+| Rang | Rol | Niveau |
+|------|-----|--------|
+| 1 | super_admin | 4 (hoogst) |
+| 2 | admin | 3 |
+| 3 | operator | 2 |
+| 4 | viewer | 1 (laagst) |
 
 ## Oplossing
+Twee lagen van bescherming implementeren:
 
-### Bestand: `src/pages/Index.tsx`
+### 1. Backend Edge Function (primaire beveiliging)
 
-**1. Extra iconen importeren (regel 5)**
+**Bestand:** `supabase/functions/manage-user-roles/index.ts`
 
-Toevoegen aan de bestaande import:
-- `Crown` (voor super_admin)
-- `Shield` (voor admin) 
-- `Play` (voor operator)
-- `Eye` (voor viewer)
+**Wijzigingen:**
 
-**2. getRoleBadge functie uitbreiden (regels 145-160)**
-
-Icoon toevoegen per rol:
-
-| Rol | Icoon | Kleur |
-|-----|-------|-------|
-| super_admin | Crown | Paars |
-| admin | Shield | Rood |
-| operator | Play | Blauw |
-| viewer | Eye | Groen |
-
-**3. Badge positie wijzigen (regels 241-248)**
-
-Huidige volgorde:
-```
-email → badge
-```
-
-Nieuwe volgorde:
-```
-badge → email
-```
-
-## Code Wijzigingen
-
-**Import (regel 5):**
+1. **validateRole uitbreiden met super_admin** (regel 32-41):
 ```typescript
-import { ..., Crown, Shield, Play, Eye } from 'lucide-react';
+function validateRole(role: unknown): 'super_admin' | 'admin' | 'operator' | 'viewer' {
+  const validRoles = ['super_admin', 'admin', 'operator', 'viewer'];
+  // ...
+}
 ```
 
-**getRoleBadge functie:**
+2. **Rol hiërarchie helper toevoegen** (nieuwe functie):
 ```typescript
-const getRoleBadge = () => {
-  if (roles.includes('super_admin')) {
-    return { 
-      label: 'Super Admin', 
-      icon: Crown,
-      className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
-    };
-  }
-  if (roles.includes('admin')) {
-    return { 
-      label: 'Admin', 
-      icon: Shield,
-      className: 'bg-red-500/20 text-red-400 border-red-500/30' 
-    };
-  }
-  if (roles.includes('operator')) {
-    return { 
-      label: 'Operator', 
-      icon: Play,
-      className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
-    };
-  }
-  if (roles.includes('viewer')) {
-    return { 
-      label: 'Viewer', 
-      icon: Eye,
-      className: 'bg-green-500/20 text-green-400 border-green-500/30' 
-    };
-  }
-  return null;
+const roleHierarchy: Record<string, number> = {
+  'super_admin': 4,
+  'admin': 3,
+  'operator': 2,
+  'viewer': 1,
 };
+
+function getRoleLevel(role: string): number {
+  return roleHierarchy[role] || 0;
+}
 ```
 
-**Badge rendering (nieuwe volgorde):**
-```tsx
-<div className="flex items-center gap-2">
-  {roleBadge && (
-    <Badge variant="outline" className={roleBadge.className}>
-      <roleBadge.icon className="w-3 h-3" />
-      <span className="ml-1">{roleBadge.label}</span>
-    </Badge>
-  )}
-  <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
-</div>
+3. **Self-downgrade check toevoegen** in `assign-role` case (rond regel 97-119):
+```typescript
+case 'assign-role': {
+  const role = validateRole(body.role);
+  
+  // Check: voorkom zelf-downgrade
+  if (userId === user.id) {
+    // Haal huidige rol van gebruiker op
+    const { data: currentRoles } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    
+    const currentLevel = Math.max(
+      ...((currentRoles || []).map(r => getRoleLevel(r.role))),
+      0
+    );
+    const newLevel = getRoleLevel(role);
+    
+    if (newLevel < currentLevel) {
+      return new Response(JSON.stringify({ 
+        error: 'Je kunt je eigen rol niet naar een lager niveau wijzigen' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+  
+  // ... rest van de code
+}
 ```
 
-## Resultaat
+### 2. Frontend UI (gebruikerservaring)
 
-De banner rechtsboven toont nu:
-```
-[Crown] Super Admin    gebruiker@email.com    [logout] [settings]
+**Bestand:** `src/components/admin/users/UserList.tsx`
+
+**Wijzigingen:**
+
+1. **Props uitbreiden** om huidige gebruiker ID door te geven:
+```typescript
+interface UserListProps {
+  users: UserProfile[];
+  currentUserId?: string;  // Toevoegen
+  onUpdateRole: (userId: string, role: AppRole) => Promise<void>;
+  onDelete: (userId: string) => Promise<void>;
+}
 ```
 
-Met exact dezelfde styling als in het admin panel (icoon + label + kleuren).
+2. **Rol opties filteren** voor de huidige gebruiker (in de Select component):
+- Als de gebruiker zichzelf bewerkt, toon alleen rollen die gelijk of hoger zijn dan hun huidige rol
+- Disable de Select volledig als er geen hogere rollen beschikbaar zijn
+
+**Bestand:** `src/components/admin/users/UsersTab.tsx`
+
+**Wijziging:**
+- Haal `user` uit `useAuth()` hook
+- Geef `currentUserId={user?.id}` door aan `UserList`
+
+## Samenvatting Wijzigingen
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `supabase/functions/manage-user-roles/index.ts` | Backend validatie + super_admin in validateRole |
+| `src/components/admin/users/UserList.tsx` | Filter opties voor eigen rol |
+| `src/components/admin/users/UsersTab.tsx` | currentUserId prop doorgeven |
+
+## Gedrag na Implementatie
+
+| Scenario | Resultaat |
+|----------|-----------|
+| Admin wijzigt eigen rol naar viewer | **GEBLOKKEERD** |
+| Super admin wijzigt eigen rol naar admin | **GEBLOKKEERD** |
+| Admin wijzigt andere gebruiker naar viewer | Toegestaan |
+| Super admin wijzigt andere admin naar viewer | Toegestaan |
+| Admin wijzigt eigen rol naar super_admin | Toegestaan (upgrade) |
