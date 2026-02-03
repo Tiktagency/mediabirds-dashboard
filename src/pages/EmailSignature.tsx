@@ -17,6 +17,10 @@ const cleanHtmlForCopy = (html: string): string => {
   cleaned = cleaned.replace(/^E-mail signature\s*/i, '');  // Losse tekst zonder code fences
   cleaned = cleaned.replace(/```\s*$/g, '');
   
+  // Trim en verwijder nogmaals "E-mail signature" (voor het geval er whitespace voor stond)
+  cleaned = cleaned.trim();
+  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');
+  
   // Verwijder lege paragrafen en divs met alleen whitespace
   cleaned = cleaned.replace(/<p[^>]*>\s*(&nbsp;|\s)*\s*<\/p>/gi, '');
   cleaned = cleaned.replace(/<div[^>]*>\s*(&nbsp;|\s)*\s*<\/div>/gi, '');
