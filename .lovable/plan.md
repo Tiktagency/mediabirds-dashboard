@@ -1,62 +1,101 @@
 
-# Plan: Kopieer Knop Toevoegen aan Preview Sectie
+# Plan: Handtekening Genereren met Save-melding bij Wijzigingen
 
 ## Doel
-Een kopieerknop toevoegen aan de Preview card header, vergelijkbaar met de bestaande knop in de HTML Code sectie.
+De "Handtekening genereren" knop moet:
+1. POST request naar de webhook sturen (al aanwezig)
+2. Gegevens opslaan en een pop-up melding tonen als er gegevens zijn veranderd
 
-## Wijziging
+## Huidige situatie
+De code slaat al automatisch op met `onSave(signatureData, { silent: true })`, maar:
+- De `silent: true` optie onderdrukt alle meldingen
+- Er wordt niet gecontroleerd of er daadwerkelijk wijzigingen zijn
 
-**Bestand:** `src/pages/EmailSignature.tsx`
+## Oplossing
+Gebruik react-hook-form's `formState.isDirty` om te detecteren of formuliergegevens zijn gewijzigd. Bij wijzigingen wordt een melding getoond, anders wordt stil opgeslagen.
 
-**Locatie:** Preview Card Header (regels 122-125)
+## Wijzigingen
 
-### Huidige code:
+**Bestand:** `src/components/email-signature/EmailSignatureForm.tsx`
+
+### 1. Voeg `isDirty` toe aan form destructuring (regel 88)
+
 ```tsx
-<CardHeader>
-  <CardTitle className="text-white text-lg">Preview</CardTitle>
-</CardHeader>
+const {
+  register,
+  handleSubmit,
+  watch,
+  setValue,
+  reset,
+  formState: { errors, isValid, isDirty },
+} = useForm<FormData>({
 ```
 
-### Nieuwe code:
+### 2. Track ook wijzigingen in niet-form velden
+
+Voeg state toe om wijzigingen in socials, foto URLs en extra velden te tracken:
+
 ```tsx
-<CardHeader className="flex flex-row items-center justify-between">
-  <CardTitle className="text-white text-lg">Preview</CardTitle>
-  {generatedHtml && (
-    <Button
-      variant="outline"
-      size="sm"
-      className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-      onClick={async () => {
-        await navigator.clipboard.writeText(generatedHtml);
-        setIsCopied(true);
-        toast({
-          title: 'Gekopieerd',
-          description: 'HTML code is naar het klembord gekopieerd',
-        });
-        setTimeout(() => setIsCopied(false), 2000);
-      }}
-    >
-      {isCopied ? (
-        <>
-          <Check className="w-4 h-4 mr-1" />
-          Gekopieerd
-        </>
-      ) : (
-        <>
-          <Copy className="w-4 h-4 mr-1" />
-          Kopieer
-        </>
-      )}
-    </Button>
-  )}
-</CardHeader>
+const [hasNonFormChanges, setHasNonFormChanges] = useState(false);
 ```
 
-## Samenvatting
+Met useEffect om wijzigingen te detecteren:
 
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/pages/EmailSignature.tsx` | Kopieerknop toevoegen aan Preview CardHeader |
+```tsx
+useEffect(() => {
+  if (!selectedSignature) {
+    setHasNonFormChanges(true); // Nieuwe handtekening = altijd wijzigingen
+    return;
+  }
+  
+  const socialsChanged = JSON.stringify(socials) !== JSON.stringify(selectedSignature.socials);
+  const photoChanged = profilePhotoUrl !== selectedSignature.profile_photo_url;
+  const logoChanged = companyLogoUrl !== selectedSignature.company_logo_url;
+  const extrasChanged = 
+    JSON.stringify(extraEmails) !== JSON.stringify(selectedSignature.emails?.slice(1) || []) ||
+    JSON.stringify(extraPhoneNumbers) !== JSON.stringify(selectedSignature.phone_numbers?.slice(1) || []) ||
+    JSON.stringify(extraLocations) !== JSON.stringify(selectedSignature.locations?.slice(1) || []);
+  
+  setHasNonFormChanges(socialsChanged || photoChanged || logoChanged || extrasChanged);
+}, [socials, profilePhotoUrl, companyLogoUrl, extraEmails, extraPhoneNumbers, extraLocations, selectedSignature]);
+```
+
+### 3. Pas save logica aan in onSubmit (regels 355-358)
+
+```tsx
+// Auto-save alle gegevens inclusief HTML
+signatureData.generated_html = htmlCode;
+
+const hasChanges = isDirty || hasNonFormChanges || !selectedSignature;
+
+if (hasChanges) {
+  // Wijzigingen gedetecteerd - opslaan MET melding
+  await onSave(signatureData, { silent: false });
+} else {
+  // Geen wijzigingen - stil opslaan (alleen HTML update)
+  await onSave(signatureData, { silent: true });
+}
+```
+
+### 4. Reset dirty state na opslaan
+
+Na succesvolle save, reset de form state:
+
+```tsx
+// Reset form dirty state na opslaan
+reset(data, { keepValues: true });
+setHasNonFormChanges(false);
+```
 
 ## Resultaat
-Gebruikers kunnen de HTML code kopiëren vanuit zowel de Preview sectie als de HTML Code sectie, voor extra gebruiksgemak.
+
+| Situatie | Gedrag |
+|----------|--------|
+| Nieuwe handtekening | Opslaan + melding "Je email handtekening is opgeslagen" |
+| Bestaande handtekening met wijzigingen | Opslaan + melding "Je email handtekening is opgeslagen" |
+| Bestaande handtekening zonder wijzigingen | Alleen HTML updaten, geen melding |
+
+## Technische Details
+- `isDirty` van react-hook-form trackt wijzigingen in form fields
+- `hasNonFormChanges` trackt wijzigingen in socials, foto URLs en extra velden
+- `reset(data, { keepValues: true })` reset de dirty state zonder waarden te wissen
