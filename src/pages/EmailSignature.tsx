@@ -14,6 +14,7 @@ const cleanHtmlForCopy = (html: string): string => {
   // Verwijder markdown code fences aan begin en einde
   cleaned = cleaned.replace(/^```html\s*/i, '');
   cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
+  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');  // Losse tekst zonder code fences
   cleaned = cleaned.replace(/```\s*$/g, '');
   
   // Verwijder lege paragrafen en divs met alleen whitespace
