@@ -351,6 +351,10 @@ export const EmailSignatureForm = ({
           htmlCode = htmlCode.replace(/^["']|["']$/g, '');
         }
         onHtmlGenerated?.(htmlCode);
+        
+        // Auto-save alle gegevens inclusief HTML
+        signatureData.generated_html = htmlCode;
+        await onSave(signatureData, { silent: true });
       }
 
       toast({
