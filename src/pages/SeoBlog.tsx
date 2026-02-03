@@ -466,7 +466,7 @@ const SeoBlog = () => {
               <div className="space-y-3 pl-2">
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">1</span>
-                  <p className="text-sm text-white/70">Zorg voor toegang tot de map <span className="text-blue-300">"SEO"</span> (beheerd door Tikt).</p>
+                  <p className="text-sm text-white/70">Zorg voor toegang tot de map <a href="https://drive.google.com/drive/folders/1u8PyUe6-ZntBG_EhuU_nnkv4YpoWjEst?hl=nl" target="_blank" rel="noopener noreferrer" className="text-blue-300 underline hover:text-blue-200">"SEO"</a> (beheerd door Tikt).</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">2</span>
