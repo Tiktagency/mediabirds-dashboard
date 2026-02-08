@@ -38,11 +38,11 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    /* Tikt brand colors */
-    --tikt-primary: 228 45% 26%;
-    --tikt-secondary: 204 80% 50%;
-    --tikt-accent: 47 100% 63%;
-    --tikt-text-light: 218 11% 90%;
+    /* Mediabirds brand colors from image */
+    --tikt-primary: 246 30% 9%;
+    --tikt-secondary: 267 85% 65%;
+    --tikt-accent: 267 85% 65%;
+    --tikt-text-light: 0 0% 95%;
 
     /* Gradients */
     --gradient-tikt: linear-gradient(135deg, hsl(var(--tikt-primary)) 0%, hsl(var(--tikt-secondary)) 100%);
