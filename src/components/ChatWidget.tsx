@@ -9,7 +9,7 @@ const ChatWidget = () => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Array<{ id: number; text: string; sender: 'user' | 'bot' }>>([
-    { id: 1, text: 'Voorbeeld:\nNodige gegeven:\nMediabirds, Pakket B, 10-2-2025, 10-5-2025\n\nFases:\nWebdesign, Development, Testen & feedback, Marketing, Livegang', sender: 'bot' }
+    { id: 1, text: 'Voorbeeld:\n\nNodige gegeven:\nMediabirds, Pakket B, 10-2-2025, 10-5-2025\n\nFases:\nWebdesign, Development, Testen & feedback, Marketing, Livegang', sender: 'bot' }
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,7 +133,7 @@ const ChatWidget = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-80 h-96 z-50 shadow-2xl border-0 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-96 h-[32rem] z-50 shadow-2xl border-0 flex flex-col">
           <CardHeader className="bg-gradient-to-r from-[hsl(var(--tikt-primary))] to-[hsl(var(--tikt-secondary))] text-white rounded-t-lg flex-shrink-0">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Tikt Support</CardTitle>
