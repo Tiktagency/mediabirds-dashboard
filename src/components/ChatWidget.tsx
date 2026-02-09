@@ -9,7 +9,7 @@ const ChatWidget = () => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<Array<{ id: number; text: string; sender: 'user' | 'bot' }>>([
-    { id: 1, text: 'Voorbeeld:\n\nNodige gegeven:\nMediabirds, Pakket B, 10-2-2025, 10-5-2025\n\nFases:\nWebdesign, Development, Testen & feedback, Marketing, Livegang', sender: 'bot' }
+    { id: 1, text: 'Voorbeeld:\n\nNodige gegeven:\n• Mediabirds\n• Pakket B\n• 10-2-2025\n• 10-5-2025\n\nFases:\n• Webdesign\n• Development\n• Testen & feedback\n• Marketing\n• Livegang', sender: 'bot' }
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
