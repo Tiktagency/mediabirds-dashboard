@@ -142,13 +142,13 @@ export const AutomationInfoTooltip = ({
             )}
             
             {/* Fallback naar enkele lastRun als geen multipleLastRuns */}
-            {!hasMultipleLastRunsData && hasSingleLastRunData && (
+            {!hasMultipleLastRunsData && (
               <div>
                 <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
                   Laatste succesvol uitgevoerd
                 </p>
                 <p className="text-sm text-white/80">
-                  {formatLastRun(lastRun)}
+                  {formatLastRun(lastRun) || 'Nooit'}
                 </p>
               </div>
             )}
