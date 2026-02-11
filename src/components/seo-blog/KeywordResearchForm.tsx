@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Sparkles, Clock, Copy, Trash2, ChevronDown } from 'lucide-react';
+import { Pencil, Sparkles, Clock, Copy, Trash2, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
@@ -158,22 +158,7 @@ export const KeywordResearchForm = ({
     }
   };
 
-  const handleCancelEdit = () => {
-    if (settings) {
-      setFormData({
-        bedrijfsnaam: selectedCompany?.name || '',
-        blog_onderwerp: settings.blog_onderwerp || '',
-        doelgroep_intentie: settings.doelgroep_intentie || '',
-        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
-        extra_instructies: settings.extra_instructies || '',
-        hoofd_google_sheet_id: settings.hoofd_google_sheet_id || '',
-        hoofd_google_slides_id: settings.hoofd_google_slides_id || '',
-        nieuw_google_sheet_id: settings.nieuw_google_sheet_id || '',
-        nieuw_google_slides_id: settings.nieuw_google_slides_id || '',
-      });
-    }
-    setEditingField(null);
-  };
+
 
   const handleStartResearch = async () => {
     if (!isFormComplete() || !selectedCompany) {
@@ -273,29 +258,13 @@ export const KeywordResearchForm = ({
         <Label className="text-white/70 text-sm">{label}</Label>
         
         {isEditing && canEdit ? (
-          <div className="flex gap-2 items-center">
-            <Input
-              value={value}
-              onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-              className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
-              onClick={() => handleSaveField(field)}
-            >
-              <Check className="h-6 w-6" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
-              onClick={handleCancelEdit}
-            >
-              <XCircle className="h-6 w-6" />
-            </Button>
-          </div>
+          <Input
+            value={value}
+            onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+            onBlur={() => handleSaveField(field)}
+            autoFocus
+          />
         ) : (
           <div className="flex items-center gap-2">
             {/* Tekst container met tooltip voor Google ID velden */}
@@ -399,36 +368,20 @@ export const KeywordResearchForm = ({
         </div>
         
         {isEditing && canEdit ? (
-          <div className="flex gap-2 items-start">
-            <Textarea
-              value={value}
-              onChange={handleTextareaChange}
-              placeholder={placeholder}
-              className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
-              ref={(el) => {
-                if (el) {
-                  el.style.height = 'auto';
-                  el.style.height = el.scrollHeight + 'px';
-                }
-              }}
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-              onClick={() => handleSaveField(field)}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-              onClick={handleCancelEdit}
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-          </div>
+          <Textarea
+            value={value}
+            onChange={handleTextareaChange}
+            placeholder={placeholder}
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
+            onBlur={() => handleSaveField(field)}
+            autoFocus
+            ref={(el) => {
+              if (el) {
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+              }
+            }}
+          />
         ) : isExpanded ? (
           <div className="expanded-field-container relative">
             <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
