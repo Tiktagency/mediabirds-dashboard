@@ -45,7 +45,7 @@ const SeoBlog = () => {
   const [managedBy, setManagedBy] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
-  const [notesEditMode, setNotesEditMode] = useState<'collapsed' | 'expanded' | 'editing'>('collapsed');
+  const [notesEditMode, setNotesEditMode] = useState<'expanded' | 'editing'>('expanded');
   const [notesDraft, setNotesDraft] = useState('');
 
   // Load notifications from database
@@ -347,19 +347,9 @@ const SeoBlog = () => {
                 )}
               </div>
 
-              {notesEditMode === 'collapsed' && (
-                <div
-                  className="text-red-400 text-sm truncate cursor-pointer min-h-[20px]"
-                  onClick={() => setNotesEditMode('expanded')}
-                >
-                  {notes || <span className="text-white/30 italic">Geen notities</span>}
-                </div>
-              )}
-
               {notesEditMode === 'expanded' && (
                 <div
-                  className="text-red-400 text-sm whitespace-pre-wrap cursor-pointer min-h-[20px]"
-                  onClick={() => setNotesEditMode('collapsed')}
+                  className="text-red-400 text-sm whitespace-pre-wrap min-h-[20px] max-h-[200px] overflow-y-auto"
                 >
                   {notes || <span className="text-white/30 italic">Geen notities</span>}
                 </div>
@@ -371,7 +361,7 @@ const SeoBlog = () => {
                     value={notesDraft}
                     onChange={(e) => setNotesDraft(e.target.value)}
                     placeholder="Laat hier notities achter voor je collega's..."
-                    className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] resize-none"
+                    className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] max-h-[200px] overflow-y-auto resize-none"
                     autoFocus
                   onBlur={async () => {
                     setNotes(notesDraft);
