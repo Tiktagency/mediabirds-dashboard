@@ -373,38 +373,22 @@ const SeoBlog = () => {
                     placeholder="Laat hier notities achter voor je collega's..."
                     className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] resize-none"
                     autoFocus
+                  onBlur={async () => {
+                    setNotes(notesDraft);
+                    setNotesEditMode('expanded');
+                    setIsSavingNotes(true);
+                    const { error } = await supabase
+                      .from('companies')
+                      .update({ notes: notesDraft } as any)
+                      .eq('id', selectedCompany.id);
+                    setIsSavingNotes(false);
+                    if (error) {
+                      toast({ title: 'Fout bij opslaan notities', variant: 'destructive' });
+                    } else {
+                      toast({ title: 'Notities opgeslagen' });
+                    }
+                  }}
                   />
-                  <div className="flex justify-end gap-1">
-                    <button
-                      onClick={() => setNotesEditMode('expanded')}
-                      className="p-1 rounded hover:bg-white/10 transition-colors"
-                      title="Annuleren"
-                    >
-                      <XCircle className="h-6 w-6 text-red-400" />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setNotes(notesDraft);
-                        setNotesEditMode('expanded');
-                        setIsSavingNotes(true);
-                        const { error } = await supabase
-                          .from('companies')
-                          .update({ notes: notesDraft } as any)
-                          .eq('id', selectedCompany.id);
-                        setIsSavingNotes(false);
-                        if (error) {
-                          toast({ title: 'Fout bij opslaan notities', variant: 'destructive' });
-                        } else {
-                          toast({ title: 'Notities opgeslagen' });
-                        }
-                      }}
-                      disabled={isSavingNotes}
-                      className="p-1 rounded hover:bg-white/10 transition-colors"
-                      title="Opslaan"
-                    >
-                      <Check className="h-6 w-6 text-green-400" />
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
