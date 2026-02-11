@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, User } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, User, AlertTriangle, Save } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -14,6 +14,8 @@ import { BlogGenerationForm } from '@/components/seo-blog/BlogGenerationForm';
 import { PageUrlForm } from '@/components/seo-blog/PageUrlForm';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
@@ -41,6 +43,8 @@ const SeoBlog = () => {
   );
   const [managedByUsers, setManagedByUsers] = useState<ManagedByUser[]>([]);
   const [managedBy, setManagedBy] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   // Load notifications from database
   useEffect(() => {
@@ -112,25 +116,45 @@ const SeoBlog = () => {
     fetchManagedByUsers();
   }, []);
 
-  // Load managed_by when company changes
+  // Load managed_by and notes when company changes
   useEffect(() => {
     if (!selectedCompany) {
       setManagedBy(null);
+      setNotes('');
       return;
     }
     
-    const fetchManagedBy = async () => {
+    const fetchCompanyData = async () => {
       const { data } = await supabase
         .from('companies')
-        .select('managed_by')
+        .select('managed_by, notes')
         .eq('id', selectedCompany.id)
         .single();
 
       setManagedBy((data as any)?.managed_by || null);
+      setNotes((data as any)?.notes || '');
     };
 
-    fetchManagedBy();
+    fetchCompanyData();
   }, [selectedCompany]);
+
+  const handleSaveNotes = async () => {
+    if (!selectedCompany) return;
+    setIsSavingNotes(true);
+    
+    const { error } = await supabase
+      .from('companies')
+      .update({ notes } as any)
+      .eq('id', selectedCompany.id);
+
+    setIsSavingNotes(false);
+    
+    if (error) {
+      toast({ title: 'Fout bij opslaan notities', variant: 'destructive' });
+    } else {
+      toast({ title: 'Notities opgeslagen' });
+    }
+  };
 
   const handleManagedByChange = async (userId: string) => {
     if (!selectedCompany) return;
@@ -264,42 +288,72 @@ const SeoBlog = () => {
         </ScrollArea>
       </div>
       
-      <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6">
-        <h1 className="hero-title text-white mb-4 fade-in-up text-center">
-          SEO
-        </h1>
-        <p className="text-white/50 text-lg mb-4 text-center max-w-lg">
-          Beheer je zoekwoord onderzoek en blog generatie op één plek
-        </p>
-        
-        {selectedCompany && (
-          <div className="flex items-center gap-2 mb-12">
-            <User className="h-4 w-4 text-white/40" />
-            <span className="text-white/40 text-sm">Beheerd door:</span>
-            {isAdmin ? (
-              <Select
-                value={managedBy || 'none'}
-                onValueChange={handleManagedByChange}
-              >
-                <SelectTrigger className="w-[220px] bg-white/5 border-white/20 text-white h-8 text-sm">
-                  <SelectValue placeholder="Selecteer beheerder" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-white/20">
-                  <SelectItem value="none" className="text-white/60">Geen</SelectItem>
-                  {managedByUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id} className="text-white/80">
-                      {u.email || 'Onbekend'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <span className="text-white/70 text-sm">
-                {managedByUsers.find(u => u.id === managedBy)?.email || 'Niet ingesteld'}
-              </span>
+      <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6 max-w-5xl mx-auto">
+        <div className="flex w-full max-w-4xl gap-6 mb-12">
+          {/* Left column - title, subtitle, managed by */}
+          <div className="flex-1 text-left">
+            <h1 className="hero-title text-white mb-4 fade-in-up">
+              SEO
+            </h1>
+            <p className="text-white/50 text-lg mb-4">
+              Beheer je zoekwoord onderzoek en blog generatie op één plek
+            </p>
+            
+            {selectedCompany && (
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-white/40" />
+                <span className="text-white/40 text-sm">Beheerd door:</span>
+                {isAdmin ? (
+                  <Select
+                    value={managedBy || 'none'}
+                    onValueChange={handleManagedByChange}
+                  >
+                    <SelectTrigger className="w-[220px] bg-white/5 border-white/20 text-white h-8 text-sm">
+                      <SelectValue placeholder="Selecteer beheerder" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-white/20">
+                      <SelectItem value="none" className="text-white/60">Geen</SelectItem>
+                      {managedByUsers.map((u) => (
+                        <SelectItem key={u.id} value={u.id} className="text-white/80">
+                          {u.email || 'Onbekend'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="text-white/70 text-sm">
+                    {managedByUsers.find(u => u.id === managedBy)?.email || 'Niet ingesteld'}
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        )}
+
+          {/* Right column - Notes */}
+          {selectedCompany && (
+            <div className="w-80 border-l-4 border-red-500 bg-white/5 rounded-r-lg p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <span className="text-white font-semibold text-sm">Notities</span>
+              </div>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Laat hier notities achter voor je collega's..."
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm min-h-[80px] resize-none flex-1"
+              />
+              <Button
+                size="sm"
+                onClick={handleSaveNotes}
+                disabled={isSavingNotes}
+                className="self-end bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              >
+                <Save className="h-3 w-3 mr-1" />
+                {isSavingNotes ? 'Opslaan...' : 'Opslaan'}
+              </Button>
+            </div>
+          )}
+        </div>
         
         {/* Mini Dashboard - Arrow-shaped navigation */}
         <div className="flex w-full max-w-4xl mb-12">
