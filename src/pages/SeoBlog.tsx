@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, User, AlertTriangle, Save } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, User, Pencil, Check, XCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -45,6 +45,8 @@ const SeoBlog = () => {
   const [managedBy, setManagedBy] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [notesEditMode, setNotesEditMode] = useState<'collapsed' | 'expanded' | 'editing'>('collapsed');
+  const [notesDraft, setNotesDraft] = useState('');
 
   // Load notifications from database
   useEffect(() => {
@@ -331,26 +333,80 @@ const SeoBlog = () => {
 
           {/* Right column - Notes */}
           {selectedCompany && (
-            <div className="w-80 border-l-4 border-red-500 bg-white/5 rounded-r-lg p-4 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-500" />
+            <div className="w-80 bg-white/5 rounded-lg p-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
                 <span className="text-white font-semibold text-sm">Notities</span>
+                {notesEditMode === 'expanded' && (
+                  <button
+                    onClick={() => { setNotesDraft(notes); setNotesEditMode('editing'); }}
+                    className="p-1 rounded hover:bg-white/10 transition-colors"
+                    title="Bewerken"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-white/60" />
+                  </button>
+                )}
               </div>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Laat hier notities achter voor je collega's..."
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm min-h-[80px] resize-none flex-1"
-              />
-              <Button
-                size="sm"
-                onClick={handleSaveNotes}
-                disabled={isSavingNotes}
-                className="self-end bg-white/10 hover:bg-white/20 text-white border border-white/20"
-              >
-                <Save className="h-3 w-3 mr-1" />
-                {isSavingNotes ? 'Opslaan...' : 'Opslaan'}
-              </Button>
+
+              {notesEditMode === 'collapsed' && (
+                <div
+                  className="text-red-400 text-sm truncate cursor-pointer min-h-[20px]"
+                  onClick={() => setNotesEditMode('expanded')}
+                >
+                  {notes || <span className="text-white/30 italic">Geen notities</span>}
+                </div>
+              )}
+
+              {notesEditMode === 'expanded' && (
+                <div
+                  className="text-red-400 text-sm whitespace-pre-wrap cursor-pointer min-h-[20px]"
+                  onClick={() => setNotesEditMode('collapsed')}
+                >
+                  {notes || <span className="text-white/30 italic">Geen notities</span>}
+                </div>
+              )}
+
+              {notesEditMode === 'editing' && (
+                <div className="flex flex-col gap-2">
+                  <Textarea
+                    value={notesDraft}
+                    onChange={(e) => setNotesDraft(e.target.value)}
+                    placeholder="Laat hier notities achter voor je collega's..."
+                    className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] resize-none"
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-1">
+                    <button
+                      onClick={() => setNotesEditMode('expanded')}
+                      className="p-1 rounded hover:bg-white/10 transition-colors"
+                      title="Annuleren"
+                    >
+                      <XCircle className="h-4 w-4 text-red-400" />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setNotes(notesDraft);
+                        setNotesEditMode('expanded');
+                        setIsSavingNotes(true);
+                        const { error } = await supabase
+                          .from('companies')
+                          .update({ notes: notesDraft } as any)
+                          .eq('id', selectedCompany.id);
+                        setIsSavingNotes(false);
+                        if (error) {
+                          toast({ title: 'Fout bij opslaan notities', variant: 'destructive' });
+                        } else {
+                          toast({ title: 'Notities opgeslagen' });
+                        }
+                      }}
+                      disabled={isSavingNotes}
+                      className="p-1 rounded hover:bg-white/10 transition-colors"
+                      title="Opslaan"
+                    >
+                      <Check className="h-4 w-4 text-green-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
