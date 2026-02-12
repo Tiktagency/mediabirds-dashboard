@@ -1,18 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 const SeoPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleStartClick = () => {
     setIsLoading(true);
-    // Simuleer loading voor 3 seconden
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
+    setProgress(0);
   };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            setIsLoading(false);
+            return 100;
+          }
+          return prev + 2; // Verhoog met 2% elke 100ms = 5 seconden totaal
+        });
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
   return (
     <div className="min-h-screen bg-background relative">
       {/* Back to home button */}
@@ -29,12 +44,13 @@ const SeoPage = () => {
         </Link>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        <h1 className="text-4xl font-bold text-center mb-12 text-white">
+      {/* Main content centered in screen */}
+      <div className="min-h-screen flex flex-col items-center justify-center px-6">
+        <h1 className="text-4xl font-bold text-center mb-16 text-white">
           SEO blogteskten
         </h1>
         
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center space-y-8">
           <Button 
             onClick={handleStartClick}
             disabled={isLoading}
@@ -50,6 +66,16 @@ const SeoPage = () => {
               'Start'
             )}
           </Button>
+
+          {/* Progress bar */}
+          {isLoading && (
+            <div className="w-80 space-y-2">
+              <Progress value={progress} className="h-3" />
+              <p className="text-center text-white text-sm">
+                {Math.round(progress)}% voltooid
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
