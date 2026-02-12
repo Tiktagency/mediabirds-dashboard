@@ -1,39 +1,27 @@
 
 
-# Verbeteringen bij bedrijf toevoegen
+# Bedrijfsnaam automatisch invullen en dialoog verbeteren
 
 ## Wat verandert er
 
-1. **Bevestigingsdialoog sluit direct**: Na het bevestigen en voltooien van het aanmaakproces hoeft de gebruiker niet opnieuw op "Toevoegen" te klikken. De bevestigingsdialoog sluit automatisch en het nieuwe bedrijf wordt geselecteerd.
-2. **WordPress URL's automatisch invullen**: Bij het aanmaken worden de `get_afbeelding_url` en `post_blog_url` velden in `blog_settings` automatisch ingevuld op basis van de opgegeven domeinnaam.
+1. **Bevestigingsdialoog toont laadsymbool**: Na bevestiging verschijnt een spinner met "Bezig met aanmaken..." (dit werkt al deels, maar moet gecontroleerd worden dat de dialoog open blijft tijdens het laden)
+2. **Bedrijfsnaam automatisch invullen in blog_settings**: Bij het aanmaken van een bedrijf wordt het `bedrijfsnaam` veld in `blog_settings` automatisch gevuld met de opgegeven bedrijfsnaam, zodat dit op elke tab meteen zichtbaar is
 
-## Aanpak
+## Aanpassingen
 
-### 1. Bug fix: dialoog sluit correct na bevestiging
+### 1. Edge function: `trigger-add-company-webhook/index.ts`
 
-De `onOpenChange` handler van de bevestigings-AlertDialog opent momenteel de invoerdialoog opnieuw wanneer deze sluit (`setIsDialogOpen(true)`). Dit wordt aangepast zodat bij sluiting na een succesvolle aanmaak de invoerdialoog niet opnieuw opent.
+In de `blog_settings` upsert wordt `bedrijfsnaam: companyName` toegevoegd. Hierdoor wordt het veld "Bedrijfsnaam" op de Blog-tab automatisch ingevuld met de naam die bij het aanmaken is opgegeven.
 
-### 2. WordPress URL's automatisch genereren
+### 2. CompanySelector: dialoog-flow controleren
 
-In de edge function (`trigger-add-company-webhook`) worden bij het upserten van `blog_settings` twee extra velden meegegeven:
+De huidige implementatie heeft al een `isCreating` state en een `Loader2` spinner in de bevestigingsdialoog. Het probleem is dat de `AlertDialogAction` standaard de dialoog sluit bij klikken. De `onClick` handler moet vervangen worden door het voorkomen van het standaard sluitgedrag, zodat de dialoog open blijft totdat het hele proces is afgerond. Dit wordt opgelost door:
 
-- `get_afbeelding_url`: `https://[domeinnaam]/wp-json/wp/v2/media`
-- `post_blog_url`: `https://[domeinnaam]/wp-json/wp/v2/posts`
-
-Dit gebeurt alleen als er een domeinnaam is opgegeven.
+- De `AlertDialogAction` om te bouwen zodat het standaard sluit-gedrag wordt voorkomen (via `e.preventDefault()`)
+- De dialoog sluit pas na succesvolle of mislukte afronding van het aanmaakproces
 
 ## Technische details
 
-### CompanySelector.tsx
-
-- De `onOpenChange` van de bevestigings-AlertDialog wordt aangepast: bij sluiting na het aanmaken (`!isCreating` en dialoog sluit) wordt `setIsDialogOpen` niet meer op `true` gezet. Alleen bij "Annuleren" (voordat het aanmaken is gestart) wordt de invoerdialoog heropend.
-
-### trigger-add-company-webhook/index.ts
-
-- Bij de `blog_settings` upsert worden `get_afbeelding_url` en `post_blog_url` toegevoegd, opgebouwd uit de `companyDomain` parameter:
-  ```
-  get_afbeelding_url: `https://${companyDomain}/wp-json/wp/v2/media`
-  post_blog_url: `https://${companyDomain}/wp-json/wp/v2/posts`
-  ```
-- Alleen ingevuld als `companyDomain` niet leeg is.
-
+- `blog_settings` heeft al een `bedrijfsnaam` kolom (type `text`, nullable) -- geen migratie nodig
+- `seo_settings` heeft geen `bedrijfsnaam` kolom; de SEO-tabs (KeywordResearchForm) gebruiken `selectedCompany?.name` direct, dus daar is geen aanpassing nodig
+- De `AlertDialogAction` krijgt `e.preventDefault()` in de onClick handler om het automatisch sluiten van de AlertDialog te voorkomen tijdens het laden
