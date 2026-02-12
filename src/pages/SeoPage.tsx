@@ -1,8 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 const SeoPage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStartClick = () => {
+    setIsLoading(true);
+    // Simuleer loading voor 3 seconden
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+  };
   return (
     <div className="min-h-screen bg-background relative">
       {/* Back to home button */}
@@ -26,10 +36,19 @@ const SeoPage = () => {
         
         <div className="flex justify-center">
           <Button 
+            onClick={handleStartClick}
+            disabled={isLoading}
             size="lg"
-            className="px-8 py-4 text-lg font-semibold"
+            className="px-12 py-6 text-xl font-semibold rounded-full"
           >
-            Start SEO proces
+            {isLoading ? (
+              <>
+                <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                Laden...
+              </>
+            ) : (
+              'Start'
+            )}
           </Button>
         </div>
       </div>
