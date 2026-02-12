@@ -372,7 +372,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showConfirmAdd} onOpenChange={(open) => { if (!open && !isCreating) { setShowConfirmAdd(false); setIsDialogOpen(true); } }}>
+      <AlertDialog open={showConfirmAdd} onOpenChange={(open) => { if (!open && !isCreating) { setShowConfirmAdd(false); } }}>
         <AlertDialogContent className="bg-card border-white/20">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">
