@@ -4,15 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Sparkles, Clock, Copy, Trash2, ChevronDown } from 'lucide-react';
+import { Pencil, Sparkles, Clock, Copy, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
 import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -33,7 +31,7 @@ export const KeywordResearchForm = ({
 }: KeywordResearchFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [adminSettingsOpen, setAdminSettingsOpen] = useState(false);
+
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -480,19 +478,8 @@ export const KeywordResearchForm = ({
 
       {/* Admin instellingen */}
       {isAdmin && (
-        <Collapsible 
-          open={adminSettingsOpen} 
-          onOpenChange={setAdminSettingsOpen}
-          className="pt-6 border-t border-white/10"
-        >
-          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 hover:bg-white/5 rounded-md px-2 transition-colors">
-            <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
-            <ChevronDown className={cn(
-              "h-4 w-4 text-yellow-400/80 transition-transform duration-200",
-              adminSettingsOpen && "rotate-180"
-            )} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-6 pt-4">
+        <div className="pt-6 border-t border-white/10 space-y-6">
+          <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
             {/* Hoofd zoekwoorden sectie */}
             <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2">
@@ -516,8 +503,7 @@ export const KeywordResearchForm = ({
                 <div>{renderInputField('Grid ID', 'nieuw_google_slides_id')}</div>
               </div>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+        </div>
       )}
 
       <ScheduleTrigger
