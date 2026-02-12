@@ -1,41 +1,43 @@
 
-# Webhook aanroepen bij bedrijf toevoegen
+# Google Document ID's synchroniseren tussen formulieren
 
 ## Wat verandert er
 
-Wanneer je op "Toevoegen" klikt in het dialoogvenster voor een nieuw bedrijf, wordt na het succesvol opslaan in de database een POST-request gestuurd naar de n8n webhook met de bedrijfsnaam. De authenticatie gebruikt dezelfde `BLOG_WEBHOOK_AUTH_TOKEN` secret als de blog "Start" knop.
+Wanneer een Spreadsheet ID of Grid ID wordt gewijzigd in een van de drie formulieren (Zoekwoord Onderzoek, Blog Generatie, of Pagina URL), worden de overeenkomstige velden in de andere tabellen automatisch bijgewerkt.
+
+## Welke velden worden gesynchroniseerd
+
+| Veld | Zoekwoord Onderzoek (seo_settings) | Blog Generatie (blog_settings) | Pagina URL (page_url_settings) |
+|------|-------------------------------------|-------------------------------|-------------------------------|
+| Spreadsheet ID | hoofd_google_sheet_id + nieuw_google_sheet_id | google_sheet_id | google_sheet_id |
+| Grid ID | hoofd_google_slides_id | google_slides_id | google_file_id |
+
+Wanneer een Spreadsheet ID verandert, worden alle 4 velden bijgewerkt (hoofd + nieuw in seo_settings, blog_settings en page_url_settings).
+Wanneer een Grid ID verandert, worden alle 3 velden bijgewerkt (hoofd in seo_settings, blog_settings en page_url_settings).
 
 ## Aanpak
 
-Er wordt een nieuwe edge function aangemaakt die de webhook aanroept. Dit is nodig omdat de `BLOG_WEBHOOK_AUTH_TOKEN` secret alleen beschikbaar is in edge functions (niet in de browser).
+### Nieuwe gedeelde hook: `src/hooks/useGoogleDocSync.ts`
 
-### 1. Nieuwe edge function: `trigger-add-company-webhook`
+Een herbruikbare functie die de synchronisatie afhandelt. Wanneer aangeroepen met een `companyId`, het gewijzigde veldtype (`sheet_id` of `slides_id`) en de nieuwe waarde, worden alle gerelateerde tabellen bijgewerkt via directe Supabase upserts.
 
-**Bestand:** `supabase/functions/trigger-add-company-webhook/index.ts`
+### Wijzigingen per formulier
 
-- Ontvangt een POST-request met `{ companyName: string }` in de body
-- Valideert de gebruiker via JWT
-- Haalt `BLOG_WEBHOOK_AUTH_TOKEN` op uit de secrets
-- Stuurt een POST-request naar `https://tikt.app.n8n.cloud/webhook/add1509b-90d0-4e56-87ea-1492614e3b62` met de bedrijfsnaam
-- Gebruikt dezelfde CORS-headers en foutafhandeling als bestaande edge functions
+**1. KeywordResearchForm.tsx**
+- Na het opslaan van `hoofd_google_sheet_id`, `hoofd_google_slides_id`, `nieuw_google_sheet_id` of `nieuw_google_slides_id`: de sync-functie aanroepen
+- Bij wijziging van een Spreadsheet ID: blog_settings.google_sheet_id, page_url_settings.google_sheet_id en het andere SEO-veld (hoofd/nieuw) bijwerken
+- Bij wijziging van Grid ID (hoofd): blog_settings.google_slides_id en page_url_settings.google_file_id bijwerken
 
-### 2. CompanySelector aanpassen
+**2. BlogGenerationForm.tsx**
+- Na het opslaan van `google_sheet_id`: seo_settings (hoofd + nieuw) en page_url_settings bijwerken
+- Na het opslaan van `google_slides_id`: seo_settings (hoofd) en page_url_settings bijwerken
 
-**Bestand:** `src/components/seo/CompanySelector.tsx`
-
-In de `handleAddCompany` functie, na het succesvol opslaan van het bedrijf in de database (regel 168-176):
-- Een aanroep toevoegen naar de nieuwe edge function via `supabase.functions.invoke('trigger-add-company-webhook', { body: { companyName: newCompanyName.trim() } })`
-- Fouten bij de webhook-aanroep worden gelogd maar blokkeren het toevoegen niet (het bedrijf is al opgeslagen)
-
-### 3. Supabase config
-
-**Bestand:** `supabase/config.toml`
-
-- Toevoegen: `[functions.trigger-add-company-webhook]` met `verify_jwt = false`
+**3. PageUrlForm.tsx**
+- Na het opslaan van `google_sheet_id`: seo_settings (hoofd + nieuw) en blog_settings bijwerken
+- Na het opslaan van `google_file_id`: seo_settings (hoofd) en blog_settings bijwerken
 
 ## Technische details
 
-- De webhook URL wordt hardcoded in de edge function (niet in de frontend)
-- Authenticatie: `BLOG_WEBHOOK_AUTH_TOKEN` secret (al geconfigureerd)
-- De webhook-aanroep is "fire and forget" -- als het mislukt, is het bedrijf wel al aangemaakt in de database
-- De payload naar de webhook bevat: `{ bedrijfsnaam: "naam" }`
+De sync-hook voert upserts uit op de andere twee tabellen (niet de tabel waar de wijziging vandaan komt). De upserts gebruiken `onConflict: 'company_id'` om bestaande records bij te werken of nieuwe aan te maken indien nodig.
+
+De synchronisatie is "fire-and-forget" vanuit het perspectief van de gebruiker -- fouten worden gelogd maar blokkeren het opslaan van het originele veld niet. De lokale formulier-state wordt niet automatisch bijgewerkt (pas bij herladen of wisselen van bedrijf), maar de database is altijd consistent.
