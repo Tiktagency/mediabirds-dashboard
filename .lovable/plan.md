@@ -1,29 +1,50 @@
 
-# SEO Blog Handleiding: Stap 17 aanpassen
+# Voornaam en achternaam toevoegen aan gebruikersprofiel
 
 ## Wat verandert er
 
-Stap 17 in Deel 4 (Blog Generatie) van de handleiding wordt aangepast. De huidige instructie wordt uitgebreid met een waarschuwing om nog **niet** op de knop "Start" te drukken voordat Luc bevestigt dat de koppeling is gelegd.
+Wanneer een uitgenodigde gebruiker voor het eerst inlogt en nog geen voornaam/achternaam heeft ingevuld, verschijnt er een verplicht formulier om deze gegevens in te vullen. De naam is daarna zichtbaar en bewerkbaar in het profielvenster.
 
 ## Wijzigingen
 
-**Bestand:** `src/pages/SeoBlog.tsx`
+### 1. Database migratie
 
-### Huidige tekst (regel 842)
-```
-<p>Vraag Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
-```
+Twee kolommen toevoegen aan de `profiles` tabel:
+- `first_name` (text, nullable, default null)
+- `last_name` (text, nullable, default null)
 
-### Nieuwe tekst
-```
-<p className="font-medium text-pink-300">Finalisering</p>
-<p>Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
-```
+RLS policy toevoegen zodat gebruikers hun eigen profiel kunnen updaten:
+- `Users can update own profile` - UPDATE waar `auth.uid() = id`
 
-### Details
-- Regel 841-843 zullen worden aangepast
-- Een titel "Finalisering" wordt toegevoegd (met styling `className="font-medium text-pink-300"` voor consistentie met andere stappen)
-- De paragraaf wordt uitgebreid met de waarschuwing: "Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd."
+### 2. Nieuw component: `CompleteProfileModal.tsx`
 
-## Resultaat
-Stap 17 bevat nu een duidelijke titel en een gestructureerde instructie die gebruikers waarschuwt om de "Start" knop niet in te drukken zonder bevestiging van Luc.
+Een verplicht dialoogvenster dat verschijnt na inloggen als `first_name` of `last_name` leeg is in de `profiles` tabel.
+
+- Twee velden: Voornaam en Achternaam (beide verplicht)
+- Kan niet worden gesloten zonder de velden in te vullen
+- Na opslaan wordt het profiel bijgewerkt in de database
+
+### 3. Login pagina (`src/pages/Login.tsx`)
+
+Na succesvol inloggen:
+- Het profiel ophalen uit de `profiles` tabel
+- Controleren of `first_name` en `last_name` zijn ingevuld
+- Indien niet: de CompleteProfileModal tonen in plaats van direct naar het dashboard te navigeren
+
+### 4. Profiel modal (`src/components/ProfileModal.tsx`)
+
+- Voornaam en achternaam ophalen uit de `profiles` tabel bij openen
+- Voornaam en achternaam tonen als bewerkbare velden (boven het e-mailadres)
+- Opslaan-knop voor naamwijzigingen toevoegen
+
+### 5. Index/Dashboard pagina
+
+- Na inloggen controleren of het profiel compleet is
+- Indien niet: CompleteProfileModal tonen als overlay
+
+## Technische details
+
+- De `profiles` tabel heeft al een `id` die overeenkomt met `auth.users.id`
+- De `handle_new_user` trigger maakt al automatisch een profiel aan bij registratie
+- Er is al een RLS policy voor SELECT (eigen profiel bekijken), maar UPDATE ontbreekt -- die wordt toegevoegd
+- Het `CompleteProfileModal` gebruikt `closable={false}` zodat het niet weggeklikt kan worden
