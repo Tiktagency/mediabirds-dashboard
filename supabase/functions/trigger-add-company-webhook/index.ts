@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName } = await req.json();
-    if (!companyName) {
-      throw new Error('companyName is verplicht');
+    const { companyName, companyId } = await req.json();
+    if (!companyName || !companyId) {
+      throw new Error('companyName en companyId zijn verplicht');
     }
 
     const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN');
@@ -21,6 +22,7 @@ serve(async (req) => {
       throw new Error('Auth token niet geconfigureerd');
     }
 
+    // Call webhook and await response
     const response = await fetch(
       'https://tikt.app.n8n.cloud/webhook/add1509b-90d0-4e56-87ea-1492614e3b62',
       {
@@ -34,9 +36,62 @@ serve(async (req) => {
     );
 
     console.log(`Webhook response status: ${response.status}`);
-    await response.text();
+    const webhookData = await response.json();
+    console.log('Webhook response data:', JSON.stringify(webhookData));
 
-    return new Response(JSON.stringify({ success: true }), {
+    // Save the returned IDs to the database
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const hoofd = webhookData['Hoofd zoekwoorden'] || {};
+    const nieuw = webhookData['Nieuwe zoekwoorden'] || {};
+    const pagina = webhookData['Pagina URL'] || {};
+
+    const toNull = (val: string | undefined) => (val && val.trim() !== '' ? val : null);
+
+    // Upsert seo_settings
+    const { error: seoError } = await supabase
+      .from('seo_settings')
+      .upsert({
+        company_id: companyId,
+        hoofd_google_sheet_id: toNull(hoofd['Spreadsheet ID']),
+        hoofd_google_slides_id: toNull(hoofd['Grid ID']),
+        nieuw_google_sheet_id: toNull(nieuw['Spreadsheet ID']),
+        nieuw_google_slides_id: toNull(nieuw['Grid ID']),
+      }, { onConflict: 'company_id' });
+
+    if (seoError) console.error('Error upserting seo_settings:', seoError);
+
+    // Upsert blog_settings
+    const { error: blogError } = await supabase
+      .from('blog_settings')
+      .upsert({
+        company_id: companyId,
+        google_sheet_id: toNull(hoofd['Spreadsheet ID']),
+        google_slides_id: toNull(hoofd['Grid ID']),
+      }, { onConflict: 'company_id' });
+
+    if (blogError) console.error('Error upserting blog_settings:', blogError);
+
+    // Upsert page_url_settings
+    const { error: pageError } = await supabase
+      .from('page_url_settings')
+      .upsert({
+        company_id: companyId,
+        google_sheet_id: toNull(pagina['Spreadsheet ID']),
+        google_file_id: toNull(pagina['Grid ID']),
+      }, { onConflict: 'company_id' });
+
+    if (pageError) console.error('Error upserting page_url_settings:', pageError);
+
+    const hasErrors = seoError || blogError || pageError;
+
+    return new Response(JSON.stringify({
+      success: !hasErrors,
+      data: webhookData,
+      errors: hasErrors ? { seoError, blogError, pageError } : undefined,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
