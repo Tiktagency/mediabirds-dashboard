@@ -1,38 +1,32 @@
 
-# Admin instellingen altijd open: Collapsible verwijderen
+
+# SEO Blog Handleiding: Zin toevoegen aan Stap 7
 
 ## Wat verandert er
 
-De "Admin instellingen" secties in alle drie de formulieren staan altijd open. De in-/uitklapfunctie (Collapsible) en het ChevronDown-icoon worden verwijderd.
+In de SEO blog handleiding wordt aan het einde van Stap 7 ("Sitemaps toevoegen") een extra zin toegevoegd: **"Druk tot slot op de knop URL's documenteren"**
 
 ## Wijzigingen
 
-### 1. `src/components/seo-blog/PageUrlForm.tsx`
-- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 285-321)
-- Vervang door een gewone `div` met de titel "Admin instellingen" en de inhoud eronder
-- Verwijder de `adminSettingsOpen` state
-- Verwijder `Collapsible`-imports en `ChevronDown` als die niet elders gebruikt worden
-- Verwijder `cn` import als die niet elders gebruikt wordt
+**Bestand:** `src/pages/SeoBlog.tsx`
 
-### 2. `src/components/seo-blog/KeywordResearchForm.tsx`
-- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 483-521)
-- Vervang door een gewone `div` met de titel en inhoud
-- Verwijder de `adminSettingsOpen` state
-- Verwijder ongebruikte imports (`Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`, `ChevronDown`, `cn`)
+### Locatie
+- Stap 7 bevindt zich in Deel 2 van de handleiding (Mediabirds Dashboard - Pagina URL's)
+- De stap start op regel 706 met `<div className="flex items-start gap-3">`
+- De beschrijving van stap 7 eindigt op regel 710 met het sluitende `</p>`-tag
 
-### 3. `src/components/seo-blog/BlogGenerationForm.tsx`
-- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 690-713)
-- Vervang door een gewone `div` met de titel en inhoud
-- Verwijder de `adminSettingsOpen` state
-- Verwijder ongebruikte imports
-
-### Structuur na wijziging (per formulier)
-
+### Wijziging
+Op regel 710, na de huidige alinea van stap 7:
 ```
-{isAdmin && (
-  <div className="pt-6 border-t border-white/10 space-y-4">
-    <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
-    {/* bestaande velden */}
-  </div>
-)}
+<p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden.</p>
 ```
+
+Zal vervangen worden door:
+```
+<p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden. Druk tot slot op de knop URL's documenteren</p>
+```
+
+## Resultaat
+- Stap 7 bevat nu een volledig stappenplan inclusief het drukken op de knop "URL's documenteren"
+- Dit helpt gebruikers om de stap volledig af te ronden
+
