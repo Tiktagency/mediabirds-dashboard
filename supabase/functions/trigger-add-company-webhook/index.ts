@@ -47,6 +47,7 @@ serve(async (req) => {
     const hoofd = webhookData['Hoofd zoekwoorden'] || {};
     const nieuw = webhookData['Nieuwe zoekwoorden'] || {};
     const pagina = webhookData['Pagina URL'] || {};
+    const folder = webhookData['Folder bedrijf'] || {};
 
     const toNull = (val: string | undefined) => (val && val.trim() !== '' ? val : null);
 
@@ -91,12 +92,24 @@ serve(async (req) => {
 
     if (pageError) console.error('Error upserting page_url_settings:', pageError);
 
-    const hasErrors = seoError || blogError || pageError;
+    // Save folder_id to company
+    const folderIdValue = toNull(folder['Folder ID']);
+    let folderError = null;
+    if (folderIdValue) {
+      const { error } = await supabase
+        .from('companies')
+        .update({ folder_id: folderIdValue })
+        .eq('id', companyId);
+      folderError = error;
+      if (folderError) console.error('Error updating company folder_id:', folderError);
+    }
+
+    const hasErrors = seoError || blogError || pageError || folderError;
 
     return new Response(JSON.stringify({
       success: !hasErrors,
       data: webhookData,
-      errors: hasErrors ? { seoError, blogError, pageError } : undefined,
+      errors: hasErrors ? { seoError, blogError, pageError, folderError } : undefined,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

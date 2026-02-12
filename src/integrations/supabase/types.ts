@@ -315,6 +315,7 @@ export type Database = {
           blogs_webhook: string | null
           created_at: string
           domain: string | null
+          folder_id: string | null
           id: string
           managed_by: string | null
           name: string
@@ -330,6 +331,7 @@ export type Database = {
           blogs_webhook?: string | null
           created_at?: string
           domain?: string | null
+          folder_id?: string | null
           id?: string
           managed_by?: string | null
           name: string
@@ -345,6 +347,7 @@ export type Database = {
           blogs_webhook?: string | null
           created_at?: string
           domain?: string | null
+          folder_id?: string | null
           id?: string
           managed_by?: string | null
           name?: string
