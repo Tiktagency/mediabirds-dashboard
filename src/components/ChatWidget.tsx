@@ -125,7 +125,7 @@ const ChatWidget = () => {
       {/* Chat Trigger Button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-[hsl(var(--tikt-primary))] to-[hsl(var(--tikt-secondary))] hover:scale-110 transition-all duration-200 shadow-lg z-50 ${isOpen ? 'hidden' : ''}`}
+        className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 hover:scale-110 transition-all duration-200 shadow-lg z-50 ${isOpen ? 'hidden' : ''}`}
         size="icon"
       >
         <MessageCircle className="h-6 w-6 text-white" />
@@ -134,9 +134,9 @@ const ChatWidget = () => {
       {/* Chat Window */}
       {isOpen && (
         <Card className="fixed bottom-6 right-6 w-96 h-[32rem] z-50 shadow-2xl border-0 flex flex-col">
-          <CardHeader className="bg-gradient-to-r from-[hsl(var(--tikt-primary))] to-[hsl(var(--tikt-secondary))] text-white rounded-t-lg flex-shrink-0">
+          <CardHeader className="bg-primary text-white rounded-t-lg flex-shrink-0">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Tikt Support</CardTitle>
+              <CardTitle className="text-lg text-white">Tikt Support</CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
@@ -158,7 +158,7 @@ const ChatWidget = () => {
                   <div
                     className={`max-w-[80%] p-3 rounded-lg text-sm ${
                       msg.sender === 'user'
-                        ? 'bg-[hsl(var(--tikt-secondary))] text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-muted text-foreground'
                     }`}
                   >
