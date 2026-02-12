@@ -1,24 +1,38 @@
 
-# Notities: editing-modus uitklappen, weergavemodus compact met scroll
+# Admin instellingen altijd open: Collapsible verwijderen
 
 ## Wat verandert er
 
-- **Weergavemodus (expanded)**: Blijft zoals nu -- maximale hoogte van 200px met scrollbar bij lange tekst. Het vak rekt niet uit.
-- **Bewerkingsmodus (editing)**: De textarea krijgt **geen maximale hoogte-beperking**, zodat je alle tekst in één keer kunt zien zonder te scrollen. Wanneer je klaar bent (onBlur), krimpt het vak weer terug naar de compacte weergave met scroll.
+De "Admin instellingen" secties in alle drie de formulieren staan altijd open. De in-/uitklapfunctie (Collapsible) en het ChevronDown-icoon worden verwijderd.
 
 ## Wijzigingen
 
-**Bestand:** `src/pages/SeoBlog.tsx`
+### 1. `src/components/seo-blog/PageUrlForm.tsx`
+- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 285-321)
+- Vervang door een gewone `div` met de titel "Admin instellingen" en de inhoud eronder
+- Verwijder de `adminSettingsOpen` state
+- Verwijder `Collapsible`-imports en `ChevronDown` als die niet elders gebruikt worden
+- Verwijder `cn` import als die niet elders gebruikt wordt
 
-### 1. Textarea in editing-modus (regel 364)
-- Verwijder `max-h-[200px] overflow-y-auto` van de textarea class.
-- Verander `min-h-[80px]` naar `min-h-[80px]` (blijft) en voeg `h-auto` toe zodat de textarea automatisch meegroeit met de inhoud.
-- De textarea mag dus onbeperkt groeien zodat alle tekst zichtbaar is tijdens het bewerken.
+### 2. `src/components/seo-blog/KeywordResearchForm.tsx`
+- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 483-521)
+- Vervang door een gewone `div` met de titel en inhoud
+- Verwijder de `adminSettingsOpen` state
+- Verwijder ongebruikte imports (`Collapsible`, `CollapsibleTrigger`, `CollapsibleContent`, `ChevronDown`, `cn`)
 
-### 2. Weergavemodus (regel 352)
-- Blijft ongewijzigd: `max-h-[200px] overflow-y-auto` zorgt ervoor dat het vak compact blijft met een scrollbar.
+### 3. `src/components/seo-blog/BlogGenerationForm.tsx`
+- Verwijder de `Collapsible`, `CollapsibleTrigger` en `CollapsibleContent` wrapper (regels 690-713)
+- Vervang door een gewone `div` met de titel en inhoud
+- Verwijder de `adminSettingsOpen` state
+- Verwijder ongebruikte imports
 
-## Resultaat
-- Bij het bewerken zie je al je tekst volledig (textarea groeit mee)
-- Zodra je klaar bent krimpt het vak terug naar max 200px met scrollbar
-- Het vak rekt niet uit in de weergavemodus
+### Structuur na wijziging (per formulier)
+
+```
+{isAdmin && (
+  <div className="pt-6 border-t border-white/10 space-y-4">
+    <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
+    {/* bestaande velden */}
+  </div>
+)}
+```
