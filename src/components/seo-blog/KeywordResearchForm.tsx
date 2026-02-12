@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
 import { useSeoSchedule } from '@/hooks/useSeoSchedule';
+import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -140,6 +141,15 @@ export const KeywordResearchForm = ({
     const result = await saveSettings(updateData);
     
     if (result.success) {
+      // Sync Google Doc IDs to blog_settings
+      if (selectedCompany && (field === 'hoofd_google_sheet_id' || field === 'nieuw_google_sheet_id')) {
+        const val = formData[field as keyof typeof formData] || null;
+        syncGoogleDocIds(selectedCompany.id, 'seo_settings', 'sheet_id', val);
+      } else if (selectedCompany && field === 'hoofd_google_slides_id') {
+        const val = formData[field as keyof typeof formData] || null;
+        syncGoogleDocIds(selectedCompany.id, 'seo_settings', 'slides_id', val);
+      }
+
       toast({
         title: "Opgeslagen",
         description: "Veld succesvol opgeslagen",
@@ -229,6 +239,12 @@ export const KeywordResearchForm = ({
     setFormData(prev => ({ ...prev, [field]: '' }));
     const result = await saveSettings({ [field]: null });
     if (result.success) {
+      // Sync cleared Google Doc IDs
+      if (selectedCompany && (field === 'hoofd_google_sheet_id' || field === 'nieuw_google_sheet_id')) {
+        syncGoogleDocIds(selectedCompany.id, 'seo_settings', 'sheet_id', null);
+      } else if (selectedCompany && field === 'hoofd_google_slides_id') {
+        syncGoogleDocIds(selectedCompany.id, 'seo_settings', 'slides_id', null);
+      }
       toast({
         title: "Verwijderd",
         description: "Veld is leeggemaakt",
