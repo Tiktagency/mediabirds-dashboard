@@ -34,13 +34,15 @@ const SeoPage = () => {
 
       clearInterval(progressInterval);
       
+      const responseData = await response.json();
+      
       if (response.ok) {
         setProgress(100);
         setTimeout(() => {
           setIsLoading(false);
           toast({
-            title: "Succesvol!",
-            description: "SEO tekst succesvol aangemaakt",
+            title: "Webhook Response",
+            description: responseData.Error || JSON.stringify(responseData),
             duration: 5000,
           });
         }, 500);
