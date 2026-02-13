@@ -41,9 +41,9 @@ const SeoPage = () => {
         setTimeout(() => {
           setIsLoading(false);
           toast({
-            title: "Webhook Response",
+            title: "Melding",
             description: responseData.Error || JSON.stringify(responseData),
-            duration: 5000,
+            duration: 6000,
           });
         }, 500);
       } else {
