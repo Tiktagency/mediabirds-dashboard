@@ -42,8 +42,8 @@ const SeoPage = () => {
           setIsLoading(false);
           toast({
             title: "Melding",
-            description: responseData.Error || JSON.stringify(responseData),
-            duration: 6000,
+            description: responseData.Error || responseData.Goed || "Onbekende response",
+            duration: 10000,
           });
         }, 500);
       } else {
