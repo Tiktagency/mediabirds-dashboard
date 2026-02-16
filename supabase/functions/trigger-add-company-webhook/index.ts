@@ -65,11 +65,16 @@ serve(async (req) => {
     if (seoError) console.error('Error upserting seo_settings:', seoError);
 
     // Upsert blog_settings
+    const folderPhotos = webhookData["Folder Foto's"] || {};
+    const folderUsedPhotos = webhookData["Folder gebruikte foto's"] || {};
+
     const blogUpsertData: Record<string, unknown> = {
       company_id: companyId,
       google_sheet_id: toNull(hoofd['Spreadsheet ID']),
       google_slides_id: toNull(hoofd['Grid ID']),
       bedrijfsnaam: companyName,
+      folder_id: toNull(folderPhotos['Folder ID']),
+      used_folder_id: toNull(folderUsedPhotos['Folder ID']),
     };
     if (companyDomain && companyDomain.trim() !== '') {
       blogUpsertData.get_afbeelding_url = `https://${companyDomain}/wp-json/wp/v2/media`;
