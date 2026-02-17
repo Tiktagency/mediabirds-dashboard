@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
@@ -40,7 +40,7 @@ export const BlogGenerationForm = ({
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [expandedField, setExpandedField] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     bedrijfsnaam: '',
     bedrijfsomschrijving: '',
@@ -60,16 +60,6 @@ export const BlogGenerationForm = ({
     google_slides_id: '',
   });
 
-  // Click outside handler to collapse expanded field
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
-        setExpandedField(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
   const { categories: blogCategories, isLoading: categoriesLoading, refetch: refetchCategories } = useBlogCategories(selectedCompany?.id || null);
@@ -226,30 +216,6 @@ export const BlogGenerationForm = ({
     }
   };
 
-  const handleCancelEdit = () => {
-    if (settings) {
-      const [gradient1, gradient2] = parseGradientString(settings.hoofdaccent_gradient);
-      setFormData({
-        bedrijfsnaam: settings.bedrijfsnaam || '',
-        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
-        schrijfstijl: settings.schrijfstijl || '',
-        aantal_woorden: parseRangeString(settings.aantal_woorden),
-        taal: settings.taal || '',
-        image_type: (settings.image_type as 'ai_image' | 'google_drive') || 'ai_image',
-        achtergrond_kleur: settings.achtergrond_kleur || '',
-        hoofdaccent_gradient_1: gradient1,
-        hoofdaccent_gradient_2: gradient2,
-        folder_id: settings.folder_id || '',
-        used_folder_id: settings.used_folder_id || '',
-        get_afbeelding_url: settings.get_afbeelding_url || '',
-        post_blog_url: settings.post_blog_url || '',
-        status: settings.status || 'draft',
-        google_sheet_id: settings.google_sheet_id || '',
-        google_slides_id: settings.google_slides_id || '',
-      });
-    }
-    setEditingField(null);
-  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -345,10 +311,8 @@ export const BlogGenerationForm = ({
     adminOnly: boolean = false
   ) => {
     const isEditing = editingField === field;
-    const isExpanded = expandedField === field;
     const value = formData[field] as string;
     const canEdit = adminOnly ? isAdmin : true;
-    const isTextField = type === 'text' || type === 'textarea';
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -366,120 +330,81 @@ export const BlogGenerationForm = ({
         </div>
         
         {isEditing && canEdit ? (
-          <div className="flex gap-2 items-start">
-            {type === 'textarea' ? (
-              <Textarea
-                value={value}
-                onChange={handleTextareaChange}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
-                ref={(el) => {
-                  if (el) {
-                    el.style.height = 'auto';
-                    el.style.height = el.scrollHeight + 'px';
-                  }
-                }}
-              />
-            ) : type === 'select' ? (
-              <Select
-                value={value}
-                onValueChange={(val) => setFormData(prev => ({ ...prev, [field]: val }))}
-              >
-                <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {options?.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                value={value}
-                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-            )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-              onClick={() => handleSaveField(field)}
+          type === 'textarea' ? (
+            <Textarea
+              value={value}
+              onChange={handleTextareaChange}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
+              onBlur={() => handleSaveField(field)}
+              autoFocus
+              ref={(el) => {
+                if (el) {
+                  el.style.height = 'auto';
+                  el.style.height = el.scrollHeight + 'px';
+                }
+              }}
+            />
+          ) : type === 'select' ? (
+            <Select
+              value={value}
+              onValueChange={(val) => {
+                setFormData(prev => ({ ...prev, [field]: val }));
+                if (selectedCompany) {
+                  saveSettings({ [field]: val });
+                }
+                setEditingField(null);
+              }}
             >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-              onClick={handleCancelEdit}
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : isExpanded && isTextField ? (
-          <div className="expanded-field-container relative">
-            <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
-              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
-            </div>
-            {canEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedField(null);
-                  setEditingField(field);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {options?.map((option) => (
+                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+              onBlur={() => handleSaveField(field)}
+              autoFocus
+            />
+          )
+        ) : type === 'select' ? (
+          <Select
+            value={value}
+            onValueChange={(val) => {
+              setFormData(prev => ({ ...prev, [field]: val }));
+              if (selectedCompany) {
+                saveSettings({ [field]: val });
+              }
+            }}
+            disabled={!canEdit}
+          >
+            <SelectTrigger className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <SelectValue placeholder="Selecteer..." />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              {options?.map((option) => (
+                <SelectItem key={option} value={option} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         ) : (
-          <div className="flex items-start gap-2">
-            {isTextField ? (
-              <div 
-                className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
-                  field === 'bedrijfsnaam' 
-                    ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
-                    : 'bg-white/5 border border-white/10'
-                }`}
-                onClick={() => setExpandedField(field)}
-              >
-                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
-              </div>
-            ) : type === 'select' ? (
-              <Select
-                value={value}
-                onValueChange={(val) => {
-                  setFormData(prev => ({ ...prev, [field]: val }));
-                  if (selectedCompany) {
-                    saveSettings({ [field]: val });
-                  }
-                }}
-                disabled={!canEdit}
-              >
-                <SelectTrigger className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10">
-                  <SelectValue placeholder="Selecteer..." />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  {options?.map((option) => (
-                    <SelectItem key={option} value={option} className="text-white hover:bg-gray-700 focus:bg-gray-700">
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div 
-                className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors"
-                onClick={() => setExpandedField(field)}
-              >
-                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
-              </div>
-            )}
+          <div 
+            className={`px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
+              field === 'bedrijfsnaam' 
+                ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+                : 'bg-white/5 border border-white/10'
+            }`}
+            onClick={() => canEdit && setEditingField(field)}
+          >
+            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
           </div>
         )}
       </div>
@@ -489,7 +414,7 @@ export const BlogGenerationForm = ({
   const renderRangeField = () => {
     const [min, max] = formData.aantal_woorden;
     const canEdit = isAdmin;
-    const isExpanded = expandedField === 'aantal_woorden';
+    const isEditing = editingField === 'aantal_woorden';
 
     const handleSliderChange = (value: number[]) => {
       setFormData(prev => ({ ...prev, aantal_woorden: value as [number, number] }));
@@ -499,12 +424,7 @@ export const BlogGenerationForm = ({
       if (selectedCompany && canEdit) {
         saveSettings({ aantal_woorden: `${value[0]}-${value[1]}` });
       }
-    };
-
-    const handleExpand = () => {
-      if (canEdit) {
-        setExpandedField('aantal_woorden');
-      }
+      setEditingField(null);
     };
 
     return (
@@ -513,7 +433,7 @@ export const BlogGenerationForm = ({
           <Label className="text-white/90">Aantal woorden</Label>
         </div>
         
-        {isExpanded ? (
+        {isEditing ? (
           <div className="space-y-4 p-4 rounded-md bg-white/5 border border-white/10">
             <div className="px-2">
               <Slider
@@ -537,8 +457,8 @@ export const BlogGenerationForm = ({
           </div>
         ) : (
           <div 
-            className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis ${canEdit ? 'cursor-pointer hover:bg-white/10' : ''} transition-colors`}
-            onClick={handleExpand}
+            className={`px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis ${canEdit ? 'cursor-pointer hover:bg-white/10' : ''} transition-colors`}
+            onClick={() => canEdit && setEditingField('aantal_woorden')}
           >
             {min}-{max} woorden
           </div>
