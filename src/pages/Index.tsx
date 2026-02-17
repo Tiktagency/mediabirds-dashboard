@@ -81,6 +81,12 @@ const tileConfigMap: Record<string, TileConfig> = {
     variant: 'secondary',
     statusKey: 'email-handtekening',
   },
+  'landingspagina': {
+    to: '/landingspagina',
+    icon: FileText,
+    variant: 'primary',
+    statusKey: 'landingspagina',
+  },
 };
 
 const Index = () => {
