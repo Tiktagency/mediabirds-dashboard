@@ -50,7 +50,8 @@ export const PageUrlForm = ({
   const [googleSheetId, setGoogleSheetId] = useState('');
   const [googleFileId, setGoogleFileId] = useState('');
   const [urls, setUrls] = useState<string[]>(['']);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingCompanies, setSubmittingCompanies] = useState<Record<string, boolean>>({});
+  const isSubmitting = selectedCompany ? submittingCompanies[selectedCompany.id] || false : false;
 
 
   // Sync local state with loaded settings
@@ -130,7 +131,10 @@ export const PageUrlForm = ({
   const handleTriggerWebhook = async () => {
     if (!selectedCompany) return;
 
-    setIsSubmitting(true);
+    const companyId = selectedCompany.id;
+    const companyName = selectedCompany.name;
+
+    setSubmittingCompanies(prev => ({ ...prev, [companyId]: true }));
     try {
       // First save all current data
       const pageUrls: Record<string, string> = {};
@@ -159,7 +163,7 @@ export const PageUrlForm = ({
         {
           "Document ID": googleSheetId,
           "Slide ID": googleFileId,
-          "bedrijfsnaam": selectedCompany.name,
+          "bedrijfsnaam": companyName,
         }
       ];
 
@@ -196,7 +200,7 @@ export const PageUrlForm = ({
       await saveNotification(catchMsg, 'error');
       toast({ title: 'Fout', description: catchMsg, variant: 'destructive', duration: 5000 });
     } finally {
-      setIsSubmitting(false);
+      setSubmittingCompanies(prev => ({ ...prev, [companyId]: false }));
     }
   };
 
