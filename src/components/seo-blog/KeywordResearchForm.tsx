@@ -109,6 +109,22 @@ export const KeywordResearchForm = ({
   };
 
   const handleSaveField = async (field: string) => {
+    // Check if value actually changed
+    if (field === 'bedrijfsnaam') {
+      const originalValue = selectedCompany?.name || '';
+      if (formData.bedrijfsnaam === originalValue) {
+        setEditingField(null);
+        return;
+      }
+    } else {
+      const originalValue = settings?.[field as keyof typeof settings] || '';
+      const currentValue = formData[field as keyof typeof formData] || '';
+      if (currentValue === originalValue) {
+        setEditingField(null);
+        return;
+      }
+    }
+
     if (field === 'bedrijfsnaam' && selectedCompany) {
       const { error: companyError } = await supabase
         .from('companies')
