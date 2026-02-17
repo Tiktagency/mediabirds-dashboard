@@ -1,34 +1,40 @@
 
 
-## Click-to-edit patroon toepassen op Pagina URL formulier
+## "Opgeslagen" melding alleen tonen bij daadwerkelijke wijzigingen
 
-### Huidige situatie
-- **KeywordResearchForm**: Gebruikt al het click-to-edit patroon (tekst weergeven, klik om te bewerken, auto-save bij blur)
-- **BlogGenerationForm**: Gebruikt al het click-to-edit patroon via `renderField()`
-- **PageUrlForm**: Gebruikt gewone `<Input>` velden die altijd bewerkbaar zijn - dit wijkt af van het patroon in de andere formulieren
+### Probleem
+Wanneer je op een veld klikt om te bekijken wat erin staat en vervolgens wegklikt zonder iets te wijzigen, verschijnt er onterecht een "Opgeslagen" melding. Dit gebeurt in alle drie de formulieren: Pagina URL, Blog Generatie en Zoekwoord Onderzoek.
 
-### Wat verandert er
-De velden in **PageUrlForm** worden omgezet naar hetzelfde click-to-edit patroon:
-- Velden tonen standaard als leesbare tekst
-- Klikken op het veld activeert de bewerkingsmodus
-- Wijzigingen worden automatisch opgeslagen bij het verlaten van het veld (blur)
+### Oplossing
+Bij het verlaten van een veld (blur) wordt eerst gecontroleerd of de waarde daadwerkelijk is gewijzigd ten opzichte van de oorspronkelijk geladen waarde. Alleen als er een verschil is, wordt opgeslagen en de melding getoond. Als er niets is gewijzigd, wordt het veld gewoon gesloten zonder actie.
 
-### Velden die aangepast worden
+### Aanpassingen per bestand
 
-**PageUrlForm:**
-1. **Bedrijfsnaam** - Blijft read-only met gradient border (geen wijziging nodig, dit veld komt uit het geselecteerde bedrijf)
-2. **Pagina URL velden** - Omzetten van altijd-bewerkbare Input naar click-to-edit: tekst weergeven, klikken opent Input, blur slaat op
-3. **Spreadsheet ID** (admin) - Omzetten naar click-to-edit
-4. **Grid ID** (admin) - Omzetten naar click-to-edit
+**1. `src/components/seo-blog/PageUrlForm.tsx`**
+- De `autoSave` functie wordt alleen aangeroepen als er een echte wijziging is. De bestaande checks in `handleSpreadsheetIdBlur` en `handleGridIdBlur` werken al correct. Geen wijziging nodig daar.
+- Controleer of `handleUrlBlur` niet onnodig triggert (JSON vergelijking is al aanwezig).
 
-### Technische aanpak
+**2. `src/components/seo-blog/BlogGenerationForm.tsx`**
+- In `handleSaveField`: voor het opslaan, vergelijk de huidige `formData[field]` waarde met de oorspronkelijk geladen waarde uit `settings`. Als ze gelijk zijn, alleen `setEditingField(null)` aanroepen en direct returnen zonder op te slaan of een toast te tonen.
 
-**`src/components/seo-blog/PageUrlForm.tsx`:**
-- `editingField` state toevoegen (zoals in de andere formulieren)
-- Een `renderInputField()` helperfunctie maken die het click-to-edit patroon implementeert:
-  - Niet-bewerkingsmodus: toont waarde als tekst in een `<div>` met hover-effect
-  - Bewerkingsmodus: toont een `<Input>` met autoFocus en onBlur voor auto-save
-- URL-velden aanpassen: elk URL-veld krijgt een unieke key (bijv. `url_0`, `url_1`) voor de editingField state
-- Spreadsheet ID en Grid ID velden omzetten naar het click-to-edit patroon
-- Pencil-icoon niet apart tonen - klik op het veld opent direct de bewerkingsmodus (consistent met BlogGenerationForm)
+**3. `src/components/seo-blog/KeywordResearchForm.tsx`**
+- Zelfde aanpak als BlogGenerationForm: in `handleSaveField` de huidige waarde vergelijken met de oorspronkelijk geladen waarde uit `settings`. Bij geen verschil, alleen het bewerkingsveld sluiten.
 
+### Technische details
+
+Per formulier wordt een vergelijking toegevoegd aan het begin van `handleSaveField`:
+
+```text
+BlogGenerationForm / KeywordResearchForm:
+  handleSaveField(field):
+    huidige_waarde = formData[field]
+    originele_waarde = settings?.[field] || ''
+    
+    als huidige_waarde === originele_waarde:
+      setEditingField(null)
+      return  // geen save, geen toast
+    
+    // ... bestaande save-logica
+```
+
+Voor PageUrlForm is de logica al grotendeels correct via de bestaande vergelijkingen in de blur handlers. Alleen het `renderInputField` `onBlur` moet correct doorvallen naar de specifieke handler die de check uitvoert, en `setEditingField(null)` moet altijd worden aangeroepen (ook zonder save).
