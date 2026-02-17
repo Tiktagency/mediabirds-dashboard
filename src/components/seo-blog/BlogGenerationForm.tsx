@@ -438,9 +438,9 @@ export const BlogGenerationForm = ({
             <SelectTrigger className="bg-white/5 border-white/10 text-white hover:bg-white/10">
               <SelectValue placeholder="Selecteer..." />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
+            <SelectContent className="bg-popover border-border">
               {options?.map((option) => (
-                <SelectItem key={option} value={option} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                <SelectItem key={option} value={option} className="text-white hover:bg-accent/20 focus:bg-accent/20">
                   {option}
                 </SelectItem>
               ))}
