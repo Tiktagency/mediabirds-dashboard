@@ -1,32 +1,34 @@
 
-
-# Auto-save op blur voor alle velden in Blog Generatie
+# Kleur-picker toevoegen aan AI afbeelding kleurvelden
 
 ## Wat verandert er
 
-Alle invulvelden in het Blog Generatie formulier gaan hetzelfde werken als in Zoekwoord Onderzoek: klik op een veld om te bewerken, klik ergens anders (blur) om automatisch op te slaan. De tussenstap (uitklappen + potlood-icoon) en de handmatige opslag-/annuleerknoppen (vinkje/kruisje) verdwijnen.
-
-## Huidige situatie
-
-- **Zoekwoord Onderzoek**: Klik op veld -> bewerk -> verlaat veld -> automatisch opgeslagen
-- **Blog Generatie**: Klik op veld -> klapt uit -> klik potlood -> bewerk -> klik vinkje/kruisje
-- **Select velden**: Slaan al direct op bij waardeverandering (blijft ongewijzigd)
+De gekleurde vierkantjes naast de kleurvelden (Achtergrond kleur, Kleur 1, Kleur 2) worden klikbaar. Bij klikken opent een native color picker (`<input type="color">`) waarmee je visueel een kleur kunt kiezen. De hex-code in het tekstveld wordt automatisch bijgewerkt en opgeslagen.
 
 ## Technisch
 
 **Bestand: `src/components/seo-blog/BlogGenerationForm.tsx`**
 
-1. **Imports opschonen**: `Check` en `XCircle` verwijderen uit de lucide-react import (regel 9)
-2. **State opschonen**: `expandedField` state verwijderen (regel 43)
-3. **Click-outside handler verwijderen**: Het hele `useEffect` blok voor expandedField (regels 63-72)
-4. **`handleCancelEdit` functie verwijderen** (regels 229-252)
-5. **`renderField` functie vereenvoudigen** (regels 340-487):
-   - Editing mode: `onBlur={() => handleSaveField(field)}` en `autoFocus` toevoegen aan Input en Textarea
-   - Save/cancel knoppen (Check/XCircle) verwijderen
-   - Expanded state (de tussenstap met potlood-icoon) volledig verwijderen
-   - Collapsed state: `onClick` wijzigen van `setExpandedField(field)` naar `setEditingField(field)` zodat klikken direct de bewerkingsmodus opent
-   - Select velden blijven ongewijzigd (slaan al direct op)
+Voor elk van de drie kleurvelden (regels 557-586) wordt het statische `<div>` kleurblokje vervangen door een `<label>` met een verborgen `<input type="color">` erin:
 
-De vereenvoudigde flow wordt:
-- **Niet-bewerken**: Waarde in een klikbaar vak
-- **Bewerken**: Input/Textarea met autoFocus, automatisch opslaan bij blur
+```
+<label className="w-10 h-10 rounded-md border border-white/20 shrink-0 cursor-pointer relative overflow-hidden">
+  <div className="w-full h-full" style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }} />
+  <input
+    type="color"
+    value={formData.achtergrond_kleur || '#000000'}
+    onChange={(e) => {
+      setFormData(prev => ({ ...prev, achtergrond_kleur: e.target.value }));
+    }}
+    onBlur={() => handleSaveField('achtergrond_kleur')}
+    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+  />
+</label>
+```
+
+Dit wordt toegepast op alle drie de kleurvelden:
+- `achtergrond_kleur` (regel 561-564)
+- `hoofdaccent_gradient_1` (regel 573-576)
+- `hoofdaccent_gradient_2` (regel 582-585)
+
+De kleur wordt direct in het formulier bijgewerkt bij selectie en opgeslagen bij blur, consistent met het auto-save patroon.
