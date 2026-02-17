@@ -189,7 +189,7 @@ const MondayPlanning = () => {
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Selecteer pakket" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/20">
+                <SelectContent className="bg-popover border-border">
                   <SelectItem value="A" className="text-white hover:bg-white/10">Pakket A</SelectItem>
                   <SelectItem value="B" className="text-white hover:bg-white/10">Pakket B</SelectItem>
                   <SelectItem value="C" className="text-white hover:bg-white/10">Pakket C</SelectItem>
@@ -214,13 +214,13 @@ const MondayPlanning = () => {
                     {startDatum ? format(startDatum, "PPP", { locale: nl }) : "Selecteer datum"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-slate-800 border-white/20" align="start">
+                <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
                   <Calendar
                     mode="single"
                     selected={startDatum}
                     onSelect={setStartDatum}
                     initialFocus
-                    className="pointer-events-auto bg-slate-800 text-white"
+                    className="pointer-events-auto bg-popover text-white"
                   />
                 </PopoverContent>
               </Popover>
