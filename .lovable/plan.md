@@ -1,28 +1,21 @@
 
+## Webhook response als popup tonen
 
-## Pagina URL's synchronisatie fixen
-
-### Probleem
-De `PageUrlForm` en `BlogGenerationForm` gebruiken elk een eigen instantie van `usePageUrlSettings`. Wanneer je de Spreadsheet ID of Grid ID wijzigt in de Pagina URL tab, wordt alleen de lokale state van die tab bijgewerkt. De Blog Generatie tab behoudt de oude waarden totdat de pagina volledig herladen wordt.
-
-### Oplossing
-De `usePageUrlSettings` hook wordt eenmalig aangeroepen in de parent component (`SeoBlog.tsx`) en doorgegeven als props aan beide child components. Zo delen ze dezelfde databron.
+### Wat verandert er
+Wanneer je op "URL's documenteren" klikt, blijft het laadsymbool draaien (dit werkt al). Na ontvangst van het webhook-antwoord verschijnt het bericht als een popup-melding die 5 seconden zichtbaar blijft.
 
 ### Technische wijzigingen
 
-**1. `src/pages/SeoBlog.tsx`**
-- Import `usePageUrlSettings` toevoegen
-- De hook aanroepen met `selectedCompany?.id`
-- Het `settings` object en `reloadSettings` functie doorgeven als props aan zowel `PageUrlForm` als `BlogGenerationForm`
+**Bestand: `src/components/seo-blog/PageUrlForm.tsx`**
 
-**2. `src/components/seo-blog/PageUrlForm.tsx`**
-- Accepteer `pageUrlSettings` en `reloadPageUrlSettings` als props in plaats van de hook intern aan te roepen
-- Verwijder de interne `usePageUrlSettings` import en aanroep
-- Gebruik de doorgegeven props voor het laden en herladen van data
+In de `handleTriggerWebhook` functie (regels 184-191) wordt na elke `saveNotification` aanroep een `toast()` call toegevoegd met een `duration` van 5000ms:
 
-**3. `src/components/seo-blog/BlogGenerationForm.tsx`**
-- Accepteer `pageUrlSettings` als prop in plaats van de hook intern aan te roepen
-- Verwijder de interne `usePageUrlSettings` import en aanroep
-- Gebruik de doorgegeven prop voor weergave en webhook payload
+- Bij succes: een toast met variant "default" en het webhook-antwoordbericht
+- Bij fout (HTTP error): een toast met variant "destructive" en het foutbericht  
+- Bij catch (netwerkfout): een toast met variant "destructive" en het generieke foutbericht
 
-Hierdoor wordt de data op een centraal punt beheerd: elke wijziging in de Pagina URL tab werkt automatisch de waarden bij die de Blog Generatie tab toont.
+De bestaande `saveNotification` aanroepen blijven behouden zodat meldingen ook in de database worden opgeslagen (bestaand gedrag).
+
+**Bestand: `src/components/ui/sonner.tsx`**
+
+Geen wijzigingen nodig -- de component gebruikt de `useToast` hook van shadcn die al beschikbaar is in `PageUrlForm`.
