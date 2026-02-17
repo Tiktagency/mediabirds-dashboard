@@ -51,7 +51,19 @@ export const PageUrlForm = ({
   const [googleFileId, setGoogleFileId] = useState('');
   const [urls, setUrls] = useState<string[]>(['']);
   const [editingField, setEditingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
   const [submittingCompanies, setSubmittingCompanies] = useState<Record<string, boolean>>({});
+
+  // Click outside handler to collapse expanded field
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
+        setExpandedField(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expandedField]);
   const isSubmitting = selectedCompany ? submittingCompanies[selectedCompany.id] || false : false;
 
 
@@ -141,17 +153,38 @@ export const PageUrlForm = ({
       );
     }
 
+    if (expandedField === fieldId && !disabled) {
+      return (
+        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px]">
+          <span className={!value ? 'text-white/30' : ''}>
+            {value || placeholder}
+          </span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpandedField(null);
+              setEditingField(fieldId);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div
-        onClick={() => !disabled && setEditingField(fieldId)}
-        className={`px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center justify-between overflow-hidden ${
+        onClick={() => !disabled && setExpandedField(fieldId)}
+        className={`px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white/10 transition-colors'
         }`}
       >
         <span className={`truncate ${!value ? 'text-white/30' : ''}`}>
           {value || placeholder}
         </span>
-        {!disabled && <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />}
       </div>
     );
   };
