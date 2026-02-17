@@ -1,33 +1,40 @@
 
 
-## Stap 2 en 3 verwijderen uit de SEO blog handleiding
+## Nieuwe dashboard tile: "Landingspagina"
 
 ### Wat verandert er
-Stap 2 ("URL Database updaten") en stap 3 ("Koppelen met Google Sheets") worden verwijderd uit de handleiding. Alle opvolgende stappen worden hernummerd (4 wordt 2, 5 wordt 3, 6 wordt 4, etc.), zodat de nummering doorlopend blijft van 1 tot 11.
+Er wordt een nieuwe tile "Landingspagina" toegevoegd aan het dashboard. Deze tile volgt exact hetzelfde patroon als de bestaande tiles (zoals "Copyright Branding" en "Email Handtekening").
 
-### Overzicht nieuwe nummering
+### Wijzigingen per bestand
 
-| Oud | Nieuw | Stap |
-|-----|-------|------|
-| 1   | 1     | Toegang regelen |
-| ~~2~~ | -   | ~~URL Database updaten~~ (verwijderd) |
-| ~~3~~ | -   | ~~Koppelen met Google Sheets~~ (verwijderd) |
-| 4   | 2     | Sitemaps toevoegen |
-| 5   | 3     | URL's documenteren |
-| 6   | 4     | Bedrijfskennis invullen |
-| 7   | 5     | Admin Instellingen configureren |
-| 8   | 6     | Testen |
-| 9   | 7     | Basisinstellingen |
-| 10  | 8     | Beeldmateriaal kiezen |
-| 11  | 9     | Publicatie status |
-| 12  | 10    | Categorieen (Optioneel) |
-| 13  | 11    | Finalisering |
+**1. Nieuwe pagina: `src/pages/Landingspagina.tsx`**
+- Lege placeholder pagina aanmaken met een titel en terugknop, in dezelfde stijl als de andere pagina's.
 
-### Technische wijzigingen
+**2. `src/App.tsx`**
+- Nieuwe route `/landingspagina` toevoegen.
 
-**Bestand: `src/pages/SeoBlog.tsx`**
+**3. `src/pages/Index.tsx`**
+- Entry toevoegen aan `tileConfigMap`:
+  ```
+  'landingspagina': {
+    to: '/landingspagina',
+    icon: FileText (of ander passend icoon),
+    variant: 'primary',
+    statusKey: 'landingspagina',
+  }
+  ```
 
-1. **Verwijder stap 2** (regels 661-668): Het blok "URL Database updaten".
-2. **Verwijder stap 3** (regels 682-692): Het blok "Koppelen met Google Sheets" inclusief de tip-box.
-3. **Hernummer alle overige stappen**: De nummers in de `<span>` elementen aanpassen van 4->2, 5->3, 6->4, 7->5, 8->6, 9->7, 10->8, 11->9, 12->10, 13->11.
+**4. `src/components/admin/dashboard/TileOrganizer.tsx`**
+- Entry toevoegen aan `tileConfig`:
+  ```
+  'landingspagina': { icon: FileText, variant: 'primary' }
+  ```
 
+**5. `src/hooks/useDashboardSettings.ts`**
+- `'landingspagina'` toevoegen aan de `DEFAULT_SETTINGS.tile_order` array.
+
+**6. Database: `automation_settings` tabel**
+- Nieuw record invoegen met `automation_name: 'landingspagina'` en `display_name: 'Landingspagina'` zodat de tile correct wordt weergegeven op het dashboard en in het admin panel.
+
+### Resultaat
+Na deze wijzigingen verschijnt de "Landingspagina" tile op het dashboard (standaard op de 8e positie), is hij versleepbaar in de Tile Organizer, en navigeert hij naar een eigen pagina.
