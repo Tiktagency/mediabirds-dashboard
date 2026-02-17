@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Loader2, Info } from 'lucide-react';
+import { Plus, Trash2, Loader2, Info, Pencil } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -50,6 +50,7 @@ export const PageUrlForm = ({
   const [googleSheetId, setGoogleSheetId] = useState('');
   const [googleFileId, setGoogleFileId] = useState('');
   const [urls, setUrls] = useState<string[]>(['']);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [submittingCompanies, setSubmittingCompanies] = useState<Record<string, boolean>>({});
   const isSubmitting = selectedCompany ? submittingCompanies[selectedCompany.id] || false : false;
 
@@ -112,6 +113,47 @@ export const PageUrlForm = ({
     if (googleFileId !== (settings?.google_file_id || '')) {
       autoSave('google_file_id', googleFileId);
     }
+  };
+
+  const renderInputField = (
+    fieldId: string,
+    value: string,
+    onChange: (val: string) => void,
+    onBlur: () => void,
+    placeholder: string,
+    disabled?: boolean
+  ) => {
+    const isEditing = editingField === fieldId;
+    
+    if (isEditing && !disabled) {
+      return (
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={() => {
+            setEditingField(null);
+            onBlur();
+          }}
+          placeholder={placeholder}
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+          autoFocus
+        />
+      );
+    }
+
+    return (
+      <div
+        onClick={() => !disabled && setEditingField(fieldId)}
+        className={`px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center justify-between overflow-hidden ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white/10 transition-colors'
+        }`}
+      >
+        <span className={`truncate ${!value ? 'text-white/30' : ''}`}>
+          {value || placeholder}
+        </span>
+        {!disabled && <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />}
+      </div>
+    );
   };
 
   const handleUrlBlur = () => {
@@ -273,14 +315,16 @@ export const PageUrlForm = ({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-white/50 text-sm min-w-[50px]">URL {index + 1}</span>
-                <Input
-                  value={url}
-                  onChange={(e) => handleUrlChange(index, e.target.value)}
-                  onBlur={handleUrlBlur}
-                  placeholder="https://example.com/sitemap.xml"
-                  className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
-                  disabled={!isAdmin}
-                />
+                <div className="flex-1">
+                  {renderInputField(
+                    `url_${index}`,
+                    url,
+                    (val) => handleUrlChange(index, val),
+                    handleUrlBlur,
+                    'https://example.com/sitemap.xml',
+                    !isAdmin
+                  )}
+                </div>
               </div>
             </div>
             {isAdmin && (
@@ -317,24 +361,24 @@ export const PageUrlForm = ({
             {/* Spreadsheet ID */}
             <div className="space-y-2">
               <Label className="text-white/70">Spreadsheet ID</Label>
-              <Input
-                value={googleSheetId}
-                onChange={(e) => setGoogleSheetId(e.target.value)}
-                onBlur={handleSpreadsheetIdBlur}
-                placeholder="Voer Spreadsheet ID in..."
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
-              />
+              {renderInputField(
+                'spreadsheet_id',
+                googleSheetId,
+                setGoogleSheetId,
+                handleSpreadsheetIdBlur,
+                'Voer Spreadsheet ID in...'
+              )}
             </div>
             {/* Grid ID */}
             <div className="space-y-2">
               <Label className="text-white/70">Grid ID</Label>
-              <Input
-                value={googleFileId}
-                onChange={(e) => setGoogleFileId(e.target.value)}
-                onBlur={handleGridIdBlur}
-                placeholder="Voer Grid ID in..."
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
-              />
+              {renderInputField(
+                'grid_id',
+                googleFileId,
+                setGoogleFileId,
+                handleGridIdBlur,
+                'Voer Grid ID in...'
+              )}
             </div>
         </div>
       )}
