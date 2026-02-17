@@ -181,6 +181,30 @@ export const BlogGenerationForm = ({
   };
 
   const handleSaveField = async (field: string) => {
+    // Check if value actually changed
+    if (field === 'aantal_woorden') {
+      const originalValue = settings?.aantal_woorden || '500-1500';
+      const currentValue = `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`;
+      if (currentValue === originalValue) {
+        setEditingField(null);
+        return;
+      }
+    } else if (field === 'hoofdaccent_gradient_1' || field === 'hoofdaccent_gradient_2') {
+      const originalGradient = settings?.hoofdaccent_gradient || ',';
+      const currentGradient = `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`;
+      if (currentGradient === originalGradient) {
+        setEditingField(null);
+        return;
+      }
+    } else {
+      const originalValue = (settings as any)?.[field] || '';
+      const currentValue = (formData[field as keyof typeof formData] as string) || '';
+      if (currentValue === originalValue) {
+        setEditingField(null);
+        return;
+      }
+    }
+
     const updateData: Record<string, string | null> = {};
     
     if (field === 'aantal_woorden') {
