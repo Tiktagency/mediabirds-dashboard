@@ -9,12 +9,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
 import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
+
+interface PageUrlSettings {
+  id?: string;
+  company_id: string;
+  google_sheet_id: string;
+  google_file_id: string;
+  page_urls: Record<string, string>;
+}
 
 interface PageUrlFormProps {
   selectedCompany: Company | null;
@@ -22,16 +29,22 @@ interface PageUrlFormProps {
   isAdmin: boolean;
   user: User | null;
   saveNotification: (message: string, status: 'success' | 'error') => Promise<void>;
+  pageUrlSettings: PageUrlSettings | null;
+  pageUrlLoading: boolean;
+  pageUrlSaving: boolean;
+  savePageUrlSettings: (newSettings: Partial<PageUrlSettings>) => Promise<{ success: boolean; error?: string }>;
+  reloadPageUrlSettings: () => Promise<void>;
 }
 
 export const PageUrlForm = ({
   selectedCompany,
   isAdmin,
   saveNotification,
+  pageUrlSettings: settings,
+  pageUrlLoading: isLoading,
+  pageUrlSaving: isSaving,
+  savePageUrlSettings: saveSettings,
 }: PageUrlFormProps) => {
-  const { settings, isLoading, isSaving, saveSettings } = usePageUrlSettings(
-    selectedCompany?.id || null
-  );
   const { toast } = useToast();
 
   const [googleSheetId, setGoogleSheetId] = useState('');
