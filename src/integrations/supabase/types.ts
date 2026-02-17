@@ -565,6 +565,39 @@ export type Database = {
         }
         Relationships: []
       }
+      role_default_permissions: {
+        Row: {
+          automation_name: string
+          can_execute: boolean
+          can_manage: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          automation_name: string
+          can_execute?: boolean
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          automation_name?: string
+          can_execute?: boolean
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seo_schedules: {
         Row: {
           company_id: string
