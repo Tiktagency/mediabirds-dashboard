@@ -167,13 +167,19 @@ export const PageUrlForm = ({
         }
       ];
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minuten
+
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const responseText = await response.text();
       let message = responseText;
@@ -196,7 +202,10 @@ export const PageUrlForm = ({
       }
     } catch (error) {
       console.error('Webhook error:', error);
-      const catchMsg = `[${companyName}] Fout bij documentatie: ${error instanceof Error ? error.message : String(error)}`;
+      const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+      const catchMsg = isTimeout
+        ? `[${companyName}] Timeout: geen antwoord ontvangen na 10 minuten`
+        : `[${companyName}] Fout bij documentatie: ${error instanceof Error ? error.message : String(error)}`;
       await saveNotification(catchMsg, 'error');
       toast({ title: 'Fout', description: catchMsg, variant: 'destructive', duration: 5000 });
     } finally {
