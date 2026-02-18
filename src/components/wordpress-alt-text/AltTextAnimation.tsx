@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const FIELDS = [
   { key: 'alt', label: 'Alternatieve tekst', value: 'Tablet met grafieken en diagrammen...' },
@@ -36,11 +35,6 @@ const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimation
     return () => timeouts.forEach(clearTimeout);
   }, [isAnimating, onAnimationComplete]);
 
-  const resetAnimation = useCallback(() => {
-    setFilledFields([]);
-  }, []);
-
-  // Expose reset via parent if needed
   useEffect(() => {
     if (!isAnimating && filledFields.length > 0) {
       const t = setTimeout(() => setFilledFields([]), 3000);
@@ -49,47 +43,23 @@ const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimation
   }, [isAnimating, filledFields.length]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full max-w-2xl">
-      {/* Left panel - Before */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 w-full min-w-0">
-        <div className="space-y-3">
-          {FIELDS.map((field) => {
-            const isFilled = filledFields.includes(field.key);
-            return (
-              <div key={field.key} className="space-y-1">
-                <label className="text-xs font-medium text-gray-600">{field.label}</label>
-                <div className="relative h-8 rounded border border-gray-200 bg-gray-50 overflow-hidden px-2 flex items-center">
-                  {isFilled && (
-                    <span className="text-xs text-gray-800 animate-[field-fill_0.4s_ease-out_forwards]">
-                      {field.value}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Arrow */}
-      <div className={`flex-shrink-0 transition-all duration-300 ${isAnimating ? 'text-primary scale-110' : 'text-muted-foreground'}`}>
-        <div className={`${isAnimating ? 'animate-[arrow-pulse_1s_ease-in-out_infinite]' : ''}`}>
-          <ArrowRight className="w-8 h-8 sm:w-10 sm:h-10 rotate-90 sm:rotate-0" />
-        </div>
-      </div>
-
-      {/* Right panel - After (always filled) */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 flex-1 w-full min-w-0">
-        <div className="space-y-3">
-          {FIELDS.map((field) => (
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 w-full">
+      <div className="space-y-3">
+        {FIELDS.map((field) => {
+          const isFilled = filledFields.includes(field.key);
+          return (
             <div key={field.key} className="space-y-1">
               <label className="text-xs font-medium text-gray-600">{field.label}</label>
-              <div className="h-8 rounded border border-gray-200 bg-gray-50 px-2 flex items-center">
-                <span className="text-xs text-gray-800 truncate">{field.value}</span>
+              <div className="relative h-8 rounded border border-gray-200 bg-gray-50 overflow-hidden px-2 flex items-center">
+                {isFilled && (
+                  <span className="text-xs text-gray-800 animate-[field-fill_0.4s_ease-out_forwards]">
+                    {field.value}
+                  </span>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
