@@ -33,6 +33,7 @@ export interface AltTextCompany {
   id: string;
   name: string;
   domain: string | null;
+  app_password: string | null;
   created_at: string;
 }
 
@@ -57,6 +58,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
   const [isDeleting, setIsDeleting] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
   const [newCompanyDomain, setNewCompanyDomain] = useState('');
+  const [newCompanyPassword, setNewCompanyPassword] = useState('');
   const [showConfirmAdd, setShowConfirmAdd] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -137,7 +139,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
   };
 
   const handleRequestAdd = () => {
-    if (!newCompanyName.trim() || !newCompanyDomain.trim()) {
+    if (!newCompanyName.trim() || !newCompanyDomain.trim() || !newCompanyPassword.trim()) {
       toast({ title: 'Vul alle velden in', variant: 'destructive' });
       return;
     }
@@ -150,7 +152,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
     try {
       const { data, error } = await supabase
         .from('alt_text_companies')
-        .insert({ name: newCompanyName.trim(), domain: newCompanyDomain.trim() })
+        .insert({ name: newCompanyName.trim(), domain: newCompanyDomain.trim(), app_password: newCompanyPassword.trim() })
         .select()
         .single();
 
@@ -160,6 +162,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
 
       setNewCompanyName('');
       setNewCompanyDomain('');
+      setNewCompanyPassword('');
       setShowConfirmAdd(false);
 
       await fetchCompanies();
@@ -260,13 +263,23 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
+            <div className="space-y-2">
+              <Label className="text-white/70">Applicatie wachtwoord</Label>
+              <Input
+                type="password"
+                value={newCompanyPassword}
+                onChange={(e) => setNewCompanyPassword(e.target.value)}
+                placeholder="WordPress applicatie wachtwoord"
+                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
+              />
+            </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-white/20 text-white">
                 Annuleren
               </Button>
               <Button
                 onClick={handleRequestAdd}
-                disabled={!newCompanyName.trim() || !newCompanyDomain.trim()}
+                disabled={!newCompanyName.trim() || !newCompanyDomain.trim() || !newCompanyPassword.trim()}
                 className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
                 Toevoegen

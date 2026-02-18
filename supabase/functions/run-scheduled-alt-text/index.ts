@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             bedrijfsnaam: company.name,
             domain: company.domain,
+            app_password: company.app_password || null,
           }),
         });
 
