@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const FIELDS = [
   { key: 'alt', label: 'Alternatieve tekst', value: 'Tablet met grafieken en diagrammen...' },
@@ -14,33 +14,74 @@ interface AltTextAnimationProps {
 
 const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimationProps) => {
   const [filledFields, setFilledFields] = useState<string[]>([]);
+  const isAnimatingRef = useRef(isAnimating);
+
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
 
   useEffect(() => {
     if (!isAnimating) return;
 
-    setFilledFields([]);
-    const timeouts: NodeJS.Timeout[] = [];
+    let cancelled = false;
 
-    FIELDS.forEach((field, i) => {
-      timeouts.push(
-        setTimeout(() => {
-          setFilledFields(prev => [...prev, field.key]);
-          if (i === FIELDS.length - 1) {
-            setTimeout(onAnimationComplete, 400);
-          }
-        }, (i + 1) * 500)
-      );
-    });
+    const runCycle = () => {
+      if (cancelled || !isAnimatingRef.current) return;
 
-    return () => timeouts.forEach(clearTimeout);
-  }, [isAnimating, onAnimationComplete]);
+      setFilledFields([]);
+      const timeouts: NodeJS.Timeout[] = [];
 
+      FIELDS.forEach((field, i) => {
+        timeouts.push(
+          setTimeout(() => {
+            if (cancelled || !isAnimatingRef.current) return;
+            setFilledFields(prev => [...prev, field.key]);
+
+            // After last field, wait 800ms then restart loop
+            if (i === FIELDS.length - 1) {
+              timeouts.push(
+                setTimeout(() => {
+                  if (cancelled || !isAnimatingRef.current) return;
+                  runCycle();
+                }, 800)
+              );
+            }
+          }, (i + 1) * 500)
+        );
+      });
+
+      // Store cleanup
+      cleanupRef.current = () => {
+        cancelled = true;
+        timeouts.forEach(clearTimeout);
+      };
+    };
+
+    const cleanupRef = { current: () => {} };
+    runCycle();
+
+    return () => {
+      cancelled = true;
+      cleanupRef.current();
+    };
+  }, [isAnimating]);
+
+  // When animation stops, keep fields visible for 3s then clear
   useEffect(() => {
     if (!isAnimating && filledFields.length > 0) {
       const t = setTimeout(() => setFilledFields([]), 3000);
       return () => clearTimeout(t);
     }
   }, [isAnimating, filledFields.length]);
+
+  // Call onAnimationComplete when isAnimating transitions to false
+  const prevAnimating = useRef(isAnimating);
+  useEffect(() => {
+    if (prevAnimating.current && !isAnimating) {
+      onAnimationComplete();
+    }
+    prevAnimating.current = isAnimating;
+  }, [isAnimating, onAnimationComplete]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 w-full h-full">
