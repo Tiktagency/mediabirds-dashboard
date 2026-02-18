@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      alt_text_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          enabled: boolean
+          id: string
+          interval_unit: string
+          interval_value: number
+          last_triggered_at: string | null
+          next_trigger_at: string | null
+          time_of_day: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          id?: string
+          interval_unit?: string
+          interval_value?: number
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          id?: string
+          interval_unit?: string
+          interval_value?: number
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string | null
