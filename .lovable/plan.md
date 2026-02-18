@@ -1,24 +1,40 @@
 
 
-## WordPress Alt-Tekst pagina: tekstvlak verwijderen en dropdown verplaatsen
+## Geselecteerd bedrijf weergeven op de Alt-Tekst pagina
 
 ### Wat er verandert
-1. Het volledige tekstvlak (Card met uitleg en bedrijvenlijst) wordt verwijderd
-2. De bedrijfsselector wordt verplaatst naar een vaste navigatiebalk bovenaan, rechts uitgelijnd -- dezelfde positie als op de SEO/Blog-pagina
-3. De Dashboard-knop verhuist ook naar deze navigatiebalk (links)
-4. Nieuw aangemaakte bedrijven verschijnen als eerste in de lijst (sortering op `created_at DESC` in plaats van op `name`)
+Wanneer een bedrijf is geselecteerd in de dropdown, worden de gegevens (bedrijfsnaam en domeinnaam) zichtbaar op de pagina onder de titel.
 
 ### Aanpassingen
 
 **1. `src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**
-- Sorteer bedrijven op `created_at` descending (`.order('created_at', { ascending: false })`) zodat het nieuwst aangemaakte bedrijf altijd bovenaan staat
+- Voeg een `onSelect` callback prop toe: `onSelect?: (company: AltTextCompany | null) => void`
+- Roep `onSelect` aan wanneer een bedrijf wordt geselecteerd (bij initieel laden en bij klikken)
+- Exporteer het `AltTextCompany` type zodat de pagina het kan gebruiken
 
 **2. `src/pages/WordpressAltText.tsx`**
-- Verwijder de Card-component met alle uitlegtekst en bedrijvenlijst
-- Verwijder de `companies` state (niet meer nodig zonder de lijst)
-- Voeg een vaste navigatiebalk toe bovenaan (net als de SEO-pagina):
-  - Links: Dashboard-knop
-  - Rechts: AltTextCompanySelector
-- De `AltTextCompanySelector` krijgt geen `onCompaniesChange` prop meer nodig (wordt vereenvoudigd)
-- De pagina-inhoud bevat alleen nog de titel, gecentreerd onder de navigatiebalk
+- Voeg state toe: `const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null)`
+- Geef `onSelect={setSelectedCompany}` mee aan `AltTextCompanySelector`
+- Toon onder de titel een informatieblok met:
+  - Bedrijfsnaam (groot/duidelijk)
+  - Domeinnaam (als link of subtekst)
+- Gebruik een `Card` met `bg-white/10 backdrop-blur-sm border-white/20` styling (passend bij de huisstijl)
+- Als er nog geen bedrijf is geselecteerd, toon een subtiele melding ("Selecteer een bedrijf om de gegevens te zien")
+
+### Weergave
+
+```
++----------------------------------+
+|  Dashboard          [Dropdown]   |
++----------------------------------+
+|                                  |
+|      Alt-tekst wordpress         |
+|                                  |
+|   +------------------------+     |
+|   | Bedrijfsnaam: Reneko   |     |
+|   | Domein: reneko.nl      |     |
+|   +------------------------+     |
+|                                  |
++----------------------------------+
+```
 
