@@ -92,7 +92,7 @@ export const ButtonColorCustomizer = ({
           className="w-full text-xs h-8"
         >
           <RotateCcw className="w-3 h-3 mr-1.5" />
-          Reset naar standaard
+          Reset
         </Button>
       </CardContent>
     </Card>
