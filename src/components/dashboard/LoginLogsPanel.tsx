@@ -15,31 +15,48 @@ interface LoginLog {
 
 export const LoginLogsPanel = () => {
   const [logs, setLogs] = useState<LoginLog[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [open, setOpen] = useState(false);
 
   const fetchLogs = async () => {
-    setIsLoading(true);
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('login_logs')
       .select('id, display_name, email, logged_in_at')
       .gte('logged_in_at', sevenDaysAgo.toISOString())
       .order('logged_in_at', { ascending: false });
 
-    if (!error && data) {
-      setLogs(data);
-    }
-    setIsLoading(false);
+    if (data) setLogs(data);
+    setIsInitialLoad(false);
   };
 
+  // Fetch on mount so data is ready before panel opens
   useEffect(() => {
-    if (open) {
-      fetchLogs();
-    }
+    fetchLogs();
+  }, []);
+
+  // Also refresh when panel opens, but no skeletons
+  useEffect(() => {
+    if (open) fetchLogs();
   }, [open]);
+
+  // Realtime subscription for new logins
+  useEffect(() => {
+    const channel = supabase
+      .channel('login-logs-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'login_logs' },
+        (payload) => {
+          setLogs(prev => [payload.new as LoginLog, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -57,7 +74,7 @@ export const LoginLogsPanel = () => {
           <SheetTitle className="text-foreground">Login logs (7 dagen)</SheetTitle>
         </SheetHeader>
         <div className="mt-4 space-y-2 overflow-y-auto max-h-[calc(100vh-120px)]">
-          {isLoading ? (
+          {isInitialLoad ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="p-3 rounded-lg bg-muted/30">
                 <Skeleton className="h-4 w-32 mb-1" />
