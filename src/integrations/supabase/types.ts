@@ -931,6 +931,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_user_visit: {
+        Args: { p_display_name: string; p_email: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:

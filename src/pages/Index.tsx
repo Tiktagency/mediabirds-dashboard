@@ -146,10 +146,10 @@ const Index = () => {
         ? `${profile.first_name} ${profile.last_name || ''}`.trim()
         : user.email;
 
-      await supabase.from('login_logs').insert({
-        user_id: user.id,
-        email: user.email,
-        display_name: displayName,
+      await supabase.rpc('log_user_visit', {
+        p_user_id: user.id,
+        p_email: user.email || '',
+        p_display_name: displayName || '',
       });
 
     };
