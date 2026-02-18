@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AltTextCompanySelector from '@/components/wordpress-alt-text/AltTextCompanySelector';
+import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextCompanySelector';
+import { Building2, Globe } from 'lucide-react';
 
 const WordpressAltText = () => {
   const { isLoading } = useAdminAuth();
+  const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null);
 
   if (isLoading) {
     return (
@@ -29,13 +33,30 @@ const WordpressAltText = () => {
             Dashboard
           </Button>
         </Link>
-        <AltTextCompanySelector />
+        <AltTextCompanySelector onSelect={setSelectedCompany} />
       </div>
       
       <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6">
         <h1 className="hero-title text-white mb-12 fade-in-up">
           Alt-tekst wordpress
         </h1>
+
+        {selectedCompany ? (
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-3">
+              <Building2 className="w-5 h-5 text-white/70" />
+              <h2 className="text-xl font-semibold text-white">{selectedCompany.name}</h2>
+            </div>
+            {selectedCompany.domain && (
+              <div className="flex items-center gap-3 text-white/60">
+                <Globe className="w-4 h-4" />
+                <span>{selectedCompany.domain}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-white/40 text-sm">Selecteer een bedrijf om de gegevens te zien</p>
+        )}
       </div>
     </div>
   );
