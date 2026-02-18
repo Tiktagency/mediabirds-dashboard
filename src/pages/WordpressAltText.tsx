@@ -67,11 +67,15 @@ const WordpressAltText = () => {
 
   const handleStart = async () => {
     if (!selectedCompany) return;
+    if (!editName.trim() || !editDomain.trim() || !editPassword.trim()) {
+      toast({ title: 'Vul alle velden in', description: 'Bedrijfsnaam, domeinnaam en applicatie wachtwoord zijn verplicht', variant: 'destructive' });
+      return;
+    }
     setIsStarting(true);
     setIsAnimating(true);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
-        body: { bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain },
+        body: { bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain, app_password: selectedCompany.app_password },
       });
       if (error) throw error;
 
@@ -194,7 +198,7 @@ const WordpressAltText = () => {
                         value={editPassword}
                         onChange={(e) => setEditPassword(e.target.value)}
                         onBlur={() => { setEditingField(null); handleFieldSave('app_password', editPassword); }}
-                        placeholder="Voer wachtwoord in..."
+                        placeholder="abcd efgh ijkl 1234"
                         className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
                         autoFocus
                       />
@@ -204,7 +208,7 @@ const WordpressAltText = () => {
                         className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
-                          {editPassword ? '••••••••••••' : 'Voer wachtwoord in...'}
+                          {editPassword ? '••••••••••••' : 'abcd efgh ijkl 1234'}
                         </span>
                       </div>
                     )}
@@ -213,7 +217,7 @@ const WordpressAltText = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true}
+                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim()}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
               >
                 {schedule?.enabled === true ? (

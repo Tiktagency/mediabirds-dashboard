@@ -269,7 +269,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
                 type="password"
                 value={newCompanyPassword}
                 onChange={(e) => setNewCompanyPassword(e.target.value)}
-                placeholder="WordPress applicatie wachtwoord"
+                placeholder="abcd efgh ijkl 1234"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
