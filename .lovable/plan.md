@@ -1,91 +1,50 @@
 
 
-## Fix: Login logs direct laden zonder flikkering
+## Achtergrondkleur customizer + reset knop hernoemen
 
-### Probleem
-1. De logs worden pas opgehaald wanneer het panel geopend wordt (`useEffect` luistert op `open`). Dit betekent dat er altijd een laadmoment is bij het openen.
-2. Tijdens het laden worden skeleton-loaders getoond in plaats van de bestaande data, wat als "knipperen" wordt ervaren.
-3. Er is geen realtime update wanneer een nieuwe login binnenkomt.
+### Wat wordt er gedaan
 
-### Oplossing
+1. **Nieuwe component: `BackgroundColorCustomizer`** -- Zelfde opzet als `ButtonColorCustomizer`, met een kleurenkiezer voor de achtergrondkleur van alle pagina's en een "Reset" knop.
 
-Drie aanpassingen in `src/components/dashboard/LoginLogsPanel.tsx`:
+2. **Achtergrondkleur opslaan in `dashboard_colors`** -- Nieuw veld `background_color` (type `string`, standaard `#0d0d0d`) wordt opgeslagen in de bestaande `dashboard_colors` JSONB kolom, net als bij button_colors. Geen database migratie nodig.
 
-**1. Logs direct laden bij mount (niet pas bij openen)**
+3. **Hook: `useApplyButtonColors` uitbreiden** -- De bestaande hook wordt uitgebreid (en hernoemd naar `useApplyCustomColors` of blijft hetzelfde) om ook de achtergrondkleur toe te passen via `document.documentElement.style.setProperty` op de `--background` CSS variabele.
 
-Verplaats de initiële fetch naar component mount, zodat de data al klaar staat voordat het panel geopend wordt.
+4. **Reset knop bij Knopkleuren hernoemen** -- De tekst "Reset naar standaard" wordt gewijzigd naar "Reset".
 
-**2. Skeleton alleen tonen bij eerste keer laden**
-
-Gebruik een aparte `isInitialLoad` state. Skeletons worden alleen getoond als er nog nooit data is geladen. Bij een refresh (panel opnieuw openen) blijft de bestaande data zichtbaar terwijl er op de achtergrond nieuwe data wordt opgehaald -- geen flikkering.
-
-**3. Realtime subscription op login_logs tabel**
-
-Voeg een Supabase realtime channel toe die luistert naar INSERT events op de `login_logs` tabel. Wanneer een nieuwe login binnenkomt, wordt deze direct bovenaan de lijst toegevoegd zonder een volledige refetch.
+5. **DashboardTab aanpassen** -- De nieuwe `BackgroundColorCustomizer` wordt onderaan de pagina toegevoegd.
 
 ### Technische details
 
-```typescript
-// Nieuwe state structuur
-const [logs, setLogs] = useState<LoginLog[]>([]);
-const [isInitialLoad, setIsInitialLoad] = useState(true);
+**Nieuw bestand: `src/components/admin/dashboard/BackgroundColorCustomizer.tsx`**
+- Zelfde structuur als `ButtonColorCustomizer`
+- Preview: een klein vierkant met de gekozen achtergrondkleur
+- Twee velden: achtergrondkleur (color picker + hex input)
+- Reset knop met standaardwaarde `#0d0d0d`
 
-// Fetch bij mount, niet bij open
-useEffect(() => {
-  fetchLogs();
-}, []);
+**`src/hooks/useDashboardSettings.ts`**
+- Toevoegen: `background_color: string` aan het `DashboardSettings` interface
+- Default: `#0d0d0d`
+- Nieuwe functie `updateBackgroundColor` die opslaat in `dashboard_colors.background_color`
+- Uitlezen uit `dashboardColors?.background_color`
 
-// Refresh ook bij openen, maar zonder skeletons
-useEffect(() => {
-  if (open) fetchLogs();
-}, [open]);
+**`src/hooks/useApplyButtonColors.ts`**
+- Naast button colors ook `settings?.background_color` uitlezen
+- Omzetten van hex naar HSL en toepassen op `--background` CSS variabele (zowel `:root` als `.dark`)
 
-// fetchLogs zet alleen isInitialLoad op false, niet isLoading
-const fetchLogs = async () => {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
-  const { data } = await supabase
-    .from('login_logs')
-    .select('id, display_name, email, logged_in_at')
-    .gte('logged_in_at', sevenDaysAgo.toISOString())
-    .order('logged_in_at', { ascending: false });
+**`src/components/admin/dashboard/ButtonColorCustomizer.tsx`**
+- Regel 95: "Reset naar standaard" wordt "Reset"
 
-  if (data) setLogs(data);
-  setIsInitialLoad(false);
-};
+**`src/components/admin/dashboard/DashboardTab.tsx`**
+- Import en render van `BackgroundColorCustomizer` onderaan, na de bestaande grid secties
 
-// Realtime subscription
-useEffect(() => {
-  const channel = supabase
-    .channel('login-logs-realtime')
-    .on('postgres_changes', 
-      { event: 'INSERT', schema: 'public', table: 'login_logs' },
-      (payload) => {
-        setLogs(prev => [payload.new as LoginLog, ...prev]);
-      }
-    )
-    .subscribe();
+### Bestanden die worden aangepast
 
-  return () => { supabase.removeChannel(channel); };
-}, []);
-
-// Skeletons alleen bij initiële load
-{isInitialLoad ? <Skeletons /> : logs.length === 0 ? <Empty /> : <LogsList />}
-```
-
-### Database vereiste
-
-Een migratie om realtime in te schakelen voor de `login_logs` tabel:
-
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.login_logs;
-```
-
-### Samenvatting
-
-| Onderdeel | Actie |
+| Bestand | Actie |
 |---|---|
-| Database migratie | Realtime inschakelen voor `login_logs` |
-| `LoginLogsPanel.tsx` | Laden bij mount, geen flikkering bij refresh, realtime updates |
+| `src/components/admin/dashboard/BackgroundColorCustomizer.tsx` | Nieuw bestand |
+| `src/hooks/useDashboardSettings.ts` | `background_color` toevoegen + update functie |
+| `src/hooks/useApplyButtonColors.ts` | Achtergrondkleur toepassen op CSS variabele |
+| `src/components/admin/dashboard/ButtonColorCustomizer.tsx` | "Reset naar standaard" -> "Reset" |
+| `src/components/admin/dashboard/DashboardTab.tsx` | BackgroundColorCustomizer toevoegen |
 
