@@ -1,32 +1,39 @@
 
 
-## Gelijke hoogte linker en rechter kolom
+## Applicatie wachtwoord toevoegen bij bedrijf (beveiligd)
 
 ### Probleem
-De linker kolom (bedrijfsvelden + knop) en rechter kolom (animatiepaneel) hebben een verschillende hoogte. De `items-stretch` class op de parent flex container werkt al, maar de rechter kolom en het animatie-component vullen hun beschikbare ruimte niet op.
+Bij het toevoegen van een alt-tekst bedrijf wordt er geen WordPress applicatie wachtwoord opgeslagen. Dit wachtwoord is nodig voor de webhook om te authenticeren bij de WordPress API.
 
 ### Oplossing
-Twee kleine aanpassingen:
+Een beveiligde `app_password` kolom toevoegen aan de `alt_text_companies` tabel en het wachtwoord meesturen naar de webhook bij zowel handmatige als automatische triggers.
 
-1. **`src/pages/WordpressAltText.tsx`** (regel 203): Voeg `flex flex-col` toe aan de rechter kolom wrapper, zodat het kind-element kan stretchen.
+### Beveiliging
+- De kolom is beschermd door de bestaande RLS-policies: alleen admins en super_admins kunnen de tabel lezen/schrijven
+- In de UI wordt het wachtwoord getoond als password-veld (dots) en nooit in plain text
+- Het wachtwoord wordt alleen server-side doorgestuurd naar de webhook via edge functions
 
-2. **`src/components/wordpress-alt-text/AltTextAnimation.tsx`**: Voeg `flex flex-col` en `justify-between` toe aan de binnenste container, zodat de velden gelijkmatig verdeeld worden over de volledige hoogte. De outer div heeft al `h-full`.
+### Aanpassingen
 
-### Technische details
+**1. Database migratie**
+- Kolom `app_password` (text, nullable) toevoegen aan `alt_text_companies`
 
-**WordpressAltText.tsx regel 203:**
-```
-// Van:
-<div className="w-full lg:w-72 flex-shrink-0">
+**2. `src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**
+- Nieuw state veld `newCompanyPassword` toevoegen
+- Extra input veld (type="password") in de "Nieuw bedrijf toevoegen" dialog
+- Het wachtwoord meesturen bij de insert
+- Interface `AltTextCompany` uitbreiden met `app_password`
 
-// Naar:
-<div className="w-full lg:w-72 flex-shrink-0 flex flex-col">
-```
+**3. `src/pages/WordpressAltText.tsx`**
+- Bewerkbaar wachtwoord-veld toevoegen naast bedrijfsnaam en domeinnaam
+- Wachtwoord tonen als `type="password"` input
+- Opslaan via dezelfde edit-flow als naam en domein
 
-**AltTextAnimation.tsx:**
-```
-// Binnenste space-y-3 div aanpassen naar flex kolom met justify-between
-// zodat de 4 velden gelijkmatig de volledige hoogte vullen
-```
+**4. `supabase/functions/trigger-alt-text-webhook/index.ts`**
+- Het `app_password` veld ophalen uit de database voor het geselecteerde bedrijf
+- Meesturen als `app_password` in de webhook payload
 
-Dit zorgt ervoor dat beide kolommen exact dezelfde hoogte hebben dankzij de bestaande `items-stretch` op de parent.
+**5. `supabase/functions/run-scheduled-alt-text/index.ts`**
+- Het `app_password` veld meelezen bij het ophalen van bedrijven
+- Per bedrijf het wachtwoord meesturen in de webhook payload
+
