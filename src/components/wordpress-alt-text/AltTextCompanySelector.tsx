@@ -36,11 +36,7 @@ export interface AltTextCompany {
   created_at: string;
 }
 
-interface AltTextCompanySelectorProps {
-  onCompaniesChange: (companies: AltTextCompany[]) => void;
-}
-
-const AltTextCompanySelector = ({ onCompaniesChange }: AltTextCompanySelectorProps) => {
+const AltTextCompanySelector = () => {
   const [companies, setCompanies] = useState<AltTextCompany[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,13 +72,13 @@ const AltTextCompanySelector = ({ onCompaniesChange }: AltTextCompanySelectorPro
       const { data, error } = await supabase
         .from('alt_text_companies')
         .select('*')
-        .order('name');
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const list = (data || []) as AltTextCompany[];
       setCompanies(list);
-      onCompaniesChange(list);
+      // companies available via local state
 
       if (list.length > 0 && !selectedCompany) {
         setSelectedCompany(list[0]);
