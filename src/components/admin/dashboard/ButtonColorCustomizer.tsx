@@ -1,8 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Palette, RotateCcw } from 'lucide-react';
+import { Palette, RotateCcw, Save } from 'lucide-react';
 import type { TileColors } from '@/hooks/useDashboardSettings';
 
 interface ButtonColorCustomizerProps {
@@ -16,6 +17,21 @@ export const ButtonColorCustomizer = ({
   onUpdate, 
   onReset 
 }: ButtonColorCustomizerProps) => {
+  const [localColors, setLocalColors] = useState<TileColors>(colors);
+
+  useEffect(() => {
+    setLocalColors(colors);
+  }, [colors]);
+
+  const handleSave = async () => {
+    await onUpdate(localColors);
+  };
+
+  const handleReset = async () => {
+    await onReset();
+    setLocalColors(colors);
+  };
+
   return (
     <Card className="bg-card/50 border-border/30">
       <CardHeader className="pb-3">
@@ -33,8 +49,8 @@ export const ButtonColorCustomizer = ({
           <button 
             className="px-6 py-2.5 rounded-md font-medium text-sm transition-colors"
             style={{ 
-              backgroundColor: colors.background,
-              color: colors.text,
+              backgroundColor: localColors.background,
+              color: localColors.text,
             }}
           >
             Voorbeeld knop
@@ -50,14 +66,14 @@ export const ButtonColorCustomizer = ({
             <div className="flex items-center gap-2">
               <Input
                 type="color"
-                value={colors.background}
-                onChange={(e) => onUpdate({ background: e.target.value })}
+                value={localColors.background}
+                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Achtergrond"
               />
               <Input
-                value={colors.background}
-                onChange={(e) => onUpdate({ background: e.target.value })}
+                value={localColors.background}
+                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
                 className="flex-1 bg-background/50 font-mono text-sm"
               />
             </div>
@@ -70,30 +86,40 @@ export const ButtonColorCustomizer = ({
             <div className="flex items-center gap-2">
               <Input
                 type="color"
-                value={colors.text}
-                onChange={(e) => onUpdate({ text: e.target.value })}
+                value={localColors.text}
+                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
                 className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
                 title="Tekst"
               />
               <Input
-                value={colors.text}
-                onChange={(e) => onUpdate({ text: e.target.value })}
+                value={localColors.text}
+                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
                 className="flex-1 bg-background/50 font-mono text-sm"
               />
             </div>
           </div>
         </div>
 
-        {/* Reset Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onReset}
-          className="w-full text-xs h-8"
-        >
-          <RotateCcw className="w-3 h-3 mr-1.5" />
-          Reset
-        </Button>
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            className="flex-1 text-xs h-8"
+          >
+            <RotateCcw className="w-3 h-3 mr-1.5" />
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            className="flex-1 text-xs h-8"
+          >
+            <Save className="w-3 h-3 mr-1.5" />
+            Opslaan
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
