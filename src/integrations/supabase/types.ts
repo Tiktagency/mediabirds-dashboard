@@ -43,6 +43,7 @@ export type Database = {
           id: string
           interval_unit: string
           interval_value: number
+          last_processed_company_id: string | null
           last_triggered_at: string | null
           next_trigger_at: string | null
           time_of_day: string
@@ -55,6 +56,7 @@ export type Database = {
           id?: string
           interval_unit?: string
           interval_value?: number
+          last_processed_company_id?: string | null
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
@@ -67,6 +69,7 @@ export type Database = {
           id?: string
           interval_unit?: string
           interval_value?: number
+          last_processed_company_id?: string | null
           last_triggered_at?: string | null
           next_trigger_at?: string | null
           time_of_day?: string
