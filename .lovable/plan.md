@@ -1,53 +1,53 @@
 
 
-## Bedrijfsgegevens bewerkbaar maken met drie-stappen patroon
+## Bedrijfsnaam live bijwerken in dropdown + "Start" knop met webhook
 
 ### Wat er verandert
-De bedrijfsnaam en domeinnaam op de WordPress Alt-Tekst pagina worden bewerkbaar via het bestaande drie-stappen interactiepatroon (collapsed > expanded met potloodje > editing). Beide velden krijgen een duidelijk kopje erboven.
+1. Als je de bedrijfsnaam aanpast in het bewerkbare veld, wordt de naam direct ook bijgewerkt in de dropdown rechtsboven (zonder herladen)
+2. Er komt een "Start" knop onder de bedrijfsgegevens
+3. Bij klik op "Start" worden de bedrijfsgegevens als POST-request verstuurd naar de alt-tekst webhook
+4. Authenticatie via dezelfde methode als bij de blogs (`BLOG_WEBHOOK_AUTH_TOKEN`)
 
 ### Aanpassingen
 
-**`src/pages/WordpressAltText.tsx`**
+**1. `src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**
+- Voeg een `selectedCompany` prop toe zodat de parent component de geselecteerde company kan bijwerken (naam wijzigingen)
+- Synchroniseer de weergegeven naam in de dropdown-trigger met de externe `selectedCompany` prop
+- Voeg een `refreshCompanies` functie/ref toe of gebruik de prop-waarde direct om de lijst en trigger-tekst bij te werken
 
-- Voeg state toe voor `expandedField` en `editingField` (zoals in PageUrlForm)
-- Voeg een `useEffect` toe voor click-outside handler om expanded velden dicht te klappen
-- Vervang het huidige statische weergaveblok door twee bewerkbare velden:
-  - **"Bedrijfsnaam:"** label + drie-stappen veld voor `name`
-  - **"Domeinnaam:"** label + drie-stappen veld voor `domain`
-- Voeg een `renderEditableField` helper functie toe (gebaseerd op `renderInputField` uit PageUrlForm):
-  - **Collapsed**: toont alleen de tekst, klikbaar
-  - **Expanded**: toont tekst + Pencil-icoon rechts
-  - **Editing**: Input-veld, wijzigingen opslaan bij blur
-- Bij blur: update het bedrijf in de `alt_text_companies` tabel via Supabase en werk de lokale state bij
-- Importeer `Pencil` uit lucide-react en `Input` component
+**2. `src/pages/WordpressAltText.tsx`**
+- Na het opslaan van een naamswijziging: geef de bijgewerkte company direct door aan de selector
+- Voeg een "Start" knop toe onder de bedrijfsgegevens card
+- Knop stuurt een POST-request via een nieuwe edge function met de bedrijfsgegevens
+- Laadstatus en feedback via toast-meldingen
 
-**`src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**
-
-- Geen wijzigingen nodig; de `onSelect` callback geeft al het volledige company-object terug met `id`, `name` en `domain`
-
-### Visuele weergave
-
-```
-+----------------------------------+
-|  Dashboard          [Dropdown]   |
-+----------------------------------+
-|                                  |
-|      Alt-tekst wordpress         |
-|                                  |
-|   +------------------------+     |
-|   | Bedrijfsnaam:          |     |
-|   | [Reneko Kozijnen    ]  |     |  <-- klikbaar, drie-stappen
-|   |                        |     |
-|   | Domeinnaam:            |     |
-|   | [reneko.nl          ]  |     |  <-- klikbaar, drie-stappen
-|   +------------------------+     |
-|                                  |
-+----------------------------------+
-```
+**3. Nieuwe edge function: `supabase/functions/trigger-alt-text-webhook/index.ts`**
+- Ontvangt de bedrijfsgegevens (naam, domein) van de frontend
+- Leest `BLOG_WEBHOOK_AUTH_TOKEN` uit de environment
+- Stuurt een POST-request naar `https://tikt.app.n8n.cloud/webhook/b6d054ac-4c1b-4091-8369-f3f7e1bbca72` met de data
+- Retourneert het resultaat naar de frontend
+- Inclusief CORS headers en JWT-validatie
 
 ### Technische details
 
-- De `renderEditableField` functie krijgt parameters: `fieldId`, `value`, `onChange`, `onBlur`, `placeholder`
-- Bij blur wordt `supabase.from('alt_text_companies').update({ [field]: newValue }).eq('id', selectedCompany.id)` aangeroepen
-- Na succesvolle update wordt `setSelectedCompany` bijgewerkt met de nieuwe waarden
-- Het drie-stappen patroon volgt exact dezelfde implementatie als in `PageUrlForm.tsx` (regels 130-190)
+**Dropdown synchronisatie:**
+De `AltTextCompanySelector` krijgt een `selectedCompany` prop die van buitenaf de huidige geselecteerde company bepaalt. Wanneer de naam in `WordpressAltText.tsx` wordt aangepast en opgeslagen, wordt `setSelectedCompany` bijgewerkt en de selector toont direct de nieuwe naam.
+
+**Edge function payload:**
+```json
+{
+  "bedrijfsnaam": "Reneko Kozijnen",
+  "domain": "reneko.nl"
+}
+```
+
+**Edge function authenticatie:**
+- Gebruikt `BLOG_WEBHOOK_AUTH_TOKEN` secret (al geconfigureerd)
+- Stuurt deze als `Authorization` header naar de n8n webhook
+- Frontend roept de edge function aan via `supabase.functions.invoke('trigger-alt-text-webhook', { body: { ... } })`
+
+**Start knop UX:**
+- Laadsymbool tijdens verwerking
+- Toast-melding bij succes of fout
+- Knop disabled als er geen bedrijf is geselecteerd
+
