@@ -1,57 +1,36 @@
 
 
-## Start-knop koppelen aan eigen webhook
+## Spreadsheet ID veld mag niet uitrekken
 
 ### Wat verandert er
 
-De Start-knop op de Landingspagina stuurt de data naar een **eigen webhook URL** in plaats van de alt-text webhook. De edge function wacht op het antwoord van n8n en stuurt dat terug. Het antwoord wordt als toast-melding 5 seconden in beeld getoond.
+Wanneer je een lange waarde invoert (zoals een Spreadsheet ID), blijft het veld op zijn vaste breedte en rekt het niet uit.
 
-### Stappen
+### Aanpassing in `src/pages/Landingspagina.tsx`
 
-**1. Nieuwe edge function: `trigger-landing-webhook`**
+**`renderEditableField` functie -- 3 plekken:**
 
-Een eigen edge function die:
-- De payload ontvangt (bedrijfsnaam, domain, app_password, spreadsheet_id, grid_id)
-- POST stuurt naar `https://tikt.app.n8n.cloud/webhook/a726f693-304a-4400-b08c-40d2748517f8`
-- Wacht op het antwoord en stuurt dat terug naar de frontend
-- Authenticatie via `BLOG_WEBHOOK_AUTH_TOKEN` (al geconfigureerd)
-
-**2. Landingspagina aanpassen**
-
-- `handleStart` roept `trigger-landing-webhook` aan in plaats van `trigger-alt-text-webhook`
-- Het webhook-antwoord wordt als toast getoond met een duur van 5 seconden (5000ms)
+1. **Input veld (regel 119-126)**: voeg `className` `overflow-hidden` toe en een `style={{ minWidth: 0 }}` zodat het input-element niet groeit
+2. **Expanded view (regel 131)**: voeg `overflow-hidden break-all` toe aan de container, en `truncate` of `break-all` aan de `<span>` zodat lange tekst wrapt of afgekapt wordt in plaats van het veld uit te rekken
+3. **Collapsed view (regel 144-149)**: al correct met `truncate` en `overflow-hidden`
 
 ### Technische details
 
-**Nieuwe edge function `supabase/functions/trigger-landing-webhook/index.ts`:**
-- Zelfde structuur als `trigger-alt-text-webhook` (auth check, CORS, etc.)
-- Haalt `app_password` op uit `landing_companies` (niet `alt_text_companies`)
-- Stuurt naar de nieuwe webhook URL
-- Wacht op response en stuurt die terug
-
-**Aanpassing `src/pages/Landingspagina.tsx` -- `handleStart`:**
-```typescript
-const { data, error } = await supabase.functions.invoke('trigger-landing-webhook', {
-  body: {
-    bedrijfsnaam: selectedCompany.name,
-    domain: selectedCompany.domain,
-    spreadsheet_id: editSheetId,
-    grid_id: editGridId,
-  },
-});
-
-// Toast met 5 seconden duur
-toast({
-  title: 'Resultaat',
-  description: message,
-  duration: 5000,
-});
+**Regel 124 -- Input:**
+```
+className="bg-white/5 border-white/20 text-white placeholder:text-white/30 w-full overflow-hidden"
 ```
 
-### Bestanden
+**Regel 131 -- Expanded container:**
+```
+className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden"
+```
 
-| Bestand | Actie |
+**Regel 132 -- Expanded span:**
+```
+<span className={`break-all ${!value ? 'text-white/30' : ''}`}>
+```
+
+| Bestand | Wijziging |
 |---|---|
-| `supabase/functions/trigger-landing-webhook/index.ts` | Nieuw -- eigen edge function voor landingspagina webhook |
-| `src/pages/Landingspagina.tsx` | `handleStart` aanpassen: nieuwe function + toast 5 sec |
-
+| `src/pages/Landingspagina.tsx` | `overflow-hidden` en `break-all` toevoegen aan renderEditableField |
