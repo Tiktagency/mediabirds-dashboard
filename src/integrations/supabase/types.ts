@@ -503,6 +503,36 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_companies: {
+        Row: {
+          app_password: string | null
+          created_at: string
+          domain: string | null
+          grid_id: string | null
+          id: string
+          name: string
+          spreadsheet_id: string | null
+        }
+        Insert: {
+          app_password?: string | null
+          created_at?: string
+          domain?: string | null
+          grid_id?: string | null
+          id?: string
+          name: string
+          spreadsheet_id?: string | null
+        }
+        Update: {
+          app_password?: string | null
+          created_at?: string
+          domain?: string | null
+          grid_id?: string | null
+          id?: string
+          name?: string
+          spreadsheet_id?: string | null
+        }
+        Relationships: []
+      }
       log_settings: {
         Row: {
           alert_email: string | null
