@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Loader2, Users, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,9 @@ const LeadsGenerator = () => {
   const [country, setCountry] = useState('');
   const [zoektermen, setZoektermen] = useState<string[]>(['']);
   const [isStarting, setIsStarting] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isValid = plaatsnaam.trim() && country.trim() && zoektermen.some(z => z.trim());
 
@@ -28,21 +32,61 @@ const LeadsGenerator = () => {
     setZoektermen(zoektermen.filter((_, i) => i !== index));
   };
 
+  const stopProgress = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
   const handleStart = async () => {
     if (!isValid) return;
     setIsStarting(true);
+    setIsRunning(true);
+    setProgress(0);
+
+    // Progress: 0→100 over 300s
+    intervalRef.current = setInterval(() => {
+      setProgress(prev => Math.min(prev + 100 / 300, 99.9));
+    }, 1000);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300_000); // 5 min
+
     try {
       const searchStringsArray = zoektermen.filter(z => z.trim());
       const { data, error } = await supabase.functions.invoke('trigger-leads-webhook', {
         body: { Plaatsnaam: plaatsnaam, Country: country, searchStringsArray },
       });
       if (error) throw error;
-      toast({ title: 'Gestart', description: 'Leads generator is gestart voor ' + plaatsnaam });
-    } catch (error) {
-      console.error('Error:', error);
-      toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
+
+      stopProgress();
+      setProgress(100);
+
+      // Parse response message
+      let message = 'Leads generator is klaar.';
+      try {
+        if (data?.data) {
+          const d = typeof data.data === 'string' ? data.data : JSON.stringify(data.data);
+          const parsed = typeof data.data === 'object' ? data.data : JSON.parse(d);
+          message = parsed?.message || parsed?.Output || d;
+        }
+      } catch { /* use default */ }
+
+      toast({ title: 'Resultaat', description: message, duration: 5000 });
+    } catch (error: any) {
+      stopProgress();
+      const isTimeout = error?.name === 'AbortError' || error?.message?.includes('aborted');
+      toast({
+        title: 'Fout',
+        description: isTimeout ? 'Timeout: geen antwoord binnen 5 minuten' : 'Er ging iets mis bij het starten',
+        variant: 'destructive',
+        duration: 5000,
+      });
     } finally {
+      clearTimeout(timeout);
       setIsStarting(false);
+      setTimeout(() => { setIsRunning(false); setProgress(0); }, 1000);
     }
   };
 
@@ -64,6 +108,12 @@ const LeadsGenerator = () => {
         <p className="text-muted-foreground text-center max-w-xl mb-8">
           Genereer automatisch leads op basis van locatie en zoektermen. Vul de gegevens in en start de zoektocht.
         </p>
+
+        {isRunning && (
+          <div className="w-full max-w-lg mb-4">
+            <Progress value={progress} className="h-2" />
+          </div>
+        )}
 
         <div className="w-full max-w-lg space-y-4">
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">

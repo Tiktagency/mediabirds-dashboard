@@ -22,6 +22,9 @@ serve(async (req) => {
       throw new Error('Auth token niet geconfigureerd');
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 300_000); // 5 min
+
     const response = await fetch(
       'https://tikt.app.n8n.cloud/webhook/02ec49ee-d7cf-4e3e-bfba-7d71206d290b',
       {
@@ -31,8 +34,11 @@ serve(async (req) => {
           'Authorization': authToken,
         },
         body: JSON.stringify({ Plaatsnaam, Country, searchStringsArray }),
+        signal: controller.signal,
       }
     );
+
+    clearTimeout(timeout);
 
     console.log(`Webhook response status: ${response.status}`);
     const text = await response.text();
