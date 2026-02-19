@@ -45,6 +45,14 @@ serve(async (req) => {
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
 
+    if (!response.ok) {
+      const errorMsg = typeof data === 'string' ? data : (data?.message || data?.error || `Webhook returned status ${response.status}`);
+      return new Response(JSON.stringify({ success: false, error: errorMsg }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
