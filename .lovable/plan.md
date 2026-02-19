@@ -1,25 +1,21 @@
 
 
-## Fix: content verdwijnt wanneer automatische trigger uitklapt
+## Fix: Tooltip tekst boven alle elementen weergeven
 
 ### Probleem
 
-De buitenste container heeft `h-screen overflow-hidden` en de binnenste scrollbare div heeft `overflow-y-auto`, maar er is geen padding aan de onderkant. Wanneer de ScheduleTrigger uitklapt, groeit de inhoud voorbij het scherm en wordt de onderkant afgesneden zonder dat je kunt scrollen naar de Start-knop en onderste velden.
+De tooltips bij "Applicatie wachtwoord" en "Pagina url" hebben al `z-50`, maar dit is niet hoog genoeg. De `backdrop-blur-sm` op de kaart creëert een nieuwe stacking context waardoor de tooltips er alsnog achter verdwijnen.
 
 ### Oplossing
 
 **Bestand: `src/pages/Landingspagina.tsx`**
 
-1. **Padding-bottom toevoegen aan de scrollbare container (regel 179)**
-   - Voeg `pb-8` toe aan de hero-gradient div, zodat er ruimte is onder de laatste content en de gebruiker kan scrollen naar de Start-knop.
-
-2. **`overflow-hidden` op de buitenste div behouden** -- dit voorkomt dat de hele pagina scrollt buiten de hero. De binnenste div met `overflow-y-auto` handelt het scrollen correct af zodra er genoeg bottom-padding is.
-
-### Technische details
+Verhoog de z-index van beide TooltipContent elementen van `z-50` naar `z-[9999]`:
 
 | Regel | Was | Wordt |
 |---|---|---|
-| 179 | `...justify-start pt-16 px-4 sm:pt-20 sm:px-6 overflow-y-auto` | `...justify-start pt-16 px-4 sm:pt-20 sm:px-6 pb-8 overflow-y-auto` |
+| 219 | `className="z-50 max-w-xs bg-card border-border text-white p-4"` | `className="z-[9999] max-w-xs bg-card border-border text-white p-4"` |
+| 276 | `className="z-50 max-w-xs bg-card border-border text-white p-3"` | `className="z-[9999] max-w-xs bg-card border-border text-white p-3"` |
 
-Dat is de enige wijziging. De `pb-8` zorgt ervoor dat de scroll-container genoeg ruimte heeft onderaan om de Start-knop en alle velden zichtbaar te maken, ook wanneer de automatische trigger is uitgeklapt.
+Dit garandeert dat de tooltips boven alle andere elementen verschijnen, ongeacht stacking contexts van parent-elementen.
 
