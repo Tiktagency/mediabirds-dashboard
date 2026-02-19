@@ -8,7 +8,7 @@ import LandingCompanySelector from '@/components/landing/LandingCompanySelector'
 import type { LandingCompany } from '@/components/landing/LandingCompanySelector';
 import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
-import { useAltTextSchedule } from '@/hooks/useAltTextSchedule';
+import { useLandingSchedule } from '@/hooks/useLandingSchedule';
 import { Pencil, Loader2, Clock, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +29,7 @@ const Landingspagina = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useAltTextSchedule();
+  const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useLandingSchedule();
 
   const handleAnimationComplete = useCallback(() => {
     setIsAnimating(false);
