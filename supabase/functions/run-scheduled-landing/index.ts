@@ -37,50 +37,44 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
 
-    const { data: schedule, error: fetchError } = await supabase
+    // Fetch all due schedules (per-company)
+    const { data: schedules, error: fetchError } = await supabase
       .from('landing_schedules')
       .select('*')
       .eq('enabled', true)
-      .lte('next_trigger_at', now)
-      .limit(1)
-      .maybeSingle();
+      .not('company_id', 'is', null)
+      .lte('next_trigger_at', now);
 
     if (fetchError) {
-      console.error('[run-scheduled-landing] Error fetching schedule:', fetchError);
+      console.error('[run-scheduled-landing] Error fetching schedules:', fetchError);
       throw fetchError;
     }
 
-    if (!schedule) {
-      console.log('[run-scheduled-landing] No schedule due at this time');
+    if (!schedules || schedules.length === 0) {
+      console.log('[run-scheduled-landing] No schedules due at this time');
       return new Response(
-        JSON.stringify({ success: true, message: 'No schedule due', processed: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { data: companies, error: companiesError } = await supabase
-      .from('landing_companies')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (companiesError) {
-      console.error('[run-scheduled-landing] Error fetching companies:', companiesError);
-      throw companiesError;
-    }
-
-    if (!companies || companies.length === 0) {
-      console.log('[run-scheduled-landing] No landing companies found');
-      return new Response(
-        JSON.stringify({ success: true, message: 'No companies to process', processed: 0 }),
+        JSON.stringify({ success: true, message: 'No schedules due', processed: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN');
     const results: { company: string; success: boolean; error?: string }[] = [];
-    let lastCompanyId = companies[companies.length - 1].id;
 
-    for (const company of companies) {
+    for (const schedule of schedules) {
+      // Fetch the company for this schedule
+      const { data: company, error: companyError } = await supabase
+        .from('landing_companies')
+        .select('*')
+        .eq('id', schedule.company_id)
+        .maybeSingle();
+
+      if (companyError || !company) {
+        console.error(`[run-scheduled-landing] Could not fetch company for schedule ${schedule.id}:`, companyError);
+        results.push({ company: schedule.company_id, success: false, error: 'Company not found' });
+        continue;
+      }
+
       console.log(`[run-scheduled-landing] Processing ${company.name} (${company.id})`);
       try {
         const webhookResponse = await fetch(LANDING_WEBHOOK_URL, {
@@ -107,6 +101,24 @@ Deno.serve(async (req) => {
           results.push({ company: company.name, success: false, error: responseText.substring(0, 200) });
         } else {
           results.push({ company: company.name, success: true });
+
+          // Only advance schedule on success
+          const nextTrigger = calculateNextTrigger(
+            schedule.interval_value,
+            schedule.interval_unit,
+            schedule.next_trigger_at
+          );
+
+          await supabase
+            .from('landing_schedules')
+            .update({
+              last_triggered_at: new Date().toISOString(),
+              next_trigger_at: nextTrigger.toISOString(),
+              last_processed_company_id: company.id,
+            })
+            .eq('id', schedule.id);
+
+          console.log(`[run-scheduled-landing] Schedule ${schedule.id} advanced to ${nextTrigger.toISOString()}`);
         }
       } catch (err) {
         console.error(`[run-scheduled-landing] Error for ${company.name}:`, err);
@@ -117,23 +129,6 @@ Deno.serve(async (req) => {
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
     console.log(`[run-scheduled-landing] Done: ${successCount} succeeded, ${failCount} failed`);
-
-    const nextTrigger = calculateNextTrigger(
-      schedule.interval_value,
-      schedule.interval_unit,
-      schedule.next_trigger_at
-    );
-
-    await supabase
-      .from('landing_schedules')
-      .update({
-        last_triggered_at: new Date().toISOString(),
-        next_trigger_at: nextTrigger.toISOString(),
-        last_processed_company_id: lastCompanyId,
-      })
-      .eq('id', schedule.id);
-
-    console.log(`[run-scheduled-landing] Schedule advanced to ${nextTrigger.toISOString()}`);
 
     return new Response(
       JSON.stringify({ success: true, processed: results.length, successCount, failCount, results }),
