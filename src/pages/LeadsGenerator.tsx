@@ -82,13 +82,26 @@ const LeadsGenerator = () => {
       const { data, error } = await supabase.functions.invoke('trigger-leads-webhook', {
         body: { Plaatsnaam: plaatsnaam, Country: country, searchStringsArray },
       });
+
       if (error) throw error;
+
+      // Check if the response indicates failure
+      if (!data?.success) {
+        stopProgress();
+        toast({
+          title: 'ERROR',
+          description: data?.error || 'De webhook heeft geen resultaat teruggestuurd',
+          variant: 'destructive',
+          duration: 5000,
+        });
+        return;
+      }
 
       stopProgress();
       setProgress(100);
 
       // Parse response message
-      let message = 'Leads generator is klaar.';
+      let message = '';
       try {
         if (data?.data) {
           const d = typeof data.data === 'string' ? data.data : JSON.stringify(data.data);
@@ -96,6 +109,16 @@ const LeadsGenerator = () => {
           message = parsed?.message || parsed?.Output || d;
         }
       } catch { /* use default */ }
+
+      if (!message) {
+        toast({
+          title: 'ERROR',
+          description: 'De webhook heeft geen bruikbaar resultaat teruggestuurd',
+          variant: 'destructive',
+          duration: 5000,
+        });
+        return;
+      }
 
       localStorage.removeItem('leads-generator-plaatsnaam');
       localStorage.removeItem('leads-generator-country');
@@ -105,8 +128,8 @@ const LeadsGenerator = () => {
       stopProgress();
       const isTimeout = error?.name === 'AbortError' || error?.message?.includes('aborted');
       toast({
-        title: 'Fout',
-        description: isTimeout ? 'Timeout: geen antwoord binnen 5 minuten' : 'Er ging iets mis bij het starten',
+        title: 'ERROR',
+        description: isTimeout ? 'Timeout: geen antwoord binnen 5 minuten' : 'Er ging iets mis bij het verwerken',
         variant: 'destructive',
         duration: 5000,
       });
