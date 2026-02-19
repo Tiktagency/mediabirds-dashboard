@@ -1,25 +1,48 @@
 
 
-## Layout aanpassen: twee onderste vakken uitlijnen en gelijk breed maken
+## Automatische trigger per bedrijf loskoppelen
+
+### Huidige situatie
+
+De `landing_schedules` tabel heeft geen `company_id` kolom -- er is maar 1 globale schedule voor alle bedrijven. De trigger staat nu ook boven de bedrijfsselectie.
 
 ### Wat verandert er
 
-De twee onderste vakken (het formulier met bedrijfsvelden + de animatie) worden even breed gemaakt en uitgelijnd met het "Automatische trigger" vak erboven.
+Elk bedrijf krijgt zijn eigen automatische trigger, net zoals bij SEO Blog en SEO Research.
 
-### Technische aanpassing
+---
 
-**Bestand: `src/pages/Landingspagina.tsx`**
+### 1. Database: `company_id` kolom toevoegen aan `landing_schedules`
 
-**Regel 217 - Container**: Behoud `max-w-2xl w-full` (is al gelijk aan de trigger).
+- Nieuwe kolom `company_id` (uuid, nullable zodat bestaande rij niet breekt)
+- Foreign key naar `landing_companies.id`
+- Unieke constraint op `company_id` (1 schedule per bedrijf)
 
-**Regel 219 - Linker kolom**: Verander van `flex-1 w-full` naar `flex-1 min-w-0` zodat beide kolommen gelijk delen.
+### 2. Hook: `useLandingSchedule` aanpassen
 
-**Regel 330 - Rechter kolom (animatie)**: Verander van `hidden lg:flex lg:w-72 flex-shrink-0` naar `hidden lg:flex flex-1 min-w-0` zodat deze dezelfde breedte krijgt als de linker kolom.
+- Accepteert `companyId` parameter (zoals `useBlogSchedule`)
+- Fetcht schedule gefilterd op `company_id`
+- Insert met `company_id` bij nieuw aanmaken
+- Reset state als `companyId` verandert
 
-| Regel | Was | Wordt |
+### 3. Frontend: `Landingspagina.tsx` aanpassen
+
+- `useLandingSchedule(selectedCompany?.id)` i.p.v. `useLandingSchedule()`
+- ScheduleTrigger verplaatsen van boven de bedrijfsselectie naar binnen het bedrijfsblok (alleen zichtbaar als er een bedrijf geselecteerd is)
+- `companyId` doorsturen als `selectedCompany?.id` i.p.v. hardcoded `"global"`
+
+### 4. Edge function: `run-scheduled-landing` aanpassen
+
+- Haalt alle enabled schedules op waar `next_trigger_at` verlopen is (meerdere bedrijven kunnen tegelijk due zijn)
+- Per schedule: haalt het bijbehorende bedrijf op via `company_id` uit `landing_companies`
+- Verwerkt elk bedrijf individueel en update per schedule de timestamps
+
+### Technische details
+
+| Onderdeel | Was | Wordt |
 |---|---|---|
-| 219 | `flex-1 w-full space-y-4` | `flex-1 min-w-0 space-y-4` |
-| 330 | `hidden lg:flex lg:w-72 flex-shrink-0 flex-col` | `hidden lg:flex flex-1 min-w-0 flex-col` |
-
-Hierdoor krijgen beide kolommen exact 50% van de beschikbare breedte binnen de `max-w-2xl` container, en staan ze netjes uitgelijnd onder het trigger-vak.
+| `landing_schedules` | Geen `company_id` | `company_id` (uuid, FK naar `landing_companies`) |
+| `useLandingSchedule()` | Geen parameter, haalt 1 globale rij | `useLandingSchedule(companyId)`, filtert op `company_id` |
+| ScheduleTrigger positie | Boven bedrijfsselectie | Binnen bedrijfsblok |
+| `run-scheduled-landing` | Haalt 1 schedule + alle bedrijven | Haalt alle due schedules, per schedule 1 bedrijf |
 
