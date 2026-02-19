@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, Sparkles, Mail, LucideIcon } from 'lucide-react';
+import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, Sparkles, Mail, Users, LucideIcon } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
 import type { TileColors } from '@/hooks/useDashboardSettings';
 import { TileLabelEditModal } from './TileLabelEditModal';
@@ -61,6 +61,7 @@ const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secon
   'copyright-branding': { icon: Sparkles, variant: 'accent' },
   'email-handtekening': { icon: Mail, variant: 'primary' },
   'landingspagina': { icon: FileText, variant: 'primary' },
+  'leads-generator': { icon: Users, variant: 'secondary' },
 };
 
 const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent' | 'muted', tileColors: TileColors) => {
