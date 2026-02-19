@@ -1,36 +1,39 @@
 
 
-## Spreadsheet ID veld mag niet uitrekken
+## Velden standaard ingeklapt houden en uitklappen bij klik
 
-### Wat verandert er
+### Probleem
 
-Wanneer je een lange waarde invoert (zoals een Spreadsheet ID), blijft het veld op zijn vaste breedte en rekt het niet uit.
+De `truncate` CSS-class op de ingeklapte velden werkt niet correct omdat het parent-element in een flex-layout zit zonder expliciete breedtebeperking. Daardoor groeit het veld mee met de tekst in plaats van de tekst af te kappen.
 
-### Aanpassing in `src/pages/Landingspagina.tsx`
+### Oplossing in `src/pages/Landingspagina.tsx`
 
-**`renderEditableField` functie -- 3 plekken:**
+**Collapsed state (standaard, niet geselecteerd):**
+- Voeg `min-w-0` toe aan de container zodat `truncate` werkt binnen flex-layouts
+- Behoud `h-[40px]`, `overflow-hidden` en `truncate` op de span
 
-1. **Input veld (regel 119-126)**: voeg `className` `overflow-hidden` toe en een `style={{ minWidth: 0 }}` zodat het input-element niet groeit
-2. **Expanded view (regel 131)**: voeg `overflow-hidden break-all` toe aan de container, en `truncate` of `break-all` aan de `<span>` zodat lange tekst wrapt of afgekapt wordt in plaats van het veld uit te rekken
-3. **Collapsed view (regel 144-149)**: al correct met `truncate` en `overflow-hidden`
+**Expanded state (na klik):**
+- Verwijder de vaste hoogte zodat het veld kan groeien
+- Behoud `break-all` zodat lange teksten zoals Spreadsheet IDs netjes wrappen
+- Voeg `min-w-0` toe voor consistentie
 
 ### Technische details
 
-**Regel 124 -- Input:**
-```
-className="bg-white/5 border-white/20 text-white placeholder:text-white/30 w-full overflow-hidden"
-```
+Wijzigingen in de `renderEditableField` functie:
 
-**Regel 131 -- Expanded container:**
-```
-className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden"
-```
+| Regel | Element | Wijziging |
+|---|---|---|
+| 131 | Expanded container | `min-w-0` toevoegen |
+| 144-146 | Collapsed container | `min-w-0` toevoegen |
 
-**Regel 132 -- Expanded span:**
 ```
-<span className={`break-all ${!value ? 'text-white/30' : ''}`}>
+// Collapsed (standaard) - tekst afgekapt
+className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors min-w-0"
+
+// Expanded (na klik) - hele tekst zichtbaar
+className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden min-w-0"
 ```
 
 | Bestand | Wijziging |
 |---|---|
-| `src/pages/Landingspagina.tsx` | `overflow-hidden` en `break-all` toevoegen aan renderEditableField |
+| `src/pages/Landingspagina.tsx` | `min-w-0` toevoegen aan collapsed en expanded containers in `renderEditableField` |
