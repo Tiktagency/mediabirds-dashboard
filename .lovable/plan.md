@@ -1,51 +1,54 @@
 
 
-## Leads Generator: velden aanpassen + webhook koppeling
+## Progressiebalk + webhook timeout + pop-up melding
 
 ### Wat wordt er gedaan
 
-1. De drie bestaande invulvelden worden vervangen door: **Plaatsnaam**, **Country** en **Zoektermen** (dynamisch, meerdere regels)
-2. Een nieuwe edge function `trigger-leads-webhook` stuurt de data als POST naar de n8n webhook
-3. De Start-knop roept deze edge function aan
+1. **Progressiebalk**: Zodra je op "Start" klikt verschijnt er een geanimeerde voortgangsbalk tussen de subtitel en het formulierblok. Deze loopt op van 0% naar 100% over maximaal 5 minuten (300 seconden).
+2. **Timeout van 5 minuten**: De webhook-aanroep krijgt een maximale wachttijd van 5 minuten. Als er geen antwoord komt binnen die tijd, stopt de balk en verschijnt een foutmelding.
+3. **Pop-up melding**: Het antwoord van de webhook wordt 5 seconden als toast-notificatie getoond (in plaats van de huidige 3 seconden standaard).
 
-### Wijzigingen
+### Technische details
 
 **`src/pages/LeadsGenerator.tsx`**
 
-De state variabelen worden vervangen:
-- `bedrijfsnaam` en `locatie` en `beschrijving` worden vervangen door `plaatsnaam` (string), `country` (string), en `zoektermen` (string array, start met `['']`)
-- Nieuw veld **Plaatsnaam**: gewoon tekstveld
-- Nieuw veld **Country**: gewoon tekstveld (Engels)
-- Nieuw veld **Zoektermen**: een lijst van tekstvelden, start met 1 veld. Elke regel heeft een X-knop om te verwijderen (behalve als er maar 1 is). Onderaan een "+ Extra zoekterm" knop om een nieuw leeg veld toe te voegen
-- Validatie: Start is enabled als plaatsnaam, country en minstens 1 niet-lege zoekterm zijn ingevuld
-- De Start-knop roept `supabase.functions.invoke('trigger-leads-webhook', { body: { Plaatsnaam, Country, searchStringsArray } })` aan
+Nieuwe state variabelen:
+- `progress` (number, 0-100) -- bijhoudt hoever de balk is
+- `isRunning` (boolean) -- of de webhook actief draait
 
-**Nieuw: `supabase/functions/trigger-leads-webhook/index.ts`**
+Wanneer "Start" wordt geklikt:
+1. `isRunning` wordt `true`, `progress` wordt `0`
+2. Een `setInterval` start die elke seconde `progress` verhoogt met `100/300` (= 0.333% per seconde, 100% na 5 min)
+3. De `supabase.functions.invoke` call wordt gestart
+4. Zodra het antwoord binnenkomt: interval stoppen, `progress` naar 100%, kort wachten, dan resetten
+5. Als er na 5 minuten geen antwoord is: `AbortController` annuleert de request, foutmelding wordt getoond
+6. Toast melding toont het webhook-antwoord met een `duration` van 5000ms
 
-- CORS headers (standaard)
-- Authenticatie check (JWT validatie)
-- Ontvangt `{ Plaatsnaam, Country, searchStringsArray }` uit de request body
-- Stuurt een POST naar `https://tikt.app.n8n.cloud/webhook/02ec49ee-d7cf-4e3e-bfba-7d71206d290b` met auth token (`BLOG_WEBHOOK_AUTH_TOKEN`)
-- Geeft het webhook-resultaat terug aan de frontend
+De progressiebalk wordt geplaatst tussen de `<p>` subtitel en de `<div className="w-full max-w-lg">` container, met dezelfde max-width (`max-w-lg`).
 
-### Payload voorbeeld
+Component gebruikt: `Progress` uit `@/components/ui/progress` (al aanwezig in het project).
 
-```json
-{
-  "Plaatsnaam": "Amsterdam",
-  "Country": "Netherlands",
-  "searchStringsArray": [
-    "marketing bureau",
-    "webdesign",
-    "SEO specialist"
-  ]
-}
+**`supabase/functions/trigger-leads-webhook/index.ts`**
+
+Een `AbortController` met timeout van 5 minuten wordt toegevoegd aan de `fetch` call naar de n8n webhook, zodat de edge function niet eindeloos blijft hangen.
+
+### Visueel gedrag
+
+```text
+[Titel + subtitel]
+[===== Progressiebalk (alleen zichtbaar tijdens laden) =====]
+[Formulierblok]
+[Start knop]
 ```
 
-### Bestanden
+- Balk verschijnt alleen wanneer de webhook draait
+- Balk loopt geleidelijk op (lineair over 5 min)
+- Bij antwoord: balk springt naar 100%, verdwijnt na 1 seconde
+- Pop-up melding verschijnt 5 seconden met het webhook-antwoord
+
+### Bestanden die worden aangepast
 
 | Bestand | Actie |
 |---|---|
-| `src/pages/LeadsGenerator.tsx` | Velden vervangen + webhook aanroep |
-| `supabase/functions/trigger-leads-webhook/index.ts` | Nieuw -- proxy naar n8n webhook |
-
+| `src/pages/LeadsGenerator.tsx` | Progress state, interval timer, AbortController timeout, toast met 5s duration |
+| `supabase/functions/trigger-leads-webhook/index.ts` | Timeout van 5 min toevoegen aan fetch call |
