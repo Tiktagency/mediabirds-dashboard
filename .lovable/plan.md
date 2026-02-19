@@ -1,39 +1,43 @@
 
 
-## Bedrijfsnaam als enige verplicht veld
+## Toevoeg-dialoog Landingspagina gelijktrekken met SEO-pagina
 
 ### Wat verandert er
 
-Bij het toevoegen van een nieuw bedrijf op de Landingspagina is alleen de **bedrijfsnaam** verplicht. De overige velden (domeinnaam, applicatie wachtwoord, spreadsheet ID, grid ID) blijven optioneel en kunnen later worden ingevuld.
+Het "Bedrijf toevoegen"-dialoog op de Landingspagina wordt vereenvoudigd zodat het identiek werkt aan dat van de `/seo-blog` pagina: alleen **Bedrijfsnaam** en **Website domeinnaam** als invoervelden. De overige velden (applicatie wachtwoord, spreadsheet ID, grid ID) worden niet meer in het dialoog getoond -- die kunnen later op de pagina zelf worden ingevuld.
 
-### Aanpassing
+De auto-fill vanuit `alt_text_companies` (domeinnaam + applicatie wachtwoord) blijft behouden op basis van de bedrijfsnaam.
 
-**`src/components/landing/LandingCompanySelector.tsx`**
+### Aanpassingen in `src/components/landing/LandingCompanySelector.tsx`
 
-1. **Validatie versoepelen** (regel 168-171): de check `handleRequestAdd` vereist nu alleen `newCompanyName.trim()` in plaats van ook domain en password
-2. **Button disabled-conditie** aanpassen: de "Toevoegen" knop is alleen disabled als de bedrijfsnaam leeg is (niet meer als domain/password leeg zijn)
+1. **Dialoogvelden verwijderen**: de invoervelden voor applicatie wachtwoord, spreadsheet ID en grid ID worden verwijderd uit het dialoog
+2. **State opschonen**: `newCompanyPassword`, `newSpreadsheetId`, `newGridId` worden niet meer gebruikt in het dialoog (maar nog wel gereset bij confirm)
+3. **Auto-fill aanpassen**: bij name blur wordt nu ook het domeinnaam-veld ingevuld vanuit `alt_text_companies`, en het `app_password` wordt meegestuurd bij insert maar niet getoond
+4. **Bevestigingsdialoog**: tekst wordt gelijkgetrokken met de SEO-versie ("bijbehorende documenten" hint verwijderd, alleen naam + domein getoond)
+5. **Insert aanpassen**: bij het aanmaken wordt `domain` + eventueel gevonden `app_password` direct meegestuurd, maar zonder spreadsheet/grid velden
 
 ### Technische details
 
-**Regel 168-171 -- validatie:**
-```typescript
-const handleRequestAdd = () => {
-  if (!newCompanyName.trim()) {
-    toast({ title: 'Vul een bedrijfsnaam in', variant: 'destructive' });
-    return;
-  }
-  // ...rest blijft hetzelfde
-};
+**Dialoog wordt vereenvoudigd naar:**
+```
+- Bedrijfsnaam (verplicht, met auto-fill op blur)
+- Website domeinnaam (optioneel)
 ```
 
-**Button disabled conditie (rond regel 305):**
+**handleNameBlur blijft**: zoekt in `alt_text_companies` en vult `domain` en `app_password` in (app_password wordt intern opgeslagen maar niet als veld getoond).
+
+**handleConfirmAdd insert:**
 ```typescript
-disabled={!newCompanyName.trim()}
+.insert({
+  name: newCompanyName.trim(),
+  domain: newCompanyDomain.trim() || null,
+  app_password: newCompanyPassword.trim() || null, // auto-filled, not shown
+})
 ```
 
 ### Bestanden
 
 | Bestand | Wijziging |
 |---|---|
-| `src/components/landing/LandingCompanySelector.tsx` | Validatie en button-conditie: alleen bedrijfsnaam verplicht |
+| `src/components/landing/LandingCompanySelector.tsx` | Dialoogvelden reduceren tot naam + domein, zoals SEO CompanySelector |
 
