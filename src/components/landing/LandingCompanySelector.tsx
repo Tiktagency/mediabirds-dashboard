@@ -166,8 +166,8 @@ const LandingCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
   };
 
   const handleRequestAdd = () => {
-    if (!newCompanyName.trim() || !newCompanyDomain.trim() || !newCompanyPassword.trim()) {
-      toast({ title: 'Vul alle velden in', variant: 'destructive' });
+    if (!newCompanyName.trim()) {
+      toast({ title: 'Vul een bedrijfsnaam in', variant: 'destructive' });
       return;
     }
     setIsDialogOpen(false);
@@ -338,7 +338,7 @@ const LandingCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
               </Button>
               <Button
                 onClick={handleRequestAdd}
-                disabled={!newCompanyName.trim() || !newCompanyDomain.trim() || !newCompanyPassword.trim()}
+                disabled={!newCompanyName.trim()}
                 className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
                 Toevoegen
