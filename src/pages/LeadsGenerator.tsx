@@ -170,7 +170,7 @@ const LeadsGenerator = () => {
 
         {isRunning && (
           <div className="w-full max-w-lg mb-4">
-            <Progress value={progress} className="h-2" />
+            <Progress value={progress} className="h-2 bg-white/10 [&>div]:bg-primary" />
           </div>
         )}
 
