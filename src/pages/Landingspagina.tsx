@@ -25,6 +25,7 @@ const Landingspagina = () => {
   const [editPassword, setEditPassword] = useState('');
   const [editSheetId, setEditSheetId] = useState('');
   const [editGridId, setEditGridId] = useState('');
+  const [editPageUrl, setEditPageUrl] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -40,6 +41,7 @@ const Landingspagina = () => {
     setEditPassword(selectedCompany?.app_password || '');
     setEditSheetId(selectedCompany?.spreadsheet_id || '');
     setEditGridId(selectedCompany?.grid_id || '');
+    setEditPageUrl((selectedCompany as any)?.page_url || '');
   }, [selectedCompany]);
 
   useEffect(() => {
@@ -52,13 +54,14 @@ const Landingspagina = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expandedField]);
 
-  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password' | 'spreadsheet_id' | 'grid_id', value: string) => {
+  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password' | 'spreadsheet_id' | 'grid_id' | 'page_url', value: string) => {
     if (!selectedCompany) return;
     const currentValue = field === 'name' ? selectedCompany.name 
       : field === 'domain' ? (selectedCompany.domain || '') 
       : field === 'app_password' ? (selectedCompany.app_password || '')
       : field === 'spreadsheet_id' ? (selectedCompany.spreadsheet_id || '')
-      : (selectedCompany.grid_id || '');
+      : field === 'grid_id' ? (selectedCompany.grid_id || '')
+      : ((selectedCompany as any).page_url || '');
     if (value === currentValue) return;
 
     const { error } = await supabase
@@ -89,6 +92,7 @@ const Landingspagina = () => {
           domain: selectedCompany.domain,
           spreadsheet_id: editSheetId,
           grid_id: editGridId,
+          page_url: editPageUrl || null,
         },
       });
       if (error) throw error;
@@ -260,6 +264,22 @@ const Landingspagina = () => {
                 <div className="space-y-2">
                   <Label className="text-white/70">Grid ID:</Label>
                   {renderEditableField('grid_id', editGridId, setEditGridId, () => handleFieldSave('grid_id', editGridId), 'Voer grid ID in...')}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-white/70">Pagina url:</Label>
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-3">
+                          <p className="text-sm text-white/80">De pagina die je wilt gebruiken in de nieuwe context</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  {renderEditableField('page_url', editPageUrl, setEditPageUrl, () => handleFieldSave('page_url', editPageUrl), 'Voer pagina url in...')}
                 </div>
               </div>
               <Button
