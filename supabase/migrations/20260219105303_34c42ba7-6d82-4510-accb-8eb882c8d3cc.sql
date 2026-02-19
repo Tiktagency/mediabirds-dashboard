@@ -1,0 +1,2 @@
+INSERT INTO public.automation_settings (automation_name, display_name, description, impact_level, status, category)
+VALUES ('leads-generator', 'Leads Generator', 'Genereer leads op basis van locatie en bedrijfsinformatie', 'medium', 'active', 'marketing');

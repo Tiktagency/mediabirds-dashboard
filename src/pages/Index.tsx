@@ -91,6 +91,12 @@ const tileConfigMap: Record<string, TileConfig> = {
     variant: 'primary',
     statusKey: 'landingspagina',
   },
+  'leads-generator': {
+    to: '/leads-generator',
+    icon: Users,
+    variant: 'secondary',
+    statusKey: 'leads-generator',
+  },
 };
 
 const Index = () => {

@@ -15,6 +15,7 @@ import EmailSignature from "./pages/EmailSignature";
 import Login from "./pages/Login";
 import AdminPanel from "./pages/AdminPanel";
 import Landingspagina from "./pages/Landingspagina";
+import LeadsGenerator from "./pages/LeadsGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const AppContent = () => {
       <Route path="/email-signature" element={<EmailSignature />} />
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/landingspagina" element={<Landingspagina />} />
+      <Route path="/leads-generator" element={<LeadsGenerator />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
