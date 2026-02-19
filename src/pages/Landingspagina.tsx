@@ -216,7 +216,7 @@ const Landingspagina = () => {
                         <TooltipTrigger asChild>
                           <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-4">
+                        <TooltipContent side="top" className="z-[9999] max-w-xs bg-card border-border text-white p-4">
                           <p className="font-semibold mb-2 text-sm">Hoe kom je aan een applicatie wachtwoord?</p>
                           <ol className="list-decimal list-inside space-y-1 text-xs text-white/80">
                             <li>Ga naar de achterkant van je <strong className="text-white">WordPress</strong> website</li>
@@ -273,7 +273,7 @@ const Landingspagina = () => {
                         <TooltipTrigger asChild>
                           <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-3">
+                        <TooltipContent side="top" className="z-[9999] max-w-xs bg-card border-border text-white p-3">
                           <p className="text-sm text-white/80">De pagina die je wilt gebruiken in de nieuwe context</p>
                         </TooltipContent>
                       </Tooltip>
