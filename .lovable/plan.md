@@ -1,58 +1,39 @@
 
 
-## Formuliergegevens automatisch opslaan (Leads Generator)
+## Progressiebalk animatie fix + ERROR melding
 
-### Wat wordt er gedaan
+### Probleem
 
-De drie invulvelden (Plaatsnaam, Country, Zoektermen) worden automatisch opgeslagen in de browser via `localStorage`. Wanneer je de pagina herlaadt of later terugkomt, staan je eerder ingevulde gegevens er nog.
+1. **Progressiebalk laadt niet visueel** -- De Progress component heeft `transition-all` maar geen expliciete `duration`, waardoor de browser de animatie mogelijk niet vloeiend toont bij kleine stappen (0.33% per seconde).
+2. **Geen duidelijke ERROR melding** -- Als de webhook snel stopt zonder een goed antwoord terug te sturen, krijg je een vage foutmelding in plaats van een duidelijk "ERROR" bericht.
 
-### Hoe werkt het
+### Oplossing
 
-- Bij het laden van de pagina worden opgeslagen waarden uit `localStorage` gelezen en als startwaarde gebruikt
-- Bij elke wijziging van een veld wordt de nieuwe waarde direct opgeslagen
-- Na een succesvolle webhook-aanroep worden de opgeslagen gegevens gewist (schone lei)
+**1. Progress component (`src/components/ui/progress.tsx`)**
 
-### Technische details
+De CSS-klasse `transition-all` wordt vervangen door een expliciete transitie met duur, zodat de balk vloeiend beweegt:
+- `transition-all` wordt `transition-all duration-1000 ease-linear`
+- Dit zorgt dat elke stap (elke seconde) vloeiend geanimeerd wordt over 1 seconde
 
-**`src/pages/LeadsGenerator.tsx`**
+**2. Foutafhandeling in LeadsGenerator (`src/pages/LeadsGenerator.tsx`)**
 
-Drie `localStorage` keys worden gebruikt:
-- `leads-generator-plaatsnaam`
-- `leads-generator-country`
-- `leads-generator-zoektermen` (JSON array)
+- Wanneer de edge function een error teruggeeft (ook als de webhook snel stopt): toon een toast met titel **"ERROR"** en een rode variant
+- Wanneer de webhook wel een antwoord stuurt maar `success: false`: ook "ERROR" tonen
+- Check ook of de response data leeg is of geen bruikbaar bericht bevat -- ook dan "ERROR"
+- De foutmelding wordt specifieker:
+  - Timeout (5 min): "Timeout: geen antwoord binnen 5 minuten"
+  - Webhook stopt snel zonder antwoord: "ERROR: de webhook heeft geen resultaat teruggestuurd"
+  - Overige fouten: "ERROR: er ging iets mis bij het verwerken"
 
-Wijzigingen:
+**3. Edge function (`supabase/functions/trigger-leads-webhook/index.ts`)**
 
-1. State initialisatie leest uit localStorage:
-```typescript
-const [plaatsnaam, setPlaatsnaam] = useState(
-  () => localStorage.getItem('leads-generator-plaatsnaam') || ''
-);
-const [country, setCountry] = useState(
-  () => localStorage.getItem('leads-generator-country') || ''
-);
-const [zoektermen, setZoektermen] = useState<string[]>(() => {
-  try {
-    const saved = localStorage.getItem('leads-generator-zoektermen');
-    return saved ? JSON.parse(saved) : [''];
-  } catch { return ['']; }
-});
-```
+- Als de webhook een niet-200 status teruggeeft, wordt dit als error behandeld met de response body als foutmelding
+- Dit zorgt ervoor dat snelle mislukkingen correct als fout worden doorgestuurd naar de frontend
 
-2. Wrapper functies die zowel state updaten als opslaan:
-```typescript
-const updatePlaatsnaam = (val: string) => {
-  setPlaatsnaam(val);
-  localStorage.setItem('leads-generator-plaatsnaam', val);
-};
-// Idem voor country en zoektermen
-```
+### Technische wijzigingen
 
-3. Na succesvolle webhook: localStorage items verwijderen zodat het formulier bij de volgende keer leeg begint.
-
-### Bestanden die worden aangepast
-
-| Bestand | Actie |
+| Bestand | Wijziging |
 |---|---|
-| `src/pages/LeadsGenerator.tsx` | localStorage lezen bij laden, opslaan bij wijziging, wissen na succes |
-
+| `src/components/ui/progress.tsx` | `transition-all` naar `transition-all duration-1000 ease-linear` op de Indicator |
+| `src/pages/LeadsGenerator.tsx` | Error handling verbeteren: expliciete "ERROR" titel, check op lege/mislukte response |
+| `supabase/functions/trigger-leads-webhook/index.ts` | Niet-200 status van webhook als error behandelen |
