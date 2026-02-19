@@ -216,7 +216,7 @@ const Landingspagina = () => {
         {selectedCompany ? (
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
-            <div className="flex-1 w-full space-y-4">
+            <div className="flex-1 min-w-0 space-y-4">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3">
                 <div className="space-y-2">
                   <Label className="text-white/70">Bedrijfsnaam:</Label>
@@ -327,7 +327,7 @@ const Landingspagina = () => {
             </div>
 
             {/* Right: Animation panel */}
-            <div className="hidden lg:flex lg:w-72 flex-shrink-0 flex-col">
+            <div className="hidden lg:flex flex-1 min-w-0 flex-col">
               <AltTextAnimation isAnimating={isAnimating} onAnimationComplete={handleAnimationComplete} />
             </div>
           </div>
