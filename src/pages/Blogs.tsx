@@ -5,15 +5,11 @@ const Blogs = () => {
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
       <div className="px-6 py-6">
-        <Button 
-          variant="outline" 
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          asChild
-        >
-          <a href="https://mediabirds-dashboard.lovable.app/">
+        <Link to="/">
+          <Button variant="outline">
             ← Terug naar Dashboard
-          </a>
-        </Button>
+          </Button>
+        </Link>
       </div>
       
       <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-20">
