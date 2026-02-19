@@ -121,15 +121,15 @@ const Landingspagina = () => {
           onChange={(e) => onChange(e.target.value)}
           onBlur={() => { setEditingField(null); onBlur(); }}
           placeholder={placeholder}
-          className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+          className="bg-white/5 border-white/20 text-white placeholder:text-white/30 w-full overflow-hidden"
           autoFocus
         />
       );
     }
     if (expandedField === fieldId) {
       return (
-        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px]">
-          <span className={!value ? 'text-white/30' : ''}>{value || placeholder}</span>
+        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden">
+          <span className={`break-all ${!value ? 'text-white/30' : ''}`}>{value || placeholder}</span>
           <Button
             size="icon" variant="ghost"
             className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
