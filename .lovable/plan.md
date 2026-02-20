@@ -1,25 +1,23 @@
 
-## Scrollbalk doorlopen + dropdown iets naar links
+## Meer witruimte + team afbeelding in animatie
 
-### Wat verandert er
+### 1. Meer witruimte tussen menubalk en titel
 
-1. De scrollbalk loopt tot aan de bovenkant van de pagina (zoals bij `/seo-blog`)
-2. De bedrijven-dropdown verschuift iets naar links
+**Bestand: `src/pages/Landingspagina.tsx` (regel 199)**
 
-### Technische aanpassing
+De `pt-16` (64px) en `sm:pt-20` (80px) worden vergroot naar `pt-24` (96px) en `sm:pt-28` (112px). Dit geeft meer ademruimte tussen de vaste header en de "Landingspagina" titel.
 
-**Bestand: `src/pages/Landingspagina.tsx`**
+### 2. Team afbeelding in het animatiepaneel
 
-**Buitenste container (regel 187)**: Verander `h-screen overflow-hidden relative` naar `min-h-screen relative` -- dit laat de scrollbar over de hele pagina lopen i.p.v. alleen in een nested div.
+**Bestand: `src/components/wordpress-alt-text/AltTextAnimation.tsx`**
 
-**Content container (regel 197)**: Verander `h-full ... overflow-y-auto` naar `min-h-screen` (zonder overflow-y-auto, want de buitenste container scrollt nu).
+Boven de vier tekstvelden wordt een afbeelding van een team toegevoegd. Dit vult het grote witte gedeelte en maakt de animatie visueel aantrekkelijker -- alsof de alt-tekst velden bij die afbeelding horen.
 
-**Dropdown knop (regel 194)**: Wrap de `LandingCompanySelector` in een div met `pr-2` om hem iets naar links te schuiven, of voeg `mr-2` toe aan de selector.
+- Een placeholder team-afbeelding wordt geplaatst in een afgerond grijs vlak bovenaan het witte paneel
+- De afbeelding wordt geladen via `https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=200&fit=crop` (team aan het werk)
+- De vier velden schuiven naar onder, onder de afbeelding
 
-| Regel | Was | Wordt |
+| Onderdeel | Was | Wordt |
 |---|---|---|
-| 187 | `h-screen overflow-hidden relative` | `min-h-screen relative` |
-| 197 | `hero-gradient h-full w-full ... overflow-y-auto` | `hero-gradient min-h-screen w-full ... ` (zonder overflow-y-auto) |
-| 194 | `<LandingCompanySelector .../>` | `<div className="mr-2"><LandingCompanySelector .../></div>` |
-
-Dit maakt de scroll-ervaring identiek aan de SEO Blog pagina.
+| Padding boven titel | `pt-16 sm:pt-20` | `pt-24 sm:pt-28` |
+| Animatiepaneel | Alleen 4 tekstvelden | Team afbeelding + 4 tekstvelden |
