@@ -7,7 +7,7 @@ const Blogs = () => {
       <div className="px-6 py-6">
         <Link to="/">
           <Button variant="outline">
-            Dashboard
+            ← Terug naar Dashboard
           </Button>
         </Link>
       </div>
