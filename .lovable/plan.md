@@ -1,52 +1,77 @@
 
 
-## "Overzicht" knop toevoegen naast bedrijven dropdown
+## Responsive maken voor grote schermen
 
-### Wat wordt er gebouwd
+### Probleem
 
-Een "Overzicht" knop links naast de bedrijven-dropdown op de SEO-pagina. Wanneer je hierop klikt, opent een overzichtelijk dialoogvenster met een tabel van alle bedrijven en hun toegewezen beheerder.
+Alle pagina's gebruiken vaste `max-w-4xl`, `max-w-5xl` of `max-w-lg` containers, waardoor er op grote schermen (1440px+, 1920px+) veel lege ruimte aan de zijkanten overblijft. De content ziet er "klein" uit op een groot monitor.
 
-### Visueel ontwerp
+### Aanpak
 
-```text
-[ Overzicht ]  [ Building2  Bedrijfsnaam  v ]  [ Handleiding ]  [ Notificaties ]
-```
+De containers worden opgeschaald met responsive breakpoints zodat ze op grotere schermen meer ruimte benutten, terwijl ze op standaard schermen hetzelfde blijven.
 
-Het overzicht toont een schone tabel:
+### Wijzigingen per pagina/bestand
 
-```text
-+---------------------------------------------+
-|  Bedrijfsoverzicht                      [X] |
-|---------------------------------------------|
-|  Bedrijf           | Beheerd door           |
-|---------------------|------------------------|
-|  Mediabirds         | lotte@mediabirds.nl    |
-|  Klant B            | joost@mediabirds.nl    |
-|  Klant C            | -                      |
-+---------------------------------------------+
-```
+| Bestand | Huidige beperking | Nieuwe aanpak |
+|---|---|---|
+| `src/pages/Index.tsx` | `max-w-5xl` wrapper + `max-w-4xl` grid, 3-kolom grid | Upgrade naar `max-w-5xl 2xl:max-w-7xl`, grid `md:grid-cols-3 2xl:grid-cols-3` met grotere tiles |
+| `src/pages/SeoBlog.tsx` | `max-w-5xl` + `max-w-4xl` + `max-w-2xl` secties | Upgrade naar `max-w-5xl 2xl:max-w-7xl`, arrow tiles en formulieren breder op grote schermen |
+| `src/pages/Landingspagina.tsx` | `max-w-2xl` | Upgrade naar `max-w-2xl xl:max-w-4xl 2xl:max-w-5xl` |
+| `src/pages/WordpressAltText.tsx` | `max-w-2xl` | Upgrade naar `max-w-2xl xl:max-w-4xl 2xl:max-w-5xl` |
+| `src/pages/LeadsGenerator.tsx` | `max-w-lg` | Upgrade naar `max-w-lg xl:max-w-xl 2xl:max-w-2xl` |
+| `src/pages/MondayPlanning.tsx` | `max-w-xl` | Upgrade naar `max-w-xl xl:max-w-2xl` |
+| `src/pages/CopyrightBranding.tsx` | Geen max-w op wrapper, maar form component heeft `max-w-4xl` | Upgrade form wrapper naar `max-w-4xl 2xl:max-w-6xl` |
+| `src/pages/EmailSignature.tsx` | `max-w-7xl` | Al goed, eventueel `2xl:max-w-[1600px]` |
+| `src/pages/AdminPanel.tsx` | `max-w-6xl` | Upgrade naar `max-w-6xl 2xl:max-w-7xl` |
+| `src/pages/Chatbot.tsx` | Volledige breedte iframe | Al goed |
+| `src/pages/Login.tsx` | `max-w-md` gecentreerd | Prima zo, login hoeft niet breder |
+| `tailwind.config.ts` | Geen `3xl` breakpoint | Optioneel `3xl: 1920px` breakpoint toevoegen |
 
-### Technische wijzigingen
+### Technisch detail
 
-**1. Nieuw bestand: `src/components/seo/CompanyOverviewDialog.tsx`**
+**1. Tailwind config - extra breakpoint toevoegen**
 
-- Een Dialog component dat alle bedrijven ophaalt uit de `companies` tabel (inclusief `managed_by`)
-- Per bedrijf de bijbehorende beheerder opzoekt uit de `profiles` tabel
-- Toont een gestileerde tabel met twee kolommen: Bedrijf en Beheerd door
-- Bedrijven zonder beheerder tonen een streepje of "Niet ingesteld"
-- Gebruikt bestaande UI-componenten: Dialog, Table, ScrollArea
+Een `3xl` breakpoint op 1920px toevoegen aan de theme.extend.screens sectie, zodat we ook ultrawide schermen kunnen targeten.
 
-**2. Bestand: `src/pages/SeoBlog.tsx`**
+**2. Dashboard (Index.tsx)**
 
-- Import van `CompanyOverviewDialog`
-- State toevoegen: `isOverviewOpen`
-- Een "Overzicht" knop toevoegen links naast de `CompanySelector` in de navigatiebalk
-- Het dialoogvenster renderen met open/close state
+- Wrapper: `max-w-5xl` wordt `max-w-5xl 2xl:max-w-7xl`
+- Grid: `max-w-4xl` wordt `max-w-4xl 2xl:max-w-6xl`
+- Banner hoogte: `h-48` wordt `h-48 2xl:h-64` voor betere verhoudingen
+- Grid tiles blijven 3 kolommen maar worden groter door de bredere container
+
+**3. SEO Blog (SeoBlog.tsx)**
+
+- Hoofd-wrapper: `max-w-5xl` wordt `max-w-5xl 2xl:max-w-7xl`
+- Title/notes sectie: `max-w-4xl` wordt `max-w-4xl 2xl:max-w-6xl`
+- Arrow tiles: `max-w-4xl` wordt `max-w-4xl 2xl:max-w-6xl`
+- Form area: `max-w-2xl` wordt `max-w-2xl xl:max-w-3xl 2xl:max-w-4xl`
+
+**4. Landingspagina & WordPress Alt Text**
+
+- Content containers: `max-w-2xl` wordt `max-w-2xl xl:max-w-4xl 2xl:max-w-5xl`
+- De twee-kolom layout (form + animatie) schaalt mee
+
+**5. Leads Generator & Monday Planning**
+
+- Kleinere forms, opschaling naar een comfortabele breedte zonder de UI uit te rekken
+
+**6. Admin Panel**
+
+- `max-w-6xl` wordt `max-w-6xl 2xl:max-w-7xl`
 
 ### Bestanden
 
 | Bestand | Actie |
 |---|---|
-| `src/components/seo/CompanyOverviewDialog.tsx` | Nieuw - overzichtsdialoog met tabel |
-| `src/pages/SeoBlog.tsx` | Knop + state toevoegen in navigatiebalk |
+| `tailwind.config.ts` | `3xl` breakpoint toevoegen |
+| `src/pages/Index.tsx` | Container en grid max-widths opschalen |
+| `src/pages/SeoBlog.tsx` | Alle max-w containers opschalen |
+| `src/pages/Landingspagina.tsx` | Content container opschalen |
+| `src/pages/WordpressAltText.tsx` | Content container opschalen |
+| `src/pages/LeadsGenerator.tsx` | Form container opschalen |
+| `src/pages/MondayPlanning.tsx` | Form container opschalen |
+| `src/pages/CopyrightBranding.tsx` | Wrapper opschalen |
+| `src/pages/EmailSignature.tsx` | Container licht opschalen |
+| `src/pages/AdminPanel.tsx` | Container opschalen |
 
