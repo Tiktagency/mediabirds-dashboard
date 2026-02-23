@@ -297,7 +297,7 @@ const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
-      <header className="w-full h-48 overflow-hidden relative">
+      <header className="w-full h-48 2xl:h-64 overflow-hidden relative">
         <img 
           src={bannerImage} 
           alt="Mediabirds Banner" 
@@ -376,8 +376,8 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+      <div className="max-w-5xl 2xl:max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl 2xl:max-w-6xl mx-auto">
           {orderedItems.map((item, index) => {
             const isEmpty = !item || item.startsWith('__empty_') || !tileConfigMap[item];
             

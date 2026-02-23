@@ -168,7 +168,7 @@ const MondayPlanning = () => {
           Monday planning Mediabirds
         </h1>
 
-        <div className="w-full max-w-xl bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10">
+        <div className="w-full max-w-xl xl:max-w-2xl bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10">
           <div className="space-y-6">
             {/* Bedrijfsnaam */}
             <div className="space-y-2">
