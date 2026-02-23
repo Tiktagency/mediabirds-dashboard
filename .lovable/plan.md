@@ -1,43 +1,54 @@
 
 
-## Leads Generator "laatste succesvol uitgevoerd" fixen
+## Fix: verwijderd bedrijf blijft geselecteerd in dropdown
 
 ### Probleem
 
-De `trigger-leads-webhook` edge function werkt correct, maar na een succesvolle uitvoering wordt de `automation_status` tabel niet bijgewerkt. Er bestaat geen rij voor `leads-generator` in die tabel, waardoor de tooltip altijd "Nooit" toont.
-
-Andere automations (zoals Copyright Branding en Email Handtekening) updaten hun `last_run` in `automation_status` na succesvolle uitvoering. De leads generator doet dit niet.
+Wanneer het geselecteerde bedrijf wordt verwijderd:
+1. `setSelectedCompany(null)` wordt aangeroepen, maar `onSelect?.(null)` wordt **niet** aangeroepen -- de parent component weet dus niet dat de selectie is gewist
+2. `fetchCompanies()` controleert `!selectedCompany`, maar die check gebruikt de **oude** waarde uit de closure (nog niet null), dus er wordt geen nieuw bedrijf automatisch geselecteerd
 
 ### Oplossing
 
-**Bestand: `supabase/functions/trigger-leads-webhook/index.ts`**
+In `handleDeleteCompany` van beide bestanden:
+- Direct `onSelect?.(null)` aanroepen wanneer het geselecteerde bedrijf wordt verwijderd
+- Na het ophalen van de bijgewerkte lijst, automatisch het eerste beschikbare bedrijf selecteren
 
-Na een succesvolle webhook-response (wanneer `response.ok` en `data.success` true is), een upsert doen naar de `automation_status` tabel:
+### Bestanden
+
+| Bestand | Aanpassing |
+|---|---|
+| `src/components/landing/LandingCompanySelector.tsx` | `onSelect?.(null)` toevoegen bij verwijdering + na fetch eerste bedrijf selecteren |
+| `src/components/wordpress-alt-text/AltTextCompanySelector.tsx` | Zelfde fix toepassen |
+
+### Technisch detail
+
+In `handleDeleteCompany` (regels 142-166 in Landing, vergelijkbaar in AltText):
 
 ```ts
-// Na succesvolle response, automation_status updaten
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-if (supabaseUrl && serviceRoleKey) {
-  const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-  await supabaseClient
-    .from('automation_status')
-    .upsert({
-      automation_name: 'leads-generator',
-      status: 'active',
-      last_run: new Date().toISOString(),
-      last_updated: new Date().toISOString(),
-    }, { onConflict: 'automation_name' });
+// Was:
+if (selectedCompany?.id === companyToDelete.id) {
+  setSelectedCompany(null);
+}
+setCompanyToDelete(null);
+await fetchCompanies();
+
+// Wordt:
+const wasSelected = selectedCompany?.id === companyToDelete.id;
+setCompanyToDelete(null);
+// Fetch bijgewerkte lijst
+const { data } = await supabase
+  .from('landing_companies') // of 'alt_text_companies'
+  .select('*')
+  .order('created_at', { ascending: false });
+const list = (data || []) as LandingCompany[];
+setCompanies(list);
+if (wasSelected) {
+  const next = list.length > 0 ? list[0] : null;
+  setSelectedCompany(next);
+  onSelect?.(next);
 }
 ```
 
-Dit is hetzelfde patroon dat `rewrite-text` gebruikt voor `copyright-branding` en `trigger-email-signature` voor `email-handtekening`.
-
-### Wijzigingen
-
-| Bestand | Wat |
-|---|---|
-| `supabase/functions/trigger-leads-webhook/index.ts` | Supabase client import toevoegen + upsert naar `automation_status` na succesvolle run |
-
-Na deze wijziging zal de volgende succesvolle uitvoering van de leads generator direct zichtbaar zijn in de tooltip op het dashboard.
+Dit zorgt ervoor dat na verwijdering direct het volgende bedrijf wordt geselecteerd, of de selector op "Selecteer bedrijf" valt als er geen bedrijven meer zijn.
 
