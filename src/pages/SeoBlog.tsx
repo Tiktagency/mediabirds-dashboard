@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
+import CompanyOverviewDialog from '@/components/seo/CompanyOverviewDialog';
 import { KeywordResearchForm } from '@/components/seo-blog/KeywordResearchForm';
 import { BlogGenerationForm } from '@/components/seo-blog/BlogGenerationForm';
 import { PageUrlForm } from '@/components/seo-blog/PageUrlForm';
@@ -48,6 +49,7 @@ const SeoBlog = () => {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [notesEditMode, setNotesEditMode] = useState<'expanded' | 'editing'>('expanded');
   const [notesDraft, setNotesDraft] = useState('');
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const { settings: pageUrlSettings, isLoading: pageUrlLoading, isSaving: pageUrlSaving, saveSettings: savePageUrlSettings, reloadSettings: reloadPageUrlSettings } = usePageUrlSettings(selectedCompany?.id || null);
 
   // Load notifications from database
@@ -221,6 +223,14 @@ const SeoBlog = () => {
         </Link>
         
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOverviewOpen(true)}
+            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+          >
+            Overzicht
+          </Button>
           <CompanySelector 
             selectedCompany={selectedCompany} 
             onCompanyChange={setSelectedCompany} 
@@ -582,6 +592,8 @@ const SeoBlog = () => {
           onClick={() => setIsPanelOpen(false)}
         />
       )}
+
+      <CompanyOverviewDialog open={isOverviewOpen} onOpenChange={setIsOverviewOpen} />
 
       {/* Guide Sheet */}
       <Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
