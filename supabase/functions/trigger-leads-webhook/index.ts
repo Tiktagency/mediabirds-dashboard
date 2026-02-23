@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,6 +52,27 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Update automation_status na succesvolle run
+    if (response.ok) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        if (supabaseUrl && serviceRoleKey) {
+          const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
+          await supabaseClient
+            .from('automation_status')
+            .upsert({
+              automation_name: 'leads-generator',
+              status: 'active',
+              last_run: new Date().toISOString(),
+              last_updated: new Date().toISOString(),
+            }, { onConflict: 'automation_name' });
+        }
+      } catch (e) {
+        console.error('[trigger-leads-webhook] Failed to update automation_status:', e.message);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, data }), {
