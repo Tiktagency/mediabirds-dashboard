@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { LucideIcon } from 'lucide-react';
 
 interface DashboardButtonProps {
   to?: string;
   label: string;
   variant?: 'primary' | 'secondary' | 'accent' | 'muted';
   disabled?: boolean;
+  icon?: LucideIcon;
 }
 
 const variantClasses = {
@@ -19,7 +21,8 @@ export const DashboardButton = ({
   to, 
   label, 
   variant = 'primary',
-  disabled = false 
+  disabled = false,
+  icon: Icon
 }: DashboardButtonProps) => {
   const buttonContent = (
     <Button 
@@ -27,7 +30,10 @@ export const DashboardButton = ({
       size="lg"
       disabled={disabled}
     >
-      {label}
+      <div className="flex flex-col items-center gap-2">
+        {Icon && <Icon className="w-8 h-8" />}
+        {label && <span>{label}</span>}
+      </div>
     </Button>
   );
 

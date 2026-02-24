@@ -1,33 +1,56 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
+import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
 
 const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
-      <div className="max-w-4xl mx-auto px-6 py-16">
+      <div className="max-w-5xl mx-auto px-6 py-16">
         <h1 className="text-4xl font-bold text-center mb-12 text-white">
           Mediabirds Dashboard
         </h1>
         
-        <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <DashboardButton 
             to="/monday-planning" 
             label="Monday planning" 
-            variant="primary" 
+            variant="primary"
+            icon={CalendarDays}
           />
           <DashboardButton 
             to="/seo" 
             label="Zoekwoord onderzoek" 
-            variant="secondary" 
+            variant="secondary"
+            icon={Search}
           />
           <DashboardButton 
             to="/blogs" 
             label="Blogs" 
-            variant="accent" 
+            variant="accent"
+            icon={FileText}
           />
           <DashboardButton 
             label="" 
-            variant="muted" 
+            variant="muted"
+            icon={Mail}
+            disabled 
+          />
+          <DashboardButton 
+            label="" 
+            variant="muted"
+            icon={BarChart3}
+            disabled 
+          />
+          <DashboardButton 
+            label="" 
+            variant="muted"
+            icon={Settings}
+            disabled 
+          />
+          <DashboardButton 
+            label="" 
+            variant="muted"
+            icon={Users}
             disabled 
           />
         </div>
