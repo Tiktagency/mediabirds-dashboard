@@ -25,16 +25,19 @@ const Blogs = () => {
 
       const data = await response.json();
       
+      // Extract plain text from response
+      const message = data.output || data.Error || data.message || 'Geen bericht beschikbaar';
+      
       if (response.ok) {
         toast({
           title: "Response ontvangen",
-          description: JSON.stringify(data, null, 2),
+          description: message,
           duration: 10000,
         });
       } else {
         toast({
-          title: "Response ontvangen",
-          description: JSON.stringify(data, null, 2),
+          title: "Fout",
+          description: message,
           duration: 10000,
           variant: "destructive",
         });
