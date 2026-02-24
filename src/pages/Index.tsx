@@ -1,4 +1,5 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
+import NewsTicker from '@/components/NewsTicker';
 
 const Index = () => {
   return (
@@ -31,6 +32,7 @@ const Index = () => {
           />
         </div>
       </div>
+      <NewsTicker />
     </div>
   );
 };
