@@ -586,6 +586,7 @@ export const BlogGenerationForm = ({
       {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
       {renderRangeField()}
       {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
+      {renderField('Extra instructie', 'extra_instructie', 'textarea')}
       
       {/* Afbeelding section - contained in visual card for clarity */}
       <div className="pt-6 border-t border-white/10">
