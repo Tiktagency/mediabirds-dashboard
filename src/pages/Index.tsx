@@ -1,7 +1,6 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
-import mediaBirdsImage from '@/assets/mediabirds-landscape.png';
 
 const Index = () => {
   return (
@@ -53,14 +52,6 @@ const Index = () => {
             variant="muted"
             icon={Users}
             disabled 
-          />
-        </div>
-        
-        <div className="mt-16 max-w-4xl mx-auto">
-          <img 
-            src={mediaBirdsImage} 
-            alt="Mediabirds landscape" 
-            className="w-full h-auto rounded-lg shadow-lg"
           />
         </div>
       </div>
