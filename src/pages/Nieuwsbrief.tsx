@@ -20,22 +20,21 @@ const ColorField = ({
   value: string;
   onChange: (v: string) => void;
 }) => (
-  <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-muted-foreground">{label}</span>
+  <div className="space-y-1.5">
+    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono text-foreground/60 w-[68px] text-right">{value}</span>
-      <label className="relative cursor-pointer">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute opacity-0 w-0 h-0"
-        />
-        <div
-          className="w-7 h-7 rounded-md border border-border shadow-sm transition-transform hover:scale-110"
-          style={{ backgroundColor: value }}
-        />
-      </label>
+      <Input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+      />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 bg-background/50 font-mono text-sm"
+        placeholder="#000000"
+      />
     </div>
   </div>
 );
@@ -228,19 +227,17 @@ const Nieuwsbrief = () => {
                   Huisstijl kleuren
                 </Label>
               </div>
-              <div className="bg-muted/30 rounded-xl px-4 py-3 space-y-3 border border-border/30">
+              <div className="space-y-3">
                 <ColorField
                   label="Achtergrond"
                   value={settings.achtergrond_kleur}
                   onChange={(v) => saveSettings({ achtergrond_kleur: v })}
                 />
-                <div className="border-t border-border/30" />
                 <ColorField
                   label="Primaire kleur"
                   value={settings.primaire_kleur}
                   onChange={(v) => saveSettings({ primaire_kleur: v })}
                 />
-                <div className="border-t border-border/30" />
                 <ColorField
                   label="Accent kleur"
                   value={settings.accent_kleur}
