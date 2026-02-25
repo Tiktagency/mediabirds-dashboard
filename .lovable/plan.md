@@ -1,58 +1,43 @@
 
-## Plan: Nieuwsbrief invulvelden — three-step potlood-patroon
+## Analyse van de drie gevraagde wijzigingen
 
-### Wat het huidige patroon op de Blog pagina doet
+### 1. Three-step patroon voor RSS feed invulveld
+Het huidige RSS-gedeelte toont bestaande feeds als verwijderbare badges en een simpel Input + Plus-knop formulier voor nieuwe feeds. Dit moet het three-step patroon volgen:
+- **Collapsed**: compact vakje dat "Geen feeds toegevoegd" of het aantal feeds toont (`{n} feed(s) toegevoegd`)
+- **Expanded**: volledige lijst met feeds + potlood-icoon om te bewerken
+- **Editing**: de huidige add/remove UI (invoerveld + plus-knop + verwijder-kruisjes)
 
-De `BlogGenerationForm` heeft een `renderField` helper die drie states bijhoudt per veld:
+State: `editingField`/`expandedField` worden al bijgehouden — RSS feeds kunnen hieraan worden toegevoegd als een extra veld (`'rss_feeds'`).
 
-1. **Collapsed** — smal klikbaar vakje (`h-[40px]`, `bg-white/5 border-white/10`), toont de waarde of *"Niet ingesteld"* in italic. Klik → expanded.
-2. **Expanded** — volle tekstweergave + potlood-knop rechts. Klik potlood → editing.
-3. **Editing** — `Input` of `Textarea` met `autoFocus`. Bij `onBlur` wordt `handleSaveField` aangeroepen, die:
-   - vergelijkt met de originele waarde (niets doen als ongewijzigd)
-   - anders `saveSettings` aanroept
-   - bij succes: "Opgeslagen" toast + `setEditingField(null)`
+### 2. RSS feeds meesturen via webhook
+In `handleGenerate` worden de RSS feeds al meegestuurd (`rss_feeds: settings.rss_feeds`). Dat is dus correct. Echter: de localData bevat alleen `bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl`. Als de gebruiker in editing-state is en nog niet heeft opgeslagen (blur), worden de **niet-opgeslagen wijzigingen niet meegestuurd**. 
 
-State wordt bijgehouden in twee variabelen: `editingField` en `expandedField`.
+De fix: in `handleGenerate` de localData gebruiken voor de drie tekstvelden in plaats van `settings`, zodat altijd de meest recente waarden worden verstuurd.
 
-### Wat er nu op de Nieuwsbrief pagina staat
+### 3. Kopjes niet in capslock
+Alle `Label`/`span` elementen hebben nu `uppercase tracking-wide` klassen. Die moeten worden verwijderd. Specifiek:
+- Regel 27: `ColorField` component — `uppercase tracking-wide` verwijderen
+- Regel 99, 126, 145: in `renderField` — `uppercase tracking-wide` verwijderen  
+- Regel 268: RSS Feeds label — `uppercase tracking-wide` verwijderen
+- Regel 320: Huisstijl kleuren label — `uppercase tracking-wide` verwijderen
 
-De velden `bedrijfsnaam`, `bedrijfsinformatie` en `schrijfstijl` zijn gewone `Input`/`Textarea` componenten die bij elke keystroke `saveSettings` triggeren (via debounce in de hook). Er is geen collapsed/expanded staat, geen potlood-icoontje.
+### Plan
 
-### Aanpak
+**Bestand: `src/pages/Nieuwsbrief.tsx`**
 
-Alle drie tekstvelden (`bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl`) omzetten naar het three-step patroon:
+**A. Kopjes lowercase maken** — verwijder `uppercase tracking-wide` van alle Label/span elementen. Verwijder ook `normal-case tracking-normal` van de counter span (die was als override, nu niet meer nodig).
 
-**State toevoegen:**
-```tsx
-const [editingField, setEditingField] = useState<string | null>(null);
-const [expandedField, setExpandedField] = useState<string | null>(null);
-```
+**B. RSS Feeds three-step patroon:**
+- Collapsed: klikbaar `div` met `h-[40px]` die toont hoeveel feeds er zijn (of "Geen feeds toegevoegd" italic als leeg)
+- Expanded (ref container): volledige feed-lijst met verwijder-kruisjes + potlood-icoon rechts bovenaan
+- Editing: huidige add-input UI + lijst met verwijder-kruisjes, klik buiten = opslaan & collapse
 
-**Lokale formData state naast `settings`:**
-De `useNewsletterSettings` hook heeft al debounced saving, maar voor het three-step patroon werkt lokale state beter: de gebruiker kan typen zonder elke keystroke op te slaan, en opslaan gebeurt op `onBlur`.
+Implementatie via uitbreiding van `editingField`/`expandedField` state met `'rss_feeds'` als waarde.
 
-Lokale state:
-```tsx
-const [localData, setLocalData] = useState({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
-```
-Gesynchroniseerd met `settings` via `useEffect`.
-
-**`handleSaveField` functie:**
-Vergelijkt `localData[field]` met `settings[field]`. Als ongewijzigd: alleen `setEditingField(null)`. Als gewijzigd: `saveSettings({ [field]: localData[field] })` + "Opgeslagen" toast.
-
-**`renderField` helper** (dezelfde drie-stap structuur als Blog):
-- Collapsed: klikbaar `div` met `h-[40px]` + truncated tekst
-- Expanded: volledige tekst + `Pencil` knop
-- Editing: `Input` of `Textarea` met `onBlur={() => handleSaveField(field)}`
-
-**Click outside handler** voor `expandedField` (zelfde als Blog).
-
-**Kleuren** (`achtergrond_kleur`, `primaire_kleur`, `accent_kleur`): deze werken al goed via de kleurpicker + debounce, en zijn niet van het potlood-type. Die blijven ongewijzigd.
-
-**RSS Feeds**: ook ongewijzigd — die hebben al hun eigen add/remove UI.
+**C. Webhook localData gebruiken** — in `handleGenerate` de `localData` waarden (bedrijfsnaam, bedrijfsinformatie, schrijfstijl) meesturen in plaats van `settings.*`, zodat niet-opgeslagen editing-state ook meekomt.
 
 ### Bestanden
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/Nieuwsbrief.tsx` | Three-step field patroon voor `bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl` |
+| `src/pages/Nieuwsbrief.tsx` | RSS feeds three-step, lowercase labels, webhook localData fix |
