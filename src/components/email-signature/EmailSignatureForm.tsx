@@ -609,31 +609,47 @@ export const EmailSignatureForm = ({
               </div>
             </RadioGroup>
 
-            <div className="flex items-end gap-4">
-              <div className="space-y-2">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
                 <Label className="text-white/70 text-sm">
                   {backgroundType === 'gradient' ? 'Start kleur' : 'Kleur'}
                 </Label>
-                <Input
-                  type="color"
-                  {...register('background_color')}
-                  className="w-16 h-10 p-1 bg-transparent border-white/20 cursor-pointer"
-                />
-              </div>
-              {backgroundType === 'gradient' && (
-                <div className="space-y-2">
-                  <Label className="text-white/70 text-sm">Eind kleur</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     type="color"
-                    {...register('gradient_end_color')}
-                    className="w-16 h-10 p-1 bg-transparent border-white/20 cursor-pointer"
+                    {...register('background_color')}
+                    className="w-8 h-8 p-0.5 bg-transparent border-white/20 cursor-pointer shrink-0"
+                  />
+                  <Input
+                    value={backgroundColor}
+                    onChange={(e) => setValue('background_color', e.target.value)}
+                    className="flex-1 bg-white/10 border-white/20 text-white font-mono text-sm"
+                    placeholder="#000000"
                   />
                 </div>
+              </div>
+              {backgroundType === 'gradient' && (
+                <div className="space-y-1.5">
+                  <Label className="text-white/70 text-sm">Eind kleur</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="color"
+                      {...register('gradient_end_color')}
+                      className="w-8 h-8 p-0.5 bg-transparent border-white/20 cursor-pointer shrink-0"
+                    />
+                    <Input
+                      value={gradientEndColor || ''}
+                      onChange={(e) => setValue('gradient_end_color', e.target.value)}
+                      className="flex-1 bg-white/10 border-white/20 text-white font-mono text-sm"
+                      placeholder="#000000"
+                    />
+                  </div>
+                </div>
               )}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-white/70 text-sm">Voorbeeld</Label>
                 <div
-                  className="w-24 h-10 rounded-md border border-white/20"
+                  className="w-full h-10 rounded-md border border-white/20"
                   style={getBackgroundStyle()}
                 />
               </div>
@@ -642,13 +658,19 @@ export const EmailSignatureForm = ({
 
           <div className="space-y-2">
             <Label className="text-white">Tekst kleur *</Label>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Input
                 type="color"
                 {...register('text_color')}
-                className="w-16 h-10 p-1 bg-transparent border-white/20 cursor-pointer"
+                className="w-8 h-8 p-0.5 bg-transparent border-white/20 cursor-pointer shrink-0"
               />
-              <span className="text-sm" style={{ color: textColor }}>
+              <Input
+                value={textColor}
+                onChange={(e) => setValue('text_color', e.target.value)}
+                className="flex-1 bg-white/10 border-white/20 text-white font-mono text-sm"
+                placeholder="#ffffff"
+              />
+              <span className="text-sm shrink-0" style={{ color: textColor }}>
                 Voorbeeld tekst
               </span>
             </div>
