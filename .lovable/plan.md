@@ -1,28 +1,24 @@
 
 
-## "Extra instructie" veld toevoegen aan Blog Generatie
+## Ontbrekend "Extra instructie" veld toevoegen aan render
 
-### Wat wordt er aangepast
+### Probleem
 
-Een nieuw optioneel tekstveld "Extra instructie" wordt toegevoegd onder het Taal-veld in het Blog Generatie formulier. De waarde wordt opgeslagen in de database en meegestuurd in de webhook payload (zowel handmatig als gepland).
+Het `extra_instructie` veld is correct toegevoegd aan de state, het laden van settings, en de webhook payload, maar de `renderField` aanroep om het daadwerkelijk te tonen ontbreekt in de JSX.
 
-### Database
+### Oplossing
 
-Een nieuwe kolom `extra_instructie` (text, nullable) wordt toegevoegd aan de `blog_settings` tabel via een migratie.
+In `src/components/seo-blog/BlogGenerationForm.tsx` wordt na regel 588 (het Taal veld) een `renderField` aanroep toegevoegd:
 
-### Wijzigingen per bestand
+```tsx
+{renderField('Extra instructie', 'extra_instructie', 'textarea')}
+```
+
+Dit wordt geplaatst direct na het Taal-veld en voor de Afbeelding-sectie. Het veld gebruikt het bestaande drie-stappen klik-patroon via `renderField` met type `textarea`.
+
+### Wijziging
 
 | Bestand | Aanpassing |
 |---|---|
-| Database migratie | `ALTER TABLE blog_settings ADD COLUMN extra_instructie text;` |
-| `src/hooks/useBlogSettings.ts` | `extra_instructie` toevoegen aan het `BlogSettings` interface |
-| `src/components/seo-blog/BlogGenerationForm.tsx` | Veld toevoegen aan formData state, laden uit settings, renderen na Taal, en meesturen in webhook payload als `extra_instructie` (leeg = `""`) |
-| `supabase/functions/run-scheduled-blogs/index.ts` | `extra_instructie` uit blogSettings meesturen in de scheduled payload |
-
-### Gedrag
-
-- Het veld gebruikt hetzelfde drie-stappen klik-patroon als de andere velden (collapsed, expanded, editing)
-- Het veld is **niet verplicht** — de `isFormComplete()` validatie wordt niet aangepast
-- Als de waarde leeg is, wordt `""` meegestuurd in de webhook payload
-- Het veld wordt gerenderd als een `textarea` type via de bestaande `renderField` helper
+| `src/components/seo-blog/BlogGenerationForm.tsx` | Na regel 588 (`renderField('Taal', ...)`) de renderField aanroep voor `extra_instructie` toevoegen |
 
