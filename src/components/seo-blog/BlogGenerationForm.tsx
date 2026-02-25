@@ -396,6 +396,8 @@ export const BlogGenerationForm = ({
                 if (el) {
                   el.style.height = 'auto';
                   el.style.height = el.scrollHeight + 'px';
+                  const len = el.value.length;
+                  el.setSelectionRange(len, len);
                 }
               }}
             />
@@ -426,6 +428,12 @@ export const BlogGenerationForm = ({
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               onBlur={() => handleSaveField(field)}
               autoFocus
+              ref={(el) => {
+                if (el) {
+                  const len = el.value.length;
+                  el.setSelectionRange(len, len);
+                }
+              }}
             />
           )
         ) : type === 'select' ? (

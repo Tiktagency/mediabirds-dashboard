@@ -141,6 +141,8 @@ const Landingspagina = () => {
             if (el) {
               el.style.height = 'auto';
               el.style.height = el.scrollHeight + 'px';
+              const len = el.value.length;
+              el.setSelectionRange(len, len);
             }
           }}
         />
@@ -259,6 +261,12 @@ const Landingspagina = () => {
                         placeholder="abcd efgh ijkl 1234"
                         className="bg-white/10 border-white/10 text-white placeholder:text-white/50"
                         autoFocus
+                        ref={(el) => {
+                          if (el) {
+                            const len = el.value.length;
+                            el.setSelectionRange(len, len);
+                          }
+                        }}
                       />
                     ) : expandedField === 'app_password' ? (
                       <div className="expanded-field-container relative">
