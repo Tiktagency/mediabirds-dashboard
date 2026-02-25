@@ -1,13 +1,14 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
+import medibirdsHero from '@/assets/mediabirds-hero.png';
 
 const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
       <div className="max-w-5xl mx-auto px-6 py-16">
         <h1 className="text-4xl font-bold text-center mb-12 text-white">
-          Mediabirds Dashboard
+          Dashboard
         </h1>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -52,6 +53,14 @@ const Index = () => {
             variant="muted"
             icon={Users}
             disabled 
+          />
+        </div>
+        
+        <div className="mt-12 max-w-4xl mx-auto">
+          <img 
+            src={medibirdsHero} 
+            alt="Mediabirds" 
+            className="w-full h-auto rounded-lg shadow-lg"
           />
         </div>
       </div>
