@@ -9,6 +9,7 @@ export interface BlogSettings {
   schrijfstijl: string | null;
   aantal_woorden: string | null; // Now stored as range "min-max" e.g. "500-1000"
   taal: string | null;
+  extra_instructie: string | null;
   achtergrond_kleur: string | null;
   hoofdaccent_gradient: string | null;
   folder_id: string | null;
