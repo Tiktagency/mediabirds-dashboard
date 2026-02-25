@@ -1,0 +1,1 @@
+ALTER TABLE public.blog_settings ADD COLUMN extra_instructie text;
