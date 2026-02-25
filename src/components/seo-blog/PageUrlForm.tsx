@@ -149,11 +149,9 @@ export const PageUrlForm = ({
           placeholder={placeholder}
           className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
           autoFocus
-          ref={(el) => {
-            if (el) {
-              const len = el.value.length;
-              el.setSelectionRange(len, len);
-            }
+          onFocus={(e) => {
+            const len = e.currentTarget.value.length;
+            e.currentTarget.setSelectionRange(len, len);
           }}
         />
       );
