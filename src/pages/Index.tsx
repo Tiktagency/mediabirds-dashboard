@@ -5,10 +5,16 @@ import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from
 const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
+      {/* Banner Section */}
+      <header className="banner-gradient w-full">
+        <div className="max-w-5xl mx-auto">
+          <h1 className="text-4xl font-bold text-center text-white">
+            Mediabirds Dashboard
+          </h1>
+        </div>
+      </header>
+
       <div className="max-w-5xl mx-auto px-6 py-16">
-        <h1 className="text-4xl font-bold text-center mb-12 text-white">
-          Mediabirds Dashboard
-        </h1>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <DashboardButton 
