@@ -45,12 +45,12 @@ All colors MUST be HSL.
     --tikt-text-light: 0 0% 100%;
     
     /* Banner gradient colors */
-    --banner-start: 260 60% 8%;
-    --banner-end: 280 85% 48%;
+    --banner-edge: 274 41% 3%;
+    --banner-center: 271 78% 18%;
 
     /* Gradients */
     --gradient-tikt: linear-gradient(135deg, hsl(var(--tikt-primary)) 0%, hsl(var(--tikt-secondary)) 100%);
-    --gradient-banner: linear-gradient(90deg, hsl(var(--banner-start)) 0%, hsl(var(--banner-end)) 100%);
+    --gradient-banner: linear-gradient(90deg, hsl(var(--banner-edge)) 0%, hsl(var(--banner-center)) 50%, hsl(var(--banner-edge)) 100%);
 
     /* Shadows */
     --shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.25);
@@ -216,6 +216,6 @@ All colors MUST be HSL.
 
   .banner-gradient {
     background: var(--gradient-banner);
-    padding: 2rem 1.5rem;
+    padding: 4rem 1.5rem;
   }
 }
