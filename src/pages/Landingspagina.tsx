@@ -218,6 +218,7 @@ const Landingspagina = () => {
               isSaving={isSaving}
               updateSchedule={updateSchedule as any}
               getNextTriggerDisplay={getNextTriggerDisplay}
+              description="Deze trigger geldt voor alle bedrijven"
             />
           </div>
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl w-full items-stretch">
