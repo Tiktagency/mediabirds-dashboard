@@ -1,7 +1,7 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
-import bannerImage from '@/assets/autumn-forest-banner.png';
+import bannerImage from '@/assets/mountain-banner.png';
 
 const Index = () => {
   return (
