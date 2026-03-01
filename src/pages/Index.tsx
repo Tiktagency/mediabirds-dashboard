@@ -7,12 +7,15 @@ const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
-      <header className="w-full h-48 overflow-hidden">
+      <header className="w-full h-48 overflow-hidden relative">
         <img 
           src={bannerImage} 
           alt="Mediabirds Banner" 
           className="w-full h-full object-cover"
         />
+        <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-5xl md:text-6xl font-bold">
+          Mediabirds
+        </h1>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-16">
