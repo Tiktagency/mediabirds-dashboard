@@ -182,8 +182,8 @@ const Blogs = () => {
                       : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900'
                   }`}
                 >
-                  <p className="text-sm mb-2">{notification.message}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm mb-2 text-gray-900 dark:text-gray-100">{notification.message}</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">
                     {format(notification.timestamp, 'dd MMM yyyy HH:mm:ss', { locale: nl })}
                   </p>
                 </div>
