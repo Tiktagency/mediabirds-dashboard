@@ -153,7 +153,7 @@ const WordpressAltText = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden relative">
+    <div className="min-h-screen relative">
       <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between">
         <Link to="/">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
@@ -163,7 +163,7 @@ const WordpressAltText = () => {
         <AltTextCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
 
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
+      <div className="hero-gradient min-h-screen w-full flex flex-col items-center justify-start pt-32 px-6 pb-12">
         <h1 className="hero-title text-foreground mb-2 fade-in-up">Alt-tekst wordpress</h1>
         <p className="text-muted-foreground text-center max-w-xl mb-6">
           Vul nu automatisch de alt-tekst velden in voor ALLE afbeeldingen op je website! Voeg zoveel websites toe als je wilt en ga lekker achterover zitten in je stoel.
