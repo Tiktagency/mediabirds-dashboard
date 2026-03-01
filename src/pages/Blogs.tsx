@@ -23,10 +23,25 @@ const Blogs = () => {
         }),
       });
 
-      const data = await response.json();
+      let message = 'Geen bericht beschikbaar';
       
-      // Extract plain text from response
-      const message = data.output || data.Error || data.message || 'Geen bericht beschikbaar';
+      try {
+        const text = await response.text();
+        
+        if (text) {
+          try {
+            const data = JSON.parse(text);
+            // Extract all values from the response object
+            const values = Object.values(data).filter(v => typeof v === 'string');
+            message = values.join(' ') || JSON.stringify(data);
+          } catch {
+            // If not valid JSON, use the text directly
+            message = text;
+          }
+        }
+      } catch (parseError) {
+        console.error("Error parsing response:", parseError);
+      }
       
       if (response.ok) {
         toast({
