@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNewsletterSettings, NewsletterSettings } from '@/hooks/useNewsletterSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuwsbrief/NewsletterCompanySelector';
 
 const MAX_RSS_FEEDS = 5;
 
@@ -75,6 +76,7 @@ const COLOR_FIELDS: { key: keyof NewsletterSettings; label: string }[] = [
 const Nieuwsbrief = () => {
   const { toast } = useToast();
   const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
+  const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
@@ -82,10 +84,43 @@ const Nieuwsbrief = () => {
     bedrijfsnaam: '', tagline: '', bedrijfsomschrijving: '', doelgroep: '',
     toon: '', cta_tekst: '', cta_url: '', website: '',
   });
+  const [localColors, setLocalColors] = useState<Record<string, string>>({
+    primaire_kleur: '#FF6B2C', secundaire_kleur: '#1A2B5E', achtergrond_kleur: '#F5F3EF',
+    kaart_achtergrond: '#FFFFFF', tekst_kleur: '#1A1A2E', subtekst_kleur: '#6B7280',
+    accent_kleur: '#FFF0E8', cta_tekst_kleur: '#FFFFFF', footer_achtergrond: '#1A2B5E',
+    footer_tekst_kleur: '#E8EDF7',
+  });
   const [localFeeds, setLocalFeeds] = useState<string[]>([]);
+  const [generatedHtml, setGeneratedHtmlLocal] = useState<string | null>(null);
 
+  // Load data from selected company
   useEffect(() => {
-    if (settings) {
+    if (selectedCompany) {
+      setLocalData({
+        bedrijfsnaam: selectedCompany.bedrijfsnaam || '',
+        tagline: selectedCompany.tagline || '',
+        bedrijfsomschrijving: selectedCompany.bedrijfsomschrijving || '',
+        doelgroep: selectedCompany.doelgroep || '',
+        toon: selectedCompany.toon || '',
+        cta_tekst: selectedCompany.cta_tekst || '',
+        cta_url: selectedCompany.cta_url || '',
+        website: selectedCompany.website || '',
+      });
+      setLocalColors({
+        primaire_kleur: selectedCompany.primaire_kleur,
+        secundaire_kleur: selectedCompany.secundaire_kleur,
+        achtergrond_kleur: selectedCompany.achtergrond_kleur,
+        kaart_achtergrond: selectedCompany.kaart_achtergrond,
+        tekst_kleur: selectedCompany.tekst_kleur,
+        subtekst_kleur: selectedCompany.subtekst_kleur,
+        accent_kleur: selectedCompany.accent_kleur,
+        cta_tekst_kleur: selectedCompany.cta_tekst_kleur,
+        footer_achtergrond: selectedCompany.footer_achtergrond,
+        footer_tekst_kleur: selectedCompany.footer_tekst_kleur,
+      });
+      setLocalFeeds(selectedCompany.rss_feeds || []);
+      setGeneratedHtmlLocal(selectedCompany.generated_html || null);
+    } else if (settings) {
       setLocalData({
         bedrijfsnaam: settings.bedrijfsnaam || '',
         tagline: settings.tagline || '',
@@ -97,8 +132,17 @@ const Nieuwsbrief = () => {
         website: settings.website || '',
       });
       setLocalFeeds(settings.rss_feeds);
+      setGeneratedHtmlLocal(settings.generated_html || null);
     }
-  }, [settings]);
+  }, [selectedCompany, settings]);
+
+  const saveToCompany = useCallback(async (patch: Record<string, any>) => {
+    if (!selectedCompany) return;
+    await supabase
+      .from('newsletter_companies' as any)
+      .update(patch)
+      .eq('id', selectedCompany.id);
+  }, [selectedCompany]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -112,17 +156,18 @@ const Nieuwsbrief = () => {
 
   const handleSaveField = (field: TextFieldKey) => {
     setEditingField(null);
-    if (!settings) return;
     const current = localData[field];
-    const original = (settings as any)[field] || '';
-    if (current === original) return;
-    saveSettings({ [field]: current });
+    if (selectedCompany) {
+      saveToCompany({ [field]: current });
+    } else if (settings) {
+      const original = (settings as any)[field] || '';
+      if (current !== original) saveSettings({ [field]: current });
+    }
     toast({ title: 'Opgeslagen' });
   };
 
   const handleSaveFeed = (index: number, value: string) => {
     setEditingField(null);
-    if (!settings) return;
     const newFeeds = [...localFeeds];
     if (value.trim()) {
       newFeeds[index] = value.trim();
@@ -130,10 +175,12 @@ const Nieuwsbrief = () => {
       newFeeds.splice(index, 1);
     }
     setLocalFeeds(newFeeds);
-    if (JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
+    if (selectedCompany) {
+      saveToCompany({ rss_feeds: newFeeds });
+    } else if (settings && JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
       saveSettings({ rss_feeds: newFeeds });
-      toast({ title: 'Opgeslagen' });
     }
+    toast({ title: 'Opgeslagen' });
   };
 
   const handleAddFeed = () => {
@@ -145,10 +192,22 @@ const Nieuwsbrief = () => {
   };
 
   const handleRemoveFeed = (index: number) => {
-    if (!settings) return;
     const newFeeds = localFeeds.filter((_, i) => i !== index);
     setLocalFeeds(newFeeds);
-    saveSettings({ rss_feeds: newFeeds });
+    if (selectedCompany) {
+      saveToCompany({ rss_feeds: newFeeds });
+    } else if (settings) {
+      saveSettings({ rss_feeds: newFeeds });
+    }
+  };
+
+  const handleColorChange = (key: string, value: string) => {
+    setLocalColors(prev => ({ ...prev, [key]: value }));
+    if (selectedCompany) {
+      saveToCompany({ [key]: value });
+    } else if (settings) {
+      saveSettings({ [key]: value } as any);
+    }
   };
 
   const renderTextField = (field: TextFieldKey, label: string, type: 'input' | 'textarea', placeholder: string) => {
@@ -329,18 +388,18 @@ const Nieuwsbrief = () => {
           cta_tekst: localData.cta_tekst,
           cta_url: localData.cta_url,
           website: localData.website,
-          rss_feeds: settings.rss_feeds,
-          primaire_kleur: settings.primaire_kleur,
-          secundaire_kleur: settings.secundaire_kleur,
-          achtergrond_kleur: settings.achtergrond_kleur,
-          kaart_achtergrond: settings.kaart_achtergrond,
-          tekst_kleur: settings.tekst_kleur,
-          subtekst_kleur: settings.subtekst_kleur,
-          accent_kleur: settings.accent_kleur,
-          cta_tekst_kleur: settings.cta_tekst_kleur,
-          footer_achtergrond: settings.footer_achtergrond,
-          footer_tekst_kleur: settings.footer_tekst_kleur,
-          settingsId: settings.id || undefined,
+          rss_feeds: localFeeds,
+          primaire_kleur: localColors.primaire_kleur,
+          secundaire_kleur: localColors.secundaire_kleur,
+          achtergrond_kleur: localColors.achtergrond_kleur,
+          kaart_achtergrond: localColors.kaart_achtergrond,
+          tekst_kleur: localColors.tekst_kleur,
+          subtekst_kleur: localColors.subtekst_kleur,
+          accent_kleur: localColors.accent_kleur,
+          cta_tekst_kleur: localColors.cta_tekst_kleur,
+          footer_achtergrond: localColors.footer_achtergrond,
+          footer_tekst_kleur: localColors.footer_tekst_kleur,
+          settingsId: selectedCompany?.id || settings.id || undefined,
         },
       });
 
@@ -348,7 +407,12 @@ const Nieuwsbrief = () => {
 
       const html = response.data?.html;
       if (html) {
-        await setGeneratedHtml(html);
+        setGeneratedHtmlLocal(html);
+        if (selectedCompany) {
+          await saveToCompany({ generated_html: html });
+        } else {
+          await setGeneratedHtml(html);
+        }
         toast({ title: 'Nieuwsbrief gegenereerd!', description: 'De preview is bijgewerkt.' });
       } else {
         toast({ title: 'Verzonden', description: 'De aanvraag is verstuurd.' });
@@ -365,8 +429,8 @@ const Nieuwsbrief = () => {
   };
 
   const handleDownload = () => {
-    if (!settings.generated_html) return;
-    const blob = new Blob([settings.generated_html], { type: 'text/html' });
+    if (!generatedHtml) return;
+    const blob = new Blob([generatedHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -376,16 +440,21 @@ const Nieuwsbrief = () => {
   };
 
   return (
-    <div className="min-h-screen hero-gradient flex flex-col">
-      <div className="absolute top-6 left-6 z-10">
+    <div className="min-h-screen relative hero-gradient flex flex-col">
+      {/* Header bar */}
+      <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between">
         <Link to="/">
-          <Button variant="outline" size="sm" className="bg-white/5 border-white/20 text-white hover:bg-white/10">
+          <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
             Dashboard
           </Button>
         </Link>
+        <NewsletterCompanySelector
+          selectedCompany={selectedCompany}
+          onSelect={setSelectedCompany}
+        />
       </div>
 
-      <div className="w-full flex flex-col items-center justify-start pt-8 pb-16 px-6">
+      <div className="w-full flex flex-col items-center justify-start pt-32 pb-16 px-6">
         <h1 className="hero-title text-white mb-4 fade-in-up text-center">
           Nieuwsbrief
         </h1>
@@ -420,8 +489,8 @@ const Nieuwsbrief = () => {
                       <ColorField
                         key={key}
                         label={label}
-                        value={(settings as any)[key] || '#000000'}
-                        onChange={(v) => saveSettings({ [key]: v } as any)}
+                        value={localColors[key as string] || '#000000'}
+                        onChange={(v) => handleColorChange(key as string, v)}
                       />
                     ))}
                   </div>
@@ -450,7 +519,7 @@ const Nieuwsbrief = () => {
             <Card className="bg-white/5 border-white/10">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-white text-lg">HTML Preview</CardTitle>
-                {settings.generated_html && (
+                {generatedHtml && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -463,10 +532,10 @@ const Nieuwsbrief = () => {
                 )}
               </CardHeader>
               <CardContent className="p-0 pb-6 px-6">
-                {settings.generated_html ? (
+                {generatedHtml ? (
                   <div className="rounded-lg overflow-hidden border border-white/10" style={{ height: '600px' }}>
                     <iframe
-                      srcDoc={settings.generated_html}
+                      srcDoc={generatedHtml}
                       sandbox="allow-same-origin"
                       title="Nieuwsbrief preview"
                       className="w-full h-full border-0"
