@@ -1,57 +1,86 @@
 
-## Twee problemen oplossen
+## Plan: Nieuwsbrief invulvelden aanpassen
 
-### Probleem 1: Scrollen werkt niet
-De wrapper div heeft `h-screen overflow-hidden` met een inner div die `overflow-y-auto` heeft. Maar de inner div heeft `h-full`, waardoor deze precies de schermhoogte beslaat — inclusief de absolute header. De content klopt niet uit omdat er geen `pb-` (padding-bottom) is onderaan, waardoor de onderkant van de pagina buiten beeld valt.
+### Wat verandert er
 
-**Fix**: Verander de buitenste `div` van `h-screen overflow-hidden` naar `min-h-screen` en maak de inner div scrollbaar door `overflow-y-auto` te verplaatsen naar de buitenste container. Of simpeler: verander de wrapper naar `h-screen overflow-y-auto` (één scrollable container) en voeg `pb-12` toe onderaan de content.
+De huidige velden (`bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl`) en kleuren (`achtergrond_kleur`, `primaire_kleur`, `accent_kleur`) worden vervangen door de volledige set velden uit het JSON-voorbeeld.
 
-Concreet: verander lijn 156:
-```tsx
-// Van:
-<div className="h-screen overflow-hidden relative">
-// Naar:
-<div className="min-h-screen relative">
-```
-En de inner div (lijn 166):
-```tsx
-// Van:
-<div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
-// Naar:
-<div className="hero-gradient min-h-screen w-full flex flex-col items-center justify-start pt-32 px-6 pb-12">
-```
+### Nieuwe velden
 
-### Probleem 2: Bedrijven worden soms 2x geactiveerd
-De cron job loopt elke 5 minuten. Als de verwerking van alle bedrijven langer dan 5 minuten duurt, start de cron job een tweede instantie terwijl de eerste nog loopt. Beide lezen dezelfde schedule met `next_trigger_at <= now` en verwerken alle bedrijven.
+**Tekstvelden:**
+- `bedrijfsnaam`
+- `tagline`
+- `bedrijfsomschrijving`
+- `doelgroep`
+- `toon`
+- `cta_tekst`
+- `cta_url`
+- `website`
 
-**Fix**: De schedule direct aan het begin "claimen" door `next_trigger_at` vooruit te zetten vóórdat de webhooks worden aangeroepen. Zo ziet een eventuele tweede instantie geen dubbele schedule meer.
+**Kleurvelden:**
+- `primaire_kleur`
+- `secundaire_kleur`
+- `achtergrond_kleur`
+- `kaart_achtergrond`
+- `tekst_kleur`
+- `subtekst_kleur`
+- `accent_kleur`
+- `cta_tekst_kleur`
+- `footer_achtergrond`
+- `footer_tekst_kleur`
 
-In `supabase/functions/run-scheduled-alt-text/index.ts`, direct na het ophalen van de schedule, de `next_trigger_at` en `last_triggered_at` alvast updaten:
+### Database migratie
 
-```typescript
-// Claim de schedule direct zodat een parallelle cron run hem niet ook oppikt
-const claimedNextTrigger = calculateNextTrigger(
-  schedule.interval_value,
-  schedule.interval_unit,
-  schedule.next_trigger_at
-);
+De `newsletter_settings` tabel mist de nieuwe kolommen. Een migratie voegt toe:
+- `tagline text`
+- `bedrijfsomschrijving text` (aparte kolom naast bestaande `bedrijfsinformatie`)
+- `doelgroep text`
+- `toon text`
+- `cta_tekst text`
+- `cta_url text`
+- `website text`
+- `secundaire_kleur text`
+- `kaart_achtergrond text`
+- `tekst_kleur text`
+- `subtekst_kleur text`
+- `cta_tekst_kleur text`
+- `footer_achtergrond text`
+- `footer_tekst_kleur text`
 
-const { error: claimError } = await supabase
-  .from('alt_text_schedules')
-  .update({
-    last_triggered_at: new Date().toISOString(),
-    next_trigger_at: claimedNextTrigger.toISOString(),
-  })
-  .eq('id', schedule.id)
-  .eq('next_trigger_at', schedule.next_trigger_at); // optimistic lock
+**Let op**: `bedrijfsinformatie` blijft bestaan als alias voor `bedrijfsomschrijving` om bestaande data te behouden. De nieuwe kolom wordt `bedrijfsomschrijving`.
 
-// Als update 0 rows raakt → een andere instantie was eerder, stop dan
-```
+### Wijzigingen
 
-De `.eq('next_trigger_at', schedule.next_trigger_at)` fungeert als een optimistic lock: als twee instanties tegelijk proberen te updaten, wint er maar één. De verliezende instantie detecteert dit en stopt.
-
-### Bestanden
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/WordpressAltText.tsx` | Scroll fix: `h-screen overflow-hidden` → `min-h-screen`, inner div `h-full overflow-y-auto` → `min-h-screen pb-12` |
-| `supabase/functions/run-scheduled-alt-text/index.ts` | Optimistic lock: claim schedule direct na ophalen om dubbele verwerking te voorkomen |
+| Database | Nieuwe kolommen toevoegen aan `newsletter_settings` |
+| `src/hooks/useNewsletterSettings.ts` | Interface en logica uitbreiden met alle nieuwe velden |
+| `src/pages/Nieuwsbrief.tsx` | Alle nieuwe tekst- en kleurvelden tonen in de sidebar |
+| `supabase/functions/trigger-newsletter-webhook/index.ts` | Volledige payload met alle nieuwe velden naar webhook sturen |
+
+### Webhook payload
+
+```json
+{
+  "bedrijfsnaam": "...",
+  "tagline": "...",
+  "bedrijfsomschrijving": "...",
+  "doelgroep": "...",
+  "toon": "...",
+  "cta_tekst": "...",
+  "cta_url": "...",
+  "website": "...",
+  "primaire_kleur": "#...",
+  "secundaire_kleur": "#...",
+  "achtergrond_kleur": "#...",
+  "kaart_achtergrond": "#...",
+  "tekst_kleur": "#...",
+  "subtekst_kleur": "#...",
+  "accent_kleur": "#...",
+  "cta_tekst_kleur": "#...",
+  "footer_achtergrond": "#...",
+  "footer_tekst_kleur": "#...",
+  "rss_feeds": [...],
+  "user_id": "..."
+}
+```
