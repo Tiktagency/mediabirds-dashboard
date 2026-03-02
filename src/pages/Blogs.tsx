@@ -1,37 +1,98 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
   message: string;
-  timestamp: Date;
+  created_at: string;
   status: 'success' | 'error';
 }
 
 const Blogs = () => {
-  const { toast, toasts, dismiss } = useToast();
+  const { toast, dismiss } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [lastReadTime, setLastReadTime] = useState<string | null>(
+    localStorage.getItem('notifications_last_read')
+  );
 
-  const addNotification = (message: string, status: 'success' | 'error') => {
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      message,
-      timestamp: new Date(),
-      status,
+  // Load notifications from database
+  useEffect(() => {
+    loadNotifications();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('notifications_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications'
+        },
+        (payload) => {
+          const newNotification = payload.new as Notification;
+          setNotifications(prev => [newNotification, ...prev].slice(0, 20));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
-    
-    setNotifications(prev => {
-      const updated = [newNotification, ...prev];
-      return updated.slice(0, 20); // Keep only the 20 most recent
-    });
+  }, []);
+
+  const loadNotifications = async () => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error('Error loading notifications:', error);
+      return;
+    }
+
+    if (data) {
+      setNotifications(data as Notification[]);
+    }
+  };
+
+  const addNotification = async (message: string, status: 'success' | 'error') => {
+    const { error } = await supabase
+      .from('notifications')
+      .insert({
+        message,
+        status,
+      });
+
+    if (error) {
+      console.error('Error saving notification:', error);
+    }
+  };
+
+  const unreadCount = notifications.filter(
+    n => !lastReadTime || new Date(n.created_at) > new Date(lastReadTime)
+  ).length;
+
+  const handlePanelToggle = () => {
+    if (!isPanelOpen) {
+      // Opening panel - mark all as read
+      const now = new Date().toISOString();
+      setLastReadTime(now);
+      localStorage.setItem('notifications_last_read', now);
+      dismiss();
+    }
+    setIsPanelOpen(!isPanelOpen);
   };
 
   const handleStartClick = async () => {
@@ -119,15 +180,12 @@ const Blogs = () => {
           variant="outline"
           size="sm"
           className="bg-white/10 border-white/20 text-white hover:bg-white/20 relative"
-          onClick={() => {
-            setIsPanelOpen(!isPanelOpen);
-            dismiss();
-          }}
+          onClick={handlePanelToggle}
         >
           <Bell className="h-4 w-4" />
-          {notifications.length > 0 && (
+          {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {notifications.length}
+              {unreadCount}
             </span>
           )}
         </Button>
@@ -187,7 +245,7 @@ const Blogs = () => {
                 >
                   <p className="text-sm mb-2 text-gray-900 dark:text-gray-100">{notification.message}</p>
                   <p className="text-xs text-gray-700 dark:text-gray-300">
-                    {format(notification.timestamp, 'dd-MM-yyyy HH:mm', { locale: nl })}
+                    {format(new Date(notification.created_at), 'dd-MM-yyyy HH:mm', { locale: nl })}
                   </p>
                 </div>
               ))
