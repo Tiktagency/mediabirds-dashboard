@@ -6,14 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNewsletterSettings } from '@/hooks/useNewsletterSettings';
+import { useNewsletterSettings, NewsletterSettings } from '@/hooks/useNewsletterSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const MAX_RSS_FEEDS = 5;
 
-type LocalData = { bedrijfsnaam: string; bedrijfsinformatie: string; schrijfstijl: string };
-type AnyField = keyof LocalData | string;
+type TextFieldKey = 'bedrijfsnaam' | 'tagline' | 'bedrijfsomschrijving' | 'doelgroep' | 'toon' | 'cta_tekst' | 'cta_url' | 'website';
+type LocalData = Record<TextFieldKey, string>;
 
 const ColorField = ({
   label,
@@ -27,12 +27,17 @@ const ColorField = ({
   <div className="space-y-1.5">
     <span className="text-xs font-medium text-white/50">{label}</span>
     <div className="flex items-center gap-2">
-      <Input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 p-0.5 cursor-pointer shrink-0 bg-white/5 border-white/10"
-      />
+      <div
+        className="w-8 h-8 rounded cursor-pointer border border-white/10 shrink-0 relative overflow-hidden"
+        style={{ backgroundColor: value }}
+      >
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+        />
+      </div>
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -43,27 +48,58 @@ const ColorField = ({
   </div>
 );
 
+const TEXT_FIELDS: { key: TextFieldKey; label: string; type: 'input' | 'textarea'; placeholder: string }[] = [
+  { key: 'bedrijfsnaam', label: 'Bedrijfsnaam', type: 'input', placeholder: 'bijv. Tikt' },
+  { key: 'tagline', label: 'Tagline', type: 'input', placeholder: 'bijv. Minder druk, meer tijd' },
+  { key: 'bedrijfsomschrijving', label: 'Bedrijfsomschrijving', type: 'textarea', placeholder: 'Beschrijf je bedrijf, producten of diensten…' },
+  { key: 'doelgroep', label: 'Doelgroep', type: 'textarea', placeholder: 'bijv. MKB-ondernemers die werkdruk willen verlagen' },
+  { key: 'toon', label: 'Toon', type: 'input', placeholder: 'bijv. Direct, eerlijk en mensgericht' },
+  { key: 'cta_tekst', label: 'CTA tekst', type: 'input', placeholder: 'bijv. Plan een vrijblijvende sessie' },
+  { key: 'cta_url', label: 'CTA URL', type: 'input', placeholder: 'https://...' },
+  { key: 'website', label: 'Website', type: 'input', placeholder: 'https://...' },
+];
+
+const COLOR_FIELDS: { key: keyof NewsletterSettings; label: string }[] = [
+  { key: 'primaire_kleur', label: 'Primaire kleur' },
+  { key: 'secundaire_kleur', label: 'Secundaire kleur' },
+  { key: 'achtergrond_kleur', label: 'Achtergrond' },
+  { key: 'kaart_achtergrond', label: 'Kaart achtergrond' },
+  { key: 'tekst_kleur', label: 'Tekstkleur' },
+  { key: 'subtekst_kleur', label: 'Subtekstkleur' },
+  { key: 'accent_kleur', label: 'Accentkleur' },
+  { key: 'cta_tekst_kleur', label: 'CTA tekstkleur' },
+  { key: 'footer_achtergrond', label: 'Footer achtergrond' },
+  { key: 'footer_tekst_kleur', label: 'Footer tekstkleur' },
+];
+
 const Nieuwsbrief = () => {
   const { toast } = useToast();
   const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
-  const [localData, setLocalData] = useState<LocalData>({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
+  const [localData, setLocalData] = useState<LocalData>({
+    bedrijfsnaam: '', tagline: '', bedrijfsomschrijving: '', doelgroep: '',
+    toon: '', cta_tekst: '', cta_url: '', website: '',
+  });
   const [localFeeds, setLocalFeeds] = useState<string[]>([]);
 
   useEffect(() => {
     if (settings) {
       setLocalData({
         bedrijfsnaam: settings.bedrijfsnaam || '',
-        bedrijfsinformatie: settings.bedrijfsinformatie || '',
-        schrijfstijl: settings.schrijfstijl || '',
+        tagline: settings.tagline || '',
+        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
+        doelgroep: settings.doelgroep || '',
+        toon: settings.toon || '',
+        cta_tekst: settings.cta_tekst || '',
+        cta_url: settings.cta_url || '',
+        website: settings.website || '',
       });
       setLocalFeeds(settings.rss_feeds);
     }
   }, [settings]);
 
-  // Click outside: collapse expanded fields
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
@@ -74,11 +110,11 @@ const Nieuwsbrief = () => {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [expandedField]);
 
-  const handleSaveField = (field: keyof LocalData) => {
+  const handleSaveField = (field: TextFieldKey) => {
     setEditingField(null);
     if (!settings) return;
     const current = localData[field];
-    const original = settings[field] || '';
+    const original = (settings as any)[field] || '';
     if (current === original) return;
     saveSettings({ [field]: current });
     toast({ title: 'Opgeslagen' });
@@ -115,12 +151,7 @@ const Nieuwsbrief = () => {
     saveSettings({ rss_feeds: newFeeds });
   };
 
-  const renderTextField = (
-    field: keyof LocalData,
-    label: string,
-    type: 'input' | 'textarea',
-    placeholder: string
-  ) => {
+  const renderTextField = (field: TextFieldKey, label: string, type: 'input' | 'textarea', placeholder: string) => {
     const value = localData[field];
     const isEditing = editingField === field;
     const isExpanded = expandedField === field;
@@ -144,7 +175,7 @@ const Nieuwsbrief = () => {
               value={value}
               onChange={(e) => setLocalData(prev => ({ ...prev, [field]: e.target.value }))}
               onBlur={() => handleSaveField(field)}
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[100px] resize-none"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px] resize-none"
               placeholder={placeholder}
             />
           )}
@@ -239,40 +270,37 @@ const Nieuwsbrief = () => {
     );
   };
 
-  const renderRssFeeds = () => {
-    const feedCount = localFeeds.length;
-    return (
+  const renderRssFeeds = () => (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-white/50">
+        RSS feeds
+        <span className="ml-1.5 text-white/30">({localFeeds.length}/{MAX_RSS_FEEDS})</span>
+      </Label>
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-white/50">
-          RSS feeds
-          <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
-        </Label>
-        <div className="space-y-2">
-          {localFeeds.map((feed, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="flex-1">{renderRssFeedItem(i, feed)}</div>
-              <button
-                onClick={() => handleRemoveFeed(i)}
-                className="text-white/30 hover:text-destructive transition-colors flex-shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-        {feedCount < MAX_RSS_FEEDS && (
-          <Button
-            variant="outline"
-            onClick={handleAddFeed}
-            className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Feed toevoegen
-          </Button>
-        )}
+        {localFeeds.map((feed, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="flex-1">{renderRssFeedItem(i, feed)}</div>
+            <button
+              onClick={() => handleRemoveFeed(i)}
+              className="text-white/30 hover:text-destructive transition-colors flex-shrink-0"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
       </div>
-    );
-  };
+      {localFeeds.length < MAX_RSS_FEEDS && (
+        <Button
+          variant="outline"
+          onClick={handleAddFeed}
+          className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Feed toevoegen
+        </Button>
+      )}
+    </div>
+  );
 
   if (isLoading || !settings) {
     return (
@@ -294,12 +322,24 @@ const Nieuwsbrief = () => {
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
         body: {
           bedrijfsnaam: localData.bedrijfsnaam,
-          bedrijfsinformatie: localData.bedrijfsinformatie,
-          schrijfstijl: localData.schrijfstijl,
+          tagline: localData.tagline,
+          bedrijfsomschrijving: localData.bedrijfsomschrijving,
+          doelgroep: localData.doelgroep,
+          toon: localData.toon,
+          cta_tekst: localData.cta_tekst,
+          cta_url: localData.cta_url,
+          website: localData.website,
           rss_feeds: settings.rss_feeds,
-          achtergrond_kleur: settings.achtergrond_kleur,
           primaire_kleur: settings.primaire_kleur,
+          secundaire_kleur: settings.secundaire_kleur,
+          achtergrond_kleur: settings.achtergrond_kleur,
+          kaart_achtergrond: settings.kaart_achtergrond,
+          tekst_kleur: settings.tekst_kleur,
+          subtekst_kleur: settings.subtekst_kleur,
           accent_kleur: settings.accent_kleur,
+          cta_tekst_kleur: settings.cta_tekst_kleur,
+          footer_achtergrond: settings.footer_achtergrond,
+          footer_tekst_kleur: settings.footer_tekst_kleur,
           settingsId: settings.id || undefined,
         },
       });
@@ -358,16 +398,17 @@ const Nieuwsbrief = () => {
 
             {/* Left: Form */}
             <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6 space-y-5">
+              <CardContent className="p-6 space-y-4">
 
-                {renderTextField('bedrijfsnaam', 'Bedrijfsnaam', 'input', 'bijv. Mediabirds')}
-                {renderTextField('bedrijfsinformatie', 'Bedrijfsinformatie', 'textarea', 'Beschrijf je bedrijf, producten of diensten…')}
-                {renderTextField('schrijfstijl', 'Schrijfstijl', 'textarea', 'bijv. Professioneel en informatief, of juist speels en toegankelijk…')}
+                {/* Tekstvelden */}
+                {TEXT_FIELDS.map(({ key, label, type, placeholder }) =>
+                  renderTextField(key, label, type, placeholder)
+                )}
 
                 {renderRssFeeds()}
 
                 {/* Kleuren */}
-                <div className="space-y-3">
+                <div className="space-y-3 pt-1">
                   <div className="flex items-center gap-2">
                     <Palette className="w-3.5 h-3.5 text-white/50" />
                     <Label className="text-xs font-medium text-white/50">
@@ -375,21 +416,14 @@ const Nieuwsbrief = () => {
                     </Label>
                   </div>
                   <div className="space-y-3">
-                    <ColorField
-                      label="Achtergrond"
-                      value={settings.achtergrond_kleur}
-                      onChange={(v) => saveSettings({ achtergrond_kleur: v })}
-                    />
-                    <ColorField
-                      label="Primaire kleur"
-                      value={settings.primaire_kleur}
-                      onChange={(v) => saveSettings({ primaire_kleur: v })}
-                    />
-                    <ColorField
-                      label="Accent kleur"
-                      value={settings.accent_kleur}
-                      onChange={(v) => saveSettings({ accent_kleur: v })}
-                    />
+                    {COLOR_FIELDS.map(({ key, label }) => (
+                      <ColorField
+                        key={key}
+                        label={label}
+                        value={(settings as any)[key] || '#000000'}
+                        onChange={(v) => saveSettings({ [key]: v } as any)}
+                      />
+                    ))}
                   </div>
                 </div>
 
