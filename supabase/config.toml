@@ -1,1 +1,4 @@
 project_id = "audrvgrsuleruuspwnhf"
+
+[functions.trigger-blog-generation]
+verify_jwt = false
