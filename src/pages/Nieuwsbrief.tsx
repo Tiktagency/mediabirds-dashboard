@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,6 +92,8 @@ const Nieuwsbrief = () => {
   });
   const [localFeeds, setLocalFeeds] = useState<string[]>([]);
   const [generatedHtml, setGeneratedHtmlLocal] = useState<string | null>(null);
+  const [colorMode, setColorMode] = useState<'custom' | 'auto'>('custom');
+  const [isFetchingColors, setIsFetchingColors] = useState(false);
 
   // Load data from selected company
   useEffect(() => {
@@ -198,6 +200,42 @@ const Nieuwsbrief = () => {
       saveToCompany({ rss_feeds: newFeeds });
     } else if (settings) {
       saveSettings({ rss_feeds: newFeeds });
+    }
+  };
+
+  const handleFetchColors = async () => {
+    if (!localData.website) {
+      toast({
+        title: 'Website ontbreekt',
+        description: 'Vul eerst een website URL in.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsFetchingColors(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-brand-colors', {
+        body: { website: localData.website },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Kleuren ophalen mislukt');
+
+      const colors = data.colors;
+      setLocalColors(colors);
+      if (selectedCompany) {
+        await saveToCompany(colors);
+      } else if (settings) {
+        await saveSettings(colors as any);
+      }
+      toast({ title: 'Kleuren opgehaald!', description: 'Huisstijlkleuren zijn automatisch ingevuld.' });
+    } catch (err: any) {
+      toast({
+        title: 'Fout bij ophalen kleuren',
+        description: err?.message || 'Er is iets misgegaan.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsFetchingColors(false);
     }
   };
 
@@ -486,13 +524,70 @@ const Nieuwsbrief = () => {
 
                 {/* Kleuren */}
                 <div className="space-y-3 pt-1">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-3.5 h-3.5 text-white/50" />
-                    <Label className="text-xs font-medium text-white/50">
-                      Huisstijl kleuren
-                    </Label>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-3.5 h-3.5 text-white/50" />
+                      <Label className="text-xs font-medium text-white/50">
+                        Huisstijl kleuren
+                      </Label>
+                    </div>
+                    {/* Mode toggle */}
+                    <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
+                      <button
+                        onClick={() => setColorMode('custom')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                          colorMode === 'custom'
+                            ? 'bg-white/15 text-white'
+                            : 'text-white/40 hover:text-white/70'
+                        }`}
+                      >
+                        <Settings2 className="w-3 h-3" />
+                        Custom
+                      </button>
+                      <button
+                        onClick={() => setColorMode('auto')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                          colorMode === 'auto'
+                            ? 'bg-white/15 text-white'
+                            : 'text-white/40 hover:text-white/70'
+                        }`}
+                      >
+                        <Wand2 className="w-3 h-3" />
+                        Automatisch
+                      </button>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+
+                  {colorMode === 'auto' && (
+                    <div className="space-y-2">
+                      {!localData.website && (
+                        <div className="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          Vul eerst een website URL in om kleuren automatisch op te halen.
+                        </div>
+                      )}
+                      <Button
+                        onClick={handleFetchColors}
+                        disabled={isFetchingColors || !localData.website}
+                        className="w-full gap-2"
+                        variant="outline"
+                      >
+                        {isFetchingColors ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Kleuren ophalen…
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4" />
+                            Kleuren ophalen van website
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className={`grid grid-cols-2 gap-3 ${colorMode === 'auto' ? 'opacity-60 pointer-events-none' : ''}`}>
                     {COLOR_FIELDS.map(({ key, label }) => (
                       <ColorField
                         key={key}
