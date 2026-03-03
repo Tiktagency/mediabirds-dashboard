@@ -99,6 +99,10 @@ const Blogs = () => {
     setIsLoading(true);
     console.log("Triggering n8n webhook");
 
+    // Create AbortController with 180 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 seconds
+
     try {
       const response = await fetch('https://tikt.app.n8n.cloud/webhook/f1bb199e-ee0c-4cb1-b085-557ea22fa79f', {
         method: 'POST',
@@ -109,7 +113,10 @@ const Blogs = () => {
           timestamp: new Date().toISOString(),
           triggered_from: 'blogs_page',
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       let message = 'Geen bericht beschikbaar';
       
@@ -149,7 +156,12 @@ const Blogs = () => {
       }
     } catch (error) {
       console.error("Error triggering webhook:", error);
-      const errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
+      
+      let errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
+      if (error instanceof Error && error.name === 'AbortError') {
+        errorMessage = "De aanvraag duurde te lang (meer dan 3 minuten). Probeer het opnieuw.";
+      }
+      
       toast({
         title: "Fout",
         description: errorMessage,
@@ -199,6 +211,12 @@ const Blogs = () => {
         <p className="text-center text-white/90 text-lg mb-8">
           Druk op de start knop om blogs te genereren
         </p>
+        
+        {isLoading && (
+          <p className="text-center text-white/80 text-sm mb-4">
+            Dit kan enkele minuten duren, even geduld...
+          </p>
+        )}
         
         <Button 
           size="lg" 
