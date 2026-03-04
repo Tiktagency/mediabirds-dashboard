@@ -7,6 +7,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Remove invisible characters and surrounding quotes from URLs
+function sanitizeUrl(input: string) {
+  return input
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // zero-width chars
+    .replace(/[\s\t\n\r]+/g, '') // remove all whitespace
+    .replace(/^['\"]/,'') // leading quote
+    .replace(/['\"]$/,'') // trailing quote
+    .trim();
+}
+
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,10 +39,24 @@ serve(async (req) => {
       Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ??
       Deno.env.get('N8N_AUTH_TOKEN');
 
-    const n8nWebhookUrl = rawWebhook?.trim();
-    const authToken = rawAuth?.trim();
+    const n8nWebhookUrl = rawWebhook ?? undefined;
+    const authToken = rawAuth ?? undefined;
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    const webhookSource = Deno.env.get('N8N_WEBHOOK') ? 'N8N_WEBHOOK'
+      : Deno.env.get('N8N_WEBHOOK_URL') ? 'N8N_WEBHOOK_URL'
+      : Deno.env.get('N8N_webhook_url') ? 'N8N_webhook_url'
+      : Deno.env.get('WEBHOOK_URL') ? 'WEBHOOK_URL'
+      : 'none';
+
+    const authSource = Deno.env.get('authorization') ? 'authorization'
+      : Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ? 'N8N_WEBHOOK_AUTH_TOKEN'
+      : Deno.env.get('N8N_AUTH_TOKEN') ? 'N8N_AUTH_TOKEN'
+      : 'none';
+
+    console.log('Using webhook secret:', webhookSource);
+    console.log('Using auth secret:', authSource);
 
     if (!n8nWebhookUrl) {
       console.error('Webhook URL secret is missing');
@@ -45,7 +70,7 @@ serve(async (req) => {
 
     // Validate that webhook URL is actually a valid URL
     try {
-      const parsed = new URL(n8nWebhookUrl);
+      const parsed = new URL(sanitizeUrl(n8nWebhookUrl));
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         throw new Error('invalid protocol');
       }
@@ -64,11 +89,12 @@ serve(async (req) => {
     console.log("Calling n8n webhook with auth header");
 
     // Call n8n webhook with authentication
-    const response = await fetch(n8nWebhookUrl, {
+    const response = await fetch(sanitizeUrl(n8nWebhookUrl), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authToken, // Secure auth header
+        'Authorization': authToken!.startsWith('Bearer ') ? authToken! : `Bearer ${authToken!}`, // Secure auth header
+        'authorization': authToken!.startsWith('Bearer ') ? authToken! : `Bearer ${authToken!}`,
       },
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
