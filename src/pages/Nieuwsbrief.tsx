@@ -61,12 +61,10 @@ const TEXT_FIELDS: { key: TextFieldKey; label: string; type: 'input' | 'textarea
 
 const COLOR_FIELDS: { key: string; label: string }[] = [
   { key: 'primaire_kleur', label: 'Primaire kleur' },
-  { key: 'secundaire_kleur', label: 'Secundaire kleur' },
   { key: 'achtergrond_kleur', label: 'Achtergrond' },
   { key: 'kaart_achtergrond', label: 'Kaart achtergrond' },
   { key: 'tekst_kleur', label: 'Tekstkleur' },
   { key: 'subtekst_kleur', label: 'Subtekstkleur' },
-  { key: 'accent_kleur', label: 'Accentkleur' },
   { key: 'cta_tekst_kleur', label: 'CTA tekstkleur' },
   { key: 'footer_achtergrond', label: 'Footer achtergrond' },
   { key: 'footer_tekst_kleur', label: 'Footer tekstkleur' },
