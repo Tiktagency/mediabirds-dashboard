@@ -107,11 +107,13 @@ const tileConfigMap: Record<string, TileConfig> = {
 
 const Index = () => {
   const { isLoading, signOut, user, isAdmin, isSuperAdmin, roles } = useAuth();
-  const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
-  const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
-  const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
+  const { lastRuns: n8nLastRuns } = useN8nExecutionsBatch([
+    'MEDIABIRDS klantenservice chatbot',
+    'MEDIABIRDS monday planning',
+    'MEDIABIRDS Alt-text Wordpress',
+  ]);
   const { lastRuns } = useAutomationStatus();
-  const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings();
+  const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings(user?.id);
   const { settings: automationSettings, isLoading: automationsLoading } = useAutomationSettings();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);

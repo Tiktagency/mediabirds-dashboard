@@ -21,16 +21,18 @@ serve(async (req) => {
       );
     }
 
-    const { workflowName } = await req.json();
+    const body = await req.json();
+    // Support both single workflowName and array workflowNames
+    const workflowNames: string[] = body.workflowNames || (body.workflowName ? [body.workflowName] : []);
     
-    if (!workflowName) {
+    if (!workflowNames.length) {
       return new Response(
-        JSON.stringify({ error: 'workflowName is required' }),
+        JSON.stringify({ error: 'workflowName or workflowNames is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Fetching executions for workflow: ${workflowName}`);
+    console.log(`Fetching executions for workflows: ${workflowNames.join(', ')}`);
 
     // First, get all workflows to find the one matching the name
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
