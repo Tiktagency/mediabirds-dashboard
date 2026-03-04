@@ -80,14 +80,19 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   background_color: DEFAULT_BACKGROUND_COLOR,
 };
 
-export const useDashboardSettings = () => {
+export const useDashboardSettings = (userId?: string) => {
   const [settings, setSettings] = useState<DashboardSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      let uid = userId;
+      if (!uid) {
+        const { data: { user } } = await supabase.auth.getUser();
+        uid = user?.id;
+      }
+      const user = uid ? { id: uid } : null;
       if (!user) return;
 
       const { data, error } = await supabase
