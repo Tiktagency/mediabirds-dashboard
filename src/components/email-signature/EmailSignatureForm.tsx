@@ -107,6 +107,8 @@ export const EmailSignatureForm = ({
       background_color: '#1a1a2e',
       gradient_end_color: '#16213e',
       text_color: '#ffffff',
+      profile_photo_url: '',
+      company_logo_url: '',
     },
   });
 
