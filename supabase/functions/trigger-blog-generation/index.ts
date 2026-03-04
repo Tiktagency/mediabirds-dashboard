@@ -18,7 +18,7 @@ serve(async (req) => {
     
     // Get environment variables
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK');
-    const authToken = Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN');
+    const authToken = Deno.env.get('authorization');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -28,8 +28,8 @@ serve(async (req) => {
     }
 
     if (!authToken) {
-      console.error('N8N_WEBHOOK_AUTH_TOKEN secret is missing');
-      throw new Error('N8N_WEBHOOK_AUTH_TOKEN configuratie ontbreekt');
+      console.error('authorization secret is missing');
+      throw new Error('authorization configuratie ontbreekt');
     }
 
     // Validate that webhook URL is actually a valid URL
