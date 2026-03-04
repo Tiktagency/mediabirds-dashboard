@@ -6,7 +6,8 @@ import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Ima
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useN8nExecutions } from '@/hooks/useN8nExecutions';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useN8nExecutionsBatch } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useAutomationSettings } from '@/hooks/useAutomationSettings';
@@ -107,11 +108,13 @@ const tileConfigMap: Record<string, TileConfig> = {
 
 const Index = () => {
   const { isLoading, signOut, user, isAdmin, isSuperAdmin, roles } = useAuth();
-  const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
-  const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
-  const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
+  const { lastRuns: n8nLastRuns } = useN8nExecutionsBatch([
+    'MEDIABIRDS klantenservice chatbot',
+    'MEDIABIRDS monday planning',
+    'MEDIABIRDS Alt-text Wordpress',
+  ]);
   const { lastRuns } = useAutomationStatus();
-  const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings();
+  const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings(user?.id);
   const { settings: automationSettings, isLoading: automationsLoading } = useAutomationSettings();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [showCompleteProfile, setShowCompleteProfile] = useState(false);
@@ -182,11 +185,11 @@ const Index = () => {
     const config = tileConfigMap[automationName];
     if (!config) return null;
     
-    if (config.n8nWorkflow) {
+      if (config.n8nWorkflow) {
       let n8nResult: string | null = null;
-      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') n8nResult = chatbotLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') n8nResult = mondayLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') n8nResult = altTextLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') n8nResult = n8nLastRuns['MEDIABIRDS klantenservice chatbot'] ?? null;
+      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') n8nResult = n8nLastRuns['MEDIABIRDS monday planning'] ?? null;
+      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') n8nResult = n8nLastRuns['MEDIABIRDS Alt-text Wordpress'] ?? null;
       
       // Als n8n resultaat beschikbaar is, gebruik dat
       if (n8nResult) return n8nResult;
@@ -237,12 +240,16 @@ const Index = () => {
 
   const roleBadge = getRoleBadge();
 
-  if (isLoading || settingsLoading || automationsLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Laden...</p>
+      <div className="min-h-screen hero-gradient">
+        <div className="w-full h-48 2xl:h-64 bg-muted animate-pulse" />
+        <div className="max-w-5xl 2xl:max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl 2xl:max-w-6xl mx-auto">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
