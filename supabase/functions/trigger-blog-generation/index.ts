@@ -9,12 +9,14 @@ const corsHeaders = {
 
 // Remove invisible characters and surrounding quotes from URLs
 function sanitizeUrl(input: string) {
-  return input
-    .replace(/[\u200B-\u200D\uFEFF]/g, '') // zero-width chars
-    .replace(/[\s\t\n\r]+/g, '') // remove all whitespace
-    .replace(/^['\"]/,'') // leading quote
-    .replace(/['\"]$/,'') // trailing quote
+  let s = (input?.normalize?.('NFKC') ?? input) as string;
+  s = s
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // control chars
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '') // zero-width & word joiners
+    .replace(/^['\"]+|['\"]+$/g, '') // strip wrapping quotes
+    .replace(/\s+/g, '') // remove all whitespace/newlines
     .trim();
+  return s;
 }
 
 
@@ -70,10 +72,17 @@ serve(async (req) => {
 
     // Validate that webhook URL is actually a valid URL
     try {
-      const parsed = new URL(sanitizeUrl(n8nWebhookUrl));
+      const sUrl = sanitizeUrl(n8nWebhookUrl);
+      const parsed = new URL(sUrl);
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         throw new Error('invalid protocol');
       }
+      // Minimal, non-sensitive debug info
+      console.log('Webhook URL validated', {
+        protocol: parsed.protocol,
+        host: parsed.host,
+        len: sUrl.length,
+      });
     } catch {
       console.error('Webhook URL is not a valid URL');
       throw new Error('N8N_WEBHOOK configuratie is ongeldig');
