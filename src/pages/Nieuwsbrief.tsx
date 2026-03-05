@@ -78,6 +78,13 @@ const Nieuwsbrief = () => {
   const { isAdmin } = useAdminAuth();
   const colorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
+  const {
+    schedule: newsletterSchedule,
+    isLoading: scheduleLoading,
+    isSaving: scheduleSaving,
+    updateSchedule,
+    getNextTriggerDisplay,
+  } = useNewsletterSchedule(selectedCompany?.id ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
