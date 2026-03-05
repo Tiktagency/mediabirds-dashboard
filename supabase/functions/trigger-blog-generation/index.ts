@@ -108,15 +108,14 @@ serve(async (req) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 180000);
 
-    console.log("Calling n8n webhook with auth header");
+    console.log("Calling n8n webhook");
 
     // Call n8n webhook with authentication
     const response = await fetch(picked.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authToken!.startsWith('Bearer ') ? authToken! : `Bearer ${authToken!}`, // Secure auth header
-        'authorization': authToken!.startsWith('Bearer ') ? authToken! : `Bearer ${authToken!}`,
+        'Authorization': authToken!, // Send token as-is without Bearer prefix
       },
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -143,8 +142,9 @@ serve(async (req) => {
       }
     } else {
       status = 'error';
+      const errorText = await response.text().catch(() => 'no response body');
+      console.error("Webhook error response:", errorText);
       message = `Webhook fout: ${response.status} ${response.statusText}`;
-      console.error("Webhook error:", message);
     }
 
     // Save notification to database
