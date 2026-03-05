@@ -741,8 +741,27 @@ const Nieuwsbrief = () => {
             </Card>
           </div>
 
+          {/* Automatische Trigger */}
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-6">
+              <ScheduleTrigger
+                companyId={selectedCompany?.id ?? null}
+                isAdmin={isAdmin}
+                schedule={newsletterSchedule as any}
+                isLoading={scheduleLoading}
+                isSaving={scheduleSaving}
+                updateSchedule={updateSchedule as any}
+                getNextTriggerDisplay={getNextTriggerDisplay}
+              />
+            </CardContent>
+          </Card>
+
           {/* Generate button full width */}
-          <Button className="w-full gap-2 h-11" onClick={handleGenerate} disabled={isGenerating}>
+          <Button
+            className="w-full gap-2 h-11"
+            onClick={handleGenerate}
+            disabled={isGenerating || !!newsletterSchedule?.enabled}
+          >
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
