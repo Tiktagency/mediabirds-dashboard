@@ -1,9 +1,24 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users } from 'lucide-react';
+import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users, LogOut } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const { isLoading, signOut, user } = useAdminAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
@@ -16,6 +31,18 @@ const Index = () => {
         <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-5xl md:text-6xl font-bold">
           Mediabirds
         </h1>
+        <div className="absolute top-6 right-6 flex items-center gap-4">
+          <span className="text-white text-sm">{user?.email}</span>
+          <Button 
+            onClick={signOut}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Uitloggen
+          </Button>
+        </div>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-16">
