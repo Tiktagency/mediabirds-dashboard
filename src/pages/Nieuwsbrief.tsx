@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuwsbrief/NewsletterCompanySelector';
+import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
+import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const MAX_RSS_FEEDS = 5;
 
