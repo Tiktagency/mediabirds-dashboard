@@ -1,33 +1,19 @@
 
-## Layout aanpassing: Trigger en knop naar linkerkolom
+## Verwijder `secundaire_kleur` & `accent_kleur` uit de POST payload
 
-Huidig: Row 2 heeft [Kleuren card | Preview card] en daarna los de ScheduleTrigger + knop full-width.
+De twee kleuren worden nog op drie plekken meegestuurd:
 
-Gewenst: 
-- Linkerkolom: Kleuren card + ScheduleTrigger card + Genereer-knop (gestapeld)
-- Rechterkolom: Live kleur preview (strekt zich uit over de volledige hoogte)
+1. **`src/pages/Nieuwsbrief.tsx`** — payload die naar de edge function wordt gestuurd (regels 395 en 400)
+2. **`supabase/functions/trigger-newsletter-webhook/index.ts`** — destructuring van body (regels 42-43) én de payload naar n8n (regels 60 en 65)
 
-### Wijziging in `src/pages/Nieuwsbrief.tsx`
+### Wijzigingen
 
-**Regel 525:** `items-start` → `items-stretch` op de grid
+**`src/pages/Nieuwsbrief.tsx`** — verwijder uit de POST body (regels 395 en 400):
+- `secundaire_kleur: localColors.secundaire_kleur,`
+- `accent_kleur: localColors.accent_kleur,`
 
-**Linkerkolom** (regel 527-604): Kleuren card omhullen in een `flex flex-col gap-4` div samen met ScheduleTrigger + knop.
+**`supabase/functions/trigger-newsletter-webhook/index.ts`**:
+- Regel 42-43: verwijder `secundaire_kleur` en `accent_kleur` uit de destructuring
+- Regels 60 en 65: verwijder `secundaire_kleur` en `accent_kleur` uit de payload naar n8n
 
-**Rechterkolom** (regel 606-741): Preview card krijgt `h-full` zodat het meestrekt.
-
-**Regels 744-785**: De losse ScheduleTrigger Card + losse Button verwijderen — ze gaan naar de linkerkolom.
-
-```
-<div class="grid cols-2 items-stretch">
-  <div class="flex flex-col gap-4">            ← linkerkolom
-    [Kleuren card]
-    [ScheduleTrigger card]
-    [Genereer-knop]
-  </div>
-  <Card class="h-full">                        ← rechterkolom
-    [Live kleur preview]
-  </Card>
-</div>
-```
-
-Enkel bestand: `src/pages/Nieuwsbrief.tsx` (regels 524–785).
+Geen database- of andere wijzigingen nodig.
