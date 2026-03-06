@@ -51,6 +51,31 @@ serve(async (req) => {
   try {
     console.log("Starting blog generation trigger");
     
+    // Get user ID from authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Geen autorisatie');
+    }
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    // Create client with user's auth token to get user ID
+    const supabaseClient = createClient(
+      supabaseUrl!,
+      supabaseAnonKey!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError || !user) {
+      console.error('Failed to get user:', userError);
+      throw new Error('Ongeldige gebruiker');
+    }
+    
+    const userId = user.id;
+    
     // Pick first VALID webhook URL among known secret names
     const picked = pickWebhookEnv();
 
@@ -164,6 +189,7 @@ serve(async (req) => {
       .insert({
         message: message,
         status: status,
+        user_id: userId,
       });
 
     if (dbError) {
@@ -212,11 +238,31 @@ serve(async (req) => {
       const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
       const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
       
+      // Try to get user ID from request for error notifications
+      const authHeader = req.headers.get('Authorization');
+      let errorUserId = null;
+      
+      if (authHeader) {
+        try {
+          const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+          const userClient = createClient(
+            supabaseUrl!,
+            supabaseAnonKey!,
+            { global: { headers: { Authorization: authHeader } } }
+          );
+          const { data: { user } } = await userClient.auth.getUser();
+          errorUserId = user?.id;
+        } catch {
+          console.log('Could not get user ID for error notification');
+        }
+      }
+      
       await supabase
         .from('notifications')
         .insert({
           message: errorMessage,
           status: errorStatus,
+          user_id: errorUserId,
         });
     } catch (dbError) {
       console.error("Error saving error notification:", dbError);

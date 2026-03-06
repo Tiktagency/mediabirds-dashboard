@@ -18,7 +18,7 @@ interface Notification {
 
 const Blogs = () => {
   const { toast, dismiss } = useToast();
-  const { isLoading: authLoading } = useAdminAuth();
+  const { isLoading: authLoading, user } = useAdminAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -28,10 +28,13 @@ const Blogs = () => {
 
   // Load notifications from database
   useEffect(() => {
+    if (!user) return;
+
     const loadNotifications = async () => {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -47,7 +50,7 @@ const Blogs = () => {
 
     loadNotifications();
 
-    // Set up realtime subscription
+    // Set up realtime subscription filtered by user_id
     const channel = supabase
       .channel('notifications_channel')
       .on(
@@ -55,7 +58,8 @@ const Blogs = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notifications'
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
         },
         (payload) => {
           const newNotification = payload.new as Notification;
@@ -67,7 +71,7 @@ const Blogs = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
 
   if (authLoading) {
     return (
