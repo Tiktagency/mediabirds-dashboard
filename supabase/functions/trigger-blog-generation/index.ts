@@ -51,14 +51,16 @@ serve(async (req) => {
   try {
     console.log("Starting blog generation trigger");
     
+    // Get environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
     // Get user ID from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Geen autorisatie');
     }
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     
     // Create client with user's auth token to get user ID
     const supabaseClient = createClient(
@@ -85,8 +87,6 @@ serve(async (req) => {
       Deno.env.get('N8N_AUTH_TOKEN');
 
     const authToken = rawAuth ?? undefined;
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     const webhookSource = picked?.source ?? 'none';
 
@@ -234,30 +234,30 @@ serve(async (req) => {
 
     // Try to save error notification to database
     try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+      const errorSupabaseUrl = Deno.env.get('SUPABASE_URL');
+      const errorSupabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      const errorSupabase = createClient(errorSupabaseUrl!, errorSupabaseServiceKey!);
       
       // Try to get user ID from request for error notifications
-      const authHeader = req.headers.get('Authorization');
+      const errorAuthHeader = req.headers.get('Authorization');
       let errorUserId = null;
       
-      if (authHeader) {
+      if (errorAuthHeader) {
         try {
-          const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-          const userClient = createClient(
-            supabaseUrl!,
-            supabaseAnonKey!,
-            { global: { headers: { Authorization: authHeader } } }
+          const errorSupabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+          const errorUserClient = createClient(
+            errorSupabaseUrl!,
+            errorSupabaseAnonKey!,
+            { global: { headers: { Authorization: errorAuthHeader } } }
           );
-          const { data: { user } } = await userClient.auth.getUser();
+          const { data: { user } } = await errorUserClient.auth.getUser();
           errorUserId = user?.id;
         } catch {
           console.log('Could not get user ID for error notification');
         }
       }
       
-      await supabase
+      await errorSupabase
         .from('notifications')
         .insert({
           message: errorMessage,
