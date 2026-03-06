@@ -56,20 +56,17 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    // Get user ID from authorization header
+  // Get user ID from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Geen autorisatie');
     }
     
-    // Create client with user's auth token to get user ID
-    const supabaseClient = createClient(
-      supabaseUrl!,
-      supabaseAnonKey!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const token = authHeader.replace('Bearer ', '').trim();
     
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Create admin client and get user from token
+    const adminClient = createClient(supabaseUrl!, supabaseServiceKey!);
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Failed to get user:', userError);
@@ -244,14 +241,13 @@ serve(async (req) => {
       
       if (errorAuthHeader) {
         try {
-          const errorSupabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-          const errorUserClient = createClient(
+          const token = errorAuthHeader.replace('Bearer ', '').trim();
+          const adminClient = createClient(
             errorSupabaseUrl!,
-            errorSupabaseAnonKey!,
-            { global: { headers: { Authorization: errorAuthHeader } } }
+            errorSupabaseServiceKey!
           );
-          const { data: { user } } = await errorUserClient.auth.getUser();
-          errorUserId = user?.id;
+          const { data: { user } } = await adminClient.auth.getUser(token);
+          errorUserId = user?.id ?? null;
         } catch {
           console.log('Could not get user ID for error notification');
         }
