@@ -15,15 +15,21 @@ const WHITELISTED_EMAILS = [
   'hello@tikt.ai'
 ];
 
+const passwordSchema = z.string()
+  .min(8, { message: "Wachtwoord moet minimaal 8 tekens bevatten" })
+  .regex(/[A-Z]/, { message: "Wachtwoord moet minimaal één hoofdletter bevatten" })
+  .regex(/[a-z]/, { message: "Wachtwoord moet minimaal één kleine letter bevatten" })
+  .regex(/[0-9]/, { message: "Wachtwoord moet minimaal één cijfer bevatten" });
+
 const loginSchema = z.object({
   email: z.string().email({ message: "Ongeldig e-mailadres" }),
-  password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens bevatten" }),
+  password: z.string().min(1, { message: "Wachtwoord is verplicht" }), // Less strict for login
 });
 
 const signupSchema = z.object({
   email: z.string().email({ message: "Ongeldig e-mailadres" }),
-  password: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens bevatten" }),
-  confirmPassword: z.string().min(6, { message: "Wachtwoord moet minimaal 6 tekens bevatten" }),
+  password: passwordSchema,
+  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Wachtwoorden komen niet overeen",
   path: ["confirmPassword"],
@@ -295,12 +301,15 @@ const Login = () => {
                 <Input
                   id="signup-password"
                   type="password"
-                  placeholder="••••••"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  Min. 8 tekens, met hoofdletter, kleine letter en cijfer
+                </p>
               </div>
               
               <div className="space-y-2">
