@@ -11,6 +11,7 @@ import { z } from 'zod';
 const WHITELISTED_EMAILS = [
   'lotte.seinen@mediabirds.nl',
   'joost.van.milligen@mediabirds.nl',
+  'isabelle.rutten@mediabirds.nl',
   'hello@tikt.ai'
 ];
 
