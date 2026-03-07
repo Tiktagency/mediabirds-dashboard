@@ -27,8 +27,9 @@ const ChatWidget = () => {
 
   const onSendMessage = async () => {
     if (message.trim()) {
-      await handleSendMessage(message);
+      const messageToSend = message;
       setMessage('');
+      await handleSendMessage(messageToSend);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
