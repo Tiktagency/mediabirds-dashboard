@@ -56,6 +56,20 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
+    // Initialize Supabase client early for status tracking
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+    
+    // Set status to 'running'
+    await supabase
+      .from('automation_status')
+      .upsert({
+        automation_name: 'blogs',
+        status: 'running',
+        last_updated: new Date().toISOString()
+      }, {
+        onConflict: 'automation_name'
+      });
+    
   // Get user ID from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -122,9 +136,6 @@ serve(async (req) => {
       console.error('Webhook URL is not a valid URL');
       throw new Error('N8N_WEBHOOK configuratie is ongeldig');
     }
-
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
     // Create AbortController with 180 second timeout
     const controller = new AbortController();
@@ -195,6 +206,18 @@ serve(async (req) => {
     }
 
     console.log("Notification saved successfully");
+    
+    // Set status to 'active' on success
+    await supabase
+      .from('automation_status')
+      .upsert({
+        automation_name: 'blogs',
+        status: 'active',
+        last_updated: new Date().toISOString(),
+        last_run: new Date().toISOString()
+      }, {
+        onConflict: 'automation_name'
+      });
 
     return new Response(
       JSON.stringify({ 
@@ -229,11 +252,22 @@ serve(async (req) => {
       }
     }
 
-    // Try to save error notification to database
+    // Try to save error notification to database and update status
     try {
       const errorSupabaseUrl = Deno.env.get('SUPABASE_URL');
       const errorSupabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
       const errorSupabase = createClient(errorSupabaseUrl!, errorSupabaseServiceKey!);
+      
+      // Set status to 'inactive' on error
+      await errorSupabase
+        .from('automation_status')
+        .upsert({
+          automation_name: 'blogs',
+          status: 'inactive',
+          last_updated: new Date().toISOString()
+        }, {
+          onConflict: 'automation_name'
+        });
       
       // Try to get user ID from request for error notifications
       const errorAuthHeader = req.headers.get('Authorization');
