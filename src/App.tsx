@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import MondayPlanning from "./pages/MondayPlanning";
 import SeoPage from "./pages/SeoPage";
 import Blogs from "./pages/Blogs";
+import WordpressAltText from "./pages/WordpressAltText";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/monday-planning" element={<MondayPlanning />} />
           <Route path="/seo" element={<SeoPage />} />
           <Route path="/blogs" element={<Blogs />} />
+          <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
