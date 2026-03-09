@@ -32,7 +32,7 @@ const MondayPlanning = () => {
         </Link>
       </div>
       
-      <HeroSection />
+      <HeroSection title="Monday planning Mediabirds" />
       <ChatWidget />
     </div>
   );
