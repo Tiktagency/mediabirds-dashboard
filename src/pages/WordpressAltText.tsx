@@ -32,7 +32,7 @@ const WordpressAltText = () => {
         </Link>
       </div>
       
-      <HeroSection />
+      <HeroSection title="Alt-tekst wordpress" />
       <ChatWidget />
     </div>
   );
