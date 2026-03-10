@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import HeroSection from '@/components/HeroSection';
-import ChatWidget from '@/components/ChatWidget';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import workflowImage from '@/assets/wordpress-alt-text-workflow.png';
 
 const WordpressAltText = () => {
   const { isLoading } = useAdminAuth();
@@ -33,7 +33,14 @@ const WordpressAltText = () => {
       </div>
       
       <HeroSection title="Alt-tekst wordpress" />
-      <ChatWidget />
+      
+      <div className="flex justify-center items-center py-12 px-6 bg-background">
+        <img 
+          src={workflowImage} 
+          alt="WordPress Alt Text Workflow" 
+          className="max-w-full h-auto rounded-lg shadow-lg"
+        />
+      </div>
     </div>
   );
 };
