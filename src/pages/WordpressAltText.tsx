@@ -19,7 +19,7 @@ const WordpressAltText = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="h-screen overflow-hidden relative">
       <div className="absolute top-6 left-6 z-10">
         <Link to="/">
           <Button 
@@ -32,14 +32,18 @@ const WordpressAltText = () => {
         </Link>
       </div>
       
-      <HeroSection title="Alt-tekst wordpress" />
-      
-      <div className="flex justify-center items-center py-12 px-6 bg-background">
-        <img 
-          src={workflowImage} 
-          alt="WordPress Alt Text Workflow" 
-          className="max-w-full h-auto rounded-lg shadow-lg"
-        />
+      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-24 px-6">
+        <h1 className="hero-title text-white mb-8 fade-in-up">
+          Alt-tekst wordpress
+        </h1>
+        
+        <div className="flex justify-center items-start max-w-5xl">
+          <img 
+            src={workflowImage} 
+            alt="WordPress Alt Text Workflow" 
+            className="max-w-full h-auto rounded-lg shadow-lg"
+          />
+        </div>
       </div>
     </div>
   );
