@@ -33,16 +33,16 @@ const WordpressAltText = () => {
         </Link>
       </div>
       
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-24 px-6 overflow-y-auto">
-        <h1 className="hero-title text-white mb-8 fade-in-up">
+      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
+        <h1 className="hero-title text-white mb-12 fade-in-up">
           Alt-tekst wordpress
         </h1>
         
-        <div className="flex flex-col items-center gap-6 max-w-5xl w-full pb-12">
+        <div className="flex flex-col items-center gap-10 max-w-5xl w-full pb-12">
           <img 
             src={workflowImage} 
             alt="WordPress Alt Text Workflow" 
-            className="max-w-full h-auto rounded-lg shadow-lg"
+            className="max-w-3xl w-full h-auto rounded-lg shadow-lg"
           />
           
           <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white w-full">
