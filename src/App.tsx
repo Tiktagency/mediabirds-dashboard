@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import MondayPlanning from "./pages/MondayPlanning";
-import SeoPage from "./pages/SeoPage";
+import ZoekwoordOnderzoek from "./pages/ZoekwoordOnderzoek";
 import Blogs from "./pages/Blogs";
 import WordpressAltText from "./pages/WordpressAltText";
 import Login from "./pages/Login";
@@ -23,7 +23,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Index />} />
           <Route path="/monday-planning" element={<MondayPlanning />} />
-          <Route path="/seo" element={<SeoPage />} />
+          <Route path="/zoekwoord-onderzoek" element={<ZoekwoordOnderzoek />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
