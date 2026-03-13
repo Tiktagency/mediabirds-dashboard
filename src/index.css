@@ -218,4 +218,104 @@ All colors MUST be HSL.
     background: var(--gradient-banner);
     padding: 4rem 1.5rem;
   }
+
+  /* SEO Research Form Styles */
+  .seo-page-gradient {
+    background: linear-gradient(180deg, hsl(0 0% 4%) 0%, hsl(270 50% 8%) 50%, hsl(0 0% 4%) 100%);
+    min-height: 100vh;
+  }
+
+  .seo-card {
+    background: linear-gradient(145deg, hsl(0 0% 10% / 0.9) 0%, hsl(0 0% 6% / 0.95) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    border-radius: 20px;
+    box-shadow: 
+      0 25px 50px -12px hsl(0 0% 0% / 0.5),
+      0 0 0 1px hsl(0 0% 100% / 0.05) inset;
+    backdrop-filter: blur(20px);
+  }
+
+  .seo-input {
+    background: hsl(0 0% 8%);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    color: hsl(0 0% 100%);
+    font-size: 1rem;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px hsl(0 0% 0% / 0.3) inset;
+  }
+
+  .seo-input::placeholder {
+    color: hsl(0 0% 100% / 0.35);
+  }
+
+  .seo-input:focus {
+    outline: none;
+    border-color: hsl(276 85% 48% / 0.5);
+    box-shadow: 
+      0 2px 8px hsl(0 0% 0% / 0.3) inset,
+      0 0 0 3px hsl(276 85% 48% / 0.15);
+  }
+
+  .seo-button {
+    background: hsl(0 0% 100% / 0.1);
+    color: hsl(0 0% 100%);
+    border: 1px solid hsl(0 0% 100% / 0.15);
+    border-radius: 100px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+
+  .seo-button:hover:not(:disabled) {
+    background: hsl(0 0% 100% / 0.15);
+    border-color: hsl(0 0% 100% / 0.25);
+    transform: translateY(-1px);
+  }
+
+  .seo-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .seo-button-primary {
+    background: linear-gradient(135deg, hsl(276 85% 48%) 0%, hsl(25 95% 55%) 100%);
+    color: hsl(0 0% 100%);
+    border: none;
+    border-radius: 100px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px hsl(276 85% 48% / 0.4);
+  }
+
+  .seo-button-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px hsl(276 85% 48% / 0.5);
+  }
+
+  .seo-button-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
 }
