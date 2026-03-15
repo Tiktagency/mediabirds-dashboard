@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import SeoResearchForm from '@/components/seo/SeoResearchForm';
+import SeoSelectionScreen from '@/components/seo/SeoSelectionScreen';
 
 const ZoekwoordOnderzoek = () => {
   const { isLoading } = useAdminAuth();
+  const [showForm, setShowForm] = useState(false);
 
   if (isLoading) {
     return (
@@ -36,10 +39,17 @@ const ZoekwoordOnderzoek = () => {
           Zoekwoord Onderzoek
         </h1>
         <p className="text-white/50 text-lg mb-12 text-center max-w-lg">
-          Vul de stappen in om een AI-gestuurd SEO zoekwoordonderzoek te starten
+          {showForm 
+            ? 'Vul de stappen in om een AI-gestuurd SEO zoekwoordonderzoek te starten'
+            : 'Kies een optie om te beginnen'
+          }
         </p>
         
-        <SeoResearchForm />
+        {showForm ? (
+          <SeoResearchForm />
+        ) : (
+          <SeoSelectionScreen onSelectResearch={() => setShowForm(true)} />
+        )}
       </div>
     </div>
   );
