@@ -12,6 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // Validate JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { Plaatsnaam, Country, searchStringsArray } = await req.json();
 
     if (!Plaatsnaam || !Country || !Array.isArray(searchStringsArray) || searchStringsArray.length === 0) {
@@ -60,8 +83,8 @@ serve(async (req) => {
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
         const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         if (supabaseUrl && serviceRoleKey) {
-          const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-          await supabaseClient
+          const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+          await supabaseAdmin
             .from('automation_status')
             .upsert({
               automation_name: 'leads-generator',
