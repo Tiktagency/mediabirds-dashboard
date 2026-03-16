@@ -34,7 +34,6 @@ const WordpressAltText = () => {
   useEffect(() => {
     setEditName(selectedCompany?.name || '');
     setEditDomain(selectedCompany?.domain || '');
-    setEditPassword(selectedCompany?.app_password || '');
   }, [selectedCompany]);
 
   useEffect(() => {
