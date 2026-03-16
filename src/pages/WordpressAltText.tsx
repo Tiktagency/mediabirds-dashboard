@@ -22,7 +22,6 @@ const WordpressAltText = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDomain, setEditDomain] = useState('');
-  const [editPassword, setEditPassword] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
