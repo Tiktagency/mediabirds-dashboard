@@ -46,9 +46,9 @@ const WordpressAltText = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expandedField]);
 
-  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password', value: string) => {
+  const handleFieldSave = async (field: 'name' | 'domain', value: string) => {
     if (!selectedCompany) return;
-    const currentValue = field === 'name' ? selectedCompany.name : field === 'domain' ? (selectedCompany.domain || '') : (selectedCompany.app_password || '');
+    const currentValue = field === 'name' ? selectedCompany.name : (selectedCompany.domain || '');
     if (value === currentValue) return;
 
     const { error } = await supabase
