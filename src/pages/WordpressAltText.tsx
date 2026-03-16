@@ -9,7 +9,7 @@ import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextComp
 import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useAltTextSchedule } from '@/hooks/useAltTextSchedule';
-import { Pencil, Loader2, Clock, Info } from 'lucide-react';
+import { Pencil, Loader2, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,6 @@ const WordpressAltText = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDomain, setEditDomain] = useState('');
-  const [editPassword, setEditPassword] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -35,7 +34,6 @@ const WordpressAltText = () => {
   useEffect(() => {
     setEditName(selectedCompany?.name || '');
     setEditDomain(selectedCompany?.domain || '');
-    setEditPassword(selectedCompany?.app_password || '');
   }, [selectedCompany]);
 
   useEffect(() => {
@@ -48,9 +46,9 @@ const WordpressAltText = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expandedField]);
 
-  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password', value: string) => {
+  const handleFieldSave = async (field: 'name' | 'domain', value: string) => {
     if (!selectedCompany) return;
-    const currentValue = field === 'name' ? selectedCompany.name : field === 'domain' ? (selectedCompany.domain || '') : (selectedCompany.app_password || '');
+    const currentValue = field === 'name' ? selectedCompany.name : (selectedCompany.domain || '');
     if (value === currentValue) return;
 
     const { error } = await supabase
@@ -68,15 +66,15 @@ const WordpressAltText = () => {
 
   const handleStart = async () => {
     if (!selectedCompany) return;
-    if (!editName.trim() || !editDomain.trim() || !editPassword.trim()) {
-      toast({ title: 'Vul alle velden in', description: 'Bedrijfsnaam, domeinnaam en applicatie wachtwoord zijn verplicht', variant: 'destructive' });
+    if (!editName.trim() || !editDomain.trim()) {
+      toast({ title: 'Vul alle velden in', description: 'Bedrijfsnaam en domeinnaam zijn verplicht', variant: 'destructive' });
       return;
     }
     setIsStarting(true);
     setIsAnimating(true);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
-        body: { bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain, app_password: selectedCompany.app_password },
+        body: { company_id: selectedCompany.id, bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain },
       });
       if (error) throw error;
 
@@ -196,58 +194,10 @@ const WordpressAltText = () => {
                   <Label className="text-white/70">Domeinnaam:</Label>
                   {renderEditableField('domain', editDomain, setEditDomain, () => handleFieldSave('domain', editDomain), 'Voer domeinnaam in...')}
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Label className="text-white/70">Applicatie wachtwoord:</Label>
-                    <TooltipProvider delayDuration={200}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-4">
-                          <p className="font-semibold mb-2 text-sm">Hoe kom je aan een applicatie wachtwoord?</p>
-                          <ol className="list-decimal list-inside space-y-1 text-xs text-white/80">
-                            <li>Ga naar de achterkant van je <strong className="text-white">WordPress</strong> website</li>
-                            <li>Navigeer naar <strong className="text-white">Gebruikers</strong> → <strong className="text-white">Mediabirds</strong></li>
-                            <li>Scroll naar <strong className="text-white">Applicatie wachtwoorden</strong></li>
-                            <li>Gebruik als naam: <strong className="text-white">n8n alt tekst</strong></li>
-                            <li>Klik op <strong className="text-white">"Applicatie wachtwoord toevoegen"</strong></li>
-                          </ol>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="relative">
-                    {editingField === 'app_password' ? (
-                      <Input
-                        type="password"
-                        value={editPassword}
-                        onChange={(e) => setEditPassword(e.target.value)}
-                        onBlur={() => { setEditingField(null); handleFieldSave('app_password', editPassword); }}
-                        placeholder="abcd efgh ijkl 1234"
-                        className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
-                        autoFocus
-                        onFocus={(e) => {
-                          const len = e.currentTarget.value.length;
-                          e.currentTarget.setSelectionRange(len, len);
-                        }}
-                      />
-                    ) : (
-                      <div
-                        onClick={() => setEditingField('app_password')}
-                        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
-                      >
-                        <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
-                          {editPassword ? '•'.repeat(editPassword.length) : 'abcd efgh ijkl 1234'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim()}
+                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim()}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
               >
                 {schedule?.enabled === true ? (
