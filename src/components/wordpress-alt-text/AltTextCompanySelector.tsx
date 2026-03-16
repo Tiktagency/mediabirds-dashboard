@@ -33,7 +33,6 @@ export interface AltTextCompany {
   id: string;
   name: string;
   domain: string | null;
-  app_password: string | null;
   created_at: string;
 }
 
