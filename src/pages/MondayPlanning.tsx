@@ -7,13 +7,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
+import bannerImage from '@/assets/mountain-banner.png';
 
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd';
 const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
@@ -27,7 +28,7 @@ const FASES = [
 ];
 
 const MondayPlanning = () => {
-  const { isLoading: authLoading, user } = useAdminAuth();
+  const { isLoading: authLoading, user, signOut } = useAdminAuth();
   const { toast } = useToast();
   
   const [bedrijfsnaam, setBedrijfsnaam] = useState('');
@@ -175,77 +176,98 @@ const MondayPlanning = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
-      <div className="absolute top-6 left-6 z-10">
-        <Link to="/">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            Dashboard
-          </Button>
-        </Link>
-      </div>
-
-      <div className="container mx-auto px-4 pt-16 pb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-12">
-          Monday planning Mediabirds
+    <div className="min-h-screen hero-gradient">
+      {/* Banner Section */}
+      <header className="w-full h-48 overflow-hidden relative">
+        <img 
+          src={bannerImage} 
+          alt="Monday Planning Banner" 
+          className="w-full h-full object-cover"
+        />
+        <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-4xl md:text-5xl font-bold text-center">
+          Monday Planning
         </h1>
+        <div className="absolute top-6 left-6">
+          <Link to="/">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white/10 border-white/20 hover:bg-white/20"
+              style={{ color: '#232323' }}
+            >
+              Dashboard
+            </Button>
+          </Link>
+        </div>
+        <div className="absolute top-6 right-6 flex items-center gap-4">
+          <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+          <Button 
+            onClick={signOut}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white/20 hover:bg-white/20"
+            style={{ color: '#232323' }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Uitloggen
+          </Button>
+        </div>
+      </header>
 
-        <div className="max-w-xl mx-auto bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10">
+      <div className="max-w-xl mx-auto px-6 py-12">
+        <div className="bg-card/50 backdrop-blur-sm rounded-xl p-8 border border-border/50">
           <div className="space-y-6">
             {/* Bedrijfsnaam */}
             <div className="space-y-2">
-              <Label htmlFor="bedrijfsnaam" className="text-white">Bedrijfsnaam</Label>
+              <Label htmlFor="bedrijfsnaam" className="text-foreground">Bedrijfsnaam</Label>
               <Input
                 id="bedrijfsnaam"
                 value={bedrijfsnaam}
                 onChange={(e) => setBedrijfsnaam(e.target.value)}
                 placeholder="Voer bedrijfsnaam in"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                className="bg-background/50 border-border"
               />
             </div>
 
             {/* Pakket */}
             <div className="space-y-2">
-              <Label htmlFor="pakket" className="text-white">Pakket</Label>
+              <Label htmlFor="pakket" className="text-foreground">Pakket</Label>
               <Select value={pakket} onValueChange={setPakket}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectTrigger className="bg-background/50 border-border">
                   <SelectValue placeholder="Selecteer pakket" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/20">
-                  <SelectItem value="A" className="text-white hover:bg-white/10">Pakket A</SelectItem>
-                  <SelectItem value="B" className="text-white hover:bg-white/10">Pakket B</SelectItem>
-                  <SelectItem value="C" className="text-white hover:bg-white/10">Pakket C</SelectItem>
-                  <SelectItem value="D" className="text-white hover:bg-white/10">Pakket D</SelectItem>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="A">Pakket A</SelectItem>
+                  <SelectItem value="B">Pakket B</SelectItem>
+                  <SelectItem value="C">Pakket C</SelectItem>
+                  <SelectItem value="D">Pakket D</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Start datum */}
             <div className="space-y-2">
-              <Label className="text-white">Start datum</Label>
+              <Label className="text-foreground">Start datum</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal bg-white/10 border-white/20 text-white hover:bg-white/20",
-                      !startDatum && "text-white/50"
+                      "w-full justify-start text-left font-normal bg-background/50 border-border",
+                      !startDatum && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {startDatum ? format(startDatum, "PPP", { locale: nl }) : "Selecteer datum"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-slate-800 border-white/20" align="start">
+                <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
                   <Calendar
                     mode="single"
                     selected={startDatum}
                     onSelect={setStartDatum}
                     initialFocus
-                    className="pointer-events-auto bg-slate-800 text-white"
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -253,7 +275,7 @@ const MondayPlanning = () => {
 
             {/* Fases */}
             <div className="space-y-3">
-              <Label className="text-white">Fases (selecteer minimaal 1)</Label>
+              <Label className="text-foreground">Fases (selecteer minimaal 1)</Label>
               <div className="space-y-2">
                 {FASES.map((fase) => (
                   <div key={fase.id} className="flex items-center space-x-3">
@@ -261,11 +283,11 @@ const MondayPlanning = () => {
                       id={fase.id}
                       checked={selectedFases.includes(fase.id)}
                       onCheckedChange={() => handleFaseToggle(fase.id)}
-                      className="border-white/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <Label 
                       htmlFor={fase.id} 
-                      className="text-white/80 cursor-pointer"
+                      className="text-muted-foreground cursor-pointer"
                     >
                       {fase.label}
                     </Label>
