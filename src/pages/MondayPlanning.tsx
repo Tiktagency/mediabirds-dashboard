@@ -188,7 +188,7 @@ const MondayPlanning = () => {
         </Link>
       </div>
 
-      <div className="container mx-auto px-4 pt-16 pb-8">
+      <div className="container mx-auto px-4 min-h-screen flex flex-col items-center justify-center">
         <h1 className="text-3xl md:text-4xl font-bold text-white text-center mb-12">
           Monday planning Mediabirds
         </h1>
