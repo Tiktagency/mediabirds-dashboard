@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          seo_research_webhook: string
+          subkeywords_webhook: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          seo_research_webhook: string
+          subkeywords_webhook: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          seo_research_webhook?: string
+          subkeywords_webhook?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

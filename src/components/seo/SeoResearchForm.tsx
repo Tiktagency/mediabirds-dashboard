@@ -47,7 +47,11 @@ const steps = [
   },
 ];
 
-const SeoResearchForm = () => {
+interface SeoResearchFormProps {
+  seoResearchWebhook: string;
+}
+
+const SeoResearchForm = ({ seoResearchWebhook }: SeoResearchFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     blogTopic: '',
@@ -96,7 +100,7 @@ const SeoResearchForm = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953', {
+      const response = await fetch(seoResearchWebhook, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
