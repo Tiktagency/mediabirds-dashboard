@@ -5,9 +5,10 @@ import { useState } from 'react';
 
 interface SeoSelectionScreenProps {
   onSelectResearch: () => void;
+  subkeywordsWebhook: string;
 }
 
-const SeoSelectionScreen = ({ onSelectResearch }: SeoSelectionScreenProps) => {
+const SeoSelectionScreen = ({ onSelectResearch, subkeywordsWebhook }: SeoSelectionScreenProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,7 +16,7 @@ const SeoSelectionScreen = ({ onSelectResearch }: SeoSelectionScreenProps) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('https://tikt.app.n8n.cloud/webhook/c7c16588-ebba-4569-a85b-543fc5bdb4c1', {
+      const response = await fetch(subkeywordsWebhook, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
