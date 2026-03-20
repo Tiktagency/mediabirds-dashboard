@@ -43,6 +43,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          blogs_webhook: string | null
           created_at: string
           id: string
           name: string
@@ -50,6 +51,7 @@ export type Database = {
           subkeywords_webhook: string
         }
         Insert: {
+          blogs_webhook?: string | null
           created_at?: string
           id?: string
           name: string
@@ -57,6 +59,7 @@ export type Database = {
           subkeywords_webhook: string
         }
         Update: {
+          blogs_webhook?: string | null
           created_at?: string
           id?: string
           name?: string
