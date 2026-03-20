@@ -14,6 +14,7 @@ export interface Company {
   name: string;
   seo_research_webhook: string;
   subkeywords_webhook: string;
+  blogs_webhook: string | null;
 }
 
 interface CompanySelectorProps {
