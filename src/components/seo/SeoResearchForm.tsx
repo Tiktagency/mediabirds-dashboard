@@ -49,9 +49,10 @@ const steps = [
 
 interface SeoResearchFormProps {
   seoResearchWebhook: string;
+  companyName: string;
 }
 
-const SeoResearchForm = ({ seoResearchWebhook }: SeoResearchFormProps) => {
+const SeoResearchForm = ({ seoResearchWebhook, companyName }: SeoResearchFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     blogTopic: '',
@@ -273,7 +274,7 @@ const SeoResearchForm = ({ seoResearchWebhook }: SeoResearchFormProps) => {
               ) : (
               <>
                   <Sparkles className="w-4 h-4" />
-                  Start SEO onderzoek
+                  Start SEO onderzoek <span className="text-sm font-normal opacity-70">- {companyName}</span>
                 </>
               )}
             </Button>
