@@ -70,7 +70,7 @@ serve(async (req) => {
         onConflict: 'automation_name'
       });
     
-  // Get user ID from authorization header
+    // Get user ID from authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Geen autorisatie');
@@ -89,8 +89,28 @@ serve(async (req) => {
     
     const userId = user.id;
     
-    // Pick first VALID webhook URL among known secret names
-    const picked = pickWebhookEnv();
+    // Parse request body to get dynamic webhook URL
+    let webhookUrl: string | null = null;
+    let webhookSource = 'request_body';
+    
+    try {
+      const body = await req.json();
+      if (body.webhookUrl) {
+        webhookUrl = validateUrl(body.webhookUrl);
+        console.log('Webhook URL provided in request body');
+      }
+    } catch {
+      console.log('No body or failed to parse body');
+    }
+    
+    // Fallback to environment variables if no webhook URL in request
+    if (!webhookUrl) {
+      const picked = pickWebhookEnv();
+      if (picked) {
+        webhookUrl = picked.url;
+        webhookSource = picked.source;
+      }
+    }
 
     const rawAuth =
       Deno.env.get('authorization') ??
@@ -99,19 +119,17 @@ serve(async (req) => {
 
     const authToken = rawAuth ?? undefined;
 
-    const webhookSource = picked?.source ?? 'none';
-
     const authSource = Deno.env.get('authorization') ? 'authorization'
       : Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ? 'N8N_WEBHOOK_AUTH_TOKEN'
       : Deno.env.get('N8N_AUTH_TOKEN') ? 'N8N_AUTH_TOKEN'
       : 'none';
 
-    console.log('Using webhook secret:', webhookSource);
+    console.log('Using webhook source:', webhookSource);
     console.log('Using auth secret:', authSource);
 
-    if (!picked?.url) {
-      console.error('Webhook URL secret is missing or invalid');
-      throw new Error('N8N_WEBHOOK configuratie ontbreekt of is ongeldig');
+    if (!webhookUrl) {
+      console.error('Webhook URL is missing or invalid');
+      throw new Error('Webhook URL configuratie ontbreekt of is ongeldig');
     }
 
     if (!authToken) {
@@ -121,7 +139,7 @@ serve(async (req) => {
 
     // Validate that webhook URL is actually a valid URL
     try {
-      const sUrl = sanitizeUrl(picked.url);
+      const sUrl = sanitizeUrl(webhookUrl);
       const parsed = new URL(sUrl);
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         throw new Error('invalid protocol');
@@ -134,7 +152,7 @@ serve(async (req) => {
       });
     } catch {
       console.error('Webhook URL is not a valid URL');
-      throw new Error('N8N_WEBHOOK configuratie is ongeldig');
+      throw new Error('Webhook URL configuratie is ongeldig');
     }
 
     // Create AbortController with 180 second timeout
@@ -144,7 +162,7 @@ serve(async (req) => {
     console.log("Calling n8n webhook");
 
     // Call n8n webhook with authentication
-    const response = await fetch(picked.url, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
