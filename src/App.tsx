@@ -8,6 +8,7 @@ import MondayPlanning from "./pages/MondayPlanning";
 import ZoekwoordOnderzoek from "./pages/ZoekwoordOnderzoek";
 import Blogs from "./pages/Blogs";
 import WordpressAltText from "./pages/WordpressAltText";
+import Chatbot from "./pages/Chatbot";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/zoekwoord-onderzoek" element={<ZoekwoordOnderzoek />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
+          <Route path="/chatbot" element={<Chatbot />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
