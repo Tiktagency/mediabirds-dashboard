@@ -31,17 +31,6 @@ function validateUrl(input?: string | null): string | null {
   }
 }
 
-function pickWebhookEnv(): { url: string; source: string } | null {
-  const names = ['N8N_WEBHOOK', 'N8N_WEBHOOK_URL', 'N8N_webhook_url', 'WEBHOOK_URL'];
-  for (const name of names) {
-    const v = Deno.env.get(name);
-    const valid = validateUrl(v);
-    if (valid) return { url: valid, source: name };
-  }
-  return null;
-}
-
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -49,21 +38,20 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting blog generation trigger");
+    console.log("Starting SEO webhook trigger");
     
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    // Initialize Supabase client early for status tracking
+    // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     
     // Set status to 'running'
     await supabase
       .from('automation_status')
       .upsert({
-        automation_name: 'blogs',
+        automation_name: 'seo',
         status: 'running',
         last_updated: new Date().toISOString()
       }, {
@@ -89,103 +77,62 @@ serve(async (req) => {
     
     const userId = user.id;
     
-    // Parse request body to get dynamic webhook URL and auth token secret name
-    let webhookUrl: string | null = null;
-    let webhookSource = 'request_body';
-    let authTokenSecretName: string | null = null;
+    // Parse request body
+    const body = await req.json();
+    const { webhookUrl, authTokenSecretName, action, formData } = body;
     
-    try {
-      const body = await req.json();
-      if (body.webhookUrl) {
-        webhookUrl = validateUrl(body.webhookUrl);
-        console.log('Webhook URL provided in request body');
-      }
-      if (body.authTokenSecretName) {
-        authTokenSecretName = body.authTokenSecretName;
-        console.log('Auth token secret name provided:', authTokenSecretName);
-      }
-    } catch {
-      console.log('No body or failed to parse body');
+    console.log('Action:', action);
+    console.log('Auth token secret name:', authTokenSecretName);
+    
+    // Validate webhook URL
+    const validatedUrl = validateUrl(webhookUrl);
+    if (!validatedUrl) {
+      throw new Error('Webhook URL is ongeldig');
     }
     
-    // Fallback to environment variables if no webhook URL in request
-    if (!webhookUrl) {
-      const picked = pickWebhookEnv();
-      if (picked) {
-        webhookUrl = picked.url;
-        webhookSource = picked.source;
-      }
-    }
-
-    // Get auth token - prefer the one specified in request, fallback to env vars
+    console.log('Webhook URL validated', {
+      protocol: new URL(validatedUrl).protocol,
+      host: new URL(validatedUrl).host,
+    });
+    
+    // Get auth token from the specified secret
     let authToken: string | undefined;
-    let authSource = 'none';
-    
     if (authTokenSecretName) {
       authToken = Deno.env.get(authTokenSecretName);
-      authSource = authTokenSecretName;
+      if (!authToken) {
+        console.error(`Auth token secret ${authTokenSecretName} not found`);
+        throw new Error('Authenticatie configuratie ontbreekt');
+      }
+      console.log('Using auth secret:', authTokenSecretName);
     }
     
-    // Fallback to default env vars if no specific secret name provided
-    if (!authToken) {
-      authToken = Deno.env.get('authorization') ??
-        Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ??
-        Deno.env.get('N8N_AUTH_TOKEN');
-      
-      authSource = Deno.env.get('authorization') ? 'authorization'
-        : Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ? 'N8N_WEBHOOK_AUTH_TOKEN'
-        : Deno.env.get('N8N_AUTH_TOKEN') ? 'N8N_AUTH_TOKEN'
-        : 'none';
-    }
-
-    console.log('Using webhook source:', webhookSource);
-    console.log('Using auth secret:', authSource);
-
-    if (!webhookUrl) {
-      console.error('Webhook URL is missing or invalid');
-      throw new Error('Webhook URL configuratie ontbreekt of is ongeldig');
-    }
-
-    if (!authToken) {
-      console.error('authorization secret is missing');
-      throw new Error('authorization configuratie ontbreekt');
-    }
-
-    // Validate that webhook URL is actually a valid URL
-    try {
-      const sUrl = sanitizeUrl(webhookUrl);
-      const parsed = new URL(sUrl);
-      if (!['http:', 'https:'].includes(parsed.protocol)) {
-        throw new Error('invalid protocol');
-      }
-      // Minimal, non-sensitive debug info
-      console.log('Webhook URL validated', {
-        protocol: parsed.protocol,
-        host: parsed.host,
-        len: sUrl.length,
-      });
-    } catch {
-      console.error('Webhook URL is not a valid URL');
-      throw new Error('Webhook URL configuratie is ongeldig');
-    }
-
     // Create AbortController with 180 second timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 180000);
 
-    console.log("Calling n8n webhook");
+    console.log("Calling webhook");
 
-    // Call n8n webhook with authentication
-    const response = await fetch(webhookUrl, {
+    // Prepare request body based on action
+    let requestBody: string;
+    if (action === 'subkeywords') {
+      requestBody = JSON.stringify('GO');
+    } else {
+      requestBody = JSON.stringify(formData || {});
+    }
+
+    // Call webhook with optional authentication
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (authToken) {
+      headers['Authorization'] = authToken;
+    }
+
+    const response = await fetch(validatedUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authToken!, // Send token as-is without Bearer prefix
-      },
-      body: JSON.stringify({
-        timestamp: new Date().toISOString(),
-        triggered_from: 'edge_function',
-      }),
+      headers,
+      body: requestBody,
       signal: controller.signal,
     });
 
@@ -201,7 +148,9 @@ serve(async (req) => {
       console.log("Webhook response data:", data);
       
       // Try to extract message from various possible keys
-      if (data.message) {
+      if (data.Output) {
+        message = data.Output;
+      } else if (data.message) {
         message = data.message;
       } else if (data.Goed) {
         message = data.Goed;
@@ -214,7 +163,6 @@ serve(async (req) => {
       } else if (typeof data === 'string') {
         message = data;
       } else {
-        // If we can't find a message, stringify the whole response
         message = JSON.stringify(data);
       }
     } catch (parseError) {
@@ -234,16 +182,15 @@ serve(async (req) => {
 
     if (dbError) {
       console.error("Error saving notification:", dbError);
-      throw dbError;
+    } else {
+      console.log("Notification saved successfully");
     }
-
-    console.log("Notification saved successfully");
     
     // Set status to 'active' on success
     await supabase
       .from('automation_status')
       .upsert({
-        automation_name: 'blogs',
+        automation_name: 'seo',
         status: 'active',
         last_updated: new Date().toISOString(),
         last_run: new Date().toISOString()
@@ -264,8 +211,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    // NEVER log the full error as it might contain secrets
-    console.error('Error in trigger-blog-generation function');
+    console.error('Error in trigger-seo-webhook function');
     
     let errorMessage = 'Er is een fout opgetreden';
     let errorStatus = 'error';
@@ -275,16 +221,12 @@ serve(async (req) => {
         errorMessage = 'De aanvraag duurde te lang (meer dan 3 minuten)';
         errorStatus = 'timeout';
       } else {
-        // Only use the error message if it's a safe, user-defined message
-        if (error.message && !error.message.includes('Invalid URL')) {
-          errorMessage = error.message;
-        }
-        // Log error type for debugging but not the full message
+        errorMessage = error.message;
         console.error('Error type:', error.name);
       }
     }
 
-    // Try to save error notification to database and update status
+    // Try to save error notification and update status
     try {
       const errorSupabaseUrl = Deno.env.get('SUPABASE_URL');
       const errorSupabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -294,24 +236,21 @@ serve(async (req) => {
       await errorSupabase
         .from('automation_status')
         .upsert({
-          automation_name: 'blogs',
+          automation_name: 'seo',
           status: 'inactive',
           last_updated: new Date().toISOString()
         }, {
           onConflict: 'automation_name'
         });
       
-      // Try to get user ID from request for error notifications
+      // Try to get user ID from request
       const errorAuthHeader = req.headers.get('Authorization');
       let errorUserId = null;
       
       if (errorAuthHeader) {
         try {
           const token = errorAuthHeader.replace('Bearer ', '').trim();
-          const adminClient = createClient(
-            errorSupabaseUrl!,
-            errorSupabaseServiceKey!
-          );
+          const adminClient = createClient(errorSupabaseUrl!, errorSupabaseServiceKey!);
           const { data: { user } } = await adminClient.auth.getUser(token);
           errorUserId = user?.id ?? null;
         } catch {
