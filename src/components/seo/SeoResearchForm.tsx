@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, ArrowRight, Sparkles, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FormData {
   blogTopic: string;
@@ -50,9 +51,10 @@ const steps = [
 interface SeoResearchFormProps {
   seoResearchWebhook: string;
   companyName: string;
+  authTokenSecretName: string | null;
 }
 
-const SeoResearchForm = ({ seoResearchWebhook, companyName }: SeoResearchFormProps) => {
+const SeoResearchForm = ({ seoResearchWebhook, companyName, authTokenSecretName }: SeoResearchFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     blogTopic: '',
@@ -101,37 +103,40 @@ const SeoResearchForm = ({ seoResearchWebhook, companyName }: SeoResearchFormPro
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(seoResearchWebhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
+        body: {
+          webhookUrl: seoResearchWebhook,
+          authTokenSecretName: authTokenSecretName,
+          action: 'research',
+          formData: {
+            blogTopic: formData.blogTopic,
+            audienceIntent: formData.audienceIntent,
+            businessDescription: formData.businessDescription,
+            extraInstructions: formData.extraInstructions,
+          },
         },
-        body: JSON.stringify({
-          blogTopic: formData.blogTopic,
-          audienceIntent: formData.audienceIntent,
-          businessDescription: formData.businessDescription,
-          extraInstructions: formData.extraInstructions,
-        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Webhook request failed');
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'SEO Onderzoek gestart',
+          description: data.message || 'Je aanvraag is succesvol verzonden.',
+          duration: 7000,
+        });
+
+        // Reset form after successful submission
+        setFormData({
+          blogTopic: '',
+          audienceIntent: '',
+          businessDescription: '',
+          extraInstructions: '',
+        });
+        setCurrentStep(1);
+      } else {
+        throw new Error(data.error || 'Webhook request failed');
       }
-
-      toast({
-        title: 'SEO Onderzoek gestart',
-        description: 'Je aanvraag is succesvol verzonden. Het onderzoek wordt nu uitgevoerd.',
-        duration: 7000,
-      });
-
-      // Reset form after successful submission
-      setFormData({
-        blogTopic: '',
-        audienceIntent: '',
-        businessDescription: '',
-        extraInstructions: '',
-      });
-      setCurrentStep(1);
     } catch (error) {
       console.error('Error submitting SEO research:', error);
       toast({
