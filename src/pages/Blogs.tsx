@@ -127,7 +127,10 @@ const Blogs = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('trigger-blog-generation', {
-        body: { webhookUrl: selectedCompany.blogs_webhook },
+        body: { 
+          webhookUrl: selectedCompany.blogs_webhook,
+          authTokenSecretName: selectedCompany.auth_token_secret_name,
+        },
       });
 
       if (error) {

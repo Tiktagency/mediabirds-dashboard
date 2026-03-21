@@ -15,6 +15,7 @@ export interface Company {
   seo_research_webhook: string;
   subkeywords_webhook: string;
   blogs_webhook: string | null;
+  auth_token_secret_name: string | null;
 }
 
 interface CompanySelectorProps {
