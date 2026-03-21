@@ -58,12 +58,14 @@ const ZoekwoordOnderzoek = () => {
             <SeoResearchForm 
               seoResearchWebhook={selectedCompany.seo_research_webhook} 
               companyName={selectedCompany.name}
+              authTokenSecretName={selectedCompany.auth_token_secret_name}
             />
           ) : (
             <SeoSelectionScreen 
               onSelectResearch={() => setShowForm(true)} 
               subkeywordsWebhook={selectedCompany.subkeywords_webhook}
               companyName={selectedCompany.name}
+              authTokenSecretName={selectedCompany.auth_token_secret_name}
             />
           )
         ) : (
