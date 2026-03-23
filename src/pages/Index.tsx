@@ -1,6 +1,6 @@
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, Mail, BarChart3, Settings, Users, LogOut, Image } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,12 @@ const Index = () => {
             icon={Image}
             automationName="wordpress-alt-text"
             status={statuses['wordpress-alt-text']}
+          />
+          <DashboardButton 
+            to="/chatbot"
+            label="Chatbot" 
+            variant="secondary"
+            icon={MessageCircle}
           />
           <DashboardButton 
             label="" 
