@@ -55,30 +55,40 @@ const Index = () => {
             label="Monday planning" 
             variant="primary"
             icon={CalendarDays}
+            description="Plan en organiseer wekelijkse sprints automatisch in Monday.com."
+            impact="high"
           />
           <DashboardButton 
             to="/zoekwoord-onderzoek" 
             label="Zoekwoord onderzoek"
             variant="secondary"
             icon={Search}
+            description="Analyseer zoekwoorden en vind SEO-kansen voor content optimalisatie."
+            impact="high"
           />
           <DashboardButton 
             to="/blogs" 
             label="Blogs" 
             variant="accent"
             icon={FileText}
+            description="Genereer automatisch blogartikelen op basis van SEO-onderzoek."
+            impact="medium"
           />
           <DashboardButton 
             to="/wordpress-alt-text"
             label="Alt-tekst wordpress" 
             variant="primary"
             icon={Image}
+            description="Automatisch alt-teksten genereren voor WordPress afbeeldingen."
+            impact="medium"
           />
           <DashboardButton 
             to="/chatbot"
             label="Chatbot" 
             variant="secondary"
             icon={MessageCircle}
+            description="AI-gestuurde chatbot voor klantenservice en ondersteuning."
+            impact="low"
           />
           <DashboardButton 
             label="" 
