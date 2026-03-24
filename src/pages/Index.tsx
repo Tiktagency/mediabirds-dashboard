@@ -55,24 +55,24 @@ const Index = () => {
             label="Monday planning" 
             variant="primary"
             icon={CalendarDays}
-            description="Plan en organiseer wekelijkse sprints automatisch in Monday.com."
-            impact="high"
+            description="Maakt een planning in verschillende fases voor opdrachtgevers."
+            impact="low"
           />
           <DashboardButton 
             to="/zoekwoord-onderzoek" 
             label="Zoekwoord onderzoek"
             variant="secondary"
             icon={Search}
-            description="Analyseer zoekwoorden en vind SEO-kansen voor content optimalisatie."
-            impact="high"
+            description="Creëert zoekwoorden die aansluiten bij zoekwoord optimalisatie."
+            impact="medium"
           />
           <DashboardButton 
             to="/blogs" 
             label="Blogs" 
             variant="accent"
             icon={FileText}
-            description="Genereer automatisch blogartikelen op basis van SEO-onderzoek."
-            impact="medium"
+            description="Schrijft SEO-blogs op basis van zoekwoorden uit de Google sheets."
+            impact="high"
           />
           <DashboardButton 
             to="/wordpress-alt-text"
@@ -88,7 +88,7 @@ const Index = () => {
             variant="secondary"
             icon={MessageCircle}
             description="AI-gestuurde chatbot voor klantenservice en ondersteuning."
-            impact="low"
+            impact="medium"
           />
           <DashboardButton 
             label="" 
