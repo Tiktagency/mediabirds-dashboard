@@ -1,0 +1,136 @@
+import { Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
+export type ImpactLevel = 'high' | 'medium' | 'low';
+
+interface AutomationInfoTooltipProps {
+  description: string;
+  lastRun?: string | null;
+  impact: ImpactLevel;
+}
+
+const impactStyles: Record<ImpactLevel, { bg: string; text: string; glow: string }> = {
+  high: {
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-400',
+    glow: 'shadow-[0_0_8px_rgba(16,185,129,0.4)]',
+  },
+  medium: {
+    bg: 'bg-amber-500/20',
+    text: 'text-amber-400',
+    glow: 'shadow-[0_0_8px_rgba(245,158,11,0.3)]',
+  },
+  low: {
+    bg: 'bg-zinc-500/20',
+    text: 'text-zinc-400',
+    glow: 'shadow-[0_0_8px_rgba(113,113,122,0.2)]',
+  },
+};
+
+const impactLabels: Record<ImpactLevel, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
+const formatLastRun = (lastRun?: string | null): string => {
+  if (!lastRun) return 'Never';
+  
+  const date = new Date(lastRun);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  return date.toLocaleDateString('nl-NL', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+export const AutomationInfoTooltip = ({
+  description,
+  lastRun,
+  impact,
+}: AutomationInfoTooltipProps) => {
+  const styles = impactStyles[impact];
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className="absolute top-3 right-3 z-10 p-1.5 rounded-full transition-all duration-200 hover:bg-white/10 group"
+            onClick={(e) => e.preventDefault()}
+          >
+            <Info className="w-4 h-4 text-white/60 group-hover:text-white/100 transition-opacity duration-200" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="end"
+          sideOffset={8}
+          className={cn(
+            "w-64 p-4 rounded-2xl border-0",
+            "bg-[#151515] backdrop-blur-xl",
+            "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+            "animate-in fade-in-0 zoom-in-95 duration-200",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          )}
+        >
+          <div className="space-y-3">
+            {/* Description */}
+            <div>
+              <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
+                Description
+              </p>
+              <p className="text-sm text-white/90 leading-relaxed">
+                {description}
+              </p>
+            </div>
+
+            {/* Last Successful Run */}
+            <div>
+              <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
+                Last Successful Run
+              </p>
+              <p className="text-sm text-white/80">
+                {formatLastRun(lastRun)}
+              </p>
+            </div>
+
+            {/* Impact Badge */}
+            <div>
+              <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                Impact
+              </p>
+              <span
+                className={cn(
+                  "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide",
+                  styles.bg,
+                  styles.text,
+                  styles.glow
+                )}
+              >
+                {impactLabels[impact]}
+              </span>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
