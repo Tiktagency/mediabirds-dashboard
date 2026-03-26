@@ -3,11 +3,13 @@ import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useN8nExecutions } from '@/hooks/useN8nExecutions';
 import { Button } from '@/components/ui/button';
 
 
 const Index = () => {
   const { isLoading, signOut, user } = useAdminAuth();
+  const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
 
   if (isLoading) {
     return (
@@ -89,6 +91,7 @@ const Index = () => {
             icon={MessageCircle}
             description="AI-gestuurde chatbot voor klantenservice en ondersteuning."
             impact="medium"
+            lastRun={chatbotLastRun}
           />
           <DashboardButton 
             label="" 
