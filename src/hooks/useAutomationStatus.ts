@@ -12,6 +12,7 @@ export interface AutomationStatusData {
 
 export const useAutomationStatus = (automationName?: string) => {
   const [statuses, setStatuses] = useState<Record<string, AutomationStatus>>({});
+  const [lastRuns, setLastRuns] = useState<Record<string, string | null>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,10 +35,13 @@ export const useAutomationStatus = (automationName?: string) => {
         
         if (data) {
           const statusMap: Record<string, AutomationStatus> = {};
+          const lastRunMap: Record<string, string | null> = {};
           data.forEach((item) => {
             statusMap[item.automation_name] = item.status as AutomationStatus;
+            lastRunMap[item.automation_name] = item.last_run;
           });
           setStatuses(statusMap);
+          setLastRuns(lastRunMap);
         }
       } catch (error) {
         console.error('Error in fetchStatuses:', error);
@@ -68,11 +72,20 @@ export const useAutomationStatus = (automationName?: string) => {
               delete newStatuses[(payload.old as any).automation_name];
               return newStatuses;
             });
+            setLastRuns(prev => {
+              const newLastRuns = { ...prev };
+              delete newLastRuns[(payload.old as any).automation_name];
+              return newLastRuns;
+            });
           } else {
             const data = payload.new as any;
             setStatuses(prev => ({
               ...prev,
               [data.automation_name]: data.status as AutomationStatus
+            }));
+            setLastRuns(prev => ({
+              ...prev,
+              [data.automation_name]: data.last_run
             }));
           }
         }
@@ -84,5 +97,5 @@ export const useAutomationStatus = (automationName?: string) => {
     };
   }, [automationName]);
 
-  return { statuses, isLoading };
+  return { statuses, lastRuns, isLoading };
 };
