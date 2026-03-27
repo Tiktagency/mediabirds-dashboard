@@ -4,12 +4,15 @@ import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Ima
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
+import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { Button } from '@/components/ui/button';
 
 
 const Index = () => {
   const { isLoading, signOut, user } = useAdminAuth();
   const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
+  const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
+  const { lastRuns } = useAutomationStatus();
 
   if (isLoading) {
     return (
@@ -59,6 +62,7 @@ const Index = () => {
             icon={CalendarDays}
             description="Maakt een planning in verschillende fases voor opdrachtgevers."
             impact="low"
+            lastRun={mondayLastRun}
           />
           <DashboardButton 
             to="/zoekwoord-onderzoek" 
@@ -67,6 +71,7 @@ const Index = () => {
             icon={Search}
             description="Creëert zoekwoorden die aansluiten bij zoekwoord optimalisatie."
             impact="medium"
+            lastRun={lastRuns['seo-research']}
           />
           <DashboardButton 
             to="/blogs" 
