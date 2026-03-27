@@ -51,7 +51,7 @@ serve(async (req) => {
     await supabase
       .from('automation_status')
       .upsert({
-        automation_name: 'seo',
+        automation_name: 'seo-research',
         status: 'running',
         last_updated: new Date().toISOString()
       }, {
@@ -190,7 +190,7 @@ serve(async (req) => {
     await supabase
       .from('automation_status')
       .upsert({
-        automation_name: 'seo',
+        automation_name: 'seo-research',
         status: 'active',
         last_updated: new Date().toISOString(),
         last_run: new Date().toISOString()
@@ -236,7 +236,7 @@ serve(async (req) => {
       await errorSupabase
         .from('automation_status')
         .upsert({
-          automation_name: 'seo',
+          automation_name: 'seo-research',
           status: 'inactive',
           last_updated: new Date().toISOString()
         }, {
