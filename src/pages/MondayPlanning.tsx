@@ -19,6 +19,7 @@ const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-
 const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
 
 const FASES = [
+  { id: 'kickoff', label: 'Kickoff' },
   { id: 'webdesign', label: 'Webdesign' },
   { id: 'development', label: 'Development' },
   { id: 'testen-feedback', label: 'Testen & feedback' },
