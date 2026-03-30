@@ -191,8 +191,8 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   };
 
   const handleRequestAdd = () => {
-    if (!newCompanyName.trim()) {
-      toast({ title: 'Vul een naam in', variant: 'destructive' });
+    if (!newCompanyName.trim() || !newCompanyDomain.trim()) {
+      toast({ title: 'Vul zowel naam als domeinnaam in', variant: 'destructive' });
       return;
     }
     setIsDialogOpen(false);
