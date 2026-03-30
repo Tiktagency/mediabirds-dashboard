@@ -72,6 +72,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   const [companyToDelete, setCompanyToDelete] = useState<NewsletterCompany | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
+  const [newCompanyDomain, setNewCompanyDomain] = useState('');
   const [showConfirmAdd, setShowConfirmAdd] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -190,8 +191,8 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   };
 
   const handleRequestAdd = () => {
-    if (!newCompanyName.trim()) {
-      toast({ title: 'Vul een naam in', variant: 'destructive' });
+    if (!newCompanyName.trim() || !newCompanyDomain.trim()) {
+      toast({ title: 'Vul zowel naam als domeinnaam in', variant: 'destructive' });
       return;
     }
     setIsDialogOpen(false);
@@ -201,9 +202,10 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   const handleConfirmAdd = async () => {
     setIsCreating(true);
     try {
+      const domainClean = newCompanyDomain.trim().replace(/^https?:\/\//, '');
       const { data, error } = await supabase
         .from('newsletter_companies' as any)
-        .insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim() })
+        .insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim(), website: `https://${domainClean}` })
         .select()
         .single();
 
@@ -211,6 +213,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
 
       toast({ title: 'Bedrijf toegevoegd', description: `${newCompanyName} is aangemaakt` });
       setNewCompanyName('');
+      setNewCompanyDomain('');
       setShowConfirmAdd(false);
 
       await fetchCompanies();
@@ -311,6 +314,15 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
                 placeholder="bijv. Tikt"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
                 autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white/70">Domeinnaam</Label>
+              <Input
+                value={newCompanyDomain}
+                onChange={(e) => setNewCompanyDomain(e.target.value)}
+                placeholder="bijv. tikt.nl"
+                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
                 onKeyDown={(e) => e.key === 'Enter' && handleRequestAdd()}
               />
             </div>
@@ -320,7 +332,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
               </Button>
               <Button
                 onClick={handleRequestAdd}
-                disabled={!newCompanyName.trim()}
+                disabled={!newCompanyName.trim() || !newCompanyDomain.trim()}
                 className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
                 Toevoegen
@@ -358,7 +370,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Bedrijf toevoegen?</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Weet je zeker dat je <strong className="text-white/80">{newCompanyName}</strong> wilt toevoegen?
+              Weet je zeker dat je <strong className="text-white/80">{newCompanyName}</strong> ({newCompanyDomain}) wilt toevoegen?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
