@@ -86,6 +86,7 @@ const Nieuwsbrief = () => {
     getNextTriggerDisplay,
   } = useNewsletterSchedule(selectedCompany?.id ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
   const [localData, setLocalData] = useState<LocalData>({
@@ -480,6 +481,49 @@ const Nieuwsbrief = () => {
     }
   };
 
+  const handleFetchCompanyInfo = async () => {
+    if (!localData.website) {
+      toast({
+        title: 'Website ontbreekt',
+        description: 'Vul eerst een website URL in.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsFetchingCompanyInfo(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-company-info', {
+        body: { website: localData.website },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Bedrijfsinfo ophalen mislukt');
+
+      const info = data.info as Record<string, string>;
+      const updatedData = { ...localData };
+      const dbPatch: Record<string, string> = {};
+
+      for (const key of ['bedrijfsnaam', 'tagline', 'bedrijfsomschrijving', 'doelgroep', 'toon', 'cta_tekst', 'cta_url'] as TextFieldKey[]) {
+        if (info[key]) {
+          updatedData[key] = info[key];
+          dbPatch[key] = info[key];
+        }
+      }
+
+      setLocalData(updatedData);
+      if (selectedCompany && Object.keys(dbPatch).length > 0) {
+        await saveToCompany(dbPatch);
+      }
+      toast({ title: 'Bedrijfsinfo ingevuld!', description: 'De velden zijn automatisch ingevuld op basis van de website.' });
+    } catch (err: any) {
+      toast({
+        title: 'Fout bij ophalen bedrijfsinfo',
+        description: err?.message || 'Er is iets misgegaan.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsFetchingCompanyInfo(false);
+    }
+  };
 
   return (
     <div className="min-h-screen relative hero-gradient flex flex-col">
@@ -525,7 +569,24 @@ const Nieuwsbrief = () => {
 
             {/* Column 1: Bedrijfsinfo + RSS */}
             <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6 space-y-4">
+              <CardHeader className="pb-2 px-6 pt-6 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-white/70">Bedrijfsinstellingen</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchCompanyInfo}
+                  disabled={isFetchingCompanyInfo || !localData.website}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                >
+                  {isFetchingCompanyInfo ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5" />
+                  )}
+                  AI invullen
+                </Button>
+              </CardHeader>
+              <CardContent className="p-6 pt-2 space-y-4">
                 {TEXT_FIELDS.slice(0, 4).map(({ key, label, type, placeholder }) =>
                   renderTextField(key, label, type, placeholder)
                 )}
