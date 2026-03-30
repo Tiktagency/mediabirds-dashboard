@@ -1,19 +1,33 @@
 
-## Verwijder `secundaire_kleur` & `accent_kleur` uit de POST payload
 
-De twee kleuren worden nog op drie plekken meegestuurd:
+## Plan: AI auto-invullen bedrijfsvelden op Nieuwsbrief pagina
 
-1. **`src/pages/Nieuwsbrief.tsx`** — payload die naar de edge function wordt gestuurd (regels 395 en 400)
-2. **`supabase/functions/trigger-newsletter-webhook/index.ts`** — destructuring van body (regels 42-43) én de payload naar n8n (regels 60 en 65)
+### Wat wordt gebouwd
+Een "Auto invullen" knop naast de bedrijfsinstellingen die de website van het geselecteerde bedrijf afleest en via AI de tekstvelden automatisch invult (bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon, CTA tekst, CTA URL).
 
-### Wijzigingen
+### Aanpak
 
-**`src/pages/Nieuwsbrief.tsx`** — verwijder uit de POST body (regels 395 en 400):
-- `secundaire_kleur: localColors.secundaire_kleur,`
-- `accent_kleur: localColors.accent_kleur,`
+**1. Nieuwe Edge Function: `extract-company-info`**
+- Hergebruikt het patroon van `extract-brand-colors` (HTML ophalen, AI analyseren)
+- Haalt de website HTML op, stuurt deze naar Lovable AI (Gemini Flash) met tool calling
+- Extraheert gestructureerd: bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon, cta_tekst, cta_url
+- De AI analyseert de homepage tekst, meta tags, hero sectie, about-sectie, en CTA's
 
-**`supabase/functions/trigger-newsletter-webhook/index.ts`**:
-- Regel 42-43: verwijder `secundaire_kleur` en `accent_kleur` uit de destructuring
-- Regels 60 en 65: verwijder `secundaire_kleur` en `accent_kleur` uit de payload naar n8n
+**2. UI aanpassing in `src/pages/Nieuwsbrief.tsx`**
+- Voegt een "AI invullen" knop toe (met Wand2 icoon) bij de Bedrijfsinstellingen card header
+- Knop is alleen beschikbaar als er een website URL is ingevuld
+- Bij klik: roept de edge function aan, vult alle tekstvelden in, slaat op naar database
+- Loading state met spinner tijdens het ophalen
 
-Geen database- of andere wijzigingen nodig.
+### Technische details
+
+**Edge Function prompt strategie:**
+- Systemprompt instrueert de AI om specifiek te zoeken naar: bedrijfsnaam (title tag, logo tekst), tagline (hero subtitle, meta description), bedrijfsomschrijving (about sectie, meta description), doelgroep (wie ze bedienen), toon (formeel/informeel analyse), CTA tekst en URL (buttons, call-to-actions)
+- Tool calling met strict schema voor gevalideerde output
+- Velden die niet gevonden worden blijven leeg (null)
+
+**Bestanden:**
+- Nieuw: `supabase/functions/extract-company-info/index.ts`
+- Aangepast: `src/pages/Nieuwsbrief.tsx` (knop + handler)
+- Aangepast: `supabase/config.toml` (function config)
+
