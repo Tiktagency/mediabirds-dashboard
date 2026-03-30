@@ -256,7 +256,7 @@ const MondayPlanning = () => {
             <div className="space-y-3">
               <Label className="text-white">Fases (selecteer minimaal 1)</Label>
               <div className="space-y-2">
-                {FASES.map((fase) => (
+                {FASES.filter(fase => fase.id !== 'kickoff' || pakket === 'A').map((fase) => (
                   <div key={fase.id} className="flex items-center space-x-3">
                     <Checkbox
                       id={fase.id}
