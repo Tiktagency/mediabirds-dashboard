@@ -481,6 +481,49 @@ const Nieuwsbrief = () => {
     }
   };
 
+  const handleFetchCompanyInfo = async () => {
+    if (!localData.website) {
+      toast({
+        title: 'Website ontbreekt',
+        description: 'Vul eerst een website URL in.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsFetchingCompanyInfo(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-company-info', {
+        body: { website: localData.website },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Bedrijfsinfo ophalen mislukt');
+
+      const info = data.info as Record<string, string>;
+      const updatedData = { ...localData };
+      const dbPatch: Record<string, string> = {};
+
+      for (const key of ['bedrijfsnaam', 'tagline', 'bedrijfsomschrijving', 'doelgroep', 'toon', 'cta_tekst', 'cta_url'] as TextFieldKey[]) {
+        if (info[key]) {
+          updatedData[key] = info[key];
+          dbPatch[key] = info[key];
+        }
+      }
+
+      setLocalData(updatedData);
+      if (selectedCompany && Object.keys(dbPatch).length > 0) {
+        await saveToCompany(dbPatch);
+      }
+      toast({ title: 'Bedrijfsinfo ingevuld!', description: 'De velden zijn automatisch ingevuld op basis van de website.' });
+    } catch (err: any) {
+      toast({
+        title: 'Fout bij ophalen bedrijfsinfo',
+        description: err?.message || 'Er is iets misgegaan.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsFetchingCompanyInfo(false);
+    }
+  };
 
   return (
     <div className="min-h-screen relative hero-gradient flex flex-col">
