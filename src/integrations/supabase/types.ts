@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_logs: {
+        Row: {
+          automation_name: string
+          created_at: string
+          execution_time_ms: number | null
+          id: string
+          log_level: Database["public"]["Enums"]["log_level"]
+          message: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          automation_name: string
+          created_at?: string
+          execution_time_ms?: number | null
+          id?: string
+          log_level?: Database["public"]["Enums"]["log_level"]
+          message: string
+          metadata?: Json | null
+          status?: string
+        }
+        Update: {
+          automation_name?: string
+          created_at?: string
+          execution_time_ms?: number | null
+          id?: string
+          log_level?: Database["public"]["Enums"]["log_level"]
+          message?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          automation_name: string
+          category: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          impact_level: Database["public"]["Enums"]["impact_level"]
+          status: Database["public"]["Enums"]["automation_status_type"]
+          updated_at: string
+          webhook_backup_url: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          automation_name: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          impact_level?: Database["public"]["Enums"]["impact_level"]
+          status?: Database["public"]["Enums"]["automation_status_type"]
+          updated_at?: string
+          webhook_backup_url?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          automation_name?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          impact_level?: Database["public"]["Enums"]["impact_level"]
+          status?: Database["public"]["Enums"]["automation_status_type"]
+          updated_at?: string
+          webhook_backup_url?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       automation_status: {
         Row: {
           automation_name: string
@@ -71,6 +146,45 @@ export type Database = {
         }
         Relationships: []
       }
+      log_settings: {
+        Row: {
+          alert_email: string | null
+          created_at: string
+          dashboard_badge_enabled: boolean
+          email_alerts_enabled: boolean
+          id: string
+          log_level: Database["public"]["Enums"]["log_level"]
+          retention_days: number
+          slack_alerts_enabled: boolean
+          slack_webhook_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          alert_email?: string | null
+          created_at?: string
+          dashboard_badge_enabled?: boolean
+          email_alerts_enabled?: boolean
+          id?: string
+          log_level?: Database["public"]["Enums"]["log_level"]
+          retention_days?: number
+          slack_alerts_enabled?: boolean
+          slack_webhook_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alert_email?: string | null
+          created_at?: string
+          dashboard_badge_enabled?: boolean
+          email_alerts_enabled?: boolean
+          id?: string
+          log_level?: Database["public"]["Enums"]["log_level"]
+          retention_days?: number
+          slack_alerts_enabled?: boolean
+          slack_webhook_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -116,6 +230,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_automation_permissions: {
+        Row: {
+          automation_name: string
+          can_execute: boolean
+          can_manage: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          automation_name: string
+          can_execute?: boolean
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          automation_name?: string
+          can_execute?: boolean
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_dashboard_settings: {
+        Row: {
+          created_at: string
+          custom_labels: Json | null
+          custom_tooltips: Json | null
+          id: string
+          impact_colors: Json | null
+          theme: string
+          tile_order: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_labels?: Json | null
+          custom_tooltips?: Json | null
+          id?: string
+          impact_colors?: Json | null
+          theme?: string
+          tile_order?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_labels?: Json | null
+          custom_tooltips?: Json | null
+          id?: string
+          impact_colors?: Json | null
+          theme?: string
+          tile_order?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -151,7 +331,10 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "viewer" | "operator"
+      automation_status_type: "active" | "inactive" | "testmode"
+      impact_level: "high" | "medium" | "low"
+      log_level: "basic" | "verbose" | "errors_only"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -279,7 +462,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "viewer", "operator"],
+      automation_status_type: ["active", "inactive", "testmode"],
+      impact_level: ["high", "medium", "low"],
+      log_level: ["basic", "verbose", "errors_only"],
     },
   },
 } as const
