@@ -46,17 +46,26 @@ const Index = () => {
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
           <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+
+          <Button 
+            onClick={signOut}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white/20 hover:bg-white/20"
+            style={{ color: '#232323' }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Uitloggen
+          </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline"
-                size="sm"
-                className="bg-white/10 border-white/20 hover:bg-white/20"
+              <button 
+                className="hover:opacity-70 transition-opacity cursor-pointer"
                 style={{ color: '#232323' }}
               >
-                <Settings className="w-4 h-4" />
-              </Button>
+                <Settings className="w-5 h-5" />
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-card border-border">
               <DropdownMenuItem 
@@ -75,17 +84,6 @@ const Index = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Button 
-            onClick={signOut}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white/20 hover:bg-white/20"
-            style={{ color: '#232323' }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Uitloggen
-          </Button>
         </div>
       </header>
 
