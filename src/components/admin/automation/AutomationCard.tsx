@@ -94,7 +94,7 @@ export const AutomationCard = ({ setting, onUpdate }: AutomationCardProps) => {
             <div className="space-y-2">
               <Label htmlFor={`category-${setting.id}`}>Categorie</Label>
               <Select
-                value={localSetting.category || ''}
+                value={localSetting.category || undefined}
                 onValueChange={(value) => setLocalSetting(prev => ({ ...prev, category: value }))}
               >
                 <SelectTrigger className="bg-background/50">
