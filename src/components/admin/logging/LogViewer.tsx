@@ -24,14 +24,14 @@ const statusColors: Record<string, string> = {
 };
 
 export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
-  const [automationFilter, setAutomationFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [automationFilter, setAutomationFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleFilter = () => {
     onFilter({
-      automation: automationFilter || undefined,
-      status: statusFilter || undefined,
+      automation: automationFilter === 'all' ? undefined : automationFilter,
+      status: statusFilter === 'all' ? undefined : statusFilter,
     });
   };
 
@@ -81,7 +81,7 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
               <SelectValue placeholder="Alle automations" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle automations</SelectItem>
+              <SelectItem value="all">Alle automations</SelectItem>
               {uniqueAutomations.map(name => (
                 <SelectItem key={name} value={name}>{name}</SelectItem>
               ))}
@@ -92,7 +92,7 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
               <SelectValue placeholder="Alle statussen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle statussen</SelectItem>
+              <SelectItem value="all">Alle statussen</SelectItem>
               <SelectItem value="success">Success</SelectItem>
               <SelectItem value="error">Error</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
