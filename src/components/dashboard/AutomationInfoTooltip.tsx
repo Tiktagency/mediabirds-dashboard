@@ -9,28 +9,23 @@ import { cn } from '@/lib/utils';
 
 export type ImpactLevel = 'high' | 'medium' | 'low';
 
+export interface ImpactColors {
+  high: string;
+  medium: string;
+  low: string;
+}
+
 interface AutomationInfoTooltipProps {
   description: string;
   lastRun?: string | null;
   impact: ImpactLevel;
+  impactColors?: ImpactColors;
 }
 
-const impactStyles: Record<ImpactLevel, { bg: string; text: string; glow: string }> = {
-  high: {
-    bg: 'bg-red-500/20',
-    text: 'text-red-400',
-    glow: 'shadow-[0_0_8px_rgba(239,68,68,0.4)]',
-  },
-  medium: {
-    bg: 'bg-yellow-500/20',
-    text: 'text-yellow-400',
-    glow: 'shadow-[0_0_8px_rgba(234,179,8,0.3)]',
-  },
-  low: {
-    bg: 'bg-gray-500/20',
-    text: 'text-gray-400',
-    glow: 'shadow-[0_0_8px_rgba(107,114,128,0.2)]',
-  },
+const defaultImpactColors: ImpactColors = {
+  high: '#ef4444',
+  medium: '#eab308',
+  low: '#6b7280',
 };
 
 const impactLabels: Record<ImpactLevel, string> = {
@@ -64,12 +59,21 @@ const formatLastRun = (lastRun?: string | null): string => {
   });
 };
 
+// Helper to convert hex to rgba
+const hexToRgba = (hex: string, alpha: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const AutomationInfoTooltip = ({
   description,
   lastRun,
   impact,
+  impactColors = defaultImpactColors,
 }: AutomationInfoTooltipProps) => {
-  const styles = impactStyles[impact];
+  const color = impactColors[impact];
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -121,12 +125,12 @@ export const AutomationInfoTooltip = ({
                 Impact
               </p>
               <span
-                className={cn(
-                  "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide",
-                  styles.bg,
-                  styles.text,
-                  styles.glow
-                )}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                style={{
+                  backgroundColor: hexToRgba(color, 0.2),
+                  color: color,
+                  boxShadow: `0 0 8px ${hexToRgba(color, 0.4)}`,
+                }}
               >
                 {impactLabels[impact]}
               </span>
