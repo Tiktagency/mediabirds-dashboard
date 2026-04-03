@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LucideIcon } from 'lucide-react';
-import { AutomationInfoTooltip, ImpactLevel } from './AutomationInfoTooltip';
+import { AutomationInfoTooltip, ImpactLevel, ImpactColors } from './AutomationInfoTooltip';
 
 interface DashboardButtonProps {
   to?: string;
@@ -12,6 +12,7 @@ interface DashboardButtonProps {
   description?: string;
   lastRun?: string | null;
   impact?: ImpactLevel;
+  impactColors?: ImpactColors;
 }
 
 const variantClasses = {
@@ -30,6 +31,7 @@ export const DashboardButton = ({
   description,
   lastRun,
   impact,
+  impactColors,
 }: DashboardButtonProps) => {
   const showTooltip = description && impact;
   const buttonContent = (
@@ -39,6 +41,7 @@ export const DashboardButton = ({
           description={description}
           lastRun={lastRun}
           impact={impact}
+          impactColors={impactColors}
         />
       )}
       <Button 
