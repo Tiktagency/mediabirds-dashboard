@@ -1,16 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
+import { useDashboardSettings } from '@/hooks/useDashboardSettings';
+import { useAutomationSettings } from '@/hooks/useAutomationSettings';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProfileModal } from '@/components/ProfileModal';
 import { useNavigate } from 'react-router-dom';
+import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
 
+// Tile configuration mapping automation_name to route, icon, and variant
+interface TileConfig {
+  to: string;
+  icon: LucideIcon;
+  variant: 'primary' | 'secondary' | 'accent' | 'muted';
+  n8nWorkflow?: string;
+  statusKey?: string;
+}
+
+const tileConfigMap: Record<string, TileConfig> = {
+  'monday-planning': {
+    to: '/monday-planning',
+    icon: CalendarDays,
+    variant: 'primary',
+    n8nWorkflow: 'MEDIABIRDS monday planning',
+  },
+  'zoekwoord-onderzoek': {
+    to: '/zoekwoord-onderzoek',
+    icon: Search,
+    variant: 'secondary',
+    statusKey: 'seo-research',
+  },
+  'blogs': {
+    to: '/blogs',
+    icon: FileText,
+    variant: 'accent',
+    statusKey: 'blogs',
+  },
+  'wordpress-alt-text': {
+    to: '/wordpress-alt-text',
+    icon: Image,
+    variant: 'primary',
+    n8nWorkflow: 'MEDIABIRDS Alt-text Wordpress',
+  },
+  'chatbot': {
+    to: '/chatbot',
+    icon: MessageCircle,
+    variant: 'secondary',
+    n8nWorkflow: 'MEDIABIRDS klantenservice chatbot',
+  },
+};
 
 const Index = () => {
   const { isLoading, signOut, user } = useAdminAuth();
@@ -18,10 +62,43 @@ const Index = () => {
   const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
   const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
   const { lastRuns } = useAutomationStatus();
+  const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings();
+  const { settings: automationSettings, isLoading: automationsLoading } = useAutomationSettings();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  if (isLoading) {
+  // Apply theme from settings
+  useEffect(() => {
+    if (dashboardSettings?.theme) {
+      document.documentElement.classList.toggle('dark', dashboardSettings.theme === 'dark');
+      document.documentElement.classList.toggle('light', dashboardSettings.theme === 'light');
+    }
+  }, [dashboardSettings?.theme]);
+
+  // Get last run for a tile based on its config
+  const getLastRun = (automationName: string): string | null => {
+    const config = tileConfigMap[automationName];
+    if (!config) return null;
+    
+    if (config.n8nWorkflow) {
+      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') return chatbotLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') return mondayLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') return altTextLastRun;
+    }
+    
+    if (config.statusKey) {
+      return lastRuns[config.statusKey] || null;
+    }
+    
+    return null;
+  };
+
+  // Get automation setting by name
+  const getAutomationSetting = (automationName: string) => {
+    return automationSettings.find(s => s.automation_name === automationName);
+  };
+
+  if (isLoading || settingsLoading || automationsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -31,6 +108,18 @@ const Index = () => {
       </div>
     );
   }
+
+  // Get ordered tiles from dashboard settings
+  const orderedTiles = dashboardSettings.tile_order?.length 
+    ? dashboardSettings.tile_order.filter(name => tileConfigMap[name])
+    : Object.keys(tileConfigMap);
+
+  // Impact colors from dashboard settings
+  const impactColors = dashboardSettings.impact_colors || {
+    high: '#ef4444',
+    medium: '#eab308',
+    low: '#6b7280',
+  };
 
   return (
     <div className="min-h-screen hero-gradient">
@@ -90,51 +179,34 @@ const Index = () => {
       <div className="max-w-5xl mx-auto px-6 py-16">
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <DashboardButton 
-            to="/monday-planning" 
-            label="Monday planning" 
-            variant="primary"
-            icon={CalendarDays}
-            description="Maakt een planning in verschillende fases voor opdrachtgevers."
-            impact="low"
-            lastRun={mondayLastRun}
-          />
-          <DashboardButton 
-            to="/zoekwoord-onderzoek" 
-            label="Zoekwoord onderzoek"
-            variant="secondary"
-            icon={Search}
-            description="Creëert zoekwoorden die aansluiten bij zoekwoord optimalisatie."
-            impact="medium"
-            lastRun={lastRuns['seo-research']}
-          />
-          <DashboardButton 
-            to="/blogs" 
-            label="Blogs" 
-            variant="accent"
-            icon={FileText}
-            description="Schrijft SEO-blogs op basis van zoekwoorden uit de Google sheets."
-            impact="high"
-            lastRun={lastRuns['blogs']}
-          />
-          <DashboardButton 
-            to="/wordpress-alt-text"
-            label="Alt-tekst wordpress" 
-            variant="primary"
-            icon={Image}
-            description="Automatisch alt-teksten genereren voor WordPress afbeeldingen."
-            impact="medium"
-            lastRun={altTextLastRun}
-          />
-          <DashboardButton 
-            to="/chatbot"
-            label="Chatbot" 
-            variant="secondary"
-            icon={MessageCircle}
-            description="AI-gestuurde chatbot voor klantenservice en ondersteuning."
-            impact="medium"
-            lastRun={chatbotLastRun}
-          />
+          {orderedTiles.map((automationName) => {
+            const config = tileConfigMap[automationName];
+            const automationSetting = getAutomationSetting(automationName);
+            const customLabel = dashboardSettings.custom_labels?.[automationName];
+            
+            // Get label: custom_label > display_name > automation_name
+            const label = customLabel || automationSetting?.display_name || automationName;
+            
+            // Get description and impact from automation settings
+            const description = automationSetting?.description || '';
+            const impact = (automationSetting?.impact_level || 'medium') as ImpactLevel;
+            
+            return (
+              <DashboardButton 
+                key={automationName}
+                to={config.to}
+                label={label}
+                variant={config.variant}
+                icon={config.icon}
+                description={description}
+                impact={impact}
+                lastRun={getLastRun(automationName)}
+                impactColors={impactColors}
+              />
+            );
+          })}
+          
+          {/* Placeholder tiles */}
           <DashboardButton 
             label="" 
             variant="muted"
