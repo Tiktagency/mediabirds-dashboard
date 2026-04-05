@@ -1,9 +1,17 @@
 import { useAutomationSettings } from '@/hooks/useAutomationSettings';
+import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { AutomationCard } from './AutomationCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const AutomationTab = () => {
   const { settings, isLoading, updateSetting } = useAutomationSettings();
+  const { settings: dashboardSettings } = useDashboardSettings();
+
+  const impactColors = dashboardSettings.impact_colors || {
+    high: '#ef4444',
+    medium: '#eab308',
+    low: '#6b7280',
+  };
 
   if (isLoading) {
     return (
@@ -30,6 +38,7 @@ export const AutomationTab = () => {
             key={setting.id} 
             setting={setting} 
             onUpdate={updateSetting}
+            impactColors={impactColors}
           />
         ))}
       </div>
