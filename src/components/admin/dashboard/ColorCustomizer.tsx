@@ -12,7 +12,21 @@ interface ColorCustomizerProps {
   onUpdate: (colors: { high?: string; medium?: string; low?: string }) => Promise<void>;
 }
 
+// Helper to convert hex to rgba
+const hexToRgba = (hex: string, alpha: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
+  const getTagStyle = (color: string) => ({
+    backgroundColor: hexToRgba(color, 0.2),
+    color: color,
+    boxShadow: `0 0 8px ${hexToRgba(color, 0.4)}`,
+  });
+
   return (
     <Card className="bg-card/50 border-border/30">
       <CardHeader>
@@ -41,6 +55,12 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
                 onChange={(e) => onUpdate({ high: e.target.value })}
                 className="flex-1 bg-background/50 font-mono text-sm"
               />
+              <span
+                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                style={getTagStyle(colors.high)}
+              >
+                High
+              </span>
             </div>
           </div>
         </div>
@@ -61,6 +81,12 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
                 onChange={(e) => onUpdate({ medium: e.target.value })}
                 className="flex-1 bg-background/50 font-mono text-sm"
               />
+              <span
+                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                style={getTagStyle(colors.medium)}
+              >
+                Medium
+              </span>
             </div>
           </div>
         </div>
@@ -81,30 +107,12 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
                 onChange={(e) => onUpdate({ low: e.target.value })}
                 className="flex-1 bg-background/50 font-mono text-sm"
               />
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-border/30">
-          <p className="text-xs text-muted-foreground mb-3">Preview</p>
-          <div className="flex gap-3">
-            <div 
-              className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: colors.high }}
-            >
-              High
-            </div>
-            <div 
-              className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: colors.medium }}
-            >
-              Medium
-            </div>
-            <div 
-              className="px-3 py-1 rounded-full text-xs font-medium text-white"
-              style={{ backgroundColor: colors.low }}
-            >
-              Low
+              <span
+                className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                style={getTagStyle(colors.low)}
+              >
+                Low
+              </span>
             </div>
           </div>
         </div>
