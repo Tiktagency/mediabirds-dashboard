@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ProfileModal } from '@/components/ProfileModal';
 import { useNavigate } from 'react-router-dom';
 import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
+import { useTheme } from 'next-themes';
 
 // Tile configuration mapping automation_name to route, icon, and variant
 interface TileConfig {
@@ -66,14 +67,14 @@ const Index = () => {
   const { settings: automationSettings, isLoading: automationsLoading } = useAutomationSettings();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { setTheme } = useTheme();
 
   // Apply theme from settings
   useEffect(() => {
     if (dashboardSettings?.theme) {
-      document.documentElement.classList.toggle('dark', dashboardSettings.theme === 'dark');
-      document.documentElement.classList.toggle('light', dashboardSettings.theme === 'light');
+      setTheme(dashboardSettings.theme);
     }
-  }, [dashboardSettings?.theme]);
+  }, [dashboardSettings?.theme, setTheme]);
 
   // Get last run for a tile based on its config
   const getLastRun = (automationName: string): string | null => {
