@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Globe, Save } from 'lucide-react';
+import { ChevronDown, ChevronUp, Globe, Save, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,6 +55,7 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
       status: localSetting.status,
       webhook_url: localSetting.webhook_url,
       webhook_backup_url: localSetting.webhook_backup_url,
+      n8n_workflow_name: localSetting.n8n_workflow_name,
     });
     setIsSaving(false);
   };
@@ -186,6 +187,26 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="border-t border-border/30 pt-4 mt-4">
+            <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+              <Workflow className="w-4 h-4" />
+              N8N Configuratie
+            </h4>
+            <div className="space-y-2">
+              <Label htmlFor={`n8n-name-${setting.id}`}>N8N Workflow Naam</Label>
+              <Input
+                id={`n8n-name-${setting.id}`}
+                value={localSetting.n8n_workflow_name || ''}
+                onChange={(e) => setLocalSetting(prev => ({ ...prev, n8n_workflow_name: e.target.value }))}
+                className="bg-background/50 font-mono text-sm"
+                placeholder="bijv. MEDIABIRDS monday planning"
+              />
+              <p className="text-xs text-muted-foreground">
+                De exacte naam van de workflow in n8n voor API integratie.
+              </p>
+            </div>
           </div>
 
           <div className="border-t border-border/30 pt-4 mt-4">

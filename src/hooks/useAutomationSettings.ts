@@ -15,6 +15,7 @@ export interface AutomationSetting {
   status: AutomationStatusType;
   webhook_url: string | null;
   webhook_backup_url: string | null;
+  n8n_workflow_name: string | null;
   created_at: string;
   updated_at: string;
 }
