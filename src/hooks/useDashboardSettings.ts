@@ -80,6 +80,20 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   background_color: DEFAULT_BACKGROUND_COLOR,
 };
 
+// Sync updates to all other users via edge function
+const syncToAllUsers = async (updates: Record<string, unknown>, excludeUserId?: string) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    await supabase.functions.invoke('sync-dashboard-settings', {
+      body: { updates, exclude_user_id: excludeUserId },
+    });
+  } catch (err) {
+    console.error('Failed to sync to all users:', err);
+  }
+};
+
 export const useDashboardSettings = (userId?: string) => {
   const [settings, setSettings] = useState<DashboardSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +131,6 @@ export const useDashboardSettings = (userId?: string) => {
           background_color: (dashboardColors?.background_color as string) || DEFAULT_BACKGROUND_COLOR,
         } as DashboardSettings);
       } else {
-        // Create default settings for this user
         const { data: newSettings, error: insertError } = await supabase
           .from('user_dashboard_settings')
           .insert({
@@ -137,7 +150,7 @@ export const useDashboardSettings = (userId?: string) => {
     }
   };
 
-  const updateSettings = async (updates: Partial<DashboardSettings>) => {
+  const updateSettings = async (updates: Partial<DashboardSettings>, syncGlobal = true) => {
     if (!settings?.id) return;
 
     try {
@@ -149,6 +162,12 @@ export const useDashboardSettings = (userId?: string) => {
       if (error) throw error;
 
       setSettings(prev => prev ? { ...prev, ...updates } : null);
+
+      // Sync to all other users
+      if (syncGlobal) {
+        await syncToAllUsers(updates, settings.user_id);
+      }
+
       toast({
         title: 'Opgeslagen',
         description: 'Dashboard instellingen bijgewerkt',
@@ -184,40 +203,37 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateTileColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.tile_colors, ...colors };
-    // Store in dashboard_colors.tile_colors for persistence
     const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const newDashboardColors = { ...currentDashboardColors, tile_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: { ...currentDashboardColors, tile_colors: newColors } })
+      .update({ dashboard_colors: newDashboardColors })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, tile_colors: newColors } : null);
-    toast({
-      title: 'Opgeslagen',
-      description: 'Tile kleuren bijgewerkt',
-    });
+    await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
+    toast({ title: 'Opgeslagen', description: 'Tile kleuren bijgewerkt' });
   };
 
   const updateSavedHoursColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.saved_hours_colors, ...colors };
-    // Store in dashboard_colors.saved_hours_colors for persistence
     const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const newDashboardColors = { ...currentDashboardColors, saved_hours_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: { ...currentDashboardColors, saved_hours_colors: newColors } })
+      .update({ dashboard_colors: newDashboardColors })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, saved_hours_colors: newColors } : null);
-    toast({
-      title: 'Opgeslagen',
-      description: 'Saved hours kleuren bijgewerkt',
-    });
+    await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
+    toast({ title: 'Opgeslagen', description: 'Saved hours kleuren bijgewerkt' });
   };
 
   const updateButtonColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.button_colors, ...colors };
     const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const newDashboardColors = { ...currentDashboardColors, button_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: { ...currentDashboardColors, button_colors: newColors } })
+      .update({ dashboard_colors: newDashboardColors })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
     if (newColors.background) {
@@ -226,26 +242,23 @@ export const useDashboardSettings = (userId?: string) => {
     if (newColors.text) {
       document.documentElement.style.setProperty('--button-primary-text', newColors.text);
     }
-    toast({
-      title: 'Opgeslagen',
-      description: 'Knopkleuren bijgewerkt',
-    });
+    await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
+    toast({ title: 'Opgeslagen', description: 'Knopkleuren bijgewerkt' });
   };
 
   const updateBackgroundColor = async (color: string) => {
     const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const newDashboardColors = { ...currentDashboardColors, background_color: color };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: { ...currentDashboardColors, background_color: color } })
+      .update({ dashboard_colors: newDashboardColors })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, background_color: color } : null);
     if (/^#[0-9a-fA-F]{6}$/.test(color)) {
       document.documentElement.style.setProperty('--background', hexToHsl(color));
     }
-    toast({
-      title: 'Opgeslagen',
-      description: 'Achtergrondkleur bijgewerkt',
-    });
+    await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
+    toast({ title: 'Opgeslagen', description: 'Achtergrondkleur bijgewerkt' });
   };
 
   const updateTheme = async (theme: 'dark' | 'light') => {
