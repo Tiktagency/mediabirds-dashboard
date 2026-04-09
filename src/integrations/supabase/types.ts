@@ -122,29 +122,38 @@ export type Database = {
       companies: {
         Row: {
           auth_token_secret_name: string | null
+          blogs_n8n_name: string | null
           blogs_webhook: string | null
           created_at: string
           id: string
           name: string
+          seo_research_n8n_name: string | null
           seo_research_webhook: string
+          subkeywords_n8n_name: string | null
           subkeywords_webhook: string
         }
         Insert: {
           auth_token_secret_name?: string | null
+          blogs_n8n_name?: string | null
           blogs_webhook?: string | null
           created_at?: string
           id?: string
           name: string
+          seo_research_n8n_name?: string | null
           seo_research_webhook: string
+          subkeywords_n8n_name?: string | null
           subkeywords_webhook: string
         }
         Update: {
           auth_token_secret_name?: string | null
+          blogs_n8n_name?: string | null
           blogs_webhook?: string | null
           created_at?: string
           id?: string
           name?: string
+          seo_research_n8n_name?: string | null
           seo_research_webhook?: string
+          subkeywords_n8n_name?: string | null
           subkeywords_webhook?: string
         }
         Relationships: []
