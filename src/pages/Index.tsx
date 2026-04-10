@@ -203,6 +203,7 @@ const Index = () => {
                 impact={impact}
                 lastRun={getLastRun(automationName)}
                 impactColors={impactColors}
+                status={automationSetting?.status}
               />
             );
           })}
