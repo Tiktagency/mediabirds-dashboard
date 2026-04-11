@@ -49,8 +49,44 @@ export const useLogSettings = () => {
     }
   };
 
+  const fetchN8nLogs = async (limit: number = 100): Promise<AutomationLog[]> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-n8n-logs', {
+        body: { limit },
+      });
+
+      if (error) {
+        console.error('Error fetching n8n logs:', error);
+        return [];
+      }
+
+      // Transform n8n logs to match AutomationLog interface
+      const n8nLogs: AutomationLog[] = (data?.logs || []).map((log: any) => ({
+        id: `n8n-${log.id}`,
+        automation_name: log.automation_name,
+        log_level: 'basic' as LogLevel,
+        message: log.message,
+        status: log.status,
+        execution_time_ms: log.execution_time_ms,
+        metadata: log.metadata,
+        created_at: log.created_at,
+      }));
+
+      return n8nLogs;
+    } catch (error) {
+      console.error('Error fetching n8n logs:', error);
+      return [];
+    }
+  };
+
   const fetchLogs = async (filters?: { automation?: string; status?: string; limit?: number }) => {
     try {
+      setIsLoading(true);
+
+      // Fetch n8n logs
+      const n8nLogs = await fetchN8nLogs(filters?.limit || 100);
+
+      // Also fetch local logs from automation_logs table
       let query = supabase
         .from('automation_logs')
         .select('*')
@@ -64,9 +100,32 @@ export const useLogSettings = () => {
         query = query.eq('status', filters.status);
       }
 
-      const { data, error } = await query;
+      const { data: localLogs, error } = await query;
       if (error) throw error;
-      setLogs(data as AutomationLog[] || []);
+
+      // Combine and sort logs
+      const allLogs = [
+        ...n8nLogs,
+        ...(localLogs as AutomationLog[] || []),
+      ];
+
+      // Sort by created_at descending
+      allLogs.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      // Apply filters to combined logs
+      let filteredLogs = allLogs;
+      if (filters?.automation) {
+        filteredLogs = filteredLogs.filter(log => 
+          log.automation_name.toLowerCase().includes(filters.automation!.toLowerCase())
+        );
+      }
+      if (filters?.status) {
+        filteredLogs = filteredLogs.filter(log => log.status === filters.status);
+      }
+
+      setLogs(filteredLogs);
     } catch (error) {
       console.error('Error fetching logs:', error);
     } finally {
