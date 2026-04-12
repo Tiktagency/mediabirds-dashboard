@@ -49,10 +49,10 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchN8nLogs = async (limit: number = 100): Promise<AutomationLog[]> => {
+  const fetchN8nLogs = async (limit: number = 100, workflowNames?: string[]): Promise<AutomationLog[]> => {
     try {
       const { data, error } = await supabase.functions.invoke('get-n8n-logs', {
-        body: { limit },
+        body: { limit, workflowNames },
       });
 
       if (error) {
@@ -79,12 +79,56 @@ export const useLogSettings = () => {
     }
   };
 
+  const fetchConnectedWorkflowNames = async (): Promise<string[]> => {
+    try {
+      // Get n8n workflow names from automation_settings
+      const { data: automationData, error: automationError } = await supabase
+        .from('automation_settings')
+        .select('n8n_workflow_name')
+        .not('n8n_workflow_name', 'is', null);
+
+      if (automationError) throw automationError;
+
+      // Get n8n workflow names from companies
+      const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .select('seo_research_n8n_name, subkeywords_n8n_name, blogs_n8n_name');
+
+      if (companyError) throw companyError;
+
+      const workflowNames: string[] = [];
+
+      // Add automation_settings workflow names
+      automationData?.forEach((item: any) => {
+        if (item.n8n_workflow_name) {
+          workflowNames.push(item.n8n_workflow_name);
+        }
+      });
+
+      // Add company workflow names
+      companyData?.forEach((company: any) => {
+        if (company.seo_research_n8n_name) workflowNames.push(company.seo_research_n8n_name);
+        if (company.subkeywords_n8n_name) workflowNames.push(company.subkeywords_n8n_name);
+        if (company.blogs_n8n_name) workflowNames.push(company.blogs_n8n_name);
+      });
+
+      // Remove duplicates
+      return [...new Set(workflowNames)];
+    } catch (error) {
+      console.error('Error fetching connected workflow names:', error);
+      return [];
+    }
+  };
+
   const fetchLogs = async (filters?: { automation?: string; status?: string; limit?: number }) => {
     try {
       setIsLoading(true);
 
-      // Fetch n8n logs
-      const n8nLogs = await fetchN8nLogs(filters?.limit || 100);
+      // Get connected workflow names first
+      const connectedWorkflows = await fetchConnectedWorkflowNames();
+      
+      // Fetch n8n logs only for connected workflows
+      const n8nLogs = await fetchN8nLogs(filters?.limit || 100, connectedWorkflows);
 
       // Also fetch local logs from automation_logs table
       let query = supabase
