@@ -49,7 +49,7 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchN8nLogs = async (limit: number = 500, workflowNames?: string[], startDate?: string): Promise<AutomationLog[]> => {
+  const fetchN8nLogs = async (limit: number = 250, workflowNames?: string[], startDate?: string): Promise<AutomationLog[]> => {
     try {
       const { data, error } = await supabase.functions.invoke('get-n8n-logs', {
         body: { limit, workflowNames, startDate },
@@ -136,7 +136,7 @@ export const useLogSettings = () => {
       const connectedWorkflows = await fetchConnectedWorkflowNames();
       
       // Fetch n8n logs only for connected workflows, with startDate filter
-      const n8nLogs = await fetchN8nLogs(500, connectedWorkflows, dateThresholdISO);
+      const n8nLogs = await fetchN8nLogs(250, connectedWorkflows, dateThresholdISO);
 
       // Also fetch local logs from automation_logs table
       let query = supabase
@@ -144,7 +144,7 @@ export const useLogSettings = () => {
         .select('*')
         .gte('created_at', dateThresholdISO)
         .order('created_at', { ascending: false })
-        .limit(filters?.limit || 500);
+        .limit(filters?.limit || 250);
 
       if (filters?.automation) {
         query = query.eq('automation_name', filters.automation);
