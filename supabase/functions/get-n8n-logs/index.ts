@@ -97,8 +97,11 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all recent executions
-    let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=${limit}`;
+    // Fetch all recent executions (n8n API has a max limit of 250)
+    const apiLimit = Math.min(limit, 250);
+    let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=${apiLimit}`;
+    
+    console.log(`Fetching executions from: ${executionsUrl}`);
     
     const executionsResponse = await fetch(executionsUrl, {
       method: 'GET',
@@ -109,7 +112,8 @@ serve(async (req) => {
     });
 
     if (!executionsResponse.ok) {
-      console.error('Failed to fetch executions');
+      const errorText = await executionsResponse.text();
+      console.error(`Failed to fetch executions: ${executionsResponse.status} - ${errorText}`);
       return new Response(
         JSON.stringify({ error: 'Failed to fetch executions', logs: [] }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
