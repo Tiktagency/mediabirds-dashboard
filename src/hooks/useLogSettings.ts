@@ -124,6 +124,12 @@ export const useLogSettings = () => {
     try {
       setIsLoading(true);
 
+      // Calculate date threshold based on retention_days
+      const retentionDays = settings?.retention_days || 30;
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - retentionDays);
+      const dateThresholdISO = dateThreshold.toISOString();
+
       // Get connected workflow names first
       const connectedWorkflows = await fetchConnectedWorkflowNames();
       
@@ -134,6 +140,7 @@ export const useLogSettings = () => {
       let query = supabase
         .from('automation_logs')
         .select('*')
+        .gte('created_at', dateThresholdISO)
         .order('created_at', { ascending: false })
         .limit(filters?.limit || 100);
 
@@ -147,19 +154,24 @@ export const useLogSettings = () => {
       const { data: localLogs, error } = await query;
       if (error) throw error;
 
-      // Combine and sort logs
+      // Combine logs
       const allLogs = [
         ...n8nLogs,
         ...(localLogs as AutomationLog[] || []),
       ];
 
+      // Filter n8n logs by retention period as well
+      const filteredByDate = allLogs.filter(log => 
+        new Date(log.created_at) >= dateThreshold
+      );
+
       // Sort by created_at descending
-      allLogs.sort((a, b) => 
+      filteredByDate.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Apply filters to combined logs
-      let filteredLogs = allLogs;
+      // Apply additional filters to combined logs
+      let filteredLogs = filteredByDate;
       if (filters?.automation) {
         filteredLogs = filteredLogs.filter(log => 
           log.automation_name.toLowerCase().includes(filters.automation!.toLowerCase())
@@ -193,6 +205,17 @@ export const useLogSettings = () => {
         title: 'Opgeslagen',
         description: 'Log instellingen bijgewerkt',
       });
+
+      // Refetch logs if retention period changed
+      if (updates.retention_days !== undefined) {
+        // Need to wait for state update, so use the new value directly
+        const retentionDays = updates.retention_days;
+        const dateThreshold = new Date();
+        dateThreshold.setDate(dateThreshold.getDate() - retentionDays);
+        
+        // Refetch logs with new retention period
+        setTimeout(() => fetchLogs(), 100);
+      }
     } catch (error) {
       console.error('Error updating log settings:', error);
       toast({
