@@ -49,10 +49,10 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchN8nLogs = async (limit: number = 250, workflowNames?: string[], startDate?: string): Promise<AutomationLog[]> => {
+  const fetchN8nLogs = async (limit: number = 100, workflowNames?: string[]): Promise<AutomationLog[]> => {
     try {
       const { data, error } = await supabase.functions.invoke('get-n8n-logs', {
-        body: { limit, workflowNames, startDate },
+        body: { limit, workflowNames },
       });
 
       if (error) {
@@ -120,31 +120,22 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchLogs = async (filters?: { automation?: string; status?: string; limit?: number; retentionDays?: number }) => {
+  const fetchLogs = async (filters?: { automation?: string; status?: string }) => {
     try {
       setIsLoading(true);
-
-      // Calculate date threshold based on retention_days (use passed value or settings or default)
-      const retentionDays = filters?.retentionDays ?? settings?.retention_days ?? 30;
-      const dateThreshold = new Date();
-      dateThreshold.setDate(dateThreshold.getDate() - retentionDays);
-      const dateThresholdISO = dateThreshold.toISOString();
-
-      console.log(`Fetching logs with retention: ${retentionDays} days, threshold: ${dateThresholdISO}`);
 
       // Get connected workflow names first
       const connectedWorkflows = await fetchConnectedWorkflowNames();
       
-      // Fetch n8n logs only for connected workflows, with startDate filter
-      const n8nLogs = await fetchN8nLogs(250, connectedWorkflows, dateThresholdISO);
+      // Fetch 100 most recent n8n logs for connected workflows
+      const n8nLogs = await fetchN8nLogs(100, connectedWorkflows);
 
       // Also fetch local logs from automation_logs table
       let query = supabase
         .from('automation_logs')
         .select('*')
-        .gte('created_at', dateThresholdISO)
         .order('created_at', { ascending: false })
-        .limit(filters?.limit || 250);
+        .limit(100);
 
       if (filters?.automation) {
         query = query.eq('automation_name', filters.automation);
@@ -162,18 +153,16 @@ export const useLogSettings = () => {
         ...(localLogs as AutomationLog[] || []),
       ];
 
-      // Filter n8n logs by retention period as well
-      const filteredByDate = allLogs.filter(log => 
-        new Date(log.created_at) >= dateThreshold
-      );
-
       // Sort by created_at descending
-      filteredByDate.sort((a, b) => 
+      allLogs.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Apply additional filters to combined logs
-      let filteredLogs = filteredByDate;
+      // Take only 100 most recent
+      const recentLogs = allLogs.slice(0, 100);
+
+      // Apply additional filters
+      let filteredLogs = recentLogs;
       if (filters?.automation) {
         filteredLogs = filteredLogs.filter(log => 
           log.automation_name.toLowerCase().includes(filters.automation!.toLowerCase())
@@ -207,11 +196,6 @@ export const useLogSettings = () => {
         title: 'Opgeslagen',
         description: 'Log instellingen bijgewerkt',
       });
-
-      // Refetch logs if retention period changed - pass the new value directly
-      if (updates.retention_days !== undefined) {
-        fetchLogs({ retentionDays: updates.retention_days });
-      }
     } catch (error) {
       console.error('Error updating log settings:', error);
       toast({
@@ -269,17 +253,10 @@ export const useLogSettings = () => {
     });
   };
 
-  // Fetch settings first, then logs once settings are loaded
   useEffect(() => {
     fetchSettings();
+    fetchLogs();
   }, []);
-
-  // Fetch logs after settings are loaded
-  useEffect(() => {
-    if (settings !== null) {
-      fetchLogs();
-    }
-  }, [settings?.retention_days]);
 
   return { settings, logs, isLoading, updateSettings, fetchLogs, exportLogs };
 };

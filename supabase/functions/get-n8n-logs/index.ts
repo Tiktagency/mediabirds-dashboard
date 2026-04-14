@@ -51,11 +51,9 @@ serve(async (req) => {
       );
     }
 
-    const { limit = 500, workflowNames, startDate } = await req.json().catch(() => ({}));
+    const { limit = 100, workflowNames } = await req.json().catch(() => ({}));
     
-    // Parse startDate if provided
-    const startDateObj = startDate ? new Date(startDate) : null;
-    console.log(`Fetching n8n logs with startDate: ${startDate}, limit: ${limit}`);
+    console.log(`Fetching n8n logs, limit: ${limit}`);
 
     // Fetch all workflows
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -128,15 +126,6 @@ serve(async (req) => {
     // Filter by workflow IDs if specified
     if (targetWorkflowIds.length > 0) {
       executions = executions.filter(e => targetWorkflowIds.includes(e.workflowId));
-    }
-
-    // Filter executions by startDate if provided
-    if (startDateObj) {
-      executions = executions.filter(exec => {
-        const execDate = new Date(exec.stoppedAt || exec.startedAt);
-        return execDate >= startDateObj;
-      });
-      console.log(`After date filter: ${executions.length} executions`);
     }
 
     // Transform executions to log entries
