@@ -123,7 +123,7 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredLogs.slice(0, 50).map(log => (
+                filteredLogs.slice(0, 100).map(log => (
                   <TableRow key={log.id} className="hover:bg-background/20">
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(log.created_at), 'dd MMM HH:mm:ss', { locale: nl })}
@@ -149,9 +149,9 @@ export const LogViewer = ({ logs, onFilter, onExport }: LogViewerProps) => {
           </Table>
         </div>
 
-        {filteredLogs.length > 50 && (
+        {filteredLogs.length > 100 && (
           <p className="text-xs text-muted-foreground text-center">
-            Toont 50 van {filteredLogs.length} logs
+            Toont 100 van {filteredLogs.length} logs
           </p>
         )}
       </CardContent>
