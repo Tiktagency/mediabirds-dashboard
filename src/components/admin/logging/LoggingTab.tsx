@@ -4,9 +4,10 @@ import { LogViewer } from './LogViewer';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const LoggingTab = () => {
-  const { settings, logs, isLoading, updateSettings, fetchLogs, exportLogs } = useLogSettings();
+  const { settings, logs, allAutomationNames, isLoading, isRefreshing, updateSettings, fetchLogs, exportLogs } = useLogSettings();
 
-  if (isLoading) {
+  // Only show skeleton on initial load, not on refresh
+  if (isLoading && logs.length === 0) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-48 w-full" />
@@ -27,7 +28,9 @@ export const LoggingTab = () => {
       <AlertConfiguration settings={settings} onUpdate={updateSettings} />
 
       <LogViewer 
-        logs={logs} 
+        logs={logs}
+        allAutomationNames={allAutomationNames}
+        isRefreshing={isRefreshing}
         onFilter={fetchLogs}
         onExport={exportLogs}
       />
