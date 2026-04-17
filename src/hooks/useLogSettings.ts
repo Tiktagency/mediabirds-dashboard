@@ -31,7 +31,9 @@ export interface AutomationLog {
 export const useLogSettings = () => {
   const [settings, setSettings] = useState<LogSettings | null>(null);
   const [logs, setLogs] = useState<AutomationLog[]>([]);
+  const [allAutomationNames, setAllAutomationNames] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
   const fetchSettings = async () => {
@@ -122,7 +124,12 @@ export const useLogSettings = () => {
 
   const fetchLogs = async (filters?: { automation?: string; status?: string }) => {
     try {
-      setIsLoading(true);
+      // Only show full loading on initial load, use refreshing for subsequent calls
+      if (logs.length === 0) {
+        setIsLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
 
       // Get connected workflow names first
       const connectedWorkflows = await fetchConnectedWorkflowNames();
@@ -130,38 +137,34 @@ export const useLogSettings = () => {
       // Fetch 100 most recent n8n logs for connected workflows
       const n8nLogs = await fetchN8nLogs(100, connectedWorkflows);
 
-      // Also fetch local logs from automation_logs table
-      let query = supabase
+      // Also fetch local logs from automation_logs table (without filters to get all names)
+      const { data: localLogs, error } = await supabase
         .from('automation_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (filters?.automation) {
-        query = query.eq('automation_name', filters.automation);
-      }
-      if (filters?.status) {
-        query = query.eq('status', filters.status);
-      }
-
-      const { data: localLogs, error } = await query;
       if (error) throw error;
 
       // Combine logs
-      const allLogs = [
+      const combinedLogs = [
         ...n8nLogs,
         ...(localLogs as AutomationLog[] || []),
       ];
 
       // Sort by created_at descending
-      allLogs.sort((a, b) => 
+      combinedLogs.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
       // Take only 100 most recent
-      const recentLogs = allLogs.slice(0, 100);
+      const recentLogs = combinedLogs.slice(0, 100);
 
-      // Apply additional filters
+      // Extract all unique automation names BEFORE filtering
+      const uniqueNames = [...new Set(recentLogs.map(log => log.automation_name))];
+      setAllAutomationNames(uniqueNames);
+
+      // Apply filters for display
       let filteredLogs = recentLogs;
       if (filters?.automation) {
         filteredLogs = filteredLogs.filter(log => 
@@ -177,6 +180,7 @@ export const useLogSettings = () => {
       console.error('Error fetching logs:', error);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -258,5 +262,5 @@ export const useLogSettings = () => {
     fetchLogs();
   }, []);
 
-  return { settings, logs, isLoading, updateSettings, fetchLogs, exportLogs };
+  return { settings, logs, allAutomationNames, isLoading, isRefreshing, updateSettings, fetchLogs, exportLogs };
 };
