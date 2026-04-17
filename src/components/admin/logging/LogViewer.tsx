@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Search, RefreshCw } from 'lucide-react';
+import { FileText, Download, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import type { AutomationLog } from '@/hooks/useLogSettings';
@@ -29,13 +29,20 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
   const [automationFilter, setAutomationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const isInitialMount = useRef(true);
 
-  const handleFilter = () => {
+  // Auto-filter when filters change (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
     onFilter({
       automation: automationFilter === 'all' ? undefined : automationFilter,
       status: statusFilter === 'all' ? undefined : statusFilter,
     });
-  };
+  }, [automationFilter, statusFilter]);
 
   const filteredLogs = logs.filter(log => 
     searchQuery === '' || 
@@ -99,9 +106,6 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
               <SelectItem value="info">Info</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={handleFilter} disabled={isRefreshing}>
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
         </div>
 
         <div className="border border-border/30 rounded-lg overflow-hidden">
