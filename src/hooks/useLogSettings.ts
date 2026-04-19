@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +35,9 @@ export const useLogSettings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+  
+  // Track the current request to prevent race conditions
+  const currentRequestId = useRef<number>(0);
 
   const fetchSettings = async () => {
     try {
@@ -51,10 +54,20 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchN8nLogs = async (limit: number = 100, workflowNames?: string[]): Promise<AutomationLog[]> => {
+  const fetchN8nLogs = async (
+    limit: number = 100, 
+    workflowNames?: string[],
+    automationFilter?: string,
+    statusFilter?: string
+  ): Promise<AutomationLog[]> => {
     try {
       const { data, error } = await supabase.functions.invoke('get-n8n-logs', {
-        body: { limit, workflowNames },
+        body: { 
+          limit, 
+          workflowNames,
+          automationFilter,
+          statusFilter
+        },
       });
 
       if (error) {
@@ -122,7 +135,10 @@ export const useLogSettings = () => {
     }
   };
 
-  const fetchLogs = async (filters?: { automation?: string; status?: string }) => {
+  const fetchLogs = useCallback(async (filters?: { automation?: string; status?: string }) => {
+    // Generate a unique request ID
+    const requestId = ++currentRequestId.current;
+    
     try {
       // Only show full loading on initial load, use refreshing for subsequent calls
       if (logs.length === 0) {
@@ -134,17 +150,50 @@ export const useLogSettings = () => {
       // Get connected workflow names first
       const connectedWorkflows = await fetchConnectedWorkflowNames();
       
-      // Fetch 100 most recent n8n logs for connected workflows
-      const n8nLogs = await fetchN8nLogs(100, connectedWorkflows);
+      // Check if this request is still current
+      if (requestId !== currentRequestId.current) {
+        console.log('Request cancelled, newer request in progress');
+        return;
+      }
+      
+      // Fetch n8n logs with server-side filtering
+      const n8nLogs = await fetchN8nLogs(
+        100, 
+        connectedWorkflows,
+        filters?.automation,
+        filters?.status
+      );
 
-      // Also fetch local logs from automation_logs table (without filters to get all names)
-      const { data: localLogs, error } = await supabase
+      // Check again if request is still current
+      if (requestId !== currentRequestId.current) {
+        console.log('Request cancelled, newer request in progress');
+        return;
+      }
+
+      // Also fetch local logs from automation_logs table
+      let localLogsQuery = supabase
         .from('automation_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
+      
+      // Apply server-side filtering for local logs too
+      if (filters?.automation) {
+        localLogsQuery = localLogsQuery.eq('automation_name', filters.automation);
+      }
+      if (filters?.status) {
+        localLogsQuery = localLogsQuery.eq('status', filters.status);
+      }
+
+      const { data: localLogs, error } = await localLogsQuery;
 
       if (error) throw error;
+
+      // Final check if request is still current
+      if (requestId !== currentRequestId.current) {
+        console.log('Request cancelled, newer request in progress');
+        return;
+      }
 
       // Combine logs
       const combinedLogs = [
@@ -160,29 +209,24 @@ export const useLogSettings = () => {
       // Take only 100 most recent
       const recentLogs = combinedLogs.slice(0, 100);
 
-      // Extract all unique automation names BEFORE filtering
-      const uniqueNames = [...new Set(recentLogs.map(log => log.automation_name))];
-      setAllAutomationNames(uniqueNames);
-
-      // Apply filters for display
-      let filteredLogs = recentLogs;
-      if (filters?.automation) {
-        filteredLogs = filteredLogs.filter(log => 
-          log.automation_name.toLowerCase().includes(filters.automation!.toLowerCase())
-        );
-      }
-      if (filters?.status) {
-        filteredLogs = filteredLogs.filter(log => log.status === filters.status);
+      // Extract all unique automation names from unfiltered data for the dropdown
+      // Only update automation names on initial load (no filters)
+      if (!filters?.automation && !filters?.status) {
+        const uniqueNames = [...new Set(recentLogs.map(log => log.automation_name))];
+        setAllAutomationNames(uniqueNames);
       }
 
-      setLogs(filteredLogs);
+      setLogs(recentLogs);
     } catch (error) {
       console.error('Error fetching logs:', error);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      // Only update loading state if this is still the current request
+      if (requestId === currentRequestId.current) {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
     }
-  };
+  }, []);
 
   const updateSettings = async (updates: Partial<LogSettings>) => {
     if (!settings?.id) return;
@@ -260,7 +304,7 @@ export const useLogSettings = () => {
   useEffect(() => {
     fetchSettings();
     fetchLogs();
-  }, []);
+  }, [fetchLogs]);
 
   return { settings, logs, allAutomationNames, isLoading, isRefreshing, updateSettings, fetchLogs, exportLogs };
 };

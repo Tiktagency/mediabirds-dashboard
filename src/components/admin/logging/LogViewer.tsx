@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Search } from 'lucide-react';
+import { FileText, Download, Search, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import type { AutomationLog } from '@/hooks/useLogSettings';
@@ -30,19 +30,39 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const isInitialMount = useRef(true);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-filter when filters change (skip initial mount)
+  // Memoize the filter function
+  const handleFilter = useCallback((automation: string, status: string) => {
+    onFilter({
+      automation: automation === 'all' ? undefined : automation,
+      status: status === 'all' ? undefined : status,
+    });
+  }, [onFilter]);
+
+  // Auto-filter with debouncing when filters change (skip initial mount)
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    
-    onFilter({
-      automation: automationFilter === 'all' ? undefined : automationFilter,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-    });
-  }, [automationFilter, statusFilter]);
+
+    // Clear previous timeout
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    // Debounce the filter call
+    debounceTimeout.current = setTimeout(() => {
+      handleFilter(automationFilter, statusFilter);
+    }, 150);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [automationFilter, statusFilter, handleFilter]);
 
   const filteredLogs = logs.filter(log => 
     searchQuery === '' || 
@@ -57,6 +77,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
           <CardTitle className="flex items-center gap-2 text-base">
             <FileText className="w-4 h-4" />
             Log Viewer
+            {isRefreshing && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => onExport('csv')}>
@@ -84,7 +105,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
             </div>
           </div>
           <Select value={automationFilter} onValueChange={setAutomationFilter}>
-            <SelectTrigger className="w-[180px] bg-background/50">
+            <SelectTrigger className="w-[280px] bg-background/50">
               <SelectValue placeholder="Alle automations" />
             </SelectTrigger>
             <SelectContent>
@@ -124,7 +145,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
                 {filteredLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Geen logs gevonden
+                      {isRefreshing ? 'Laden...' : 'Geen logs gevonden'}
                     </TableCell>
                   </TableRow>
                 ) : (
