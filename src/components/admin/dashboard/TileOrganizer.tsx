@@ -88,7 +88,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     <div
       ref={setNodeRef}
       style={style}
-      className="aspect-[4/3] rounded-lg border border-border/50 bg-gradient-to-br from-card/80 to-card/40 relative group cursor-grab active:cursor-grabbing"
+      className="aspect-[4/3] rounded-lg border border-primary/50 bg-gradient-to-br from-primary/30 to-primary/10 relative group cursor-grab active:cursor-grabbing"
       {...attributes}
       {...listeners}
     >
@@ -218,9 +218,8 @@ export const TileOrganizer = ({
       
       setItems(newItems);
       
-      // Only save non-empty items in order
-      const filteredOrder = newItems.filter(id => !id.startsWith('__empty_'));
-      await onReorder(filteredOrder);
+      // Save the full array with positions preserved (including empty slots)
+      await onReorder(newItems);
     }
   };
 
