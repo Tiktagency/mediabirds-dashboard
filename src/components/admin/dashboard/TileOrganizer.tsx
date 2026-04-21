@@ -7,18 +7,19 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  rectSwappingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { GripVertical, LayoutGrid, Pencil } from 'lucide-react';
+import { GripVertical, LayoutGrid, Pencil, X } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
 
 interface TileOrganizerProps {
@@ -29,14 +30,23 @@ interface TileOrganizerProps {
   onUpdateLabel: (automationName: string, label: string) => Promise<void>;
 }
 
-interface SortableItemProps {
+interface GridTileProps {
   id: string;
+  index: number;
   name: string;
   customLabel: string;
+  status?: 'active' | 'inactive' | 'testmode';
+  isEmpty: boolean;
   onUpdateLabel: (label: string) => void;
 }
 
-const SortableItem = ({ id, name, customLabel, onUpdateLabel }: SortableItemProps) => {
+const statusColors = {
+  active: 'bg-green-500',
+  inactive: 'bg-red-500',
+  testmode: 'bg-yellow-500',
+};
+
+const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel }: GridTileProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(customLabel || name);
 
@@ -47,57 +57,119 @@ const SortableItem = ({ id, name, customLabel, onUpdateLabel }: SortableItemProp
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled: isEmpty });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.3 : 1,
   };
 
   const handleSave = () => {
-    onUpdateLabel(label);
+    if (!isEmpty) {
+      onUpdateLabel(label);
+    }
     setIsEditing(false);
   };
+
+  if (isEmpty) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="aspect-[4/3] rounded-lg border-2 border-dashed border-border/30 bg-background/20 flex items-center justify-center"
+      >
+        <span className="text-xs text-muted-foreground/50">{index + 1}</span>
+      </div>
+    );
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border border-border/30"
+      className="aspect-[4/3] rounded-lg border border-border/50 bg-gradient-to-br from-card/80 to-card/40 relative group cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing p-1 hover:bg-card/50 rounded"
-      >
-        <GripVertical className="w-4 h-4 text-muted-foreground" />
-      </button>
-      
-      {isEditing ? (
-        <Input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onBlur={handleSave}
-          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-          className="flex-1 h-8 bg-background/50"
-          autoFocus
-        />
-      ) : (
-        <span className="flex-1 text-sm font-medium text-foreground">
-          {customLabel || name}
-        </span>
+      {/* Position number */}
+      <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-background/60 flex items-center justify-center">
+        <span className="text-[10px] font-medium text-foreground/70">{index + 1}</span>
+      </div>
+
+      {/* Status indicator */}
+      {status && (
+        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
       )}
-      
-      <button
-        onClick={() => setIsEditing(true)}
-        className="p-1 hover:bg-card/50 rounded text-muted-foreground hover:text-foreground"
-      >
-        <Pencil className="w-3 h-3" />
-      </button>
+
+      {/* Drag handle indicator */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity">
+        <GripVertical className="w-6 h-6 text-foreground" />
+      </div>
+
+      {/* Tile name */}
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
+        {isEditing ? (
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') {
+                  setLabel(customLabel || name);
+                  setIsEditing(false);
+                }
+              }}
+              className="h-6 text-xs bg-background/50 px-1"
+              autoFocus
+              onPointerDown={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLabel(customLabel || name);
+                setIsEditing(false);
+              }}
+              className="p-0.5 hover:bg-background/50 rounded"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <X className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-foreground truncate pr-1">
+              {customLabel || name}
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/50 rounded transition-opacity"
+            >
+              <Pencil className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+const DragOverlayTile = ({ name, status }: { name: string; status?: 'active' | 'inactive' | 'testmode' }) => (
+  <div className="aspect-[4/3] w-full rounded-lg border border-primary/50 bg-gradient-to-br from-card to-card/60 relative shadow-lg">
+    {status && (
+      <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
+    )}
+    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
+      <span className="text-xs font-medium text-foreground truncate">{name}</span>
+    </div>
+  </div>
+);
 
 export const TileOrganizer = ({ 
   tileOrder, 
@@ -106,31 +178,62 @@ export const TileOrganizer = ({
   onReorder, 
   onUpdateLabel 
 }: TileOrganizerProps) => {
-  const [items, setItems] = useState(tileOrder);
+  const GRID_SIZE = 9;
+  
+  // Pad the tile order to always have 9 slots
+  const paddedOrder = [...tileOrder];
+  while (paddedOrder.length < GRID_SIZE) {
+    paddedOrder.push(`__empty_${paddedOrder.length}`);
+  }
+  
+  const [items, setItems] = useState(paddedOrder.slice(0, GRID_SIZE));
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
 
     if (over && active.id !== over.id) {
       const oldIndex = items.indexOf(active.id as string);
       const newIndex = items.indexOf(over.id as string);
-      const newItems = arrayMove(items, oldIndex, newIndex);
+      
+      const newItems = [...items];
+      // Swap the items
+      [newItems[oldIndex], newItems[newIndex]] = [newItems[newIndex], newItems[oldIndex]];
+      
       setItems(newItems);
-      await onReorder(newItems);
+      
+      // Only save non-empty items in order
+      const filteredOrder = newItems.filter(id => !id.startsWith('__empty_'));
+      await onReorder(filteredOrder);
     }
   };
 
+  const getAutomation = (id: string) => {
+    return automations.find(a => a.automation_name === id);
+  };
+
   const getAutomationName = (id: string) => {
-    const automation = automations.find(a => a.automation_name === id);
+    const automation = getAutomation(id);
     return automation?.display_name || id;
   };
+
+  const activeTile = activeId ? getAutomation(activeId) : null;
 
   return (
     <Card className="bg-card/50 border-border/30">
@@ -140,29 +243,53 @@ export const TileOrganizer = ({
           Tile Volgorde
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Sleep tiles om de volgorde aan te passen. Klik op het potlood om labels te wijzigen.
+          Sleep tiles naar de gewenste positie in het grid. Het grid toont hoe je dashboard eruit zal zien.
         </p>
       </CardHeader>
       <CardContent>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={items} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
-              {items.map((id) => (
-                <SortableItem
-                  key={id}
-                  id={id}
-                  name={getAutomationName(id)}
-                  customLabel={customLabels[id] || ''}
-                  onUpdateLabel={(label) => onUpdateLabel(id, label)}
-                />
-              ))}
+          <SortableContext items={items} strategy={rectSwappingStrategy}>
+            <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+              {items.map((id, index) => {
+                const isEmpty = id.startsWith('__empty_');
+                const automation = getAutomation(id);
+                
+                return (
+                  <GridTile
+                    key={id}
+                    id={id}
+                    index={index}
+                    name={getAutomationName(id)}
+                    customLabel={customLabels[id] || ''}
+                    status={automation?.status}
+                    isEmpty={isEmpty}
+                    onUpdateLabel={(label) => onUpdateLabel(id, label)}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
+          
+          <DragOverlay>
+            {activeId && activeTile ? (
+              <div className="w-[120px]">
+                <DragOverlayTile 
+                  name={customLabels[activeId] || activeTile.display_name} 
+                  status={activeTile.status}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
+        
+        <p className="text-xs text-muted-foreground text-center mt-4">
+          Lege posities worden als placeholder tiles getoond op het dashboard
+        </p>
       </CardContent>
     </Card>
   );
