@@ -38,8 +38,12 @@ export const useLogSettings = () => {
   
   // Track the current request to prevent race conditions
   const currentRequestId = useRef<number>(0);
+  const hasLoadedSettings = useRef(false);
 
-  const fetchSettings = async () => {
+  // Fetch settings immediately (fast operation)
+  const fetchSettings = useCallback(async () => {
+    if (hasLoadedSettings.current) return;
+    
     try {
       const { data, error } = await supabase
         .from('log_settings')
@@ -49,10 +53,11 @@ export const useLogSettings = () => {
 
       if (error) throw error;
       setSettings(data as LogSettings);
+      hasLoadedSettings.current = true;
     } catch (error) {
       console.error('Error fetching log settings:', error);
     }
-  };
+  }, []);
 
   const fetchN8nLogs = async (
     limit: number = 100, 
@@ -301,8 +306,13 @@ export const useLogSettings = () => {
     });
   };
 
+  // Load settings immediately (fast)
   useEffect(() => {
     fetchSettings();
+  }, [fetchSettings]);
+
+  // Load logs separately (slower, can take time)
+  useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
 
