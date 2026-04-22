@@ -110,11 +110,28 @@ const Index = () => {
     );
   }
 
-  // Get ordered tiles from dashboard settings (filter out empty slots and invalid names)
-  const orderedTiles = dashboardSettings.tile_order?.length 
-    ? dashboardSettings.tile_order
-        .filter(name => name && !name.startsWith('__empty_') && tileConfigMap[name])
-    : Object.keys(tileConfigMap);
+  // Grid size constant - same as TileOrganizer
+  const GRID_SIZE = 9;
+  
+  // Get ordered items from dashboard settings (keep all 9 positions including empty slots)
+  const getOrderedItems = () => {
+    if (dashboardSettings.tile_order?.length) {
+      const items = [...dashboardSettings.tile_order];
+      // Pad to ensure 9 items
+      while (items.length < GRID_SIZE) {
+        items.push(`__empty_${items.length}`);
+      }
+      return items.slice(0, GRID_SIZE);
+    }
+    // Default: all tiles + empty placeholders
+    const defaultTiles = Object.keys(tileConfigMap);
+    while (defaultTiles.length < GRID_SIZE) {
+      defaultTiles.push(`__empty_${defaultTiles.length}`);
+    }
+    return defaultTiles;
+  };
+  
+  const orderedItems = getOrderedItems();
 
   // Impact colors from dashboard settings
   const impactColors = dashboardSettings.impact_colors || {
@@ -181,13 +198,29 @@ const Index = () => {
       <div className="max-w-5xl mx-auto px-6 py-16">
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {orderedTiles.map((automationName) => {
-            const config = tileConfigMap[automationName];
-            const automationSetting = getAutomationSetting(automationName);
-            const customLabel = dashboardSettings.custom_labels?.[automationName];
+          {orderedItems.map((item, index) => {
+            const isEmpty = !item || item.startsWith('__empty_') || !tileConfigMap[item];
+            
+            // Render placeholder for empty slots
+            if (isEmpty) {
+              return (
+                <DashboardButton 
+                  key={`empty-${index}`}
+                  label="" 
+                  variant="muted"
+                  icon={BarChart3}
+                  disabled 
+                />
+              );
+            }
+            
+            // Render actual tile
+            const config = tileConfigMap[item];
+            const automationSetting = getAutomationSetting(item);
+            const customLabel = dashboardSettings.custom_labels?.[item];
             
             // Get label: custom_label > display_name > automation_name
-            const label = customLabel || automationSetting?.display_name || automationName;
+            const label = customLabel || automationSetting?.display_name || item;
             
             // Get description and impact from automation settings
             const description = automationSetting?.description || '';
@@ -195,39 +228,19 @@ const Index = () => {
             
             return (
               <DashboardButton 
-                key={automationName}
+                key={item}
                 to={config.to}
                 label={label}
                 variant={config.variant}
                 icon={config.icon}
                 description={description}
                 impact={impact}
-                lastRun={getLastRun(automationName)}
+                lastRun={getLastRun(item)}
                 impactColors={impactColors}
                 status={automationSetting?.status}
               />
             );
           })}
-          
-          {/* Placeholder tiles */}
-          <DashboardButton 
-            label="" 
-            variant="muted"
-            icon={BarChart3}
-            disabled 
-          />
-          <DashboardButton 
-            label="" 
-            variant="muted"
-            icon={Settings}
-            disabled 
-          />
-          <DashboardButton 
-            label="" 
-            variant="muted"
-            icon={Users}
-            disabled 
-          />
         </div>
       </div>
       <NewsTicker />
