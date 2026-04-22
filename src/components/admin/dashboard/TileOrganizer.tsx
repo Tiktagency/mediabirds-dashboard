@@ -87,8 +87,11 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className="aspect-[4/3] rounded-lg border border-primary/50 bg-gradient-to-br from-primary/30 to-primary/10 relative group cursor-grab active:cursor-grabbing"
+      style={{
+        ...style,
+        background: 'linear-gradient(to bottom right, rgba(143, 19, 226, 0.3), rgba(143, 19, 226, 0.1))'
+      }}
+      className="aspect-[4/3] rounded-lg border border-[#8f13e2]/50 relative group cursor-grab active:cursor-grabbing"
       {...attributes}
       {...listeners}
     >
@@ -161,7 +164,10 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
 };
 
 const DragOverlayTile = ({ name, status }: { name: string; status?: 'active' | 'inactive' | 'testmode' }) => (
-  <div className="aspect-[4/3] w-full rounded-lg border border-primary/50 bg-gradient-to-br from-card to-card/60 relative shadow-lg">
+  <div 
+    className="aspect-[4/3] w-full rounded-lg border border-[#8f13e2]/50 relative shadow-lg"
+    style={{ background: 'linear-gradient(to bottom right, rgba(143, 19, 226, 0.3), rgba(143, 19, 226, 0.1))' }}
+  >
     {status && (
       <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
     )}
