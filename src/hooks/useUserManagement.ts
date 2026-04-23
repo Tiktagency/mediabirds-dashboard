@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,7 +27,7 @@ export const useUserManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -42,7 +42,10 @@ export const useUserManagement = () => {
         .from('user_roles')
         .select('*');
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+        // Continue without roles if there's an error
+      }
 
       // Combine profiles with roles
       const usersWithRoles = (profiles || []).map(profile => ({
@@ -63,9 +66,9 @@ export const useUserManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchPermissions = async () => {
+  const fetchPermissions = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('user_automation_permissions')
@@ -76,25 +79,19 @@ export const useUserManagement = () => {
     } catch (error) {
       console.error('Error fetching permissions:', error);
     }
-  };
+  }, []);
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
     try {
-      // First remove existing roles
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
+      // Call edge function to update role
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'assign-role', userId, role: newRole },
+      });
 
-      if (deleteError) throw deleteError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Add new role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: newRole });
-
-      if (insertError) throw insertError;
-
+      // Optimistic update
       setUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, roles: [newRole] } : u)
       );
@@ -103,13 +100,15 @@ export const useUserManagement = () => {
         title: 'Opgeslagen',
         description: 'Gebruikersrol bijgewerkt',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user role:', error);
       toast({
         title: 'Fout',
-        description: 'Kon rol niet bijwerken',
+        description: error.message || 'Kon rol niet bijwerken',
         variant: 'destructive',
       });
+      // Refetch to ensure consistency
+      fetchUsers();
     }
   };
 
@@ -168,23 +167,26 @@ export const useUserManagement = () => {
 
   const deleteUser = async (userId: string) => {
     try {
-      // Note: This only removes roles and permissions, not the actual user
-      // Full user deletion would require admin API access
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      await supabase.from('user_automation_permissions').delete().eq('user_id', userId);
+      // Call edge function to delete user completely
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'delete-user', userId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       setUsers(prev => prev.filter(u => u.id !== userId));
       setPermissions(prev => prev.filter(p => p.user_id !== userId));
 
       toast({
         title: 'Verwijderd',
-        description: 'Gebruiker verwijderd uit het systeem',
+        description: 'Gebruiker volledig verwijderd uit het systeem',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
       toast({
         title: 'Fout',
-        description: 'Kon gebruiker niet verwijderen',
+        description: error.message || 'Kon gebruiker niet verwijderen',
         variant: 'destructive',
       });
     }
@@ -193,7 +195,7 @@ export const useUserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchPermissions();
-  }, []);
+  }, [fetchUsers, fetchPermissions]);
 
   return {
     users,
