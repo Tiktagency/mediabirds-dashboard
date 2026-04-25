@@ -32,22 +32,21 @@ export const PermissionMatrix = ({
     return user.roles.includes(role as any);
   };
 
-  // Get effective permissions based on role
+  // Get effective permissions based on role defaults and specific overrides
   const getEffectivePermissions = (user: UserProfile, automationName: string) => {
     const isViewer = hasRole(user, 'viewer');
     const isOperator = hasRole(user, 'operator');
     const perm = getPermission(user.id, automationName);
 
+    // If specific permission exists, use it; otherwise use role defaults
+    const hasSpecificPermission = !!perm;
+    
     return {
-      // Viewers and Operators can always view
-      can_view: isViewer || isOperator || (perm?.can_view ?? false),
-      // Operators can always execute
-      can_execute: isOperator || (perm?.can_execute ?? false),
-      // Only specific permission or admin
+      can_view: hasSpecificPermission ? perm.can_view : (isViewer || isOperator),
+      can_execute: hasSpecificPermission ? perm.can_execute : isOperator,
       can_manage: perm?.can_manage ?? false,
-      // Track if permission is from role (to disable checkbox)
-      view_from_role: isViewer || isOperator,
-      execute_from_role: isOperator,
+      // Track if using role default (for visual styling)
+      is_role_default: !hasSpecificPermission && (isViewer || isOperator),
     };
   };
 
@@ -67,13 +66,14 @@ export const PermissionMatrix = ({
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Stel per gebruiker in welke automations ze mogen bekijken, uitvoeren of beheren.
+          Rol-standaarden worden automatisch ingesteld maar kunnen worden aangepast.
         </p>
         <div className="flex flex-wrap gap-2 mt-2 text-xs">
           <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-400">
-            Viewer = Alles bekijken
+            Viewer = Standaard alles bekijken
           </Badge>
           <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-400">
-            Operator = Alles bekijken + uitvoeren
+            Operator = Standaard alles bekijken + uitvoeren
           </Badge>
           <Badge variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-400">
             Admin = Volledige toegang
@@ -138,21 +138,17 @@ export const PermissionMatrix = ({
                           <div className="flex items-center justify-center gap-3">
                             <Checkbox
                               checked={effectivePerm.can_view}
-                              disabled={effectivePerm.view_from_role}
                               onCheckedChange={(checked) => 
                                 onUpdatePermission(user.id, automation.automation_name, { can_view: !!checked })
                               }
-                              title={effectivePerm.view_from_role ? "Automatisch via rol" : "Bekijken"}
-                              className={effectivePerm.view_from_role ? "opacity-50" : ""}
+                              title="Bekijken"
                             />
                             <Checkbox
                               checked={effectivePerm.can_execute}
-                              disabled={effectivePerm.execute_from_role}
                               onCheckedChange={(checked) => 
                                 onUpdatePermission(user.id, automation.automation_name, { can_execute: !!checked })
                               }
-                              title={effectivePerm.execute_from_role ? "Automatisch via rol" : "Uitvoeren"}
-                              className={effectivePerm.execute_from_role ? "opacity-50" : ""}
+                              title="Uitvoeren"
                             />
                             <Checkbox
                               checked={effectivePerm.can_manage}
