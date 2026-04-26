@@ -82,8 +82,16 @@ export const useUserManagement = () => {
   }, []);
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
+    // Store previous state for rollback
+    const previousUsers = users;
+    
+    // Optimistic update FIRST for instant feedback
+    setUsers(prev =>
+      prev.map(u => u.id === userId ? { ...u, roles: [newRole] } : u)
+    );
+
     try {
-      // Call edge function to update role
+      // Call edge function to update role in background
       const { data, error } = await supabase.functions.invoke('manage-user-roles', {
         body: { action: 'assign-role', userId, role: newRole },
       });
@@ -91,24 +99,19 @@ export const useUserManagement = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Optimistic update
-      setUsers(prev =>
-        prev.map(u => u.id === userId ? { ...u, roles: [newRole] } : u)
-      );
-
       toast({
         title: 'Opgeslagen',
         description: 'Gebruikersrol bijgewerkt',
       });
     } catch (error: any) {
       console.error('Error updating user role:', error);
+      // Rollback optimistic update
+      setUsers(previousUsers);
       toast({
         title: 'Fout',
         description: error.message || 'Kon rol niet bijwerken',
         variant: 'destructive',
       });
-      // Refetch to ensure consistency
-      fetchUsers();
     }
   };
 
@@ -166,8 +169,16 @@ export const useUserManagement = () => {
   };
 
   const deleteUser = async (userId: string) => {
+    // Store previous state for rollback
+    const previousUsers = users;
+    const previousPermissions = permissions;
+    
+    // Optimistic update FIRST for instant feedback
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    setPermissions(prev => prev.filter(p => p.user_id !== userId));
+
     try {
-      // Call edge function to delete user completely
+      // Call edge function to delete user in background
       const { data, error } = await supabase.functions.invoke('manage-user-roles', {
         body: { action: 'delete-user', userId },
       });
@@ -175,15 +186,15 @@ export const useUserManagement = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setUsers(prev => prev.filter(u => u.id !== userId));
-      setPermissions(prev => prev.filter(p => p.user_id !== userId));
-
       toast({
         title: 'Verwijderd',
         description: 'Gebruiker volledig verwijderd uit het systeem',
       });
     } catch (error: any) {
       console.error('Error deleting user:', error);
+      // Rollback optimistic update
+      setUsers(previousUsers);
+      setPermissions(previousPermissions);
       toast({
         title: 'Fout',
         description: error.message || 'Kon gebruiker niet verwijderen',
