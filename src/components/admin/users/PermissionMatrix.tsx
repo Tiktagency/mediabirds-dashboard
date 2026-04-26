@@ -69,13 +69,13 @@ export const PermissionMatrix = ({
           Rol-standaarden worden automatisch ingesteld maar kunnen worden aangepast.
         </p>
         <div className="flex flex-wrap gap-2 mt-2 text-xs">
-          <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-400">
+          <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-400">
             Viewer = Standaard alles bekijken
           </Badge>
-          <Badge variant="outline" className="bg-green-500/10 border-green-500/30 text-green-400">
+          <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-400">
             Operator = Standaard alles bekijken + uitvoeren
           </Badge>
-          <Badge variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-400">
+          <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-400">
             Admin = Volledige toegang
           </Badge>
         </div>
@@ -119,12 +119,12 @@ export const PermissionMatrix = ({
                         <span>{user.email}</span>
                         <div className="flex gap-1">
                           {hasRole(user, 'viewer') && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-500/10 border-blue-500/30 text-blue-400">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 border-green-500/30 text-green-400">
                               Viewer
                             </Badge>
                           )}
                           {hasRole(user, 'operator') && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 border-green-500/30 text-green-400">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-500/10 border-blue-500/30 text-blue-400">
                               Operator
                             </Badge>
                           )}
