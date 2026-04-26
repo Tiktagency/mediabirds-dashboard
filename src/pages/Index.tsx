@@ -3,7 +3,7 @@ import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
@@ -14,6 +14,7 @@ import { ProfileModal } from '@/components/ProfileModal';
 import { useNavigate } from 'react-router-dom';
 import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
 import { useTheme } from 'next-themes';
+import { Badge } from '@/components/ui/badge';
 
 // Tile configuration mapping automation_name to route, icon, and variant
 interface TileConfig {
@@ -58,7 +59,7 @@ const tileConfigMap: Record<string, TileConfig> = {
 };
 
 const Index = () => {
-  const { isLoading, signOut, user } = useAdminAuth();
+  const { isLoading, signOut, user, isAdmin, roles } = useAuth();
   const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
   const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
   const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
@@ -98,6 +99,22 @@ const Index = () => {
   const getAutomationSetting = (automationName: string) => {
     return automationSettings.find(s => s.automation_name === automationName);
   };
+
+  // Get role badge config
+  const getRoleBadge = () => {
+    if (roles.includes('admin')) {
+      return { label: 'Admin', className: 'bg-red-500/20 text-red-400 border-red-500/30' };
+    }
+    if (roles.includes('operator')) {
+      return { label: 'Operator', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+    }
+    if (roles.includes('viewer')) {
+      return { label: 'Viewer', className: 'bg-green-500/20 text-green-400 border-green-500/30' };
+    }
+    return null;
+  };
+
+  const roleBadge = getRoleBadge();
 
   if (isLoading || settingsLoading || automationsLoading) {
     return (
@@ -153,7 +170,14 @@ const Index = () => {
           Mediabirds
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
-          <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+            {roleBadge && (
+              <Badge variant="outline" className={roleBadge.className}>
+                {roleBadge.label}
+              </Badge>
+            )}
+          </div>
 
           <Button 
             onClick={signOut}
@@ -176,13 +200,15 @@ const Index = () => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-card border-border">
-              <DropdownMenuItem 
-                onClick={() => navigate('/admin')}
-                className="cursor-pointer"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Admin panel
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem 
+                  onClick={() => navigate('/admin')}
+                  className="cursor-pointer"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin panel
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem 
                 onClick={() => setProfileModalOpen(true)}
                 className="cursor-pointer"
