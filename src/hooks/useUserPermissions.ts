@@ -76,31 +76,33 @@ export const useUserPermissions = () => {
     // Admins can view everything
     if (state.isAdmin) return true;
     
-    // Operators can view everything by default
-    if (state.isOperator) return true;
-    
-    // Viewers can view everything by default
-    if (state.isViewer) return true;
-    
-    // Check specific permission for other roles
+    // Check specific permission first (overrides role default)
     const permission = state.permissions.find(p => p.automation_name === automationName);
-    return permission?.can_view ?? false;
+    if (permission) {
+      return permission.can_view;
+    }
+    
+    // Fall back to role defaults: Operators and Viewers can view by default
+    if (state.isOperator || state.isViewer) return true;
+    
+    return false;
   }, [state.isAdmin, state.isOperator, state.isViewer, state.permissions]);
 
   const canExecute = useCallback((automationName: string): boolean => {
     // Admins can execute everything
     if (state.isAdmin) return true;
     
-    // Operators can execute everything by default
+    // Check specific permission first (overrides role default)
+    const permission = state.permissions.find(p => p.automation_name === automationName);
+    if (permission) {
+      return permission.can_execute;
+    }
+    
+    // Fall back to role defaults: Operators can execute by default, Viewers cannot
     if (state.isOperator) return true;
     
-    // Viewers can never execute (view only)
-    if (state.isViewer && !state.isOperator && !state.isAdmin) return false;
-    
-    // Check specific permission for other roles
-    const permission = state.permissions.find(p => p.automation_name === automationName);
-    return permission?.can_execute ?? false;
-  }, [state.isAdmin, state.isOperator, state.isViewer, state.permissions]);
+    return false;
+  }, [state.isAdmin, state.isOperator, state.permissions]);
 
   const canManage = useCallback((automationName: string): boolean => {
     // Only admins can manage
