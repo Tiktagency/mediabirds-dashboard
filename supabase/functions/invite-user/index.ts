@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -95,10 +98,84 @@ serve(async (req) => {
       }
     }
 
+    // Send invitation email
+    const loginUrl = redirectUrl || 'https://audrvgrsuleruuspwnhf.lovableproject.com/login';
+    const roleLabel = role === 'admin' ? 'Administrator' : role === 'operator' ? 'Operator' : 'Viewer';
+    
+    let emailSent = false;
+    let emailError = null;
+    
+    try {
+      const { error: resendError } = await resend.emails.send({
+        from: 'TIKT Dashboard <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Je bent uitgenodigd voor het TIKT Dashboard',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">TIKT Dashboard</h1>
+            </div>
+            
+            <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
+              <h2 style="color: #1f2937; margin-top: 0;">Welkom!</h2>
+              
+              <p>Je bent uitgenodigd om toegang te krijgen tot het TIKT Dashboard met de rol:</p>
+              
+              <div style="background: #8f13e2; color: white; display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 600; margin: 10px 0;">
+                ${roleLabel}
+              </div>
+              
+              <h3 style="color: #1f2937; margin-top: 25px;">Je inloggegevens:</h3>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; margin: 15px 0;">
+                <p style="margin: 5px 0;"><strong>E-mail:</strong> ${email}</p>
+                <p style="margin: 5px 0;"><strong>Tijdelijk wachtwoord:</strong></p>
+                <code style="background: #f3f4f6; padding: 10px 15px; border-radius: 5px; display: block; font-size: 16px; letter-spacing: 1px; margin-top: 5px;">${tempPassword}</code>
+              </div>
+              
+              <a href="${loginUrl}" style="display: inline-block; background: #8f13e2; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0;">
+                Inloggen op het Dashboard
+              </a>
+              
+              <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
+                <strong>⚠️ Belangrijk:</strong> Wijzig je wachtwoord na je eerste login voor optimale beveiliging.
+              </p>
+            </div>
+            
+            <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+              <p>Deze e-mail is verzonden door het TIKT Dashboard.<br>Heb je vragen? Neem contact op met je administrator.</p>
+            </div>
+          </body>
+          </html>
+        `,
+      });
+
+      if (resendError) {
+        console.error('Email send error:', resendError);
+        emailError = resendError.message;
+      } else {
+        emailSent = true;
+        console.log(`Invitation email sent to ${email}`);
+      }
+    } catch (e) {
+      console.error('Email send exception:', e);
+      emailError = e.message;
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Gebruiker uitgenodigd',
-      tempPassword // In production, send this via email instead
+      message: emailSent 
+        ? 'Gebruiker uitgenodigd en e-mail verzonden' 
+        : 'Gebruiker aangemaakt maar e-mail niet verzonden',
+      tempPassword,
+      emailSent,
+      emailError
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
