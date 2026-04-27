@@ -95,6 +95,24 @@ serve(async (req) => {
       }
     }
 
+    // Send invitation data to n8n webhook
+    const webhookUrl = 'https://tikt.app.n8n.cloud/webhook/mediabirds-invite';
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          role,
+          tempPassword
+        })
+      });
+      console.log('Webhook response status:', webhookResponse.status);
+    } catch (webhookError) {
+      console.error('Webhook error (non-blocking):', webhookError);
+      // Don't fail the invite if webhook fails
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'Gebruiker aangemaakt',
