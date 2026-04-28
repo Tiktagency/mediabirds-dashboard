@@ -97,6 +97,7 @@ serve(async (req) => {
 
     // Send invitation data to n8n webhook
     const webhookUrl = 'https://tikt.app.n8n.cloud/webhook/mediabirds-invite';
+    const dashboardUrl = 'https://audrvgrsuleruuspwnhf.lovableproject.com';
     try {
       const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
@@ -104,7 +105,8 @@ serve(async (req) => {
         body: JSON.stringify({
           email,
           role,
-          tempPassword
+          tempPassword,
+          dashboardUrl
         })
       });
       console.log('Webhook response status:', webhookResponse.status);
