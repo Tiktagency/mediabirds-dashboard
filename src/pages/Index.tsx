@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
+import { SavedHoursCard } from '@/components/dashboard/SavedHoursCard';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
@@ -150,6 +151,23 @@ const Index = () => {
   
   const orderedItems = getOrderedItems();
 
+  // Get all connected n8n workflow names for saved hours calculation
+  const connectedWorkflowNames = useMemo(() => {
+    const names: string[] = [];
+    Object.values(tileConfigMap).forEach(config => {
+      if (config.n8nWorkflow) {
+        names.push(config.n8nWorkflow);
+      }
+    });
+    // Also add workflow names from automation settings
+    automationSettings.forEach(setting => {
+      if (setting.n8n_workflow_name && !names.includes(setting.n8n_workflow_name)) {
+        names.push(setting.n8n_workflow_name);
+      }
+    });
+    return names;
+  }, [automationSettings]);
+
   // Impact colors from dashboard settings
   const impactColors = dashboardSettings.impact_colors || {
     high: '#ef4444',
@@ -223,6 +241,10 @@ const Index = () => {
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-16">
+        {/* Saved Hours Card */}
+        <div className="flex justify-center mb-8">
+          <SavedHoursCard workflowNames={connectedWorkflowNames} />
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {orderedItems.map((item, index) => {
