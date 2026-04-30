@@ -189,7 +189,12 @@ export const BlogGenerationForm = ({
     
     // Afbeelding velden afhankelijk van gekozen type
     if (formData.image_type === 'ai_image') {
-      if (!formData.achtergrond_kleur || !formData.hoofdaccent_gradient_1 || !formData.hoofdaccent_gradient_2) {
+      if (
+        !formData.achtergrond_kleur ||
+        !formData.hoofdaccent_gradient_1 ||
+        !formData.hoofdaccent_gradient_2 ||
+        !formData.image_style
+      ) {
         return false;
       }
     } else if (formData.image_type === 'google_drive') {
