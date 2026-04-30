@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Pencil } from 'lucide-react';
+import { Clock, Pencil, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
@@ -15,7 +15,10 @@ import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import styleIsometricFlat from '@/assets/style-isometric-flat.png';
+import styleCinematic3d from '@/assets/style-cinematic-3d.png';
 
 
 interface PageUrlSettings {
@@ -713,34 +716,70 @@ export const BlogGenerationForm = ({
               {/* Stijl selectie */}
               <div className="space-y-2 pt-2">
                 <Label className="text-white/70 text-sm">Stijl</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {([
-                    { value: 'isometric_flat', label: 'Isometric flat illustration' },
-                    { value: 'cinematic_3d', label: 'Cinematic 3D interface render' },
-                    { value: 'brutalist_raw', label: 'Brutalist / Raw UI design' },
-                  ] as const).map((option) => {
-                    const isSelected = formData.image_style === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={async () => {
-                          const newValue = isSelected ? '' : option.value;
-                          setFormData(prev => ({ ...prev, image_style: newValue }));
-                          await saveSettings({ image_style: newValue });
-                        }}
-                        className={cn(
-                          "text-left p-3 rounded-md border transition-all duration-200 text-sm",
-                          isSelected
-                            ? "bg-accent text-[#002C1F] border-accent"
-                            : "bg-white/5 border-white/20 text-white/80 hover:bg-white/10"
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <TooltipProvider delayDuration={150}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {([
+                      { value: 'isometric_flat', label: 'Isometric flat illustration', preview: styleIsometricFlat },
+                      { value: 'cinematic_3d', label: 'Cinematic 3D interface render', preview: styleCinematic3d },
+                      { value: 'brutalist_raw', label: 'Brutalist / Raw UI design', preview: null as string | null },
+                    ] as const).map((option) => {
+                      const isSelected = formData.image_style === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={async () => {
+                            const newValue = isSelected ? '' : option.value;
+                            setFormData(prev => ({ ...prev, image_style: newValue }));
+                            await saveSettings({ image_style: newValue });
+                          }}
+                          className={cn(
+                            "relative text-left p-3 pr-8 rounded-md border transition-all duration-200 text-sm",
+                            isSelected
+                              ? "bg-accent text-[#002C1F] border-accent"
+                              : "bg-white/5 border-white/20 text-white/80 hover:bg-white/10"
+                          )}
+                        >
+                          {option.label}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                                onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                                className={cn(
+                                  "absolute top-2 right-2 inline-flex items-center justify-center rounded-full transition-opacity",
+                                  isSelected ? "text-[#002C1F]/60 hover:text-[#002C1F]" : "text-white/50 hover:text-white/90"
+                                )}
+                                aria-label={`Voorbeeld ${option.label}`}
+                              >
+                                <Info className="w-3.5 h-3.5" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              className="p-2 bg-[#002C1F]/95 border border-white/20 text-white max-w-none"
+                            >
+                              {option.preview ? (
+                                <div className="space-y-1">
+                                  <img
+                                    src={option.preview}
+                                    alt={`Voorbeeld ${option.label}`}
+                                    className="w-60 h-auto rounded-md object-cover"
+                                  />
+                                  <div className="text-xs text-white/70 text-center">{option.label}</div>
+                                </div>
+                              ) : (
+                                <div className="px-2 py-3 text-xs text-white/80">Voorbeeld komt binnenkort</div>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
               </div>
             </div>
           )}
