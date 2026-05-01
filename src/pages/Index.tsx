@@ -178,7 +178,7 @@ const Index = () => {
   return (
     <div className="min-h-screen hero-gradient">
       {/* Banner Section */}
-      <header className="w-full h-48 overflow-visible relative">
+      <header className="w-full h-48 overflow-hidden relative">
         <img 
           src={bannerImage} 
           alt="Mediabirds Banner" 
@@ -238,14 +238,13 @@ const Index = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
-        {/* Saved Hours Card - positioned at bottom of banner */}
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 z-10">
-          <SavedHoursCard workflowNames={connectedWorkflowNames} />
-        </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 pt-12 pb-16">
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        {/* Saved Hours Card */}
+        <div className="flex justify-center mb-8">
+          <SavedHoursCard workflowNames={connectedWorkflowNames} />
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {orderedItems.map((item, index) => {
