@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
-import { SavedHoursCard } from '@/components/dashboard/SavedHoursCard';
+import { SavedHoursTile } from '@/components/dashboard/SavedHoursTile';
 import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
@@ -241,13 +241,11 @@ const Index = () => {
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-16">
-        {/* Saved Hours Card */}
-        <div className="flex justify-center mb-8">
-          <SavedHoursCard workflowNames={connectedWorkflowNames} />
-        </div>
-        
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {orderedItems.map((item, index) => {
+          {/* Saved Hours Tile - always first */}
+          <SavedHoursTile workflowNames={connectedWorkflowNames} />
+          
+          {orderedItems.slice(0, 8).map((item, index) => {
             const isEmpty = !item || item.startsWith('__empty_') || !tileConfigMap[item];
             
             // Render placeholder for empty slots
