@@ -46,6 +46,8 @@ const statusColors = {
   testmode: 'bg-yellow-500',
 };
 
+const isSavedHoursTile = (id: string) => id === 'saved-hours';
+
 const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel }: GridTileProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [label, setLabel] = useState(customLabel || name);
@@ -84,14 +86,16 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     );
   }
 
+  const isSavedHours = isSavedHoursTile(id);
+
   return (
     <div
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: 'rgba(143, 19, 226, 0.25)'
+        backgroundColor: isSavedHours ? 'white' : 'rgba(143, 19, 226, 0.25)'
       }}
-      className="aspect-[4/3] rounded-lg border border-[#8f13e2] relative group cursor-grab active:cursor-grabbing"
+      className={`aspect-[4/3] rounded-lg border relative group cursor-grab active:cursor-grabbing ${isSavedHours ? 'border-[#8f13e2]/30' : 'border-[#8f13e2]'}`}
       {...attributes}
       {...listeners}
     >
@@ -143,7 +147,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground truncate pr-1">
+            <span className={`text-xs font-medium truncate pr-1 ${isSavedHours ? 'text-[#8f13e2]' : 'text-foreground'}`}>
               {customLabel || name}
             </span>
             <button
@@ -163,19 +167,23 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   );
 };
 
-const DragOverlayTile = ({ name, status }: { name: string; status?: 'active' | 'inactive' | 'testmode' }) => (
-  <div 
-    className="aspect-[4/3] w-full rounded-lg border border-[#8f13e2] relative shadow-lg"
-    style={{ backgroundColor: 'rgba(143, 19, 226, 0.25)' }}
-  >
-    {status && (
-      <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
-    )}
-    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
-      <span className="text-xs font-medium text-foreground truncate">{name}</span>
+const DragOverlayTile = ({ id, name, status }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode' }) => {
+  const isSavedHours = isSavedHoursTile(id);
+  
+  return (
+    <div 
+      className={`aspect-[4/3] w-full rounded-lg border relative shadow-lg ${isSavedHours ? 'border-[#8f13e2]/30' : 'border-[#8f13e2]'}`}
+      style={{ backgroundColor: isSavedHours ? 'white' : 'rgba(143, 19, 226, 0.25)' }}
+    >
+      {status && (
+        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
+      )}
+      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
+        <span className={`text-xs font-medium truncate ${isSavedHours ? 'text-[#8f13e2]' : 'text-foreground'}`}>{name}</span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const TileOrganizer = ({ 
   tileOrder, 
@@ -284,6 +292,7 @@ export const TileOrganizer = ({
             {activeId && activeTile ? (
               <div className="w-[120px]">
                 <DragOverlayTile 
+                  id={activeId}
                   name={customLabels[activeId] || activeTile.display_name} 
                   status={activeTile.status}
                 />
