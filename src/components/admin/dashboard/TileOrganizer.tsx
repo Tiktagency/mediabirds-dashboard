@@ -19,7 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { GripVertical, LayoutGrid, Pencil, X } from 'lucide-react';
+import { GripVertical, LayoutGrid, Pencil, X, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, LucideIcon } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
 
 interface TileOrganizerProps {
@@ -46,7 +46,22 @@ const statusColors = {
   testmode: 'bg-yellow-500',
 };
 
-const isSavedHoursTile = (id: string) => id === 'saved-hours';
+// Tile configuration matching dashboard exactly
+const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secondary' | 'accent' | 'muted' }> = {
+  'saved-hours': { icon: Clock, variant: 'primary' },
+  'monday-planning': { icon: CalendarDays, variant: 'primary' },
+  'zoekwoord-onderzoek': { icon: Search, variant: 'secondary' },
+  'blogs': { icon: FileText, variant: 'accent' },
+  'wordpress-alt-text': { icon: Image, variant: 'primary' },
+  'chatbot': { icon: MessageCircle, variant: 'secondary' },
+};
+
+const variantClasses = {
+  primary: 'bg-primary text-primary-foreground',
+  secondary: 'bg-secondary text-secondary-foreground',
+  accent: 'bg-accent text-accent-foreground',
+  muted: 'bg-muted text-muted-foreground',
+};
 
 const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel }: GridTileProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -74,48 +89,45 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     setIsEditing(false);
   };
 
+  // Empty placeholder tile
   if (isEmpty) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="aspect-[4/3] rounded-lg border-2 border-dashed border-border/30 bg-background/20 flex items-center justify-center"
+        className="h-32 rounded-xl bg-muted/50 border-2 border-dashed border-border/30 flex items-center justify-center"
       >
-        <span className="text-xs text-muted-foreground/50">{index + 1}</span>
+        <BarChart3 className="w-8 h-8 text-muted-foreground/30" />
       </div>
     );
   }
 
-  const isSavedHours = isSavedHoursTile(id);
+  const isSavedHours = id === 'saved-hours';
+  const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
+  const Icon = config.icon;
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        ...style,
-        backgroundColor: isSavedHours ? 'white' : 'rgba(143, 19, 226, 0.25)'
-      }}
-      className={`aspect-[4/3] rounded-lg border relative group cursor-grab active:cursor-grabbing ${isSavedHours ? 'border-[#8f13e2]/30' : 'border-[#8f13e2]'}`}
-      {...attributes}
-      {...listeners}
-    >
-      {/* Position number */}
-      <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-background/60 flex items-center justify-center">
-        <span className="text-[10px] font-medium text-foreground/70">{index + 1}</span>
-      </div>
+  // Saved Hours tile - white with purple accent
+  if (isSavedHours) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="h-32 rounded-xl bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-2 p-4 relative group cursor-grab active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        {/* Status indicator */}
+        {status && (
+          <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+        )}
+        
+        {/* Drag handle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+          <GripVertical className="w-8 h-8 text-[#8f13e2]" />
+        </div>
 
-      {/* Status indicator */}
-      {status && (
-        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
-      )}
-
-      {/* Drag handle indicator */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity">
-        <GripVertical className="w-6 h-6 text-foreground" />
-      </div>
-
-      {/* Tile name */}
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
+        <Clock className="w-6 h-6 text-[#8f13e2]" />
+        
         {isEditing ? (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
             <Input
@@ -129,7 +141,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                   setIsEditing(false);
                 }
               }}
-              className="h-6 text-xs bg-background/50 px-1"
+              className="h-6 text-xs bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center"
               autoFocus
               onPointerDown={(e) => e.stopPropagation()}
             />
@@ -139,48 +151,127 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                 setLabel(customLabel || name);
                 setIsEditing(false);
               }}
-              className="p-0.5 hover:bg-background/50 rounded"
+              className="p-0.5 hover:bg-[#8f13e2]/10 rounded"
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <X className="w-3 h-3 text-muted-foreground" />
+              <X className="w-3 h-3 text-[#8f13e2]" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium truncate pr-1 ${isSavedHours ? 'text-[#8f13e2]' : 'text-foreground'}`}>
-              {customLabel || name}
-            </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[#8f13e2] font-medium">{customLabel || name}</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/50 rounded transition-opacity"
+              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity"
             >
-              <Pencil className="w-3 h-3 text-muted-foreground" />
+              <Pencil className="w-3 h-3 text-[#8f13e2]" />
             </button>
           </div>
         )}
+        
+        <span className="text-2xl font-bold text-[#8f13e2]">— uur</span>
       </div>
+    );
+  }
+
+  // Regular automation tile - matches DashboardButton styling
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`h-32 rounded-xl ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-2 p-4 relative group cursor-grab active:cursor-grabbing`}
+      {...attributes}
+      {...listeners}
+    >
+      {/* Status indicator */}
+      {status && (
+        <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+      )}
+      
+      {/* Drag handle */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+        <GripVertical className="w-8 h-8" />
+      </div>
+
+      <Icon className="w-8 h-8" />
+      
+      {isEditing ? (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave();
+              if (e.key === 'Escape') {
+                setLabel(customLabel || name);
+                setIsEditing(false);
+              }
+            }}
+            className="h-6 text-xs bg-background/20 px-1 text-center"
+            autoFocus
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setLabel(customLabel || name);
+              setIsEditing(false);
+            }}
+            className="p-0.5 hover:bg-background/20 rounded"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1">
+          <span className="text-lg font-semibold">{customLabel || name}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity"
+          >
+            <Pencil className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
 const DragOverlayTile = ({ id, name, status }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode' }) => {
-  const isSavedHours = isSavedHoursTile(id);
-  
-  return (
-    <div 
-      className={`aspect-[4/3] w-full rounded-lg border relative shadow-lg ${isSavedHours ? 'border-[#8f13e2]/30' : 'border-[#8f13e2]'}`}
-      style={{ backgroundColor: isSavedHours ? 'white' : 'rgba(143, 19, 226, 0.25)' }}
-    >
-      {status && (
-        <div className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${statusColors[status]}`} />
-      )}
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/80 to-transparent rounded-b-lg">
-        <span className={`text-xs font-medium truncate ${isSavedHours ? 'text-[#8f13e2]' : 'text-foreground'}`}>{name}</span>
+  const isSavedHours = id === 'saved-hours';
+  const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
+  const Icon = config.icon;
+
+  if (isSavedHours) {
+    return (
+      <div className="h-32 rounded-xl bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-2 p-4 shadow-lg">
+        {status && (
+          <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+        )}
+        <Clock className="w-6 h-6 text-[#8f13e2]" />
+        <span className="text-xs text-[#8f13e2] font-medium">{name}</span>
+        <span className="text-2xl font-bold text-[#8f13e2]">— uur</span>
       </div>
+    );
+  }
+
+  return (
+    <div className={`h-32 rounded-xl ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-2 p-4 shadow-lg relative`}>
+      {status && (
+        <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+      )}
+      <Icon className="w-8 h-8" />
+      <span className="text-lg font-semibold">{name}</span>
     </div>
   );
 };
@@ -256,7 +347,7 @@ export const TileOrganizer = ({
           Tile Volgorde
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Sleep tiles naar de gewenste positie in het grid. Het grid toont hoe je dashboard eruit zal zien.
+          Sleep tiles naar de gewenste positie. Dit is een exacte preview van je dashboard.
         </p>
       </CardHeader>
       <CardContent>
@@ -267,7 +358,7 @@ export const TileOrganizer = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={items} strategy={rectSwappingStrategy}>
-            <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {items.map((id, index) => {
                 const isEmpty = id.startsWith('__empty_');
                 const automation = getAutomation(id);
@@ -289,20 +380,20 @@ export const TileOrganizer = ({
           </SortableContext>
           
           <DragOverlay>
-            {activeId && activeTile ? (
-              <div className="w-[120px]">
+            {activeId && !activeId.startsWith('__empty_') ? (
+              <div className="w-[200px]">
                 <DragOverlayTile 
                   id={activeId}
-                  name={customLabels[activeId] || activeTile.display_name} 
-                  status={activeTile.status}
+                  name={customLabels[activeId] || getAutomationName(activeId)} 
+                  status={activeTile?.status}
                 />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
         
-        <p className="text-xs text-muted-foreground text-center mt-4">
-          Lege posities worden als placeholder tiles getoond op het dashboard
+        <p className="text-xs text-muted-foreground text-center mt-6">
+          Klik op een tile label om het aan te passen
         </p>
       </CardContent>
     </Card>
