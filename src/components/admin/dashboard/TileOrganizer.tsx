@@ -106,13 +106,13 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
 
-  // Saved Hours tile - white with purple accent (scaled down)
+  // Saved Hours tile - white with purple accent (scaled down, simplified)
   if (isSavedHours) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-1 p-2 relative group cursor-grab active:cursor-grabbing"
+        className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
@@ -123,10 +123,82 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
         
         {/* Drag handle */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-          <GripVertical className="w-5 h-5 text-[#8f13e2]" />
+          <GripVertical className="w-4 h-4 text-[#8f13e2]" />
         </div>
 
-        <Clock className="w-4 h-4 text-[#8f13e2]" />
+        <div className="flex flex-col items-center justify-center gap-1">
+          <Clock className="w-4 h-4 text-[#8f13e2]" />
+          
+          {isEditing ? (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <Input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave();
+                  if (e.key === 'Escape') {
+                    setLabel(customLabel || name);
+                    setIsEditing(false);
+                  }
+                }}
+                className="h-5 text-[10px] bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center w-20"
+                autoFocus
+                onPointerDown={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLabel(customLabel || name);
+                  setIsEditing(false);
+                }}
+                className="p-0.5 hover:bg-[#8f13e2]/10 rounded"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <X className="w-2.5 h-2.5 text-[#8f13e2]" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-[#8f13e2] font-medium leading-tight">{customLabel || name}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity"
+              >
+                <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Regular automation tile - scaled down version
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center relative group cursor-grab active:cursor-grabbing`}
+      {...attributes}
+      {...listeners}
+    >
+      {/* Status indicator */}
+      {status && (
+        <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+      )}
+      
+      {/* Drag handle */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+        <GripVertical className="w-4 h-4" />
+      </div>
+
+      <div className="flex flex-col items-center justify-center gap-1">
+        <Icon className="w-4 h-4" />
         
         {isEditing ? (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -141,7 +213,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                   setIsEditing(false);
                 }
               }}
-              className="h-5 text-[10px] bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center w-20"
+              className="h-5 text-[10px] bg-background/20 px-1 text-center w-20"
               autoFocus
               onPointerDown={(e) => e.stopPropagation()}
             />
@@ -151,98 +223,28 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                 setLabel(customLabel || name);
                 setIsEditing(false);
               }}
-              className="p-0.5 hover:bg-[#8f13e2]/10 rounded"
+              className="p-0.5 hover:bg-background/20 rounded"
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <X className="w-2.5 h-2.5 text-[#8f13e2]" />
+              <X className="w-2.5 h-2.5" />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-0.5">
-            <span className="text-[10px] text-[#8f13e2] font-medium">{customLabel || name}</span>
+            <span className="text-[10px] font-semibold leading-tight">{customLabel || name}</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity"
+              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity"
             >
-              <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
+              <Pencil className="w-2.5 h-2.5" />
             </button>
           </div>
         )}
-        
-        <span className="text-base font-bold text-[#8f13e2]">— uur</span>
       </div>
-    );
-  }
-
-  // Regular automation tile - scaled down version
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`h-20 rounded-lg ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-1 p-2 relative group cursor-grab active:cursor-grabbing`}
-      {...attributes}
-      {...listeners}
-    >
-      {/* Status indicator */}
-      {status && (
-        <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
-      )}
-      
-      {/* Drag handle */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-        <GripVertical className="w-5 h-5" />
-      </div>
-
-      <Icon className="w-5 h-5" />
-      
-      {isEditing ? (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Input
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave();
-              if (e.key === 'Escape') {
-                setLabel(customLabel || name);
-                setIsEditing(false);
-              }
-            }}
-            className="h-5 text-[10px] bg-background/20 px-1 text-center w-20"
-            autoFocus
-            onPointerDown={(e) => e.stopPropagation()}
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setLabel(customLabel || name);
-              setIsEditing(false);
-            }}
-            className="p-0.5 hover:bg-background/20 rounded"
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <X className="w-2.5 h-2.5" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-0.5">
-          <span className="text-xs font-semibold">{customLabel || name}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity"
-          >
-            <Pencil className="w-2.5 h-2.5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };
@@ -254,24 +256,27 @@ const DragOverlayTile = ({ id, name, status }: { id: string; name: string; statu
 
   if (isSavedHours) {
     return (
-      <div className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-1 p-2 shadow-lg relative">
+      <div className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center shadow-lg relative">
         {status && (
           <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
-        <Clock className="w-4 h-4 text-[#8f13e2]" />
-        <span className="text-[10px] text-[#8f13e2] font-medium">{name}</span>
-        <span className="text-base font-bold text-[#8f13e2]">— uur</span>
+        <div className="flex flex-col items-center justify-center gap-1">
+          <Clock className="w-4 h-4 text-[#8f13e2]" />
+          <span className="text-[10px] text-[#8f13e2] font-medium leading-tight">{name}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`h-20 rounded-lg ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-1 p-2 shadow-lg relative`}>
+    <div className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center shadow-lg relative`}>
       {status && (
         <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
       )}
-      <Icon className="w-5 h-5" />
-      <span className="text-xs font-semibold">{name}</span>
+      <div className="flex flex-col items-center justify-center gap-1">
+        <Icon className="w-4 h-4" />
+        <span className="text-[10px] font-semibold leading-tight">{name}</span>
+      </div>
     </div>
   );
 };
