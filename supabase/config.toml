@@ -11,10 +11,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-n8n-executions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-n8n-logs]
-verify_jwt = false
+verify_jwt = true
 
 [functions.manage-user-roles]
 verify_jwt = false
@@ -32,7 +32,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.get-saved-hours]
-verify_jwt = false
+verify_jwt = true
 
 [functions.trigger-email-signature]
 verify_jwt = false
