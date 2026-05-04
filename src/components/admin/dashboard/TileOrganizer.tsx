@@ -95,9 +95,9 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
       <div
         ref={setNodeRef}
         style={style}
-        className="h-32 rounded-xl bg-muted/50 border-2 border-dashed border-border/30 flex items-center justify-center"
+        className="h-20 rounded-lg bg-muted/50 border-2 border-dashed border-border/30 flex items-center justify-center"
       >
-        <BarChart3 className="w-8 h-8 text-muted-foreground/30" />
+        <BarChart3 className="w-5 h-5 text-muted-foreground/30" />
       </div>
     );
   }
@@ -106,27 +106,27 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
 
-  // Saved Hours tile - white with purple accent
+  // Saved Hours tile - white with purple accent (scaled down)
   if (isSavedHours) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="h-32 rounded-xl bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-2 p-4 relative group cursor-grab active:cursor-grabbing"
+        className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-1 p-2 relative group cursor-grab active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
         {/* Status indicator */}
         {status && (
-          <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+          <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
         
         {/* Drag handle */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-          <GripVertical className="w-8 h-8 text-[#8f13e2]" />
+          <GripVertical className="w-5 h-5 text-[#8f13e2]" />
         </div>
 
-        <Clock className="w-6 h-6 text-[#8f13e2]" />
+        <Clock className="w-4 h-4 text-[#8f13e2]" />
         
         {isEditing ? (
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -141,7 +141,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                   setIsEditing(false);
                 }
               }}
-              className="h-6 text-xs bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center"
+              className="h-5 text-[10px] bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center w-20"
               autoFocus
               onPointerDown={(e) => e.stopPropagation()}
             />
@@ -154,12 +154,12 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
               className="p-0.5 hover:bg-[#8f13e2]/10 rounded"
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <X className="w-3 h-3 text-[#8f13e2]" />
+              <X className="w-2.5 h-2.5 text-[#8f13e2]" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-[#8f13e2] font-medium">{customLabel || name}</span>
+          <div className="flex items-center gap-0.5">
+            <span className="text-[10px] text-[#8f13e2] font-medium">{customLabel || name}</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -168,36 +168,36 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
               onPointerDown={(e) => e.stopPropagation()}
               className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity"
             >
-              <Pencil className="w-3 h-3 text-[#8f13e2]" />
+              <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
             </button>
           </div>
         )}
         
-        <span className="text-2xl font-bold text-[#8f13e2]">— uur</span>
+        <span className="text-base font-bold text-[#8f13e2]">— uur</span>
       </div>
     );
   }
 
-  // Regular automation tile - matches DashboardButton styling
+  // Regular automation tile - scaled down version
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`h-32 rounded-xl ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-2 p-4 relative group cursor-grab active:cursor-grabbing`}
+      className={`h-20 rounded-lg ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-1 p-2 relative group cursor-grab active:cursor-grabbing`}
       {...attributes}
       {...listeners}
     >
       {/* Status indicator */}
       {status && (
-        <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+        <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
       )}
       
       {/* Drag handle */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-        <GripVertical className="w-8 h-8" />
+        <GripVertical className="w-5 h-5" />
       </div>
 
-      <Icon className="w-8 h-8" />
+      <Icon className="w-5 h-5" />
       
       {isEditing ? (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -212,7 +212,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
                 setIsEditing(false);
               }
             }}
-            className="h-6 text-xs bg-background/20 px-1 text-center"
+            className="h-5 text-[10px] bg-background/20 px-1 text-center w-20"
             autoFocus
             onPointerDown={(e) => e.stopPropagation()}
           />
@@ -225,12 +225,12 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
             className="p-0.5 hover:bg-background/20 rounded"
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <X className="w-3 h-3" />
+            <X className="w-2.5 h-2.5" />
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-semibold">{customLabel || name}</span>
+        <div className="flex items-center gap-0.5">
+          <span className="text-xs font-semibold">{customLabel || name}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -239,7 +239,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
             onPointerDown={(e) => e.stopPropagation()}
             className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity"
           >
-            <Pencil className="w-3 h-3" />
+            <Pencil className="w-2.5 h-2.5" />
           </button>
         </div>
       )}
@@ -254,24 +254,24 @@ const DragOverlayTile = ({ id, name, status }: { id: string; name: string; statu
 
   if (isSavedHours) {
     return (
-      <div className="h-32 rounded-xl bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-2 p-4 shadow-lg">
+      <div className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex flex-col items-center justify-center gap-1 p-2 shadow-lg relative">
         {status && (
-          <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+          <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
-        <Clock className="w-6 h-6 text-[#8f13e2]" />
-        <span className="text-xs text-[#8f13e2] font-medium">{name}</span>
-        <span className="text-2xl font-bold text-[#8f13e2]">— uur</span>
+        <Clock className="w-4 h-4 text-[#8f13e2]" />
+        <span className="text-[10px] text-[#8f13e2] font-medium">{name}</span>
+        <span className="text-base font-bold text-[#8f13e2]">— uur</span>
       </div>
     );
   }
 
   return (
-    <div className={`h-32 rounded-xl ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-2 p-4 shadow-lg relative`}>
+    <div className={`h-20 rounded-lg ${variantClasses[config.variant]} flex flex-col items-center justify-center gap-1 p-2 shadow-lg relative`}>
       {status && (
-        <div className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+        <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
       )}
-      <Icon className="w-8 h-8" />
-      <span className="text-lg font-semibold">{name}</span>
+      <Icon className="w-5 h-5" />
+      <span className="text-xs font-semibold">{name}</span>
     </div>
   );
 };
@@ -358,7 +358,7 @@ export const TileOrganizer = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={items} strategy={rectSwappingStrategy}>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
               {items.map((id, index) => {
                 const isEmpty = id.startsWith('__empty_');
                 const automation = getAutomation(id);
@@ -381,7 +381,7 @@ export const TileOrganizer = ({
           
           <DragOverlay>
             {activeId && !activeId.startsWith('__empty_') ? (
-              <div className="w-[200px]">
+              <div className="w-[120px]">
                 <DragOverlayTile 
                   id={activeId}
                   name={customLabels[activeId] || getAutomationName(activeId)} 
