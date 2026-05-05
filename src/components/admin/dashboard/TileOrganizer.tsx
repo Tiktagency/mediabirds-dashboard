@@ -18,9 +18,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { GripVertical, LayoutGrid, Pencil, X, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, LucideIcon } from 'lucide-react';
+import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, LucideIcon } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
+import { TileLabelEditModal } from './TileLabelEditModal';
 
 interface TileOrganizerProps {
   tileOrder: string[];
@@ -64,8 +64,7 @@ const variantClasses = {
 };
 
 const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel }: GridTileProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [label, setLabel] = useState(customLabel || name);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     attributes,
@@ -80,13 +79,6 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.3 : 1,
-  };
-
-  const handleSave = () => {
-    if (!isEmpty) {
-      onUpdateLabel(label);
-    }
-    setIsEditing(false);
   };
 
   // Empty placeholder tile
@@ -109,146 +101,107 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   // Saved Hours tile - white with purple accent (scaled down, simplified)
   if (isSavedHours) {
     return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-      >
-        {/* Status indicator */}
-        {status && (
-          <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
-        )}
-        
-        {/* Drag handle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-          <GripVertical className="w-4 h-4 text-[#8f13e2]" />
+      <>
+        <div
+          ref={setNodeRef}
+          style={style}
+          className="h-20 rounded-lg bg-white border border-[#8f13e2]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          {/* Status indicator - absolute top-left */}
+          {status && (
+            <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+          )}
+          
+          {/* Edit button - absolute top-right */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsModalOpen(true);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity z-10"
+          >
+            <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
+          </button>
+          
+          {/* Drag handle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+            <GripVertical className="w-4 h-4 text-[#8f13e2]" />
+          </div>
+
+          {/* Centered content */}
+          <div className="flex flex-col items-center justify-center gap-1">
+            <Clock className="w-4 h-4 text-[#8f13e2]" />
+            <span className="text-[10px] text-[#8f13e2] font-medium leading-tight text-center px-1">
+              {customLabel || name}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-1">
-          <Clock className="w-4 h-4 text-[#8f13e2]" />
-          
-          {isEditing ? (
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <Input
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                onBlur={handleSave}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSave();
-                  if (e.key === 'Escape') {
-                    setLabel(customLabel || name);
-                    setIsEditing(false);
-                  }
-                }}
-                className="h-5 text-[10px] bg-[#8f13e2]/10 px-1 text-[#8f13e2] text-center w-20"
-                autoFocus
-                onPointerDown={(e) => e.stopPropagation()}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLabel(customLabel || name);
-                  setIsEditing(false);
-                }}
-                className="p-0.5 hover:bg-[#8f13e2]/10 rounded"
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <X className="w-2.5 h-2.5 text-[#8f13e2]" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-0.5">
-              <span className="text-[10px] text-[#8f13e2] font-medium leading-tight">{customLabel || name}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#8f13e2]/10 rounded transition-opacity"
-              >
-                <Pencil className="w-2.5 h-2.5 text-[#8f13e2]" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+        <TileLabelEditModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          currentLabel={customLabel || name}
+          automationName={name}
+          onSave={onUpdateLabel}
+        />
+      </>
     );
   }
 
   // Regular automation tile - scaled down version
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center relative group cursor-grab active:cursor-grabbing`}
-      {...attributes}
-      {...listeners}
-    >
-      {/* Status indicator */}
-      {status && (
-        <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
-      )}
-      
-      {/* Drag handle */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-        <GripVertical className="w-4 h-4" />
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center relative group cursor-grab active:cursor-grabbing`}
+        {...attributes}
+        {...listeners}
+      >
+        {/* Status indicator - absolute top-left */}
+        {status && (
+          <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
+        )}
+        
+        {/* Edit button - absolute top-right */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsModalOpen(true);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity z-10"
+        >
+          <Pencil className="w-2.5 h-2.5" />
+        </button>
+        
+        {/* Drag handle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+          <GripVertical className="w-4 h-4" />
+        </div>
+
+        {/* Centered content */}
+        <div className="flex flex-col items-center justify-center gap-1">
+          <Icon className="w-4 h-4" />
+          <span className="text-[10px] font-semibold leading-tight text-center px-1">
+            {customLabel || name}
+          </span>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-1">
-        <Icon className="w-4 h-4" />
-        
-        {isEditing ? (
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <Input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              onBlur={handleSave}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave();
-                if (e.key === 'Escape') {
-                  setLabel(customLabel || name);
-                  setIsEditing(false);
-                }
-              }}
-              className="h-5 text-[10px] bg-background/20 px-1 text-center w-20"
-              autoFocus
-              onPointerDown={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setLabel(customLabel || name);
-                setIsEditing(false);
-              }}
-              className="p-0.5 hover:bg-background/20 rounded"
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <X className="w-2.5 h-2.5" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-0.5">
-            <span className="text-[10px] font-semibold leading-tight">{customLabel || name}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity"
-            >
-              <Pencil className="w-2.5 h-2.5" />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+      <TileLabelEditModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        currentLabel={customLabel || name}
+        automationName={name}
+        onSave={onUpdateLabel}
+      />
+    </>
   );
 };
-
 const DragOverlayTile = ({ id, name, status }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode' }) => {
   const isSavedHours = id === 'saved-hours';
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
@@ -398,7 +351,7 @@ export const TileOrganizer = ({
         </DndContext>
         
         <p className="text-xs text-muted-foreground text-center mt-6">
-          Klik op een tile label om het aan te passen
+          Klik op het potlood icoon om een tile label aan te passen
         </p>
       </CardContent>
     </Card>
