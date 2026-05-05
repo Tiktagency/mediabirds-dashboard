@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +22,11 @@ serve(async (req) => {
       );
     }
 
+    // Create Supabase client to fetch automation settings
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { workflowNames } = await req.json();
     
     if (!workflowNames || !Array.isArray(workflowNames) || workflowNames.length === 0) {
@@ -31,6 +37,26 @@ serve(async (req) => {
     }
 
     console.log(`Fetching saved hours for workflows: ${workflowNames.join(', ')}`);
+
+    // Fetch automation settings to get time_saved_per_execution per workflow
+    const { data: automationSettings, error: settingsError } = await supabase
+      .from('automation_settings')
+      .select('n8n_workflow_name, time_saved_per_execution');
+
+    if (settingsError) {
+      console.error('Error fetching automation settings:', settingsError);
+    }
+
+    // Create a map of workflow name to time saved per execution
+    const timeSavedMap: Record<string, number> = {};
+    if (automationSettings) {
+      for (const setting of automationSettings) {
+        if (setting.n8n_workflow_name) {
+          timeSavedMap[setting.n8n_workflow_name.toLowerCase()] = setting.time_saved_per_execution || 5;
+        }
+      }
+    }
+    console.log('Time saved map:', JSON.stringify(timeSavedMap));
 
     // Get all workflows from n8n
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -53,11 +79,13 @@ serve(async (req) => {
     const workflowsData = await workflowsResponse.json();
     console.log(`Found ${workflowsData.data?.length || 0} workflows`);
 
-    // Calculate date range for past month (filter client-side)
+    // Calculate date range for past 30 days
     const now = new Date();
-    const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
 
-    let totalSuccessfulExecutions = 0;
+    let totalSavedMinutes = 0;
+    let totalExecutions = 0;
+    const breakdownByWorkflow: Record<string, { executions: number; minutesSaved: number; minutesPerExecution: number }> = {};
 
     // For each workflow name, find matching workflow and get executions
     for (const workflowName of workflowNames) {
@@ -94,28 +122,41 @@ serve(async (req) => {
       const executions = executionsData.data || [];
       console.log(`Found ${executions.length} successful executions for ${workflow.name}`);
 
-      // Filter executions from past month (client-side filtering)
+      // Filter executions from past 30 days (client-side filtering)
       const recentExecutions = executions.filter((exec: any) => {
         const execDate = new Date(exec.startedAt || exec.createdAt);
-        return execDate >= oneMonthAgo;
+        return execDate >= thirtyDaysAgo;
       });
       
-      console.log(`${recentExecutions.length} executions from past month for ${workflow.name}`);
-      totalSuccessfulExecutions += recentExecutions.length;
+      console.log(`${recentExecutions.length} executions from past 30 days for ${workflow.name}`);
+
+      // Get time saved per execution for this workflow (default to 5 if not found)
+      const minutesPerExecution = timeSavedMap[workflowName.toLowerCase()] || 5;
+      const workflowMinutesSaved = recentExecutions.length * minutesPerExecution;
+      
+      console.log(`${workflow.name}: ${recentExecutions.length} executions × ${minutesPerExecution} min = ${workflowMinutesSaved} minutes`);
+
+      breakdownByWorkflow[workflow.name] = {
+        executions: recentExecutions.length,
+        minutesSaved: workflowMinutesSaved,
+        minutesPerExecution,
+      };
+
+      totalExecutions += recentExecutions.length;
+      totalSavedMinutes += workflowMinutesSaved;
     }
 
-    // Calculate saved hours: assume 5 minutes saved per successful execution
-    const MINUTES_PER_EXECUTION = 5;
-    const totalSavedMinutes = totalSuccessfulExecutions * MINUTES_PER_EXECUTION;
     const totalHours = Math.round((totalSavedMinutes / 60) * 10) / 10;
     
-    console.log(`Total: ${totalSuccessfulExecutions} executions × ${MINUTES_PER_EXECUTION} min = ${totalSavedMinutes} minutes = ${totalHours} hours`);
+    console.log(`Total: ${totalExecutions} executions = ${totalSavedMinutes} minutes = ${totalHours} hours`);
+    console.log('Breakdown:', JSON.stringify(breakdownByWorkflow));
 
     return new Response(
       JSON.stringify({
         totalHours,
         totalMinutes: totalSavedMinutes,
-        executionCount: totalSuccessfulExecutions,
+        executionCount: totalExecutions,
+        breakdown: breakdownByWorkflow,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
