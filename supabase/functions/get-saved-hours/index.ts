@@ -47,16 +47,16 @@ serve(async (req) => {
       console.error('Error fetching automation settings:', settingsError);
     }
 
-    // Create a map of workflow name to time saved per execution
+    // Create a map of workflow name to time saved per execution (only include workflows with a value set)
     const timeSavedMap: Record<string, number> = {};
     if (automationSettings) {
       for (const setting of automationSettings) {
-        if (setting.n8n_workflow_name) {
-          timeSavedMap[setting.n8n_workflow_name.toLowerCase()] = setting.time_saved_per_execution || 5;
+        if (setting.n8n_workflow_name && setting.time_saved_per_execution !== null && setting.time_saved_per_execution > 0) {
+          timeSavedMap[setting.n8n_workflow_name.toLowerCase()] = setting.time_saved_per_execution;
         }
       }
     }
-    console.log('Time saved map:', JSON.stringify(timeSavedMap));
+    console.log('Time saved map (only configured values):', JSON.stringify(timeSavedMap));
 
     // Get all workflows from n8n
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -130,8 +130,12 @@ serve(async (req) => {
       
       console.log(`${recentExecutions.length} executions from past 30 days for ${workflow.name}`);
 
-      // Get time saved per execution for this workflow (default to 5 if not found)
-      const minutesPerExecution = timeSavedMap[workflowName.toLowerCase()] || 5;
+      // Get time saved per execution for this workflow (skip if not configured)
+      const minutesPerExecution = timeSavedMap[workflowName.toLowerCase()];
+      if (!minutesPerExecution) {
+        console.log(`Skipping ${workflow.name}: no time_saved_per_execution configured`);
+        continue;
+      }
       const workflowMinutesSaved = recentExecutions.length * minutesPerExecution;
       
       console.log(`${workflow.name}: ${recentExecutions.length} executions × ${minutesPerExecution} min = ${workflowMinutesSaved} minutes`);
