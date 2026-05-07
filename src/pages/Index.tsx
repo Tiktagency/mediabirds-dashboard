@@ -210,16 +210,13 @@ const Index = () => {
             )}
           </div>
 
-          <Button 
+          <button 
             onClick={signOut}
-            variant="outline"
-            size="sm"
-            className="bg-white/10 border-white/20 hover:bg-white/20"
+            className="hover:opacity-70 transition-opacity cursor-pointer"
             style={{ color: '#232323' }}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Uitloggen
-          </Button>
+            <LogOut className="w-5 h-5" />
+          </button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
