@@ -733,6 +733,59 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_schedules: {
+        Row: {
+          company_id: string
+          created_at: string
+          day_of_week: number
+          enabled: boolean
+          frequency: string
+          id: string
+          interval_unit: string
+          interval_value: number
+          last_triggered_at: string | null
+          next_trigger_at: string | null
+          time_of_day: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          frequency?: string
+          id?: string
+          interval_unit?: string
+          interval_value?: number
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          frequency?: string
+          id?: string
+          interval_unit?: string
+          interval_value?: number
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "newsletter_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_settings: {
         Row: {
           accent_kleur: string | null
