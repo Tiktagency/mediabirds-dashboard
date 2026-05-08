@@ -16,18 +16,21 @@ export type Database = {
     Tables: {
       alt_text_companies: {
         Row: {
+          app_password: string | null
           created_at: string
           domain: string | null
           id: string
           name: string
         }
         Insert: {
+          app_password?: string | null
           created_at?: string
           domain?: string | null
           id?: string
           name: string
         }
         Update: {
+          app_password?: string | null
           created_at?: string
           domain?: string | null
           id?: string
