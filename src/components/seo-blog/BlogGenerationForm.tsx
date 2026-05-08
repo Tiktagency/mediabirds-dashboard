@@ -345,7 +345,7 @@ export const BlogGenerationForm = ({
         <div className="flex items-center gap-2">
           <Label className="text-white/70 text-sm">{label}</Label>
           {adminOnly && (
-            <span className="text-xs text-purple-400">(Admin)</span>
+            <span className="text-xs text-[#cfddd0]">(Admin)</span>
           )}
         </div>
         
