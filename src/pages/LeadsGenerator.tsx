@@ -10,9 +10,18 @@ import { supabase } from '@/integrations/supabase/client';
 
 const LeadsGenerator = () => {
   const { toast } = useToast();
-  const [plaatsnaam, setPlaatsnaam] = useState('');
-  const [country, setCountry] = useState('');
-  const [zoektermen, setZoektermen] = useState<string[]>(['']);
+  const [plaatsnaam, setPlaatsnaam] = useState(
+    () => localStorage.getItem('leads-generator-plaatsnaam') || ''
+  );
+  const [country, setCountry] = useState(
+    () => localStorage.getItem('leads-generator-country') || ''
+  );
+  const [zoektermen, setZoektermen] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('leads-generator-zoektermen');
+      return saved ? JSON.parse(saved) : [''];
+    } catch { return ['']; }
+  });
   const [isStarting, setIsStarting] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -20,16 +29,31 @@ const LeadsGenerator = () => {
 
   const isValid = plaatsnaam.trim() && country.trim() && zoektermen.some(z => z.trim());
 
+  const updatePlaatsnaam = (val: string) => {
+    setPlaatsnaam(val);
+    localStorage.setItem('leads-generator-plaatsnaam', val);
+  };
+
+  const updateCountry = (val: string) => {
+    setCountry(val);
+    localStorage.setItem('leads-generator-country', val);
+  };
+
+  const saveZoektermen = (updated: string[]) => {
+    setZoektermen(updated);
+    localStorage.setItem('leads-generator-zoektermen', JSON.stringify(updated));
+  };
+
   const updateZoekterm = (index: number, value: string) => {
     const updated = [...zoektermen];
     updated[index] = value;
-    setZoektermen(updated);
+    saveZoektermen(updated);
   };
 
-  const addZoekterm = () => setZoektermen([...zoektermen, '']);
+  const addZoekterm = () => saveZoektermen([...zoektermen, '']);
 
   const removeZoekterm = (index: number) => {
-    setZoektermen(zoektermen.filter((_, i) => i !== index));
+    saveZoektermen(zoektermen.filter((_, i) => i !== index));
   };
 
   const stopProgress = useCallback(() => {
@@ -73,6 +97,9 @@ const LeadsGenerator = () => {
         }
       } catch { /* use default */ }
 
+      localStorage.removeItem('leads-generator-plaatsnaam');
+      localStorage.removeItem('leads-generator-country');
+      localStorage.removeItem('leads-generator-zoektermen');
       toast({ title: 'Resultaat', description: message, duration: 5000 });
     } catch (error: any) {
       stopProgress();
@@ -121,7 +148,7 @@ const LeadsGenerator = () => {
               <Label className="text-white/70">Plaatsnaam</Label>
               <Input
                 value={plaatsnaam}
-                onChange={(e) => setPlaatsnaam(e.target.value)}
+                onChange={(e) => updatePlaatsnaam(e.target.value)}
                 placeholder="Bijv. Amsterdam"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
@@ -131,7 +158,7 @@ const LeadsGenerator = () => {
               <Label className="text-white/70">Country</Label>
               <Input
                 value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                onChange={(e) => updateCountry(e.target.value)}
                 placeholder="e.g. Netherlands"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
