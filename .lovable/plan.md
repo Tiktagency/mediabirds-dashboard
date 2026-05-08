@@ -1,66 +1,26 @@
 
-# Plan: Super Admin Toegang tot Admin Panel
+# Plan: Hello@tikt.ai naar Super Admin rol
 
-## Probleem
-De `useAdminAuth` hook in `src/hooks/useAdminAuth.ts` filtert alleen op `role = 'admin'` (regels 27 en 52). Dit betekent dat gebruikers met de `super_admin` rol geen toegang krijgen tot het admin panel, ondanks dat ze hogere rechten zouden moeten hebben.
+## Huidige Situatie
+- Account: `hello@tikt.ai`
+- User ID: `858fbdeb-e892-45ff-8d95-299063068e0c`
+- Huidige rol: `viewer`
 
-Je account `hello@tikt.ai` heeft al de `super_admin` rol in de database - de code herkent deze alleen niet.
+## Gewenste Situatie
+- Rol wijzigen naar: `super_admin`
 
-## Oplossing
-De `useAdminAuth` hook aanpassen om zowel `admin` als `super_admin` rollen te herkennen.
+## Benodigde Wijziging
 
----
+**SQL Update voor user_roles tabel:**
 
-## Technische Wijzigingen
-
-### Bestand: `src/hooks/useAdminAuth.ts`
-
-**1. Query in onAuthStateChange aanpassen (regels 23-28):**
-```typescript
-// Van:
-const { data: roles } = await supabase
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', currentSession.user.id)
-  .eq('role', 'admin')
-  .maybeSingle();
-
-// Naar:
-const { data: roles } = await supabase
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', currentSession.user.id)
-  .in('role', ['admin', 'super_admin']);
-
-const hasAdminRole = roles && roles.length > 0;
+```sql
+UPDATE user_roles 
+SET role = 'super_admin' 
+WHERE user_id = '858fbdeb-e892-45ff-8d95-299063068e0c';
 ```
 
-**2. Query in getSession aanpassen (regels 48-53):**
-```typescript
-// Van:
-const { data: roles } = await supabase
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', currentSession.user.id)
-  .eq('role', 'admin')
-  .maybeSingle();
-
-// Naar:
-const { data: roles } = await supabase
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', currentSession.user.id)
-  .in('role', ['admin', 'super_admin']);
-
-const hasAdminRole = roles && roles.length > 0;
-```
-
----
-
-## Samenvatting
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/hooks/useAdminAuth.ts` | `.eq('role', 'admin')` → `.in('role', ['admin', 'super_admin'])` op 2 plekken |
-
-Na deze wijziging krijgen zowel admins als super admins toegang tot het admin panel.
+## Resultaat
+Na deze wijziging heeft het account `hello@tikt.ai`:
+- Volledige admin toegang tot het Admin panel
+- Super admin rechten voor gebruikersbeheer
+- Toegang tot alle edge functions die admin/super_admin controleren
