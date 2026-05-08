@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { bedrijfsnaam } = await req.json();
+    const { bedrijfsnaam, folderId } = await req.json();
 
     if (!bedrijfsnaam) {
       return new Response(JSON.stringify({ success: false, error: 'bedrijfsnaam is required' }), {
@@ -29,7 +29,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': authToken,
       },
-      body: JSON.stringify({ bedrijfsnaam }),
+      body: JSON.stringify({ bedrijfsnaam, folderId: folderId || null }),
     });
 
     if (!response.ok) {
