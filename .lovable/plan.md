@@ -1,40 +1,60 @@
 
-# Plan: Maak Email Handtekening Preview Volledig Selecteerbaar
+# Plan: Forceer Selecteerbaarheid voor Alle Elementen in Email Handtekening Preview
 
 ## Probleem
-De email handtekening preview bevat gegenereerde HTML die mogelijk `user-select: none` CSS heeft, waardoor componenten en vlakken niet selecteerbaar zijn.
+Het oranje achtergrondvlak in de gegenereerde email handtekening is niet selecteerbaar. Dit komt waarschijnlijk doordat de gegenereerde HTML inline styles bevat zoals `user-select: none` of `-webkit-user-select: none` die de Tailwind classes overschrijven.
 
 ## Oplossing
-Voeg CSS toe aan de preview container die `user-select: text !important` afdwingt op ALLE onderliggende elementen, inclusief:
-- Tekst
-- Achtergrondvlakken (divs, tables)
-- Afbeeldingen
-- Links
+Voeg extra CSS styling toe die ook webkit prefixes afdwingt en pointer-events correct instelt. Dit zorgt ervoor dat ALLE elementen selecteerbaar worden, ongeacht hun inline styles.
 
 ## Wijziging
 
 **Bestand:** `src/pages/EmailSignature.tsx`
 
-**Regels 131-135:** Update de preview div styling
+**Regels 131-135:** Uitbreiden met inline style die selectie afdwingt
 
-| Was | Wordt |
-|-----|-------|
-| `<div className="origin-top-left scale-[0.65]"` | `<div className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"` |
+```tsx
+// Was:
+<div 
+  className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
+  style={{ width: '154%' }}
+  dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+/>
 
-### Uitleg CSS Classes:
-- `[&_*]:!select-text` - Forceert `user-select: text` op ALLE child elementen (de `!` maakt het `!important`)
-- `[&_*]:!cursor-text` - Toont tekst-cursor voor alle children (visuele feedback)
-- `select-text` - Maakt de container zelf ook selecteerbaar
-- `cursor-text` - Cursor voor de container
+// Wordt:
+<div 
+  className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
+  style={{ width: '154%' }}
+>
+  <style>{`
+    .email-signature-preview * {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      -moz-user-select: text !important;
+      -ms-user-select: text !important;
+      cursor: text !important;
+      pointer-events: auto !important;
+    }
+  `}</style>
+  <div 
+    className="email-signature-preview"
+    dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+  />
+</div>
+```
 
-## Samenvatting
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/pages/EmailSignature.tsx` | CSS classes toevoegen voor volledige selecteerbaarheid |
+## Technische Details
+- `user-select: text !important` - Standaard CSS
+- `-webkit-user-select: text !important` - Safari/Chrome
+- `-moz-user-select: text !important` - Firefox  
+- `-ms-user-select: text !important` - Edge/IE
+- `pointer-events: auto !important` - Zorgt dat klikken/selecteren werkt op alle elementen
 
 ## Resultaat
-Na deze wijziging kunnen gebruikers:
-- Alle tekst in de preview selecteren
-- Achtergrondvlakken selecteren
-- De volledige handtekening selecteren en kopiëren via Ctrl+C
+Na deze wijziging zijn alle elementen in de email handtekening preview selecteerbaar:
+- Oranje achtergrondvlakken
+- Tekst
+- Afbeeldingen
+- Tabellen en cellen
+
+Dit werkt voor zowel de huidige als toekomstige gegenereerde handtekeningen.
