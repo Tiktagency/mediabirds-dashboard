@@ -1,23 +1,25 @@
 
+## Scrollbalk doorlopen + dropdown iets naar links
 
-## Bedrijven dropdown knop normaal uitlijnen
+### Wat verandert er
 
-### Probleem
+1. De scrollbalk loopt tot aan de bovenkant van de pagina (zoals bij `/seo-blog`)
+2. De bedrijven-dropdown verschuift iets naar links
 
-De bedrijven-dropdown knop in de header van de Landingspagina is momenteel gepositioneerd met `absolute` positionering en inconsistente padding/marges. Op de SEO Blog pagina wordt een `fixed` header gebruikt met nette uitlijning en achtergrond-blur.
-
-### Aanpassing
+### Technische aanpassing
 
 **Bestand: `src/pages/Landingspagina.tsx`**
 
-De header-balk (regel 188) wordt aangepast zodat de styling consistent is met andere pagina's zoals SEO Blog:
+**Buitenste container (regel 187)**: Verander `h-screen overflow-hidden relative` naar `min-h-screen relative` -- dit laat de scrollbar over de hele pagina lopen i.p.v. alleen in een nested div.
 
-| Eigenschap | Was | Wordt |
+**Content container (regel 197)**: Verander `h-full ... overflow-y-auto` naar `min-h-screen` (zonder overflow-y-auto, want de buitenste container scrollt nu).
+
+**Dropdown knop (regel 194)**: Wrap de `LandingCompanySelector` in een div met `pr-2` om hem iets naar links te schuiven, of voeg `mr-2` toe aan de selector.
+
+| Regel | Was | Wordt |
 |---|---|---|
-| Positionering | `absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6` | `fixed top-0 left-0 right-0 px-6 py-4` |
-| Z-index | `z-10` | `z-30` |
-| Achtergrond | Geen | `bg-background/80 backdrop-blur-md border-b border-white/10` |
+| 187 | `h-screen overflow-hidden relative` | `min-h-screen relative` |
+| 197 | `hero-gradient h-full w-full ... overflow-y-auto` | `hero-gradient min-h-screen w-full ... ` (zonder overflow-y-auto) |
+| 194 | `<LandingCompanySelector .../>` | `<div className="mr-2"><LandingCompanySelector .../></div>` |
 
-De content-sectie eronder (`pt-16`) blijft ongewijzigd omdat deze al voldoende ruimte biedt voor de vaste header.
-
-Dit zorgt ervoor dat de Dashboard-knop en bedrijven-dropdown netjes naast elkaar staan, consistent met de rest van de applicatie.
+Dit maakt de scroll-ervaring identiek aan de SEO Blog pagina.
