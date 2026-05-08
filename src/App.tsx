@@ -9,6 +9,7 @@ import MondayPlanning from "./pages/MondayPlanning";
 import SeoBlog from "./pages/SeoBlog";
 import WordpressAltText from "./pages/WordpressAltText";
 import Chatbot from "./pages/Chatbot";
+import CopyrightBranding from "./pages/CopyrightBranding";
 import Login from "./pages/Login";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/seo-blog" element={<SeoBlog />} />
             <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
             <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/copyright-branding" element={<CopyrightBranding />} />
             <Route path="/admin" element={<AdminPanel />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -18,7 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, LucideIcon } from 'lucide-react';
+import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, Sparkles, LucideIcon } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
 import { TileLabelEditModal } from './TileLabelEditModal';
 
@@ -53,6 +53,7 @@ const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secon
   'seo-blog': { icon: FileText, variant: 'accent' },
   'wordpress-alt-text': { icon: Image, variant: 'primary' },
   'chatbot': { icon: MessageCircle, variant: 'secondary' },
+  'copyright-branding': { icon: Sparkles, variant: 'accent' },
 };
 
 const variantClasses = {
