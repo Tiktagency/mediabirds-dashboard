@@ -16,6 +16,12 @@ interface N8nExecution {
   status: 'success' | 'error' | 'running' | 'waiting';
 }
 
+interface WorkflowInfo {
+  timeSaved: number;
+  companyName: string;
+  workflowType: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -35,9 +41,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Build time saved map from automation_settings and companies
-    const timeSavedMap: Record<string, number> = {};
-    const configuredWorkflowNames: string[] = [];
+    // Build workflow info map: workflow name -> { timeSaved, companyName, workflowType }
+    const workflowInfoMap: Record<string, WorkflowInfo> = {};
     
     // Fetch automation_settings for base workflow names and time saved
     const { data: automationSettings, error: settingsError } = await supabase
@@ -53,7 +58,6 @@ serve(async (req) => {
 
     if (automationSettings) {
       for (const setting of automationSettings) {
-        // Store time_saved for mapping to company workflows
         if (setting.automation_name === 'zoekwoord-onderzoek' && setting.time_saved_per_execution) {
           zoekwoordTimeSaved = setting.time_saved_per_execution;
         }
@@ -61,21 +65,22 @@ serve(async (req) => {
           blogsTimeSaved = setting.time_saved_per_execution;
         }
         
-        // Add base workflows with their time_saved
+        // Add base workflows with their time_saved - these are "Overig" company
         if (setting.n8n_workflow_name && setting.time_saved_per_execution !== null && setting.time_saved_per_execution > 0) {
           const nameLower = setting.n8n_workflow_name.toLowerCase();
-          configuredWorkflowNames.push(nameLower);
-          timeSavedMap[nameLower] = setting.time_saved_per_execution;
+          workflowInfoMap[nameLower] = {
+            timeSaved: setting.time_saved_per_execution,
+            companyName: 'Overig',
+            workflowType: setting.automation_name || setting.n8n_workflow_name,
+          };
         }
       }
     }
-    
-    console.log('Base workflow names from settings:', configuredWorkflowNames);
 
-    // Fetch company-specific workflow names
+    // Fetch companies with their workflow names
     const { data: companies, error: companiesError } = await supabase
       .from('companies')
-      .select('seo_research_n8n_name, subkeywords_n8n_name, blogs_n8n_name');
+      .select('name, seo_research_n8n_name, subkeywords_n8n_name, blogs_n8n_name');
 
     if (companiesError) {
       console.error('Error fetching companies:', companiesError);
@@ -86,27 +91,34 @@ serve(async (req) => {
         // SEO Research workflows
         if (company.seo_research_n8n_name) {
           const nameLower = company.seo_research_n8n_name.toLowerCase();
-          configuredWorkflowNames.push(nameLower);
-          timeSavedMap[nameLower] = zoekwoordTimeSaved;
+          workflowInfoMap[nameLower] = {
+            timeSaved: zoekwoordTimeSaved,
+            companyName: company.name,
+            workflowType: 'SEO Zoekwoorden',
+          };
         }
         // Subkeywords workflows
         if (company.subkeywords_n8n_name) {
           const nameLower = company.subkeywords_n8n_name.toLowerCase();
-          configuredWorkflowNames.push(nameLower);
-          timeSavedMap[nameLower] = zoekwoordTimeSaved;
+          workflowInfoMap[nameLower] = {
+            timeSaved: zoekwoordTimeSaved,
+            companyName: company.name,
+            workflowType: 'Subkeywords',
+          };
         }
         // Blogs workflows
         if (company.blogs_n8n_name) {
           const nameLower = company.blogs_n8n_name.toLowerCase();
-          configuredWorkflowNames.push(nameLower);
-          timeSavedMap[nameLower] = blogsTimeSaved;
+          workflowInfoMap[nameLower] = {
+            timeSaved: blogsTimeSaved,
+            companyName: company.name,
+            workflowType: 'SEO Blog',
+          };
         }
       }
-      console.log(`Added workflow names from ${companies.length} companies`);
     }
 
-    console.log('All configured workflow names:', configuredWorkflowNames);
-    console.log('Time saved map:', JSON.stringify(timeSavedMap));
+    console.log('Workflow info map:', JSON.stringify(workflowInfoMap));
 
     // Fetch all workflows from n8n
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -130,43 +142,56 @@ serve(async (req) => {
     const workflows = workflowsData.data || [];
     console.log(`Found ${workflows.length} workflows in n8n`);
 
-    // Create a map of workflow IDs to names
+    // Create a map of workflow IDs to names and info
     const workflowIdToName = new Map<string, string>();
+    const workflowIdToInfo = new Map<string, WorkflowInfo>();
+    
     workflows.forEach((w: any) => {
       workflowIdToName.set(w.id, w.name);
+      const workflowNameLower = w.name.toLowerCase();
+      
+      // Find matching workflow info
+      for (const [key, info] of Object.entries(workflowInfoMap)) {
+        if (workflowNameLower.includes(key) || key.includes(workflowNameLower)) {
+          workflowIdToInfo.set(w.id, info);
+          break;
+        }
+      }
     });
 
-    // Find workflow IDs that match our configured workflows
-    const targetWorkflowIds: string[] = workflows
-      .filter((w: any) => {
-        const workflowNameLower = w.name.toLowerCase();
-        return configuredWorkflowNames.some(configName => 
-          workflowNameLower.includes(configName) || configName.includes(workflowNameLower)
-        );
-      })
-      .map((w: any) => w.id);
+    // Find workflow IDs that have configured info
+    const targetWorkflowIds: string[] = Array.from(workflowIdToInfo.keys());
 
     console.log(`Found ${targetWorkflowIds.length} matching workflows`);
 
     if (targetWorkflowIds.length === 0) {
       console.log('No configured workflows found');
       return new Response(
-        JSON.stringify({ totalHours: 0, totalMinutes: 0, executionCount: 0, breakdown: {} }),
+        JSON.stringify({ 
+          totalHours: 0, 
+          totalMinutes: 0, 
+          executionCount: 0, 
+          breakdown: {},
+          breakdownByCompany: {},
+          periodStart: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          periodEnd: new Date().toISOString(),
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Calculate date range for past 30 days
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 30);
-    console.log(`Fetching executions from the last 30 days (since ${cutoffDate.toISOString()})`);
+    const periodEnd = new Date();
+    const periodStart = new Date();
+    periodStart.setDate(periodStart.getDate() - 30);
+    console.log(`Fetching executions from the last 30 days (since ${periodStart.toISOString()})`);
 
-    // Fetch ALL executions using cursor-based pagination (same as get-n8n-logs)
+    // Fetch ALL executions using cursor-based pagination
     let allExecutions: N8nExecution[] = [];
     let cursor: string | undefined = undefined;
     let hasMore = true;
     let pageCount = 0;
-    const maxPages = 50; // Safety limit
+    const maxPages = 50;
 
     while (hasMore && pageCount < maxPages) {
       pageCount++;
@@ -201,20 +226,19 @@ serve(async (req) => {
 
       // Filter executions within the 30-day window
       const recentExecutions = pageExecutions.filter(e =>
-        new Date(e.startedAt) >= cutoffDate
+        new Date(e.startedAt) >= periodStart
       );
 
       allExecutions.push(...recentExecutions);
 
       // Check if the oldest execution in this page is older than 30 days
       const oldestInPage = pageExecutions[pageExecutions.length - 1];
-      if (new Date(oldestInPage.startedAt) < cutoffDate) {
+      if (new Date(oldestInPage.startedAt) < periodStart) {
         console.log('Reached executions older than 30 days, stopping pagination');
         hasMore = false;
         break;
       }
 
-      // Get next cursor
       cursor = executionsData.nextCursor;
       if (!cursor) {
         hasMore = false;
@@ -229,28 +253,29 @@ serve(async (req) => {
     );
     console.log(`Filtered to ${filteredExecutions.length} executions for configured workflows`);
 
-    // Calculate time saved per workflow
+    // Calculate time saved per workflow and per company
     let totalSavedMinutes = 0;
     let totalExecutions = 0;
     const breakdownByWorkflow: Record<string, { executions: number; minutesSaved: number; minutesPerExecution: number }> = {};
+    const breakdownByCompany: Record<string, { 
+      totalMinutes: number; 
+      totalHours: number; 
+      workflows: Record<string, { executions: number; minutesSaved: number }> 
+    }> = {};
 
     for (const exec of filteredExecutions) {
       const workflowName = workflowIdToName.get(exec.workflowId) || `Workflow ${exec.workflowId}`;
-      const workflowNameLower = workflowName.toLowerCase();
+      const info = workflowIdToInfo.get(exec.workflowId);
 
-      // Find matching time_saved value
-      let minutesPerExecution: number | null = null;
-      for (const [key, value] of Object.entries(timeSavedMap)) {
-        if (workflowNameLower.includes(key) || key.includes(workflowNameLower)) {
-          minutesPerExecution = value;
-          break;
-        }
+      if (!info) {
+        continue;
       }
 
-      if (minutesPerExecution === null) {
-        continue; // Skip workflows without configured time_saved
-      }
+      const minutesPerExecution = info.timeSaved;
+      const companyName = info.companyName;
+      const workflowType = info.workflowType;
 
+      // Update workflow breakdown
       if (!breakdownByWorkflow[workflowName]) {
         breakdownByWorkflow[workflowName] = {
           executions: 0,
@@ -258,24 +283,50 @@ serve(async (req) => {
           minutesPerExecution,
         };
       }
-
       breakdownByWorkflow[workflowName].executions++;
       breakdownByWorkflow[workflowName].minutesSaved += minutesPerExecution;
+
+      // Update company breakdown
+      if (!breakdownByCompany[companyName]) {
+        breakdownByCompany[companyName] = {
+          totalMinutes: 0,
+          totalHours: 0,
+          workflows: {},
+        };
+      }
+      if (!breakdownByCompany[companyName].workflows[workflowType]) {
+        breakdownByCompany[companyName].workflows[workflowType] = {
+          executions: 0,
+          minutesSaved: 0,
+        };
+      }
+      breakdownByCompany[companyName].workflows[workflowType].executions++;
+      breakdownByCompany[companyName].workflows[workflowType].minutesSaved += minutesPerExecution;
+      breakdownByCompany[companyName].totalMinutes += minutesPerExecution;
+
       totalExecutions++;
       totalSavedMinutes += minutesPerExecution;
+    }
+
+    // Calculate total hours per company
+    for (const company of Object.keys(breakdownByCompany)) {
+      breakdownByCompany[company].totalHours = Math.round((breakdownByCompany[company].totalMinutes / 60) * 10) / 10;
     }
 
     const totalHours = Math.round((totalSavedMinutes / 60) * 10) / 10;
 
     console.log(`Total: ${totalExecutions} executions = ${totalSavedMinutes} minutes = ${totalHours} hours`);
-    console.log('Breakdown:', JSON.stringify(breakdownByWorkflow));
+    console.log('Breakdown by company:', JSON.stringify(breakdownByCompany));
 
     return new Response(
       JSON.stringify({
         totalHours,
         totalMinutes: totalSavedMinutes,
         executionCount: totalExecutions,
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
         breakdown: breakdownByWorkflow,
+        breakdownByCompany,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
