@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import { SavedHoursTile } from '@/components/dashboard/SavedHoursTile';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon, Crown, Shield, Play, Eye } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
@@ -145,16 +145,16 @@ const Index = () => {
   // Get role badge config
   const getRoleBadge = () => {
     if (roles.includes('super_admin')) {
-      return { label: 'Super Admin', className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' };
+      return { label: 'Super Admin', icon: Crown, className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' };
     }
     if (roles.includes('admin')) {
-      return { label: 'Admin', className: 'bg-red-500/20 text-red-400 border-red-500/30' };
+      return { label: 'Admin', icon: Shield, className: 'bg-red-500/20 text-red-400 border-red-500/30' };
     }
     if (roles.includes('operator')) {
-      return { label: 'Operator', className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
+      return { label: 'Operator', icon: Play, className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' };
     }
     if (roles.includes('viewer')) {
-      return { label: 'Viewer', className: 'bg-green-500/20 text-green-400 border-green-500/30' };
+      return { label: 'Viewer', icon: Eye, className: 'bg-green-500/20 text-green-400 border-green-500/30' };
     }
     return null;
   };
@@ -239,12 +239,13 @@ const Index = () => {
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
             {roleBadge && (
               <Badge variant="outline" className={roleBadge.className}>
-                {roleBadge.label}
+                <roleBadge.icon className="w-3 h-3" />
+                <span className="ml-1">{roleBadge.label}</span>
               </Badge>
             )}
+            <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
           </div>
 
           <AlertDialog>
