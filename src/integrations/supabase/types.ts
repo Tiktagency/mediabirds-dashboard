@@ -315,6 +315,7 @@ export type Database = {
           blogs_webhook: string | null
           created_at: string
           id: string
+          managed_by: string | null
           name: string
           seo_research_n8n_name: string | null
           seo_research_webhook: string | null
@@ -327,6 +328,7 @@ export type Database = {
           blogs_webhook?: string | null
           created_at?: string
           id?: string
+          managed_by?: string | null
           name: string
           seo_research_n8n_name?: string | null
           seo_research_webhook?: string | null
@@ -339,6 +341,7 @@ export type Database = {
           blogs_webhook?: string | null
           created_at?: string
           id?: string
+          managed_by?: string | null
           name?: string
           seo_research_n8n_name?: string | null
           seo_research_webhook?: string | null
