@@ -1,58 +1,26 @@
 
-## Landingspagina: eigen automatische trigger losmaken van WordPress Alt Text
 
-### Probleem
+## Invulvelden Landingspagina gelijktrekken met "Doel/kern" van SEO-pagina
 
-De Landingspagina gebruikt momenteel `useAltTextSchedule`, die leest en schrijft naar de `alt_text_schedules` tabel. Dit betekent dat de automatische trigger van de Landingspagina en die van WordPress Alt Text dezelfde instellingen delen -- als je de ene aan/uitzet, verandert de andere mee.
+### Wat verandert er
 
-### Oplossing
+Alle bewerkbare velden op de Landingspagina krijgen exact hetzelfde drie-stappen interactiepatroon als het "Doel/kern" veld op de SEO-pagina:
 
-Een volledig eigen schedule-systeem aanmaken voor de Landingspagina, bestaande uit 4 onderdelen:
+1. **Dichtgeklapt**: Klikbaar vlak met tekst of cursieve "Niet ingesteld"
+2. **Uitgeklapt**: Toont volledige tekst + potlood-icoon rechts
+3. **Bewerken**: Textarea (in plaats van Input) die automatisch meeschaalt met de inhoud
 
----
+**Uitzondering**: Het wachtwoordveld behoudt `type="password"` gedrag (toont stippen), maar krijgt wel dezelfde drie-stappen flow.
 
-### 1. Nieuwe database tabel: `landing_schedules`
+### Technische aanpassingen
 
-Zelfde structuur als `alt_text_schedules`, maar volledig onafhankelijk:
+**Bestand: `src/pages/Landingspagina.tsx`**
 
-- `id` (uuid, primary key)
-- `enabled` (boolean, default false)
-- `interval_value` (integer, default 1)
-- `interval_unit` (text, default 'weeks')
-- `day_of_week` (integer, default 1)
-- `time_of_day` (time, default '10:00:00')
-- `last_triggered_at` (timestamptz, nullable)
-- `next_trigger_at` (timestamptz, nullable)
-- `last_processed_company_id` (uuid, nullable)
-- `created_at`, `updated_at` (timestamptz)
-- RLS policies voor authenticated users
+1. **Import Textarea** toevoegen naast Input
+2. **`renderEditableField` herschrijven** zodat het exact de `renderTextField` logica uit `KeywordResearchForm.tsx` volgt:
+   - Collapsed: `bg-white/5 border-white/10` styling, cursieve "Niet ingesteld" als placeholder
+   - Expanded: `whitespace-pre-wrap min-h-[40px]` met Pencil-knop
+   - Editing: `Textarea` met `min-h-[80px] resize-none` en auto-resize via `ref` en `onChange`
+3. **Wachtwoordveld apart afhandelen**: Gebruikt hetzelfde drie-stappen patroon maar toont stippen in collapsed/expanded modus en een `<Input type="password">` in edit-modus (geen Textarea voor wachtwoorden)
+4. **Styling uniforme kleuren**: `border-white/10` in plaats van `border-white/20` voor consistentie met SEO-pagina
 
-### 2. Nieuwe hook: `src/hooks/useLandingSchedule.ts`
-
-Kopie van `useAltTextSchedule` maar leest/schrijft naar `landing_schedules` in plaats van `alt_text_schedules`.
-
-### 3. Nieuwe edge function: `supabase/functions/run-scheduled-landing/index.ts`
-
-Gebaseerd op `run-scheduled-alt-text`, maar:
-- Leest schedule uit `landing_schedules`
-- Leest bedrijven uit `landing_companies`
-- Stuurt webhook naar de landing webhook URL (`https://tikt.app.n8n.cloud/webhook/a726f693-304a-4400-b08c-40d2748517f8`)
-- Stuurt `spreadsheet_id`, `grid_id`, en `page_url` mee per bedrijf
-
-### 4. Cron job voor `run-scheduled-landing`
-
-Database cron job die elke 5 minuten de nieuwe edge function aanroept, net als de bestaande `run-scheduled-alt-text-job`.
-
-### 5. Aanpassing `src/pages/Landingspagina.tsx`
-
-- Vervang `import { useAltTextSchedule }` door `import { useLandingSchedule }`
-- Gebruik de nieuwe hook zodat de schedule volledig los staat van WordPress Alt Text
-
-### Technische details
-
-| Onderdeel | Oud (gedeeld) | Nieuw (eigen) |
-|---|---|---|
-| Tabel | `alt_text_schedules` | `landing_schedules` |
-| Hook | `useAltTextSchedule` | `useLandingSchedule` |
-| Cron edge function | `run-scheduled-alt-text` | `run-scheduled-landing` |
-| Cron job | `run-scheduled-alt-text-job` | `run-scheduled-landing-job` |
