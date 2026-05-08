@@ -59,7 +59,13 @@ const ZoekwoordOnderzoek = () => {
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useSeoSettings(selectedCompany?.id || null);
-  const { schedule: seoSchedule } = useSeoSchedule(selectedCompany?.id || null);
+  const { 
+    schedule: seoSchedule, 
+    isLoading: scheduleLoading, 
+    isSaving: scheduleSaving, 
+    updateSchedule, 
+    getNextTriggerDisplay 
+  } = useSeoSchedule(selectedCompany?.id || null);
   const isScheduleEnabled = seoSchedule?.enabled || false;
 
   // Load settings into form when they change
@@ -598,6 +604,11 @@ const ZoekwoordOnderzoek = () => {
                   <ScheduleTrigger
                     companyId={selectedCompany?.id || null}
                     isAdmin={isAdmin}
+                    schedule={seoSchedule}
+                    isLoading={scheduleLoading}
+                    isSaving={scheduleSaving}
+                    updateSchedule={updateSchedule}
+                    getNextTriggerDisplay={getNextTriggerDisplay}
                   />
 
                   {/* Action Button */}
