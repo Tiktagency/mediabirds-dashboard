@@ -240,12 +240,16 @@ const Index = () => {
 
   const roleBadge = getRoleBadge();
 
-  if (isLoading || settingsLoading || automationsLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Laden...</p>
+      <div className="min-h-screen hero-gradient">
+        <div className="w-full h-48 2xl:h-64 bg-muted animate-pulse" />
+        <div className="max-w-5xl 2xl:max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl 2xl:max-w-6xl mx-auto">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
