@@ -186,17 +186,17 @@ export const PageUrlForm = ({
       }
 
       if (response.ok) {
-        const successMsg = message || 'URL documentatie gestart';
+        const successMsg = `[${companyName}] ${message || 'URL documentatie gestart (geen response body)'}`;
         await saveNotification(successMsg, 'success');
         toast({ title: 'Succes', description: successMsg, duration: 5000 });
       } else {
-        const errorMsg = `Fout: ${message}`;
+        const errorMsg = `[${companyName}] Fout: ${message}`;
         await saveNotification(errorMsg, 'error');
         toast({ title: 'Fout', description: errorMsg, variant: 'destructive', duration: 5000 });
       }
     } catch (error) {
       console.error('Webhook error:', error);
-      const catchMsg = 'Fout bij het starten van documentatie';
+      const catchMsg = `[${companyName}] Fout bij documentatie: ${error instanceof Error ? error.message : String(error)}`;
       await saveNotification(catchMsg, 'error');
       toast({ title: 'Fout', description: catchMsg, variant: 'destructive', duration: 5000 });
     } finally {
