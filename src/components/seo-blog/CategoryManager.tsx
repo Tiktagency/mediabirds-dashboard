@@ -19,9 +19,10 @@ import {
 interface CategoryManagerProps {
   companyId: string | null;
   isAdmin: boolean;
+  onCategoryChange?: () => void;
 }
 
-export const CategoryManager = ({ companyId, isAdmin }: CategoryManagerProps) => {
+export const CategoryManager = ({ companyId, isAdmin, onCategoryChange }: CategoryManagerProps) => {
   const { categories, isLoading, addCategory, deleteCategory } = useBlogCategories(companyId);
   const [newLabel, setNewLabel] = useState('');
   const [newId, setNewId] = useState('');
@@ -49,6 +50,7 @@ export const CategoryManager = ({ companyId, isAdmin }: CategoryManagerProps) =>
       toast.success('Categorie toegevoegd');
       setNewLabel('');
       setNewId('');
+      onCategoryChange?.();
     } else {
       toast.error(result.error || 'Fout bij toevoegen categorie');
     }
@@ -64,6 +66,7 @@ export const CategoryManager = ({ companyId, isAdmin }: CategoryManagerProps) =>
     
     if (result.success) {
       toast.success('Categorie verwijderd');
+      onCategoryChange?.();
     } else {
       toast.error(result.error || 'Fout bij verwijderen categorie');
     }
