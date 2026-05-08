@@ -124,7 +124,7 @@ export type Database = {
       }
       blog_settings: {
         Row: {
-          aantal_woorden: number | null
+          aantal_woorden: string | null
           afbeelding_prompt: string | null
           bedrijfsnaam: string | null
           bedrijfsomschrijving: string | null
@@ -138,7 +138,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          aantal_woorden?: number | null
+          aantal_woorden?: string | null
           afbeelding_prompt?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null
@@ -152,7 +152,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          aantal_woorden?: number | null
+          aantal_woorden?: string | null
           afbeelding_prompt?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null

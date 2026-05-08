@@ -7,7 +7,7 @@ export interface BlogSettings {
   bedrijfsnaam: string | null;
   bedrijfsomschrijving: string | null;
   schrijfstijl: string | null;
-  aantal_woorden: number | null;
+  aantal_woorden: string | null; // Now stored as range "min-max" e.g. "500-1000"
   taal: string | null;
   afbeelding_prompt: string | null;
   get_afbeelding_url: string | null;
