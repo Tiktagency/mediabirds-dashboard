@@ -1,64 +1,82 @@
 
-# Plan: Fix Extra Velden Opslaan en Laden
+# Plan: Gegenereerde HTML Opslaan
 
 ## Probleem
 
-Wanneer een gebruiker een tweede email, telefoonnummer of plaatsnaam toevoegt en de pagina verlaat, verdwijnt het extra invulveld. Dit komt doordat:
-
-1. De data wordt opgeslagen als `JSON.stringify(array)` → een string in de database
-2. Bij ophalen checkt `parseJsonArray` alleen of de waarde een array is
-3. Als het een string is (de gestringified JSON), wordt een lege array teruggegeven
+Wanneer een gebruiker een email handtekening genereert en vervolgens de pagina verlaat, gaat de gegenereerde HTML code en preview verloren. De gebruiker moet dan de handtekening opnieuw genereren.
 
 ---
 
 ## Oplossing
 
-Update de `parseJsonArray` functie in `useEmailSignatureSettings.ts` om zowel arrays als gestringified arrays te ondersteunen.
+Sla de gegenereerde HTML op in de database bij de handtekening-instellingen, zodat deze automatisch wordt geladen wanneer de gebruiker terugkeert naar de pagina.
 
 ---
 
-## Code Wijzigingen
+## Technische Wijzigingen
 
-**Bestand: `src/hooks/useEmailSignatureSettings.ts`**
+### 1. Database Migratie
 
-### parseJsonArray functie uitbreiden (regel 51-54)
+Voeg een nieuwe kolom toe aan de `email_signature_settings` tabel:
 
-**Huidige code:**
-```typescript
-const parseJsonArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  return [];
-};
+```sql
+ALTER TABLE email_signature_settings 
+ADD COLUMN generated_html TEXT DEFAULT NULL;
 ```
 
-**Nieuwe code:**
+### 2. Hook Aanpassen (`src/hooks/useEmailSignatureSettings.ts`)
+
+**Interface uitbreiden:**
 ```typescript
-const parseJsonArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
-    } catch {
-      return [];
-    }
-  }
-  return [];
-};
+export interface EmailSignatureSettings {
+  // ... bestaande velden
+  generated_html: string | null;  // NIEUW
+}
 ```
+
+**Parse functie updaten:**
+- `generated_html` toevoegen aan de `parseSignature` functie
+
+**Save functie updaten:**
+- `generated_html` parameter toevoegen aan de `saveSettings` functie
+- Dit veld meenemen in zowel INSERT als UPDATE queries
+
+### 3. Pagina Aanpassen (`src/pages/EmailSignature.tsx`)
+
+**HTML laden bij selectie:**
+- Wanneer `selectedSignature` verandert, de opgeslagen `generated_html` laden in de state
+
+**HTML opslaan na generatie:**
+- Na succesvolle webhook response, de HTML opslaan via een aparte update functie
+
+### 4. Formulier Aanpassen (`src/components/email-signature/EmailSignatureForm.tsx`)
+
+**Callback uitbreiden:**
+- `onHtmlGenerated` callback aanroepen met de gegenereerde HTML
+- De parent component slaat dit vervolgens op
 
 ---
 
-## Wat dit oplost
+## Dataflow
 
-| Scenario | Voorheen | Na fix |
-|----------|----------|--------|
-| Database retourneert `["a@b.nl", "c@d.nl"]` (array) | ✅ Werkt | ✅ Werkt |
-| Database retourneert `'["a@b.nl", "c@d.nl"]'` (string) | ❌ Lege array | ✅ Parsed correct |
+```
+1. Gebruiker genereert handtekening
+   ↓
+2. Webhook retourneert HTML
+   ↓
+3. HTML wordt getoond in preview + opgeslagen in database
+   ↓
+4. Gebruiker verlaat pagina
+   ↓
+5. Gebruiker keert terug
+   ↓
+6. Opgeslagen HTML wordt geladen en getoond
+```
 
 ---
 
 ## Resultaat
 
-- Extra emails, telefoonnummers en plaatsnamen blijven behouden na het verlaten van de pagina
-- De extra invulvelden worden correct weergegeven wanneer de handtekening opnieuw wordt geladen
+- Gegenereerde HTML blijft behouden na het verlaten van de pagina
+- Preview wordt direct getoond bij het selecteren van een bestaande handtekening
+- HTML code is meteen beschikbaar om te kopiëren
