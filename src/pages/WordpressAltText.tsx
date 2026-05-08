@@ -9,7 +9,7 @@ import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextComp
 import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useAltTextSchedule } from '@/hooks/useAltTextSchedule';
-import { Pencil, Loader2 } from 'lucide-react';
+import { Pencil, Loader2, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -152,7 +152,10 @@ const WordpressAltText = () => {
       </div>
 
       <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
-        <h1 className="hero-title text-foreground mb-6 fade-in-up">Alt-tekst wordpress</h1>
+        <h1 className="hero-title text-foreground mb-2 fade-in-up">Alt-tekst wordpress</h1>
+        <p className="text-muted-foreground text-center max-w-xl mb-6">
+          Vul nu automatisch de alt-tekst velden in voor ALLE afbeeldingen op je website! Voeg zoveel websites toe als je wilt en ga lekker achterover zitten in je stoel.
+        </p>
 
         {/* Global Schedule Trigger */}
         <div className="w-full max-w-2xl mb-6">
@@ -183,10 +186,12 @@ const WordpressAltText = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting}
+                disabled={isStarting || schedule?.enabled === true}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
               >
-                {isStarting ? (
+                {schedule?.enabled === true ? (
+                  <><Clock className="w-4 h-4 mr-2" />Automatische trigger actief</>
+                ) : isStarting ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
                 ) : (
                   'Start'
