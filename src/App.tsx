@@ -13,7 +13,6 @@ import CopyrightBranding from "./pages/CopyrightBranding";
 import Login from "./pages/Login";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import { DashboardColorsProvider } from "./components/DashboardColorsProvider";
 
 const queryClient = new QueryClient();
 
@@ -21,24 +20,22 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <TooltipProvider>
-        <DashboardColorsProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Index />} />
-              <Route path="/monday-planning" element={<MondayPlanning />} />
-              <Route path="/seo-blog" element={<SeoBlog />} />
-              <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
-              <Route path="/chatbot" element={<Chatbot />} />
-              <Route path="/copyright-branding" element={<CopyrightBranding />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </DashboardColorsProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/monday-planning" element={<MondayPlanning />} />
+            <Route path="/seo-blog" element={<SeoBlog />} />
+            <Route path="/wordpress-alt-text" element={<WordpressAltText />} />
+            <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/copyright-branding" element={<CopyrightBranding />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
