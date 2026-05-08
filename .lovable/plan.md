@@ -1,81 +1,98 @@
 
-# Plan: Handleiding Toevoegen aan SEO Pagina
+# Plan: Admin Instellingen Sectie voor PageUrlForm
 
 ## Overzicht
-Een handleiding knop toevoegen aan de SEO pagina die een slide-out panel opent met stap-voor-stap instructies voor het opzetten van een blog.
+De "Spreadsheet ID" en "Grid ID" velden verplaatsen naar een inklapbare "Admin instellingen" sectie in het Pagina URL formulier, vergelijkbaar met de implementatie in BlogGenerationForm.
 
 ---
 
-## Locatie
+## Huidige situatie
 
-De handleiding knop komt in de **top navigatiebalk**, links van de notificatie bel:
+De velden staan nu direct in het formulier:
+```
+Bedrijfsnaam (read-only)
+Spreadsheet ID
+Grid ID
+Pagina URLs
+[URL's documenteren]
+```
+
+---
+
+## Nieuwe structuur
 
 ```
-[Dashboard]                    [Bedrijf ▼] [📖] [🔔]
+Bedrijfsnaam (read-only)
+Pagina URLs
+[Admin instellingen ▼]  ← Alleen zichtbaar voor admins
+   Spreadsheet ID
+   Grid ID
+[URL's documenteren]
 ```
 
 ---
 
-## UI Componenten
+## Technische wijzigingen
 
-### 1. Handleiding Knop
-- **Icoon:** `BookOpen` van lucide-react
-- **Styling:** Zelfde stijl als de notificatie bel (bg-white/5, border-white/20)
-- **Tooltip:** "Handleiding" bij hover
+### Bestand: `src/components/seo-blog/PageUrlForm.tsx`
 
-### 2. Handleiding Panel (Sheet)
-- **Type:** `Sheet` component (slide-in van rechts)
-- **Breedte:** 500px voor goede leesbaarheid
-- **Inhoud:** Placeholder sectie met stappen (later aan te passen)
-
----
-
-## Technische Implementatie
-
-### Bestand: `src/pages/SeoBlog.tsx`
-
-**Wijzigingen:**
-1. Import `BookOpen` icoon en `Sheet` componenten
-2. Nieuwe state: `isGuideOpen` 
-3. Handleiding knop naast notificatie bel
-4. Sheet component met placeholder inhoud
-
-**Nieuwe imports:**
+**1. Nieuwe imports:**
 ```typescript
-import { BookOpen } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 ```
 
-**Nieuwe state:**
+**2. Nieuwe state:**
 ```typescript
-const [isGuideOpen, setIsGuideOpen] = useState(false);
+const [adminSettingsOpen, setAdminSettingsOpen] = useState(false);
 ```
 
-**Knop in navigatiebalk (voor de notificatie bel):**
+**3. Verplaatsen Spreadsheet ID en Grid ID velden:**
+- Verwijder deze velden van hun huidige locatie (regels 214-238)
+- Plaats ze in een Collapsible component na de Pagina URLs sectie
+
+**4. Collapsible sectie toevoegen:**
 ```tsx
-<button
-  onClick={() => setIsGuideOpen(true)}
-  className="relative p-2 rounded-lg bg-white/5 border border-white/20 hover:bg-white/10 transition-colors"
-  title="Handleiding"
->
-  <BookOpen className="h-5 w-5 text-white" />
-</button>
+{isAdmin && (
+  <Collapsible 
+    open={adminSettingsOpen} 
+    onOpenChange={setAdminSettingsOpen}
+    className="pt-6 border-t border-white/10"
+  >
+    <CollapsibleTrigger className="flex items-center justify-between w-full py-2 hover:bg-white/5 rounded-md px-2 transition-colors">
+      <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
+      <ChevronDown className={cn(
+        "h-4 w-4 text-yellow-400/80 transition-transform duration-200",
+        adminSettingsOpen && "rotate-180"
+      )} />
+    </CollapsibleTrigger>
+    <CollapsibleContent className="space-y-4 pt-4">
+      {/* Spreadsheet ID */}
+      <div className="space-y-2">
+        <Label className="text-white/70">Spreadsheet ID</Label>
+        <Input ... />
+      </div>
+      {/* Grid ID */}
+      <div className="space-y-2">
+        <Label className="text-white/70">Grid ID</Label>
+        <Input ... />
+      </div>
+    </CollapsibleContent>
+  </Collapsible>
+)}
 ```
 
-**Sheet component (onderaan de pagina):**
-```tsx
-<Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
-  <SheetContent className="w-[500px] sm:max-w-[500px] bg-card border-border overflow-y-auto">
-    <SheetHeader>
-      <SheetTitle className="text-white text-xl">Blog Handleiding</SheetTitle>
-    </SheetHeader>
-    <div className="mt-6 space-y-6 text-white/80">
-      <p>Hier komt de stap-voor-stap handleiding...</p>
-      {/* Placeholder voor latere inhoud */}
-    </div>
-  </SheetContent>
-</Sheet>
-```
+---
+
+## Visueel resultaat
+
+| Element | Zichtbaar voor |
+|---------|----------------|
+| Bedrijfsnaam | Iedereen |
+| Pagina URLs | Iedereen (alleen admin kan bewerken) |
+| Admin instellingen | Alleen admins |
+| URL's documenteren knop | Alleen admins |
 
 ---
 
@@ -83,10 +100,4 @@ const [isGuideOpen, setIsGuideOpen] = useState(false);
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/pages/SeoBlog.tsx` | Handleiding knop en Sheet panel toevoegen |
-
----
-
-## Volgende stap
-
-Na implementatie kan de inhoud van de handleiding worden ingevuld met de specifieke stappen voor het opzetten van een blog.
+| `src/components/seo-blog/PageUrlForm.tsx` | Collapsible admin sectie toevoegen, velden verplaatsen |
