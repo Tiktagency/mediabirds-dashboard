@@ -1,35 +1,42 @@
 
-## Plan: Bedrijfsnaam auto-invullen + twee kolommen layout
+## Plan: Layout herstructureren — invulvelden full-width, preview eronder
 
-### Wijziging 1: Bedrijfsnaam automatisch invullen
-In `NewsletterCompanySelector.tsx`, bij het aanmaken van een nieuw bedrijf (`handleConfirmAdd`), de `bedrijfsnaam` direct mee-inserteren samen met `name`:
-
-```typescript
-// Nu:
-.insert({ name: newCompanyName.trim() })
-
-// Wordt:
-.insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim() })
-```
-
-En de `newCompany` object ook `bedrijfsnaam` meegeven zodat de form direct bijwerkt.
-
-### Wijziging 2: Invulvelden in twee gelijke blokken naast elkaar
-In `Nieuwsbrief.tsx` de 8 tekstvelden opsplitsen in twee blokken van 4 in een `grid grid-cols-2 gap-4`:
+### Nieuwe layout
 
 ```
-Kolom 1                    Kolom 2
-──────────────────         ──────────────────
-Bedrijfsnaam               Toon
-Tagline                    CTA tekst
-Bedrijfsomschrijving       CTA URL
-Doelgroep                  Website
+┌─────────────────────────────────────────────────┐
+│  [Dashboard]                    [Bedrijf ▾]      │
+└─────────────────────────────────────────────────┘
+              Nieuwsbrief
+    Genereer een op maat gemaakte...
+
+┌──────────────────────┐  ┌──────────────────────┐
+│  Bedrijfsnaam        │  │  Toon                │
+│  Tagline             │  │  CTA tekst           │
+│  Bedrijfsomschrijving│  │  CTA URL             │
+│  Doelgroep           │  │  Website             │
+│  RSS feeds           │  │  Huisstijl kleuren   │
+└──────────────────────┘  └──────────────────────┘
+
+              [Genereer nieuwsbrief]
+
+┌─────────────────────────────────────────────────┐
+│  HTML Preview                      [Downloaden] │
+│                                                 │
+│  <iframe ...>                                   │
+└─────────────────────────────────────────────────┘
 ```
 
-RSS feeds en kleuren blijven eronder op volledige breedte, of kleuren ook in twee kolommen (2×5).
+### Wijzigingen in `src/pages/Nieuwsbrief.tsx`
+
+1. **Buitenste grid verwijderen** — geen `grid-cols-[400px_1fr]` meer
+2. **Twee gelijke kolommen voor velden** — `grid grid-cols-2 gap-6` over de volledige breedte (`max-w-7xl`):
+   - **Kolom 1 (Card)**: Bedrijfsnaam, Tagline, Bedrijfsomschrijving, Doelgroep + RSS feeds
+   - **Kolom 2 (Card)**: Toon, CTA tekst, CTA URL, Website + Huisstijl kleuren
+3. **Genereer-knop** eronder, full-width
+4. **Preview Card** eronder op volledige breedte, iframe hoogte verhogen naar `700px`
 
 ### Bestanden
 | Bestand | Aanpassing |
 |---|---|
-| `src/components/nieuwsbrief/NewsletterCompanySelector.tsx` | `bedrijfsnaam` meesturen bij insert |
-| `src/pages/Nieuwsbrief.tsx` | Tekstvelden in `grid grid-cols-2 gap-4` layout |
+| `src/pages/Nieuwsbrief.tsx` | Layout herstructureren: twee gelijke kolom-cards + preview eronder |
