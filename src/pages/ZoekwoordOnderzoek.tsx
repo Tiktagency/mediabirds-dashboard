@@ -22,6 +22,7 @@ interface Notification {
 }
 
 const FIXED_SEO_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/b932bfda-0727-4ff4-b311-b234be0ff953';
+const FIXED_SUBKEYWORDS_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/64e96f60-f941-4cd6-8f14-a9ab91c9dc67';
 
 const ZoekwoordOnderzoek = () => {
   const { toast, dismiss } = useToast();
@@ -302,7 +303,7 @@ const ZoekwoordOnderzoek = () => {
     try {
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
         body: {
-          webhookUrl: selectedCompany.subkeywords_webhook,
+          webhookUrl: FIXED_SUBKEYWORDS_WEBHOOK_URL,
           authTokenSecretName: selectedCompany.auth_token_secret_name,
           action: 'subkeywords',
         },
