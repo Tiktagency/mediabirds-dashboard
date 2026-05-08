@@ -297,13 +297,13 @@ export const KeywordResearchForm = ({
           />
         ) : (
           <div className="flex items-center gap-2">
-            {/* Tekst container met tooltip voor Google ID velden */}
+            {/* Google ID velden met waarde: tooltip + actie-iconen */}
             {isGoogleIdField && value ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div 
                     className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
-                    onClick={() => canEdit && setEditingField(field)}
+                    onClick={() => canEdit && setExpandedField(field)}
                   >
                     {value}
                   </div>
@@ -312,13 +312,32 @@ export const KeywordResearchForm = ({
                   <p className="font-mono text-xs">{value}</p>
                 </TooltipContent>
               </Tooltip>
+            ) : expandedField === field ? (
+              /* Expanded state: toont tekst + potlood */
+              <div className={`expanded-field-container relative flex-1 px-3 py-2 pr-12 rounded-md text-white/80 min-h-[40px] ${borderStyles}`}>
+                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+                {canEdit && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedField(null);
+                      setEditingField(field);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             ) : (
+              /* Collapsed state: geen potlood, klik opent expanded */
               <div 
-                className={`flex-1 flex items-center justify-between px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
-                onClick={() => canEdit && setEditingField(field)}
+                className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
+                onClick={() => canEdit && setExpandedField(field)}
               >
                 <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
-                {!isGoogleIdField && <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />}
               </div>
             )}
             
@@ -435,11 +454,10 @@ export const KeywordResearchForm = ({
           </div>
         ) : (
           <div 
-            className="flex items-center justify-between px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
+            className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
             onClick={() => setExpandedField(field)}
           >
             <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
-            <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
           </div>
         )}
       </div>
