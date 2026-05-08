@@ -55,7 +55,6 @@ export const BlogGenerationForm = ({
     status: 'Draft',
     google_sheet_id: '',
     google_slides_id: '',
-    category: '',
   });
 
   // Click outside handler to collapse expanded field
@@ -118,7 +117,6 @@ export const BlogGenerationForm = ({
         status: settings.status || 'Draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
-        category: settings.category || '',
       });
     } else {
       setFormData({
@@ -135,7 +133,6 @@ export const BlogGenerationForm = ({
         status: 'Draft',
         google_sheet_id: '',
         google_slides_id: '',
-        category: '',
       });
     }
     setEditingField(null);
@@ -218,7 +215,6 @@ export const BlogGenerationForm = ({
         status: settings.status || 'Draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
-        category: settings.category || '',
       });
     }
     setEditingField(null);
@@ -251,7 +247,7 @@ export const BlogGenerationForm = ({
         status: formData.status,
         google_sheet_id: formData.google_sheet_id,
         google_slides_id: formData.google_slides_id,
-        category: formData.category,
+        categories: blogCategories.map(cat => ({ label: cat.label, value: cat.value })),
         timestamp: new Date().toISOString(),
       };
 
@@ -545,7 +541,6 @@ export const BlogGenerationForm = ({
       {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
       {renderRangeField()}
       {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
-      {renderField('Categorie', 'category', 'select', blogCategories.map(cat => cat.label))}
       
       {/* Afbeelding section */}
       <div className="pt-6 border-t border-white/10 space-y-4">
