@@ -112,8 +112,9 @@ serve(async (req) => {
       }
     }
 
-    // Fetch all recent executions (n8n API has a max limit of 250)
-    const apiLimit = Math.min(limit, 250);
+    // Fetch more executions than needed to ensure we have enough after filtering
+    // n8n API has a max limit of 250, so we fetch max to ensure we get 100 after filtering
+    const apiLimit = 250;
     let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=${apiLimit}`;
     
     console.log(`Fetching executions from: ${executionsUrl}`);
@@ -194,10 +195,13 @@ serve(async (req) => {
     // Sort by created_at descending
     logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    console.log(`Returning ${logs.length} log entries`);
+    // Always return exactly 100 logs (or less if there aren't enough)
+    const finalLogs = logs.slice(0, 100);
+
+    console.log(`Returning ${finalLogs.length} log entries`);
 
     return new Response(
-      JSON.stringify({ logs }),
+      JSON.stringify({ logs: finalLogs }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
