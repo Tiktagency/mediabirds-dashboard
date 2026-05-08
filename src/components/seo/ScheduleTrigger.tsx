@@ -39,6 +39,7 @@ interface UpdateScheduleData {
 interface ScheduleTriggerProps {
   companyId: string | null;
   isAdmin: boolean;
+  description?: string;
   schedule: SeoSchedule | null;
   isLoading: boolean;
   isSaving: boolean;
@@ -84,6 +85,7 @@ const getUnitLabel = (value: number, unit: 'days' | 'weeks' | 'months'): string 
 export const ScheduleTrigger = ({
   companyId, 
   isAdmin, 
+  description,
   schedule, 
   isLoading, 
   isSaving, 
@@ -173,6 +175,7 @@ export const ScheduleTrigger = ({
   return (
     <div className="space-y-2">
       <Label className="text-white/70 text-sm">Automatische Trigger</Label>
+      {description && <p className="text-white/40 text-xs">{description}</p>}
       
       <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-6">
         {/* Enable/Disable Toggle */}
