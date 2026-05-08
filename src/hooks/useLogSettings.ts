@@ -24,6 +24,7 @@ export interface AutomationLog {
   message: string;
   status: string;
   execution_time_ms: number | null;
+  time_saved_minutes: number | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
 }
@@ -88,6 +89,7 @@ export const useLogSettings = () => {
         message: log.message,
         status: log.status,
         execution_time_ms: log.execution_time_ms,
+        time_saved_minutes: log.time_saved_minutes,
         metadata: log.metadata,
         created_at: log.created_at,
       }));
