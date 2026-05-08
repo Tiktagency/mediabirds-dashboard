@@ -1,225 +1,190 @@
 
+# Plan: Accurate Bespaarde Uren per Bedrijf
 
-# Plan: Verbeterde Bespaarde Uren Statistieken
+## Probleemanalyse
 
-## Probleem Analyse
+Het huidige systeem kan niet bepalen welk bedrijf een SEO Blog of Zoekwoord execution heeft getriggerd omdat:
+1. De n8n API alleen workflow ID retourneert, niet de payload
+2. De `bedrijfsnaam` wordt wel naar n8n gestuurd maar nergens opgeslagen
+3. Daarom worden executions proportioneel verdeeld - dit is een **schatting**, geen echte data
 
-### Huidige Situatie (uit logs)
+## Oplossing: Trigger Logging
 
-| Bedrijf | Totale Uren | Breakdown |
-|---------|-------------|-----------|
-| Overig | 198.5 uur | SEO Blog (231 runs), SEO Zoekwoorden (166 runs) |
-| Tikt | 14.8 uur | Overig (89 runs) |
-| Mediabirds | 13.6 uur | Overig (31), Alt-text (34), Monday Planning (9) |
-| Smart Charged | - | Geen executions |
+### 1. Nieuwe Database Tabel: `workflow_executions`
 
-### Geïdentificeerde Problemen
+| Kolom | Type | Beschrijving |
+|-------|------|--------------|
+| id | uuid | Primary key |
+| company_id | uuid | FK naar companies |
+| workflow_type | text | 'seo_blog' of 'seo_research' |
+| triggered_at | timestamptz | Moment van trigger |
+| triggered_by | uuid | User ID (nullable) |
+| success | boolean | Of de webhook succesvol was |
 
-1. **SEO Blog en SEO Zoekwoorden zijn gedeelde workflows**
-   - De workflow "SEO blog" en "SEO zoekwoorden" worden door alle bedrijven gebruikt
-   - De n8n API retourneert alleen workflow ID en executie metadata
-   - De **input payload** (met bedrijfsnaam) is NIET beschikbaar via de executions API
-   - Daarom belanden deze 397 runs onder "Overig"
+### 2. Edge Functions Aanpassen
 
-2. **Company-specifieke workflows missen in Tikt**
-   - Tikt heeft wel `TIKT zoekwoorden` en `TIKT seo` geconfigureerd in de database
-   - Maar de n8n workflow "SEO blog" en "SEO zoekwoorden" matchen niet met deze namen
-   - De prefix-matching werkt alleen voor workflows die beginnen met "TIKT"
+**`trigger-blog-generation/index.ts`**:
+- Na succesvolle webhook call: insert record met company_id en workflow_type = 'seo_blog'
+- Company ID ophalen via bedrijfsnaam uit de payload
 
-3. **Smart Charged ontbreekt volledig**
-   - Database check toont: `seo_research_n8n_name: null`, `blogs_n8n_name: null`
-   - Er zijn geen n8n workflows geconfigureerd voor Smart Charged
-   - Dus ook geen executions om te tellen
+**`trigger-seo-webhook/index.ts`**:
+- Na succesvolle webhook call: insert record met company_id en workflow_type = 'seo_research'
+- Company ID ophalen via bedrijfsnaam uit de formData
 
-4. **Tooltip UI te klein**
-   - Huidige breedte: 288px (`w-72`)
-   - Meer ruimte nodig voor overzicht
+**`run-scheduled-blogs/index.ts`** en **`run-scheduled-seo/index.ts`**:
+- Dezelfde logging voor scheduled triggers
 
----
+### 3. Get-Saved-Hours Aanpassen
 
-## Oplossingsrichtingen
+De edge function `get-saved-hours` wordt aangepast om:
+1. **Eerst** de `workflow_executions` tabel te raadplegen voor accurate per-bedrijf counts
+2. **Fallback** naar n8n API voor andere workflows (Alt-text, Monday Planning, etc.)
+3. "Overig" automatiseringen toewijzen aan Mediabirds
 
-### Optie A: N8n Execution Data Ophalen (Aanbevolen)
+## Dataflow Diagram
 
-De n8n API heeft een endpoint om **volledige executie details** op te halen, inclusief de input data:
-
-```
-GET /api/v1/executions/{id}
-```
-
-Dit retourneert de volledige executie inclusief `data` object met input parameters (waar `bedrijfsnaam` in staat).
-
-**Nadelen:**
-- Vereist 1 API call per executie = 560 calls voor huidige maand
-- Zeer traag en kan rate limits triggeren
-
-### Optie B: Proportionele Verdeling (Pragmatisch)
-
-Verdeel de "gedeelde" SEO workflows proportioneel over bedrijven op basis van:
-- Configuratie in database (welke bedrijven hebben SEO actief)
-- Gelijk verdeeld over actieve bedrijven
-
-**Implementatie:**
-```typescript
-// Als workflow "SEO blog" of "SEO zoekwoorden" is:
-// 1. Haal lijst van bedrijven met SEO configuratie
-// 2. Verdeel executions gelijk over deze bedrijven
-```
-
-### Optie C: Aparte Workflows per Bedrijf in n8n (Lange termijn)
-
-Maak in n8n aparte workflows per bedrijf:
-- `Mediabirds SEO blog`
-- `Tikt SEO blog`
-- `Smart Charged SEO blog`
-
-Dit vereist wijzigingen in n8n, niet in deze app.
-
----
-
-## Aanbevolen Aanpak: Optie B + UI Verbeteringen
-
-### 1. Proportionele Verdeling voor Gedeelde Workflows
-
-**Logica:**
-1. Identificeer "gedeelde" workflows (SEO blog, SEO zoekwoorden) uit `automation_settings`
-2. Tel hoeveel bedrijven SEO-configuratie hebben in de `companies` tabel
-3. Verdeel de executions van gedeelde workflows proportioneel
-
-**Voorbeeld berekening:**
-- "SEO blog": 231 executions × 30 min = 6930 min
-- Bedrijven met blogs_n8n_name: Mediabirds, Tikt (2 bedrijven)
-- Per bedrijf: 6930 / 2 = 3465 min = 57.75 uur
-
-### 2. Verbeterde Workflow Type Detectie
-
-Verbeter `determineWorkflowType()` om meer specifieke categorieën te herkennen:
-- `simplicate` → "Simplicate Sync"
-- `klantenservice` → "Klantenservice"
-- `database` → "Database Sync"
-- etc.
-
-### 3. Grotere en Overzichtelijkere Tooltip
-
-**Huidige dimensies:**
-- Breedte: 288px
-- Max hoogte: 400px
-
-**Nieuwe dimensies:**
-- Breedte: 400px (`w-[400px]`)
-- Max hoogte: 500px
-- Betere spacing
-
-**Verbeterde layout:**
 ```text
-╔══════════════════════════════════════════════════╗
-║  BESPAARD DEZE MAAND                             ║
-║  28 dec 2025 - 27 jan 2026                       ║
-╠══════════════════════════════════════════════════╣
-║                                                  ║
-║  MEDIABIRDS                          120.5 uur   ║
-║  ████████████████████████████░░░░░░░░    53%     ║
-║                                                  ║
-║    SEO Blog              57.8 uur   (116 runs)   ║
-║    SEO Zoekwoorden       50.0 uur   (100 runs)   ║
-║    Monday Planning        3.8 uur     (5 runs)   ║
-║    Alt-text               1.7 uur    (34 runs)   ║
-║    Simplicate Sync        4.0 uur    (24 runs)   ║
-║    Klantenservice         3.2 uur    (32 runs)   ║
-║                                                  ║
-╠══════════════════════════════════════════════════╣
-║                                                  ║
-║  TIKT                                 83.5 uur   ║
-║  ████████████████████░░░░░░░░░░░░░░░░    37%     ║
-║                                                  ║
-║    SEO Blog              57.8 uur   (116 runs)   ║
-║    SEO Zoekwoorden       16.5 uur    (33 runs)   ║
-║    Database Sync          5.0 uur    (50 runs)   ║
-║    Klantenservice         4.2 uur    (42 runs)   ║
-║                                                  ║
-╠══════════════════════════════════════════════════╣
-║                                                  ║
-║  SMART CHARGED                        22.0 uur   ║
-║  ███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    10%     ║
-║                                                  ║
-║    (Nog geen workflows geconfigureerd)           ║
-║                                                  ║
-╠══════════════════════════════════════════════════╣
-║  TOTAAL                  227 uur (560 executies) ║
-╚══════════════════════════════════════════════════╝
+┌─────────────────────────────────────────────────────────────────┐
+│                        SEO Blog Pagina                          │
+│                                                                 │
+│   ┌─────────────────┐      ┌─────────────────────────────────┐ │
+│   │ CompanySelector │ ──── │ Geselecteerd: "Smart Charged"   │ │
+│   └─────────────────┘      └─────────────────────────────────┘ │
+│                                       │                         │
+│                                       ▼                         │
+│   ┌───────────────────────────────────────────────────────────┐│
+│   │ BlogGenerationForm.handleSubmit()                         ││
+│   │ payload = { bedrijfsnaam: "Smart Charged", ... }          ││
+│   └───────────────────────────────────────────────────────────┘│
+└───────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌───────────────────────────────────────────────────────────────┐
+│                  Edge Function: trigger-blog-generation        │
+│                                                                │
+│   1. Ontvang payload met bedrijfsnaam                          │
+│   2. Call n8n webhook                                          │
+│   3. Bij succes:                                               │
+│      ┌─────────────────────────────────────────────────────┐  │
+│      │ INSERT INTO workflow_executions                      │  │
+│      │   (company_id, workflow_type, triggered_at, success) │  │
+│      │ VALUES (uuid, 'seo_blog', now(), true)               │  │
+│      └─────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌───────────────────────────────────────────────────────────────┐
+│                  Edge Function: get-saved-hours                │
+│                                                                │
+│   1. Query workflow_executions voor exacte counts per bedrijf  │
+│   2. Query n8n API voor overige workflows (Alt-text, Monday)   │
+│   3. Wijs "Overig" toe aan Mediabirds                          │
+│   4. Return breakdown per bedrijf                              │
+└───────────────────────────────────────────────────────────────┘
 ```
 
----
+## Technische Implementatie
 
-## Technische Wijzigingen
+### Stap 1: Database Migratie
 
-### 1. Edge Function: `supabase/functions/get-saved-hours/index.ts`
+Nieuwe tabel `workflow_executions` met RLS policies:
+- Admins kunnen alles zien
+- Service role kan inserts doen (edge functions)
 
-| Wijziging | Details |
-|-----------|---------|
-| Gedeelde workflows detectie | Identificeer "SEO blog", "SEO zoekwoorden" als gedeelde workflows |
-| Proportionele verdeling | Verdeel executions over bedrijven met SEO config |
-| Verbeterde workflow types | Meer specifieke categorieën (Simplicate, Klantenservice, Database) |
-| Smart Charged inclusie | Toon bedrijf ook zonder executions |
+### Stap 2: Edge Function Updates
 
-**Nieuwe logica voor gedeelde workflows:**
+**trigger-blog-generation/index.ts**:
 ```typescript
-// Bepaal welke bedrijven SEO-configuratie hebben
-const companiesWithSeoBlogs = companies.filter(c => c.blogs_n8n_name);
-const companiesWithSeoResearch = companies.filter(c => c.seo_research_n8n_name);
-
-// Bij executie van "SEO blog":
-// → Verdeel proportioneel over companiesWithSeoBlogs
+// Na succesvolle webhook response
+const bedrijfsnaam = blogData?.bedrijfsnaam;
+if (bedrijfsnaam) {
+  const { data: company } = await supabase
+    .from('companies')
+    .select('id')
+    .eq('name', bedrijfsnaam)
+    .single();
+    
+  if (company) {
+    await supabase.from('workflow_executions').insert({
+      company_id: company.id,
+      workflow_type: 'seo_blog',
+      triggered_by: userId,
+      success: true,
+    });
+  }
+}
 ```
 
-### 2. Tooltip Component: `src/components/dashboard/SavedHoursInfoTooltip.tsx`
-
-| Wijziging | Details |
-|-----------|---------|
-| Grotere breedte | `w-72` → `w-[400px]` |
-| Grotere max hoogte | `max-h-[400px]` → `max-h-[520px]` |
-| Tabel-achtige layout | Workflow naam, uren, runs in kolommen |
-| Visuele scheiding | Divider lijnen tussen bedrijven |
-| Empty state | "Nog geen workflows" voor bedrijven zonder data |
-
-### 3. UI Verbeteringen
-
-**Workflow details als mini-tabel:**
-```tsx
-<div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 text-xs">
-  <span className="text-white/60">SEO Blog</span>
-  <span className="text-white/80 font-medium text-right">57.8 uur</span>
-  <span className="text-white/40 text-right">(116 runs)</span>
-</div>
+**trigger-seo-webhook/index.ts**:
+```typescript
+// Na succesvolle webhook response
+const bedrijfsnaam = formData?.bedrijfsnaam;
+if (bedrijfsnaam) {
+  const { data: company } = await supabase
+    .from('companies')
+    .select('id')
+    .eq('name', bedrijfsnaam)
+    .single();
+    
+  if (company) {
+    await supabase.from('workflow_executions').insert({
+      company_id: company.id,
+      workflow_type: 'seo_research',
+      triggered_by: userId,
+      success: true,
+    });
+  }
+}
 ```
 
----
+### Stap 3: Get-Saved-Hours Herschrijven
 
-## Bestanden Overzicht
+```typescript
+// Haal exacte counts uit workflow_executions (voor afgelopen 30 dagen)
+const { data: executions } = await supabase
+  .from('workflow_executions')
+  .select('company_id, workflow_type, success')
+  .gte('triggered_at', periodStart.toISOString())
+  .eq('success', true);
 
-| Bestand | Actie |
-|---------|-------|
-| `supabase/functions/get-saved-hours/index.ts` | Proportionele verdeling + verbeterde workflow types |
-| `src/components/dashboard/SavedHoursInfoTooltip.tsx` | Grotere UI + tabel layout |
+// Tel per bedrijf
+const countsByCompany: Record<string, { seo_blog: number; seo_research: number }> = {};
+for (const exec of executions) {
+  // ... aggregeer per company_id
+}
 
----
+// Voeg toe aan breakdownByCompany met juiste uren
+```
 
-## Verwacht Resultaat Na Implementatie
+### Stap 4: "Overig" naar Mediabirds
 
-### Breakdown per Bedrijf (geschat)
+```typescript
+// Alle workflows die niet aan een specifiek bedrijf zijn gekoppeld
+// gaan naar Mediabirds
+if (companyName === 'Overig') {
+  companyName = 'Mediabirds';
+}
+```
 
-| Bedrijf | Uren | Workflows |
-|---------|------|-----------|
-| **Mediabirds** | ~120 uur | SEO Blog (58), Zoekwoorden (50), Monday (4), Alt-text (2), Simplicate (3), Chatbot (3) |
-| **Tikt** | ~85 uur | SEO Blog (58), Zoekwoorden (25), Database (2) |
-| **Smart Charged** | ~22 uur | SEO Blog (11), Zoekwoorden (11) (proportioneel) |
-| **Totaal** | 227 uur | 560 executies |
+## Bestanden die Aangepast Worden
 
-### Belangrijke Opmerking
+| Bestand | Wijziging |
+|---------|-----------|
+| `supabase/migrations/xxx_add_workflow_executions.sql` | Nieuwe tabel |
+| `supabase/functions/trigger-blog-generation/index.ts` | Logging toevoegen |
+| `supabase/functions/trigger-seo-webhook/index.ts` | Logging toevoegen |
+| `supabase/functions/run-scheduled-blogs/index.ts` | Logging toevoegen |
+| `supabase/functions/run-scheduled-seo/index.ts` | Logging toevoegen |
+| `supabase/functions/get-saved-hours/index.ts` | Query workflow_executions + "Overig" → Mediabirds |
 
-De proportionele verdeling is een **benadering**. Voor exacte cijfers per bedrijf zou n8n moeten worden aangepast om:
-1. Aparte workflows per bedrijf te gebruiken, OF
-2. De bedrijfsnaam in de workflow naam op te nemen
+## Verwacht Resultaat
 
-Dit valt buiten de scope van deze app-aanpassing maar kan later in n8n worden geconfigureerd.
+Na implementatie:
+- Elke nieuwe SEO Blog of Zoekwoord trigger wordt gelogd met het correcte bedrijf
+- De bespaarde uren breakdown toont **echte data** per bedrijf
+- Historische data (van voor implementatie) valt onder "Overig" → Mediabirds
+- Smart Charged krijgt alleen uren als zij daadwerkelijk triggers uitvoeren
 
+## Belangrijke Opmerking
+
+**Historische data** kan niet met terugwerkende kracht worden gecorrigeerd - de n8n API bevat niet welk bedrijf de execution triggerde. Vanaf het moment van implementatie worden alle nieuwe triggers correct gelogd.
