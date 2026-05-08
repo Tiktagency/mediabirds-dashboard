@@ -243,7 +243,12 @@ export const CopyrightBrandingForm = () => {
               {newText && (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Gegenereerde tekst</Label>
+                    <div className="flex items-center gap-3">
+                      <Label>Gegenereerde tekst</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {newText.trim().split(/\s+/).filter(Boolean).length} woorden
+                      </span>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -281,7 +286,14 @@ export const CopyrightBrandingForm = () => {
                 {/* New Text */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Nieuwe tekst</Label>
+                    <div className="flex items-center gap-3">
+                      <Label>Nieuwe tekst</Label>
+                      {newText && (
+                        <span className="text-xs text-muted-foreground">
+                          {newText.trim().split(/\s+/).filter(Boolean).length} woorden
+                        </span>
+                      )}
+                    </div>
                     {newText && (
                       <Button
                         variant="ghost"
