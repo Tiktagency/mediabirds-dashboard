@@ -28,14 +28,14 @@ interface CacheData {
   timestamp: number;
 }
 
-const defaultData: SavedHoursData = {
+const getDefaultData = (): SavedHoursData => ({
   totalHours: 0,
   totalMinutes: 0,
   executionCount: 0,
   periodStart: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   periodEnd: new Date().toISOString(),
   breakdownByCompany: {},
-};
+});
 
 export const useSavedHours = () => {
   // Initialize with cached value for instant display
@@ -43,16 +43,20 @@ export const useSavedHours = () => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { data, timestamp }: CacheData = JSON.parse(cached);
-        // Use cache if less than 1 hour old
-        if (Date.now() - timestamp < 3600000) {
-          return data;
+        const parsed = JSON.parse(cached);
+        // Handle both old cache format (just hours) and new format (full data)
+        if (parsed.data && typeof parsed.data.totalHours === 'number' && Date.now() - parsed.timestamp < 3600000) {
+          return parsed.data;
+        }
+        // Old format: { hours, timestamp }
+        if (typeof parsed.hours === 'number' && Date.now() - parsed.timestamp < 3600000) {
+          return { ...getDefaultData(), totalHours: parsed.hours };
         }
       }
     } catch {
       // Ignore cache errors
     }
-    return defaultData;
+    return getDefaultData();
   };
 
   const [data, setData] = useState<SavedHoursData>(getCachedValue);
@@ -72,12 +76,13 @@ export const useSavedHours = () => {
           return;
         }
 
+        const defaults = getDefaultData();
         const newData: SavedHoursData = {
           totalHours: responseData?.totalHours || 0,
           totalMinutes: responseData?.totalMinutes || 0,
           executionCount: responseData?.executionCount || 0,
-          periodStart: responseData?.periodStart || defaultData.periodStart,
-          periodEnd: responseData?.periodEnd || defaultData.periodEnd,
+          periodStart: responseData?.periodStart || defaults.periodStart,
+          periodEnd: responseData?.periodEnd || defaults.periodEnd,
           breakdownByCompany: responseData?.breakdownByCompany || {},
         };
         
