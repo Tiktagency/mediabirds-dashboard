@@ -1,22 +1,17 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FileText, Users, LayoutDashboard, Building2 } from 'lucide-react';
+import { Settings, FileText, Users, LayoutDashboard } from 'lucide-react';
 import { AutomationTab } from './automation/AutomationTab';
 import { LoggingTab } from './logging/LoggingTab';
 import { UsersTab } from './users/UsersTab';
 import { DashboardTab } from './dashboard/DashboardTab';
-import { CompaniesTab } from './companies/CompaniesTab';
 
 export const AdminTabs = () => {
   return (
     <Tabs defaultValue="automations" className="w-full">
-      <TabsList className="grid w-full grid-cols-5 bg-card/50 border border-border/30">
+      <TabsList className="grid w-full grid-cols-4 bg-card/50 border border-border/30">
         <TabsTrigger value="automations" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
           <Settings className="w-4 h-4" />
           <span className="hidden sm:inline">Automatiseringen</span>
-        </TabsTrigger>
-        <TabsTrigger value="companies" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
-          <Building2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Bedrijven</span>
         </TabsTrigger>
         <TabsTrigger value="logging" className="flex items-center gap-2 data-[state=active]:bg-primary/20">
           <FileText className="w-4 h-4" />
@@ -34,10 +29,6 @@ export const AdminTabs = () => {
 
       <TabsContent value="automations" className="mt-6">
         <AutomationTab />
-      </TabsContent>
-
-      <TabsContent value="companies" className="mt-6">
-        <CompaniesTab />
       </TabsContent>
 
       <TabsContent value="logging" className="mt-6">
