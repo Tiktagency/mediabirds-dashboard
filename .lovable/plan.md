@@ -1,33 +1,21 @@
 
 
-## Plan: AI auto-invullen bedrijfsvelden op Nieuwsbrief pagina
+## Plan: Domeinnaam verplicht bij aanmaken nieuwsbrief bedrijf
 
-### Wat wordt gebouwd
-Een "Auto invullen" knop naast de bedrijfsinstellingen die de website van het geselecteerde bedrijf afleest en via AI de tekstvelden automatisch invult (bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon, CTA tekst, CTA URL).
+### Wat verandert
+Het "Nieuw bedrijf toevoegen" dialoog krijgt een extra verplicht veld voor de domeinnaam. Bij het opslaan wordt automatisch de `website` kolom gevuld met `https://{domein}`.
 
-### Aanpak
+### Aanpassingen in `src/components/nieuwsbrief/NewsletterCompanySelector.tsx`
 
-**1. Nieuwe Edge Function: `extract-company-info`**
-- Hergebruikt het patroon van `extract-brand-colors` (HTML ophalen, AI analyseren)
-- Haalt de website HTML op, stuurt deze naar Lovable AI (Gemini Flash) met tool calling
-- Extraheert gestructureerd: bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon, cta_tekst, cta_url
-- De AI analyseert de homepage tekst, meta tags, hero sectie, about-sectie, en CTA's
+1. **Nieuwe state**: `newCompanyDomain` (string) naast de bestaande `newCompanyName`
+2. **Dialog uitbreiden**: Extra `<Input>` veld met label "Domeinnaam" en placeholder "bijv. tikt.nl" onder het naam-veld
+3. **Validatie**: `handleRequestAdd` controleert dat beide velden ingevuld zijn
+4. **Insert aanpassen**: Bij `handleConfirmAdd` wordt het insert-object uitgebreid:
+   ```ts
+   { name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim(), website: `https://${newCompanyDomain.trim()}` }
+   ```
+5. **Reset**: `newCompanyDomain` wordt geleegd na succesvol aanmaken
+6. **Bevestigingsdialoog**: Toont ook de domeinnaam ter controle
 
-**2. UI aanpassing in `src/pages/Nieuwsbrief.tsx`**
-- Voegt een "AI invullen" knop toe (met Wand2 icoon) bij de Bedrijfsinstellingen card header
-- Knop is alleen beschikbaar als er een website URL is ingevuld
-- Bij klik: roept de edge function aan, vult alle tekstvelden in, slaat op naar database
-- Loading state met spinner tijdens het ophalen
-
-### Technische details
-
-**Edge Function prompt strategie:**
-- Systemprompt instrueert de AI om specifiek te zoeken naar: bedrijfsnaam (title tag, logo tekst), tagline (hero subtitle, meta description), bedrijfsomschrijving (about sectie, meta description), doelgroep (wie ze bedienen), toon (formeel/informeel analyse), CTA tekst en URL (buttons, call-to-actions)
-- Tool calling met strict schema voor gevalideerde output
-- Velden die niet gevonden worden blijven leeg (null)
-
-**Bestanden:**
-- Nieuw: `supabase/functions/extract-company-info/index.ts`
-- Aangepast: `src/pages/Nieuwsbrief.tsx` (knop + handler)
-- Aangepast: `supabase/config.toml` (function config)
+Geen database wijzigingen nodig — de `website` kolom bestaat al op `newsletter_companies`.
 
