@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Clock, Calendar, CalendarDays } from 'lucide-react';
+import { Clock, Calendar, CalendarDays, Play, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface SeoSchedule {
   id: string;
@@ -76,12 +77,15 @@ export const ScheduleTrigger = ({
   updateSchedule, 
   getNextTriggerDisplay 
 }: ScheduleTriggerProps) => {
+  const { toast } = useToast();
+  
   // Local state for form controls
   const [enabled, setEnabled] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
   const [dayOfWeek, setDayOfWeek] = useState(1);
   const [hours, setHours] = useState('10');
   const [minutes, setMinutes] = useState('00');
+  const [isTesting, setIsTesting] = useState(false);
 
   // Sync local state with schedule data
   useEffect(() => {
@@ -124,6 +128,45 @@ export const ScheduleTrigger = ({
   const handleMinutesChange = async (newMinutes: string) => {
     setMinutes(newMinutes);
     await updateSchedule({ time_of_day: `${hours}:${newMinutes}:00` });
+  };
+
+  const handleTestTrigger = async () => {
+    setIsTesting(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-scheduled-seo`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({
+          title: "Test succesvol",
+          description: `${result.processed || 0} schedule(s) verwerkt`,
+        });
+      } else {
+        toast({
+          title: "Test mislukt",
+          description: result.error || "Er ging iets mis",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Test mislukt",
+        description: "Kon geen verbinding maken met de server",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   if (isLoading) {
@@ -264,9 +307,33 @@ export const ScheduleTrigger = ({
             {nextTrigger && (
               <>
                 <div className="h-px bg-white/10" />
-                <div className="text-sm text-white/60">
-                  <span className="text-white/40">Volgende uitvoering:</span>{' '}
-                  <span className="text-purple-400">{nextTrigger}</span>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-white/60">
+                    <span className="text-white/40">Volgende uitvoering:</span>{' '}
+                    <span className="text-purple-400">{nextTrigger}</span>
+                  </div>
+                  
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestTrigger}
+                      disabled={isTesting}
+                      className="bg-white/5 border-white/20 text-white hover:bg-white/10 text-xs h-7"
+                    >
+                      {isTesting ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Testen...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-3 w-3 mr-1" />
+                          Test nu
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </>
             )}
