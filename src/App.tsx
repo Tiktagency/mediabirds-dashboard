@@ -14,6 +14,7 @@ import CopyrightBranding from "./pages/CopyrightBranding";
 import EmailSignature from "./pages/EmailSignature";
 import Login from "./pages/Login";
 import AdminPanel from "./pages/AdminPanel";
+import Landingspagina from "./pages/Landingspagina";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const AppContent = () => {
       <Route path="/copyright-branding" element={<CopyrightBranding />} />
       <Route path="/email-signature" element={<EmailSignature />} />
       <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/landingspagina" element={<Landingspagina />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
