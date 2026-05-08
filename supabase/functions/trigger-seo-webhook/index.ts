@@ -135,14 +135,15 @@ serve(async (req) => {
 
     console.log(`Webhook response status: ${response.status}`);
 
-    let message = 'Geen bericht beschikbaar';
+    let message: string | null = null;
     let status = response.ok ? 'success' : 'error';
+    let hasActualMessage = false;
     
     // First get the raw text, then try to parse as JSON
     const rawText = await response.text().catch(() => '');
     console.log("Webhook raw response:", rawText);
     
-    if (rawText) {
+    if (rawText && rawText.trim().length > 0) {
       try {
         const data = JSON.parse(rawText);
         console.log("Webhook response data (parsed):", data);
@@ -150,46 +151,57 @@ serve(async (req) => {
         // Try to extract message from various possible keys
         if (data.Output) {
           message = data.Output;
-        } else if (data.message) {
+          hasActualMessage = true;
+        } else if (data.message && data.message !== 'Workflow was started') {
+          // Ignore "Workflow was started" as it's just an acknowledgment, not final result
           message = data.message;
+          hasActualMessage = true;
         } else if (data.Goed) {
           message = data.Goed;
+          hasActualMessage = true;
         } else if (data.Error) {
           message = data.Error;
           status = 'error';
+          hasActualMessage = true;
         } else if (data.error) {
           message = data.error;
           status = 'error';
-        } else if (data.status) {
+          hasActualMessage = true;
+        } else if (data.status && data.status !== 'success' && data.status !== 'ok') {
           message = data.status;
-        } else if (typeof data === 'string') {
+          hasActualMessage = true;
+        } else if (typeof data === 'string' && data.trim().length > 0) {
           message = data;
-        } else {
-          // If it's an object/array, stringify it for display
-          message = JSON.stringify(data, null, 2);
+          hasActualMessage = true;
         }
+        // If it's just { message: "Workflow was started" } or similar, we don't have actual content yet
       } catch (parseError) {
         console.log("Response is not JSON, using raw text");
-        // Not JSON, use the raw text as the message
-        message = rawText;
+        // Not JSON, use the raw text as the message if it's meaningful
+        if (rawText.trim().length > 0 && rawText !== 'OK' && rawText !== 'ok') {
+          message = rawText;
+          hasActualMessage = true;
+        }
       }
-    } else {
-      message = `Webhook response: ${response.status} ${response.statusText}`;
     }
 
-    // Save notification to database
-    const { error: dbError } = await supabase
-      .from('notifications')
-      .insert({
-        message: message,
-        status: status,
-        user_id: userId,
-      });
+    // Only save notification if we have an actual message
+    if (hasActualMessage && message) {
+      const { error: dbError } = await supabase
+        .from('notifications')
+        .insert({
+          message: message,
+          status: status,
+          user_id: userId,
+        });
 
-    if (dbError) {
-      console.error("Error saving notification:", dbError);
+      if (dbError) {
+        console.error("Error saving notification:", dbError);
+      } else {
+        console.log("Notification saved successfully");
+      }
     } else {
-      console.log("Notification saved successfully");
+      console.log("No actual message in response, skipping notification");
     }
     
     // Set status to 'active' on success
@@ -208,6 +220,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: message,
+        hasMessage: hasActualMessage,
         status: status 
       }),
       {
