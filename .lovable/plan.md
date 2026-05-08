@@ -1,70 +1,128 @@
 
-Doel: de “Handtekening genereren”-knop moet aantoonbaar wél een POST doen met alle data, en jij moet direct feedback krijgen als n8n de webhook niet accepteert (nu faalt het stil/verwarrend).
 
-Wat ik heb gevonden (uit de netwerk- en console-logs)
-- De app verstuurt wel degelijk een request naar de backend-functie `trigger-email-signature` (status 200).
-- Die backend-functie verstuurt vervolgens een POST naar jouw n8n URL.
-- n8n antwoordt met:
-  `{"code":404,"message":"This webhook is not registered for POST requests. Did you mean to make a GET request?"}`
-- Dit is typisch voor n8n wanneer:
-  - je de **/webhook-test/** URL gebruikt terwijl de workflow niet in “test listening” staat, of
-  - de webhook-node niet op POST staat, of
-  - je eigenlijk de **/webhook/** (productie) URL moet gebruiken (zoals bij je andere automatiseringen).
+# Plan: Webhook HTML Response Tonen in HTML Code Paneel
 
-Waarom het “nog steeds niet werkt”
-- De data wordt verstuurd, maar n8n weigert de POST op deze endpoint. Daarnaast retourneert onze backend-functie nu altijd `success: true` (ook als n8n faalt), waardoor het lijkt alsof alles goed ging.
+## Huidige Situatie
 
-Aanpak (simpel en zoals andere automatiseringen)
+- De "Handtekening genereren" knop roept de edge function aan die de data naar n8n stuurt
+- De webhook response wordt wel ontvangen (`rawText` in de console logs)
+- Het rechter "HTML Code" paneel toont nu alleen een placeholder tekst
+- Er is geen koppeling tussen de form en het paneel (ze zijn gescheiden componenten)
 
-1) Backend-functie `trigger-email-signature` robuust maken (zoals trigger-blog/SEO)
-Bestand: `supabase/functions/trigger-email-signature/index.ts`
+## Oplossing
 
-Wijzigingen:
-- Return niet altijd `success: true`. Gebruik:
-  - `success: response.ok`
-  - `status: response.status`
-  - `rawText` (volledige response body)
-- Voeg logging toe (alleen status/route, geen secrets) zodat we in de backend logs precies zien wat er gebeurt.
-- Voeg optioneel een Authorization header toe, net als andere automations:
-  - `Authorization: Deno.env.get('TIKT_WEBHOOK_AUTH_TOKEN') ?? Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN')` (als aanwezig)
-- Belangrijk: “kijk naar andere automatiseringen”
-  - Andere automations gebruiken meestal `/webhook/` (niet `/webhook-test/`).
-  - Ik implementeer daarom een “slimme fallback”:
-    1) Eerst POST naar exact de door jou gegeven URL (`.../webhook-test/...`)
-    2) Als n8n antwoordt met die “not registered for POST” boodschap of status 404:
-       - automatisch nogmaals POST naar dezelfde URL maar dan met `webhook-test` vervangen door `webhook`.
-    3) We geven terug welke URL uiteindelijk gebruikt is (`attemptedUrls` + `usedUrl`).
+### 1. State Lifting naar Parent Component
 
-Resultaat:
-- Als jouw n8n workflow actief is op productie-webhook, werkt het zonder dat jij iets hoeft aan te passen.
-- Als je écht test-webhook wilt, blijft dat ook werken zodra n8n “listening for test” staat.
+**Bestand: `src/pages/EmailSignature.tsx`**
 
-2) Frontend: toon duidelijke feedback (geen “het gebeurt niks” meer)
-Bestand: `src/components/email-signature/EmailSignatureForm.tsx`
+Voeg state toe voor de gegenereerde HTML code:
 
-Wijzigingen:
-- Voeg `useToast()` toe (zoals BlogGenerationForm) en toon een toast na klikken op “Handtekening genereren”:
-  - Succes: toon (korte) succesmelding + eventueel response tekst.
-  - Fout: toon foutmelding met de exacte n8n response (“not registered for POST…”) zodat meteen duidelijk is wat er misgaat.
-- Verwerk de response van `supabase.functions.invoke('trigger-email-signature')` als:
-  - `if (response.error)` => toast error
-  - `else if (!response.data?.success)` => toast error met `status` + `rawText`
-  - `else` => toast success
-- Dit verandert niets aan auto-save: dat blijft stil en automatisch.
+```typescript
+const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
+const [isGenerating, setIsGenerating] = useState(false);
+```
 
-3) (Optioneel maar aanbevolen) UI: zet de volledige webhook response ook in het rechter “HTML Code” paneel
-- Niet vereist voor de fix, maar dit maakt het debuggen/gebruik veel duidelijker (je ziet meteen wat n8n teruggeeft).
-- Alleen als jij dit wilt; ik kan het direct meenemen.
+Geef een callback mee aan `EmailSignatureForm`:
 
-Testplan (end-to-end)
-1. Vul verplichte velden in → er mag géén “Opgeslagen” toast komen (auto-save is silent).
-2. Klik “Handtekening genereren”:
-   - Je moet direct een toast krijgen met succes of met de echte fout uit n8n.
-3. Controleer dat n8n nu wél een run triggert:
-   - Als het nog 404 is, dan ligt het aan n8n endpoint/methode; de UI zal dat nu expliciet tonen, en de fallback naar `/webhook/` vangt het meestal direct af.
+```typescript
+<EmailSignatureForm
+  ...
+  onHtmlGenerated={(html: string) => setGeneratedHtml(html)}
+  onGeneratingChange={(generating: boolean) => setIsGenerating(generating)}
+/>
+```
 
-Technisch (waarom dit dit oplost)
-- We sturen al een POST, maar n8n weigert de endpoint. De echte fix is:
-  1) correcte endpoint gebruiken (vaak `/webhook/` i.p.v. `/webhook-test/`), en/of
-  2) correcte auth header meegeven, en
-  3) het falen niet verbergen: success/status/response doorgeven en zichtbaar maken in de UI.
+Toon de HTML in het rechter paneel:
+
+```typescript
+<div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[300px] overflow-auto">
+  {isGenerating ? (
+    <div className="flex items-center gap-2">
+      <Loader2 className="w-4 h-4 animate-spin" />
+      <span>HTML code genereren...</span>
+    </div>
+  ) : generatedHtml ? (
+    <pre className="whitespace-pre-wrap break-all">{generatedHtml}</pre>
+  ) : (
+    <span className="text-white/30">
+      Vul het formulier in en klik op "Handtekening genereren" om de HTML code te zien.
+    </span>
+  )}
+</div>
+```
+
+Voeg ook een "Kopieer" knop toe wanneer er HTML is.
+
+### 2. Form Component Aanpassen
+
+**Bestand: `src/components/email-signature/EmailSignatureForm.tsx`**
+
+Voeg nieuwe props toe:
+
+```typescript
+interface EmailSignatureFormProps {
+  ...
+  onHtmlGenerated?: (html: string) => void;
+  onGeneratingChange?: (generating: boolean) => void;
+}
+```
+
+In de `onSubmit` functie:
+
+```typescript
+onGeneratingChange?.(true);
+setIsSending(true);
+
+try {
+  const response = await supabase.functions.invoke('trigger-email-signature', {
+    body: signatureData,
+  });
+
+  // ... error handling ...
+
+  if (data?.success && data?.rawText) {
+    // Probeer JSON te parsen voor een specifieke key, anders gebruik raw text
+    let htmlCode = data.rawText;
+    try {
+      const parsed = JSON.parse(data.rawText);
+      // n8n kan HTML teruggeven in verschillende keys
+      htmlCode = parsed.html || parsed.output || parsed.Output || parsed.message || data.rawText;
+    } catch {
+      // Gebruik raw text als het geen JSON is
+    }
+    onHtmlGenerated?.(htmlCode);
+  }
+} finally {
+  setIsSending(false);
+  onGeneratingChange?.(false);
+}
+```
+
+### 3. Kopieer Functionaliteit
+
+In `EmailSignature.tsx`, voeg een kopieer-knop toe:
+
+```typescript
+const copyToClipboard = async () => {
+  if (generatedHtml) {
+    await navigator.clipboard.writeText(generatedHtml);
+    // Toast: "HTML gekopieerd naar klembord"
+  }
+};
+```
+
+## Samenvatting Wijzigingen
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `EmailSignature.tsx` | State voor `generatedHtml` en `isGenerating`, toon HTML in paneel, kopieer knop |
+| `EmailSignatureForm.tsx` | Nieuwe props `onHtmlGenerated` en `onGeneratingChange`, roep callbacks aan na webhook response |
+
+## Resultaat
+
+1. Gebruiker vult formulier in
+2. Klikt op "Handtekening genereren"
+3. Paneel toont "HTML code genereren..." met spinner
+4. Na ontvangst van webhook response: HTML code wordt getoond in het rechter paneel
+5. Gebruiker kan de code kopiëren met een knop
+
