@@ -1,30 +1,44 @@
 
-# Bedrijfsnaam labeling consistency
+# Webhook aanroep bij verwijderen bedrijf
 
 ## Wat verandert er
 
-1. **KeywordResearchForm**: Het label "Bedrijf" wordt veranderd naar "Bedrijfsnaam" voor consistent labeling
-2. **BlogGenerationForm**: Dit formulier heeft al "Bedrijfsnaam" staan, dus geen wijziging nodig
-3. De `bedrijfsnaam` waarde wordt al automatisch gesynchroniseerd tussen de twee formulieren dankzij de eerdere wijzigingen in de edge function
+Bij het verwijderen van een bedrijf wordt na bevestiging een POST-request gestuurd naar de n8n webhook met de bedrijfsnaam. Dit gebeurt via een nieuwe backend function, zodat de auth token veilig blijft.
+
+## Huidige situatie
+
+- De bevestigingsdialoog bestaat al: "Weet je zeker dat je [naam] wilt verwijderen?"
+- Na bevestiging worden `blog_settings` en het bedrijf uit de database verwijderd
+- Er wordt nog geen webhook aangeroepen
 
 ## Aanpassingen
 
-### KeywordResearchForm.tsx (1 kleine wijziging)
+### 1. Nieuwe edge function: `trigger-delete-company-webhook`
 
-Op regel 468 wordt de label veranderd van:
-```typescript
-{renderInputField('Bedrijf', 'bedrijfsnaam', true)}
-```
+Een nieuwe backend function die:
+- De `bedrijfsnaam` ontvangt als parameter
+- Een POST-request stuurt naar `https://tikt.app.n8n.cloud/webhook/dca2fe6c-13f7-43ab-8f19-33ed0d97fd18`
+- De `BLOG_WEBHOOK_AUTH_TOKEN` secret gebruikt voor authenticatie (al geconfigureerd)
+- De bedrijfsnaam meestuurt in de body als `{ bedrijfsnaam: "..." }`
 
-Naar:
-```typescript
-{renderInputField('Bedrijfsnaam', 'bedrijfsnaam', true)}
-```
+### 2. CompanySelector.tsx: `handleDeleteCompany` uitbreiden
 
-Dit zorgt voor consistent labeling met de BlogGenerationForm en maakt duidelijk dat dit hetzelfde veld is in beide tabbladen.
+- Na bevestiging en voordat het bedrijf uit de database wordt verwijderd, wordt de webhook aangeroepen via de nieuwe edge function
+- De `AlertDialogAction` krijgt `e.preventDefault()` om de dialoog open te houden tijdens het verwijderen
+- Er verschijnt een laadsymbool met "Bezig met verwijderen..." tijdens de verwerking
+- Als de webhook faalt, wordt het bedrijf alsnog verwijderd uit de database (met een waarschuwing)
 
 ## Technische details
 
-- Beide formulieren gebruiken nu dezelfde labeling ("Bedrijfsnaam")
-- De `bedrijfsnaam` waarde wordt al automatisch gesynchroniseerd tussen `seo_settings` en `blog_settings` (vanuit eerdere wijzigingen)
-- De edge function voegt de `bedrijfsnaam` al automatisch in bij het aanmaken van een bedrijf
+### Edge function (`supabase/functions/trigger-delete-company-webhook/index.ts`)
+
+- Standaard CORS headers
+- Ontvangt `{ bedrijfsnaam: string }` in de request body
+- POST naar de opgegeven webhook URL met `Authorization` header uit `BLOG_WEBHOOK_AUTH_TOKEN`
+- Retourneert `{ success: true/false }`
+
+### CompanySelector.tsx wijzigingen
+
+- `handleDeleteCompany`: roept eerst `supabase.functions.invoke('trigger-delete-company-webhook', { body: { bedrijfsnaam: companyToDelete.name } })` aan
+- `AlertDialogAction` onClick krijgt `e.preventDefault()` + aanroep naar `handleDeleteCompany()`
+- Loading state toont `Loader2` spinner + "Bezig met verwijderen..."
