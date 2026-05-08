@@ -1,78 +1,101 @@
 
-# Plan: Prullenbak op Nieuw Handtekening Slot
+# Plan: Knopkleuren Customizer Toevoegen
 
-## Probleem
+## Overzicht
 
-Het nieuwe "Nieuwe handtekening" placeholder slot heeft geen prullenbak-icoon, waardoor gebruikers niet intuïtief kunnen annuleren als ze toch geen nieuwe handtekening willen maken.
-
----
-
-## Oplossing
-
-Voeg een prullenbak-knop toe aan het nieuwe handtekening slot, identiek aan de bestaande handtekeningen. Bij klikken wordt de "nieuw" modus geannuleerd.
+Vervang het "Thema" component door een nieuwe "Knopkleuren" customizer waarmee gebruikers de achtergrond- en tekstkleur van knoppen in de applicatie kunnen aanpassen.
 
 ---
 
 ## Technische Wijzigingen
 
-### 1. SignatureList aanpassen
+### 1. Hook uitbreiden (`src/hooks/useDashboardSettings.ts`)
 
-**Nieuwe prop toevoegen:**
+**Nieuwe interface en defaults:**
 ```typescript
-interface SignatureListProps {
-  // ... bestaande props
-  onCancelNew: () => void;  // NIEUW
+export interface DashboardSettings {
+  // ... bestaande velden
+  button_colors: TileColors;  // NIEUW
 }
-```
 
-**Prullenbak toevoegen aan placeholder card:**
-```typescript
-{isCreatingNew && (
-  <Card className="...">
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        {/* Bestaande inhoud */}
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-white/40 hover:text-red-400 hover:bg-red-400/10 flex-shrink-0"
-        onClick={onCancelNew}
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
-    </div>
-  </Card>
-)}
-```
-
-### 2. Hook aanpassen (`useEmailSignatureSettings.ts`)
-
-**Nieuwe functie toevoegen:**
-```typescript
-const cancelNewSignature = () => {
-  setIsCreatingNew(false);
-  // Selecteer eerste bestaande handtekening als die er is
-  if (signatures.length > 0) {
-    setSelectedSignature(signatures[0]);
-  }
+const DEFAULT_BUTTON_COLORS: TileColors = {
+  background: '#cfddd0',  // Sage green (primary)
+  text: '#002C1F',        // Dark green
 };
 ```
 
-### 3. EmailSignature pagina updaten
-
-**Nieuwe prop doorgeven:**
+**Nieuwe functie toevoegen:**
 ```typescript
-<SignatureList
-  // ... bestaande props
-  onCancelNew={cancelNewSignature}
-/>
+const updateButtonColors = async (colors: { background?: string; text?: string }) => {
+  const newColors = { ...settings?.button_colors, ...colors };
+  const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+  await supabase
+    .from('user_dashboard_settings')
+    .update({ dashboard_colors: { ...currentDashboardColors, button_colors: newColors } })
+    .eq('id', settings?.id);
+  setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
+  toast({ title: 'Opgeslagen', description: 'Knopkleuren bijgewerkt' });
+};
+```
+
+### 2. Nieuw component maken (`src/components/admin/dashboard/ButtonColorCustomizer.tsx`)
+
+Vergelijkbaar met TileColorCustomizer:
+- Preview van een knop met huidige kleuren
+- Kleurpickers voor achtergrond en tekst
+- Reset knop naar standaardwaarden
+
+```typescript
+interface ButtonColorCustomizerProps {
+  colors: TileColors;
+  onUpdate: (colors: { background?: string; text?: string }) => Promise<void>;
+  onReset: () => Promise<void>;
+}
+```
+
+### 3. DashboardTab aanpassen (`src/components/admin/dashboard/DashboardTab.tsx`)
+
+**Verwijderen:**
+- ThemeSwitch import
+- ThemeSwitch component
+- updateTheme uit hook destructuring
+
+**Toevoegen:**
+- ButtonColorCustomizer import
+- ButtonColorCustomizer component op de plek van ThemeSwitch
+- updateButtonColors uit hook destructuring
+
+### 4. ThemeSwitch component behouden (niet verwijderen)
+
+Het bestand `ThemeSwitch.tsx` blijft bestaan voor eventueel toekomstig gebruik, maar wordt niet meer geïmporteerd in DashboardTab.
+
+---
+
+## Bestanden
+
+| Bestand | Actie |
+|---------|-------|
+| `src/hooks/useDashboardSettings.ts` | `button_colors` + `updateButtonColors` toevoegen |
+| `src/components/admin/dashboard/ButtonColorCustomizer.tsx` | Nieuw component aanmaken |
+| `src/components/admin/dashboard/DashboardTab.tsx` | ThemeSwitch vervangen door ButtonColorCustomizer |
+
+---
+
+## Opslag
+
+Button colors worden opgeslagen in de bestaande `dashboard_colors` JSONB kolom:
+```json
+{
+  "tile_colors": { "background": "#cfddd0", "text": "#002C1F" },
+  "saved_hours_colors": { "background": "#f2eadc", "text": "#412700" },
+  "button_colors": { "background": "#cfddd0", "text": "#002C1F" }
+}
 ```
 
 ---
 
-## Resultaat
+## Visueel Resultaat
 
-- Prullenbak-icoon verschijnt rechts op het nieuwe handtekening slot
-- Klikken op prullenbak annuleert het aanmaken en selecteert de eerste bestaande handtekening (indien aanwezig)
-- Consistent gedrag met bestaande handtekening cards
+De tweede rij in het Dashboard tabblad bevat dan:
+- **Links**: Knopkleuren customizer (nieuw)
+- **Rechts**: Impact Kleuren (bestaand)
