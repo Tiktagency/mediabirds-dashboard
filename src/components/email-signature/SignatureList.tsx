@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2, Mail } from 'lucide-react';
+import { Trash2, Mail, Plus } from 'lucide-react';
 import { EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 
 interface SignatureListProps {
@@ -8,6 +8,7 @@ interface SignatureListProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onDelete: (id: string) => void;
+  isCreatingNew: boolean;
 }
 
 export const SignatureList = ({
@@ -15,10 +16,26 @@ export const SignatureList = ({
   selectedId,
   onSelect,
   onDelete,
+  isCreatingNew,
 }: SignatureListProps) => {
   return (
     <div className="space-y-2">
-      {signatures.length === 0 ? (
+      {/* Nieuw handtekening placeholder */}
+      {isCreatingNew && (
+        <Card className="bg-white/5 border-white/10 p-4 ring-2 ring-primary border-primary">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white/50" />
+            </div>
+            <div>
+              <p className="font-medium text-white">Nieuwe handtekening</p>
+              <p className="text-sm text-white/50">Vul het formulier in</p>
+            </div>
+          </div>
+        </Card>
+      )}
+      
+      {signatures.length === 0 && !isCreatingNew ? (
         <Card className="bg-white/5 border-white/10 p-6">
           <div className="text-center text-white/50">
             <Mail className="w-10 h-10 mx-auto mb-2 opacity-50" />
