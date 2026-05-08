@@ -30,7 +30,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const isInitialMount = useRef(true);
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Memoize the filter function
   const handleFilter = useCallback((automation: string, status: string) => {
