@@ -22,6 +22,7 @@ export interface DashboardSettings {
   tile_colors: TileColors;
   saved_hours_colors: TileColors;
   button_colors: TileColors;
+  background_color: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +42,8 @@ const DEFAULT_BUTTON_COLORS: TileColors = {
   text: '#002C1F',
 };
 
+const DEFAULT_BACKGROUND_COLOR = '#0d0d0d';
+
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
   tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot', 'copyright-branding', 'email-handtekening', 'landingspagina'],
   custom_labels: {},
@@ -54,6 +57,7 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   tile_colors: DEFAULT_TILE_COLORS,
   saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
   button_colors: DEFAULT_BUTTON_COLORS,
+  background_color: DEFAULT_BACKGROUND_COLOR,
 };
 
 export const useDashboardSettings = () => {
@@ -85,6 +89,7 @@ export const useDashboardSettings = () => {
           tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
           saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
           button_colors: (dashboardColors?.button_colors as TileColors) || DEFAULT_BUTTON_COLORS,
+          background_color: (dashboardColors?.background_color as string) || DEFAULT_BACKGROUND_COLOR,
         } as DashboardSettings);
       } else {
         // Create default settings for this user
@@ -196,6 +201,19 @@ export const useDashboardSettings = () => {
     });
   };
 
+  const updateBackgroundColor = async (color: string) => {
+    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    await supabase
+      .from('user_dashboard_settings')
+      .update({ dashboard_colors: { ...currentDashboardColors, background_color: color } })
+      .eq('id', settings?.id);
+    setSettings(prev => prev ? { ...prev, background_color: color } : null);
+    toast({
+      title: 'Opgeslagen',
+      description: 'Achtergrondkleur bijgewerkt',
+    });
+  };
+
   const updateTheme = async (theme: 'dark' | 'light') => {
     await updateSettings({ theme });
   };
@@ -214,6 +232,7 @@ export const useDashboardSettings = () => {
     updateTileColors,
     updateSavedHoursColors,
     updateButtonColors,
+    updateBackgroundColor,
     updateTheme,
     refetch: fetchSettings,
   };
