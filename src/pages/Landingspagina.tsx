@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import LandingCompanySelector from '@/components/landing/LandingCompanySelector';
@@ -118,22 +119,39 @@ const Landingspagina = () => {
   const renderEditableField = (
     fieldId: string, value: string, onChange: (val: string) => void, onBlur: () => void, placeholder: string
   ) => {
-    if (editingField === fieldId) {
+    const isEditing = editingField === fieldId;
+    const isExpanded = expandedField === fieldId;
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(e.target.value);
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    };
+
+    if (isEditing) {
       return (
-        <Input
+        <Textarea
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => { setEditingField(null); onBlur(); }}
+          onChange={handleTextareaChange}
           placeholder={placeholder}
-          className="bg-white/5 border-white/20 text-white placeholder:text-white/30 w-full overflow-hidden"
+          className="bg-white/10 border-white/10 text-white placeholder:text-white/50 min-h-[80px] resize-none"
+          onBlur={() => { setEditingField(null); onBlur(); }}
           autoFocus
+          ref={(el) => {
+            if (el) {
+              el.style.height = 'auto';
+              el.style.height = el.scrollHeight + 'px';
+            }
+          }}
         />
       );
     }
-    if (expandedField === fieldId) {
+    if (isExpanded) {
       return (
-        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden min-w-0">
-          <span className={`break-all ${!value ? 'text-white/30' : ''}`}>{value || placeholder}</span>
+        <div className="expanded-field-container relative">
+          <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
+            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+          </div>
           <Button
             size="icon" variant="ghost"
             className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
@@ -147,9 +165,9 @@ const Landingspagina = () => {
     return (
       <div
         onClick={() => setExpandedField(fieldId)}
-        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors min-w-0"
+        className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
       >
-        <span className={`truncate ${!value ? 'text-white/30' : ''}`}>{value || placeholder}</span>
+        <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
       </div>
     );
   };
@@ -237,17 +255,28 @@ const Landingspagina = () => {
                         onChange={(e) => setEditPassword(e.target.value)}
                         onBlur={() => { setEditingField(null); handleFieldSave('app_password', editPassword); }}
                         placeholder="abcd efgh ijkl 1234"
-                        className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+                        className="bg-white/10 border-white/10 text-white placeholder:text-white/50"
                         autoFocus
                       />
+                    ) : expandedField === 'app_password' ? (
+                      <div className="expanded-field-container relative">
+                        <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
+                          {editPassword ? '•'.repeat(editPassword.length) : <span className="text-white/40 italic">Niet ingesteld</span>}
+                        </div>
+                        <Button
+                          size="icon" variant="ghost"
+                          className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                          onClick={(e) => { e.stopPropagation(); setExpandedField(null); setEditingField('app_password'); }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ) : (
                       <div
-                        onClick={() => setEditingField('app_password')}
-                        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => setExpandedField('app_password')}
+                        className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
                       >
-                        <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
-                          {editPassword ? '•'.repeat(editPassword.length) : 'abcd efgh ijkl 1234'}
-                        </span>
+                        <span className="truncate">{editPassword ? '•'.repeat(editPassword.length) : <span className="text-white/40 italic">Niet ingesteld</span>}</span>
                       </div>
                     )}
                   </div>
