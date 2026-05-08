@@ -37,26 +37,11 @@ serve(async (req) => {
 
     const body = await req.json();
     const {
-      bedrijfsnaam,
-      tagline,
-      bedrijfsomschrijving,
-      doelgroep,
-      toon,
-      cta_tekst,
-      cta_url,
-      website,
-      rss_feeds,
-      primaire_kleur,
-      secundaire_kleur,
-      achtergrond_kleur,
-      kaart_achtergrond,
-      tekst_kleur,
-      subtekst_kleur,
-      accent_kleur,
-      cta_tekst_kleur,
-      footer_achtergrond,
-      footer_tekst_kleur,
-      settingsId,
+      bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon,
+      cta_tekst, cta_url, website, rss_feeds,
+      primaire_kleur, secundaire_kleur, achtergrond_kleur, kaart_achtergrond,
+      tekst_kleur, subtekst_kleur, accent_kleur, cta_tekst_kleur,
+      footer_achtergrond, footer_tekst_kleur, settingsId,
     } = body;
 
     const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN') ?? Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN');
@@ -85,64 +70,48 @@ serve(async (req) => {
       settings_id: settingsId || null,
     };
 
-    // Clear any existing generated_html to signal "processing"
-    if (settingsId) {
-      await supabase
-        .from('newsletter_companies')
-        .update({ generated_html: null })
-        .eq('id', settingsId);
-    }
-
-    // Fire and forget — do NOT await the webhook response
-    // n8n will call back by saving to the DB via another mechanism,
-    // or we handle the response async via EdgeRuntime.waitUntil
-    const webhookPromise = fetch(NEWSLETTER_WEBHOOK_URL, {
+    // Await the webhook response directly
+    const webhookResponse = await fetch(NEWSLETTER_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(authToken ? { 'Authorization': authToken } : {}),
       },
       body: JSON.stringify(payload),
-    }).then(async (webhookResponse) => {
-      if (!webhookResponse.ok) {
-        const errorText = await webhookResponse.text();
-        console.error('Webhook error:', webhookResponse.status, errorText.substring(0, 200));
-        return;
-      }
-
-      const responseText = await webhookResponse.text();
-      let generatedHtml: string | null = null;
-
-      try {
-        const responseData = JSON.parse(responseText);
-        generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
-      } catch {
-        const trimmed = responseText.trim();
-        if (trimmed.startsWith('<')) {
-          generatedHtml = trimmed;
-        }
-      }
-
-      if (generatedHtml && settingsId) {
-        await supabase
-          .from('newsletter_companies')
-          .update({ generated_html: generatedHtml })
-          .eq('id', settingsId);
-        console.log('Newsletter HTML saved to DB for settingsId:', settingsId);
-      }
-    }).catch((err) => {
-      console.error('Webhook fetch error:', err?.message || err);
     });
 
-    // Use waitUntil so the background work continues after we return
-    // @ts-ignore
-    if (typeof EdgeRuntime !== 'undefined') {
-      // @ts-ignore
-      EdgeRuntime.waitUntil(webhookPromise);
+    if (!webhookResponse.ok) {
+      const errorText = await webhookResponse.text();
+      console.error('Webhook error:', webhookResponse.status, errorText.substring(0, 200));
+      return new Response(JSON.stringify({ error: 'Webhook mislukt', details: errorText.substring(0, 200) }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Return immediately — client will poll for the result
-    return new Response(JSON.stringify({ success: true, status: 'processing' }), {
+    const responseText = await webhookResponse.text();
+    let generatedHtml: string | null = null;
+
+    try {
+      const responseData = JSON.parse(responseText);
+      generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
+    } catch {
+      const trimmed = responseText.trim();
+      if (trimmed.startsWith('<')) {
+        generatedHtml = trimmed;
+      }
+    }
+
+    // Persist to DB for future loads
+    if (generatedHtml && settingsId) {
+      await supabase
+        .from('newsletter_companies')
+        .update({ generated_html: generatedHtml })
+        .eq('id', settingsId);
+      console.log('Newsletter HTML saved to DB for settingsId:', settingsId);
+    }
+
+    return new Response(JSON.stringify({ success: true, html: generatedHtml }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
