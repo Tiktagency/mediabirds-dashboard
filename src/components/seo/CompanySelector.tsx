@@ -120,7 +120,25 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
 
     setIsDeleting(true);
     try {
-      // First delete blog_settings for this company (cascade)
+      // First call the webhook to notify n8n
+      try {
+        const { data: webhookResult, error: webhookError } = await supabase.functions.invoke('trigger-delete-company-webhook', {
+          body: { bedrijfsnaam: companyToDelete.name },
+        });
+
+        if (webhookError || !webhookResult?.success) {
+          console.error('Delete webhook failed:', webhookError || webhookResult?.error);
+          toast({
+            title: 'Waarschuwing',
+            description: 'De webhook kon niet worden aangeroepen, maar het bedrijf wordt alsnog verwijderd.',
+            variant: 'destructive',
+          });
+        }
+      } catch (webhookErr) {
+        console.error('Delete webhook call failed:', webhookErr);
+      }
+
+      // Delete blog_settings for this company
       await supabase
         .from('blog_settings')
         .delete()
@@ -139,7 +157,6 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         description: `${companyToDelete.name} is succesvol verwijderd`,
       });
 
-      // If the deleted company was selected, select another one
       if (selectedCompany?.id === companyToDelete.id) {
         localStorage.removeItem('selectedCompanyId');
       }
@@ -362,11 +379,19 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
               Annuleren
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteCompany}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteCompany();
+              }}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {isDeleting ? 'Verwijderen...' : 'Verwijderen'}
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Bezig met verwijderen...
+                </>
+              ) : 'Verwijderen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
