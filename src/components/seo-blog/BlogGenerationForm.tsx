@@ -727,6 +727,7 @@ export const BlogGenerationForm = ({
         
         <Button 
           size="lg" 
+          variant="primaryCustom"
           className="w-full py-6 text-lg h-auto"
           onClick={handleStartClick}
           disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
