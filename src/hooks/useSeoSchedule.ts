@@ -23,41 +23,29 @@ interface UpdateScheduleData {
   next_trigger_at?: string;
 }
 
-// Helper to get timezone offset in milliseconds
-const getTimezoneOffset = (timeZone: string, date: Date): number => {
-  const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-  const tzDate = new Date(date.toLocaleString('en-US', { timeZone }));
-  return utcDate.getTime() - tzDate.getTime();
-};
-
-const TIMEZONE = 'Europe/Amsterdam';
-
 const calculateNextTrigger = (
   frequency: string,
   dayOfWeek: number,
   timeOfDay: string
 ): Date => {
-  // Get current time in Dutch timezone
   const now = new Date();
-  const nowInNL = new Date(now.toLocaleString('en-US', { timeZone: TIMEZONE }));
-  
   const [hours, minutes] = timeOfDay.split(':').map(Number);
   
-  // Start with today at the specified time in Dutch timezone
-  let next = new Date(nowInNL);
+  // Start with today at the specified time
+  let next = new Date(now);
   next.setHours(hours, minutes, 0, 0);
   
   if (frequency === 'daily') {
     // If time has passed today, schedule for tomorrow
-    if (next <= nowInNL) {
+    if (next <= now) {
       next.setDate(next.getDate() + 1);
     }
   } else if (frequency === 'weekly' || frequency === 'biweekly') {
     // Find the next occurrence of the specified day
-    const currentDay = nowInNL.getDay();
+    const currentDay = now.getDay();
     let daysUntil = dayOfWeek - currentDay;
     
-    if (daysUntil < 0 || (daysUntil === 0 && next <= nowInNL)) {
+    if (daysUntil < 0 || (daysUntil === 0 && next <= now)) {
       daysUntil += 7;
     }
     
@@ -69,7 +57,7 @@ const calculateNextTrigger = (
     }
   } else if (frequency === 'monthly') {
     // Schedule for the same day next month (or this month if not passed)
-    if (next <= nowInNL) {
+    if (next <= now) {
       next.setMonth(next.getMonth() + 1);
     }
     // Ensure the day exists in the target month
@@ -77,9 +65,7 @@ const calculateNextTrigger = (
     next.setDate(targetDay);
   }
   
-  // Convert back to UTC for storage
-  const nlOffset = getTimezoneOffset(TIMEZONE, next);
-  return new Date(next.getTime() + nlOffset);
+  return next;
 };
 
 export const useSeoSchedule = (companyId: string | null) => {
@@ -187,15 +173,15 @@ export const useSeoSchedule = (companyId: string | null) => {
     if (!schedule?.enabled || !schedule?.next_trigger_at) return null;
     
     const nextTrigger = new Date(schedule.next_trigger_at);
+    const now = new Date();
     
-    // Format nicely in Dutch with explicit Amsterdam timezone
+    // Format nicely in Dutch
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: TIMEZONE,
     };
     
     return nextTrigger.toLocaleDateString('nl-NL', options);
