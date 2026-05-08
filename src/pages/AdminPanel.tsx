@@ -43,7 +43,7 @@ const AdminPanel = () => {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/">
-              <Button variant="ghost" size="sm" className="text-foreground hover:bg-white/10">
+              <Button variant="ghost" size="sm" className="text-foreground">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Terug
               </Button>
