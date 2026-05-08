@@ -655,6 +655,51 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_settings: {
+        Row: {
+          accent_kleur: string | null
+          achtergrond_kleur: string | null
+          bedrijfsinformatie: string | null
+          bedrijfsnaam: string | null
+          created_at: string | null
+          generated_html: string | null
+          id: string
+          primaire_kleur: string | null
+          rss_feeds: Json | null
+          schrijfstijl: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accent_kleur?: string | null
+          achtergrond_kleur?: string | null
+          bedrijfsinformatie?: string | null
+          bedrijfsnaam?: string | null
+          created_at?: string | null
+          generated_html?: string | null
+          id?: string
+          primaire_kleur?: string | null
+          rss_feeds?: Json | null
+          schrijfstijl?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accent_kleur?: string | null
+          achtergrond_kleur?: string | null
+          bedrijfsinformatie?: string | null
+          bedrijfsnaam?: string | null
+          created_at?: string | null
+          generated_html?: string | null
+          id?: string
+          primaire_kleur?: string | null
+          rss_feeds?: Json | null
+          schrijfstijl?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
