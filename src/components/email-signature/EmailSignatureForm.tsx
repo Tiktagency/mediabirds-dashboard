@@ -74,7 +74,7 @@ export const EmailSignatureForm = ({
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Extra velden state (max 1 extra per type = 2 totaal)
   const [extraEmails, setExtraEmails] = useState<string[]>([]);
