@@ -839,7 +839,8 @@ const SeoBlog = () => {
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">17</span>
                   <div className="text-sm text-white/70">
-                    <p>Vraag Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
+                    <p className="font-medium text-pink-300">Finalisering</p>
+                    <p>Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
                   </div>
                 </div>
               </div>
