@@ -247,7 +247,10 @@ export const BlogGenerationForm = ({
         status: formData.status,
         google_sheet_id: formData.google_sheet_id,
         google_slides_id: formData.google_slides_id,
-        categories: blogCategories.map(cat => ({ label: cat.label, value: cat.value })),
+        Category: blogCategories.reduce((acc, cat) => {
+          acc[cat.label] = cat.value;
+          return acc;
+        }, {} as Record<string, string>),
         timestamp: new Date().toISOString(),
       };
 
