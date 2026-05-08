@@ -50,6 +50,14 @@ export const useEmailSignatureSettings = () => {
     // Parse JSONB arrays
     const parseJsonArray = (value: unknown): string[] => {
       if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+        } catch {
+          return [];
+        }
+      }
       return [];
     };
     
