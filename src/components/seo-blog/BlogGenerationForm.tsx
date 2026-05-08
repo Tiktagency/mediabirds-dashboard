@@ -23,6 +23,12 @@ interface BlogGenerationFormProps {
 
 const FIXED_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2-44fb-88bf-50e0c16f17ac';
 
+const CATEGORY_OPTIONS = [
+  { label: 'Begrijpen / uitleg (ID 6)', value: 'begrijpen_uitleg_6' },
+  { label: 'Toepassen / stappen / how-to (ID 7)', value: 'toepassen_stappen_7' },
+  { label: 'Resultaat / waarde / ROI (ID 1)', value: 'resultaat_waarde_1' },
+];
+
 export const BlogGenerationForm = ({
   selectedCompany,
   setSelectedCompany,
@@ -50,6 +56,7 @@ export const BlogGenerationForm = ({
     status: 'Draft',
     google_sheet_id: '',
     google_slides_id: '',
+    category: '',
   });
 
   // Click outside handler to collapse expanded field
@@ -111,6 +118,7 @@ export const BlogGenerationForm = ({
         status: settings.status || 'Draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
+        category: settings.category || '',
       });
     } else {
       setFormData({
@@ -127,6 +135,7 @@ export const BlogGenerationForm = ({
         status: 'Draft',
         google_sheet_id: '',
         google_slides_id: '',
+        category: '',
       });
     }
     setEditingField(null);
@@ -209,6 +218,7 @@ export const BlogGenerationForm = ({
         status: settings.status || 'Draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
+        category: settings.category || '',
       });
     }
     setEditingField(null);
@@ -241,6 +251,7 @@ export const BlogGenerationForm = ({
         status: formData.status,
         google_sheet_id: formData.google_sheet_id,
         google_slides_id: formData.google_slides_id,
+        category: formData.category,
         timestamp: new Date().toISOString(),
       };
 
@@ -534,6 +545,7 @@ export const BlogGenerationForm = ({
       {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
       {renderRangeField()}
       {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
+      {renderField('Categorie', 'category', 'select', CATEGORY_OPTIONS.map(opt => opt.label))}
       
       {/* Afbeelding section */}
       <div className="pt-6 border-t border-white/10 space-y-4">
