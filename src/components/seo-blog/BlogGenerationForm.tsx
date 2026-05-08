@@ -51,6 +51,18 @@ export const BlogGenerationForm = ({
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
+
+  // Click outside handler to collapse expanded field
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
+        setExpandedField(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expandedField]);
   
   const [formData, setFormData] = useState({
     bedrijfsnaam: '',
@@ -434,17 +446,38 @@ export const BlogGenerationForm = ({
               ))}
             </SelectContent>
           </Select>
+        ) : expandedField === field ? (
+          <div className={`expanded-field-container relative px-3 py-2 pr-12 rounded-md text-white/80 min-h-[40px] whitespace-pre-wrap ${
+            field === 'bedrijfsnaam' 
+              ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+              : 'bg-white/5 border border-white/10'
+          }`}>
+            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            {canEdit && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedField(null);
+                  setEditingField(field);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         ) : (
           <div 
-            className={`flex items-center justify-between px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${
+            className={`px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${
               field === 'bedrijfsnaam' 
                 ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
                 : 'bg-white/5 border border-white/10'
             }`}
-            onClick={() => canEdit && setEditingField(field)}
+            onClick={() => canEdit && setExpandedField(field)}
           >
             <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
-            <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
           </div>
         )}
       </div>
