@@ -382,9 +382,6 @@ const Nieuwsbrief = () => {
     setGeneratedHtmlLocal(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Niet ingelogd');
-
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
         body: {
           bedrijfsnaam: localData.bedrijfsnaam,
@@ -412,48 +409,24 @@ const Nieuwsbrief = () => {
 
       if (response.error) throw response.error;
 
-      // Webhook is processing async — poll the DB for the result
-      toast({ title: 'Nieuwsbrief wordt gegenereerd...', description: 'Dit kan 1-3 minuten duren.' });
-
-      const companyId = selectedCompany.id;
-      const maxAttempts = 40; // 40 × 5s = ~3.5 min
-      let attempts = 0;
-
-      const pollInterval = setInterval(async () => {
-        attempts++;
-        try {
-          const { data } = await supabase
-            .from('newsletter_companies')
-            .select('generated_html')
-            .eq('id', companyId)
-            .single();
-
-          if (data?.generated_html) {
-            clearInterval(pollInterval);
-            setGeneratedHtmlLocal(data.generated_html);
-            setIsGenerating(false);
-            toast({ title: 'Nieuwsbrief gegenereerd!', description: 'De preview is bijgewerkt.' });
-          } else if (attempts >= maxAttempts) {
-            clearInterval(pollInterval);
-            setIsGenerating(false);
-            toast({
-              title: 'Timeout',
-              description: 'Het genereren duurt langer dan verwacht. Ververs de pagina om te controleren.',
-              variant: 'destructive',
-            });
-          }
-        } catch {
-          // keep polling
-        }
-      }, 5000);
-
-      return; // isGenerating stays true until poll finishes
+      const html = response.data?.html;
+      if (html) {
+        setGeneratedHtmlLocal(html);
+        toast({ title: '✅ Nieuwsbrief gegenereerd!', description: 'De preview is direct beschikbaar.' });
+      } else {
+        toast({
+          title: 'Geen HTML ontvangen',
+          description: 'De webhook heeft geen inhoud teruggegeven.',
+          variant: 'destructive',
+        });
+      }
     } catch (err: any) {
       toast({
         title: 'Fout',
         description: err?.message || 'Er is iets misgegaan.',
         variant: 'destructive',
       });
+    } finally {
       setIsGenerating(false);
     }
   };
