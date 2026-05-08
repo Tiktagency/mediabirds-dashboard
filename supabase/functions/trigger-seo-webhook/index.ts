@@ -138,32 +138,43 @@ serve(async (req) => {
     let message = 'Geen bericht beschikbaar';
     let status = response.ok ? 'success' : 'error';
     
-    try {
-      const data = await response.json();
-      console.log("Webhook response data:", data);
-      
-      // Try to extract message from various possible keys
-      if (data.Output) {
-        message = data.Output;
-      } else if (data.message) {
-        message = data.message;
-      } else if (data.Goed) {
-        message = data.Goed;
-      } else if (data.Error) {
-        message = data.Error;
-      } else if (data.error) {
-        message = data.error;
-      } else if (data.status) {
-        message = data.status;
-      } else if (typeof data === 'string') {
-        message = data;
-      } else {
-        message = JSON.stringify(data);
+    // First get the raw text, then try to parse as JSON
+    const rawText = await response.text().catch(() => '');
+    console.log("Webhook raw response:", rawText);
+    
+    if (rawText) {
+      try {
+        const data = JSON.parse(rawText);
+        console.log("Webhook response data (parsed):", data);
+        
+        // Try to extract message from various possible keys
+        if (data.Output) {
+          message = data.Output;
+        } else if (data.message) {
+          message = data.message;
+        } else if (data.Goed) {
+          message = data.Goed;
+        } else if (data.Error) {
+          message = data.Error;
+          status = 'error';
+        } else if (data.error) {
+          message = data.error;
+          status = 'error';
+        } else if (data.status) {
+          message = data.status;
+        } else if (typeof data === 'string') {
+          message = data;
+        } else {
+          // If it's an object/array, stringify it for display
+          message = JSON.stringify(data, null, 2);
+        }
+      } catch (parseError) {
+        console.log("Response is not JSON, using raw text");
+        // Not JSON, use the raw text as the message
+        message = rawText;
       }
-    } catch (parseError) {
-      console.error("Failed to parse webhook response:", parseError);
-      const textResponse = await response.text().catch(() => 'no response body');
-      message = textResponse || `Webhook response: ${response.status} ${response.statusText}`;
+    } else {
+      message = `Webhook response: ${response.status} ${response.statusText}`;
     }
 
     // Save notification to database
