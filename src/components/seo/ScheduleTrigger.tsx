@@ -9,11 +9,36 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Clock, Calendar, CalendarDays } from 'lucide-react';
-import { useSeoSchedule } from '@/hooks/useSeoSchedule';
+
+interface SeoSchedule {
+  id: string;
+  company_id: string;
+  enabled: boolean;
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  day_of_week: number;
+  time_of_day: string;
+  last_triggered_at: string | null;
+  next_trigger_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UpdateScheduleData {
+  enabled?: boolean;
+  frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  day_of_week?: number;
+  time_of_day?: string;
+  next_trigger_at?: string;
+}
 
 interface ScheduleTriggerProps {
   companyId: string | null;
   isAdmin: boolean;
+  schedule: SeoSchedule | null;
+  isLoading: boolean;
+  isSaving: boolean;
+  updateSchedule: (updates: UpdateScheduleData) => Promise<{ success: boolean; error?: string }>;
+  getNextTriggerDisplay: () => string | null;
 }
 
 const DAYS_OF_WEEK = [
@@ -37,9 +62,15 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) =>
   `${i.toString().padStart(2, '0')}:00`
 );
 
-export const ScheduleTrigger = ({ companyId, isAdmin }: ScheduleTriggerProps) => {
-  const { schedule, isLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useSeoSchedule(companyId);
-  
+export const ScheduleTrigger = ({ 
+  companyId, 
+  isAdmin, 
+  schedule, 
+  isLoading, 
+  isSaving, 
+  updateSchedule, 
+  getNextTriggerDisplay 
+}: ScheduleTriggerProps) => {
   // Local state for form controls
   const [enabled, setEnabled] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
