@@ -151,6 +151,7 @@ export const BlogGenerationForm = ({
         taal: '',
         extra_instructie: '',
         image_type: 'ai_image',
+        image_style: '',
         achtergrond_kleur: '',
         hoofdaccent_gradient_1: '',
         hoofdaccent_gradient_2: '',
