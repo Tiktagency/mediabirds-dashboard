@@ -1,0 +1,1 @@
+ALTER TABLE public.alt_text_companies ADD COLUMN app_password text;

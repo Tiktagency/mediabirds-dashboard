@@ -21,6 +21,7 @@ const WordpressAltText = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDomain, setEditDomain] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -33,6 +34,7 @@ const WordpressAltText = () => {
   useEffect(() => {
     setEditName(selectedCompany?.name || '');
     setEditDomain(selectedCompany?.domain || '');
+    setEditPassword(selectedCompany?.app_password || '');
   }, [selectedCompany]);
 
   useEffect(() => {
@@ -45,9 +47,9 @@ const WordpressAltText = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expandedField]);
 
-  const handleFieldSave = async (field: 'name' | 'domain', value: string) => {
+  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password', value: string) => {
     if (!selectedCompany) return;
-    const currentValue = field === 'name' ? selectedCompany.name : (selectedCompany.domain || '');
+    const currentValue = field === 'name' ? selectedCompany.name : field === 'domain' ? (selectedCompany.domain || '') : (selectedCompany.app_password || '');
     if (value === currentValue) return;
 
     const { error } = await supabase
@@ -182,6 +184,31 @@ const WordpressAltText = () => {
                 <div className="space-y-2">
                   <Label className="text-white/70">Domeinnaam:</Label>
                   {renderEditableField('domain', editDomain, setEditDomain, () => handleFieldSave('domain', editDomain), 'Voer domeinnaam in...')}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70">Applicatie wachtwoord:</Label>
+                  <div className="relative">
+                    {editingField === 'app_password' ? (
+                      <Input
+                        type="password"
+                        value={editPassword}
+                        onChange={(e) => setEditPassword(e.target.value)}
+                        onBlur={() => { setEditingField(null); handleFieldSave('app_password', editPassword); }}
+                        placeholder="Voer wachtwoord in..."
+                        className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => setEditingField('app_password')}
+                        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
+                      >
+                        <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
+                          {editPassword ? '••••••••••••' : 'Voer wachtwoord in...'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <Button
