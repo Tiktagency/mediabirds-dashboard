@@ -686,7 +686,14 @@ const SeoBlog = () => {
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">4</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-green-300">Sitemaps toevoegen</p>
-                    <p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden. Druk tot slot op de knop URL's documenteren</p>
+                    <p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap).</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">5</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-green-300">URL's documenteren</p>
+                    <p>Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden. Druk tot slot op de knop URL's documenteren.</p>
                   </div>
                 </div>
               </div>
@@ -704,29 +711,29 @@ const SeoBlog = () => {
               
               <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">5</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">6</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-orange-300">Bedrijfskennis invullen</p>
                     <p>Vul de gevraagde velden in op basis van de briefing of jouw kennis van het bedrijf.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">6</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">7</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-orange-300">Admin Instellingen configureren</p>
-                    <p>Klap de Admin instellingen open. Open het bestand [BEDRIJFSNAAM] seo in Google Drive:</p>
+                    <p>Open het bestand [BEDRIJFSNAAM] seo in Google Drive, navigeer naar het tweede tab "Zoekwoord nieuw"</p>
                     <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li><span className="text-orange-300">Zoekwoord nieuw:</span> Haal de Grid ID op en vul in.</li>
+                      <li><span className="text-orange-300">Zoekwoord nieuw:</span> Haal de Grid ID op uit de browser URL en vul in.</li>
                     </ul>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">7</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">8</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-orange-300">Testen</p>
                     <p>Klik op de knop om de koppeling te testen.</p>
                     <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Werkt het? Ga door naar stap 8.</li>
+                      <li>Werkt het? Ga door naar stap 9.</li>
                       <li>Foutmelding? Neem contact op met Luc de Graag.</li>
                     </ul>
                   </div>
@@ -746,14 +753,14 @@ const SeoBlog = () => {
               
               <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">8</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">9</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-pink-300">Basisinstellingen</p>
                     <p>Vul de velden in tot en met de sectie "Taal".</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">9</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">10</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-pink-300">Beeldmateriaal kiezen</p>
                     <p>Maak een keuze tussen AI-gegenereerde afbeeldingen of eigen foto's:</p>
@@ -774,7 +781,7 @@ const SeoBlog = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">10</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">11</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-pink-300">Publicatie status</p>
                     <p>Kies tussen Draft (concept) of Publish (direct live).</p>
@@ -785,14 +792,14 @@ const SeoBlog = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">11</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">12</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-pink-300">Categorieën (Optioneel)</p>
                     <p>Indien de klant specifieke WordPress-categorieën gebruikt, vul deze dan in het betreffende veld in.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">12</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">13</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-pink-300">Finalisering</p>
                     <p>Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
