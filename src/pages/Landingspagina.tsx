@@ -79,7 +79,7 @@ const Landingspagina = () => {
 
   const handleStart = async () => {
     if (!selectedCompany) return;
-    if (!editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim()) {
+    if (!editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()) {
       toast({ title: 'Vul alle velden in', description: 'Alle velden zijn verplicht', variant: 'destructive' });
       return;
     }
@@ -176,14 +176,14 @@ const Landingspagina = () => {
         <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
 
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
+      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-20 px-6 overflow-y-auto">
         <h1 className="hero-title text-foreground mb-2 fade-in-up">Landingspagina</h1>
-        <p className="text-muted-foreground text-center max-w-xl mb-6">
+        <p className="text-muted-foreground text-center max-w-xl mb-3">
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
         </p>
 
         {/* Global Schedule Trigger */}
-        <div className="w-full max-w-2xl mb-6">
+        <div className="w-full max-w-2xl mb-3">
           <ScheduleTrigger
             companyId="global"
             isAdmin={isAdmin}
@@ -196,10 +196,10 @@ const Landingspagina = () => {
         </div>
 
         {selectedCompany ? (
-          <div className="flex flex-col lg:flex-row gap-6 max-w-2xl w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-4 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
             <div className="flex-1 w-full space-y-4 overflow-hidden">
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4 overflow-hidden">
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3 overflow-hidden">
                 <div className="space-y-2">
                   <Label className="text-white/70">Bedrijfsnaam:</Label>
                   {renderEditableField('name', editName, setEditName, () => handleFieldSave('name', editName), 'Voer bedrijfsnaam in...')}
@@ -284,7 +284,7 @@ const Landingspagina = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim()}
+                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
               >
                 {schedule?.enabled === true ? (
