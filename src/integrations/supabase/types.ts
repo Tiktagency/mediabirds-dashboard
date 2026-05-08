@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       automation_logs: {
         Row: {
           automation_name: string
@@ -768,7 +792,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "viewer" | "operator"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "viewer"
+        | "operator"
+        | "super_admin"
       automation_status_type: "active" | "inactive" | "testmode"
       impact_level: "high" | "medium" | "low"
       log_level: "basic" | "verbose" | "errors_only"
@@ -899,7 +929,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "viewer", "operator"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "viewer",
+        "operator",
+        "super_admin",
+      ],
       automation_status_type: ["active", "inactive", "testmode"],
       impact_level: ["high", "medium", "low"],
       log_level: ["basic", "verbose", "errors_only"],
