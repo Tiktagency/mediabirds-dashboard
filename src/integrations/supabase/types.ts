@@ -122,45 +122,6 @@ export type Database = {
         }
         Relationships: []
       }
-      blog_schedules: {
-        Row: {
-          company_id: string
-          created_at: string
-          day_of_week: number
-          enabled: boolean
-          frequency: string
-          id: string
-          last_triggered_at: string | null
-          next_trigger_at: string | null
-          time_of_day: string
-          updated_at: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          day_of_week?: number
-          enabled?: boolean
-          frequency?: string
-          id?: string
-          last_triggered_at?: string | null
-          next_trigger_at?: string | null
-          time_of_day?: string
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          day_of_week?: number
-          enabled?: boolean
-          frequency?: string
-          id?: string
-          last_triggered_at?: string | null
-          next_trigger_at?: string | null
-          time_of_day?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       blog_settings: {
         Row: {
           aantal_woorden: string | null
