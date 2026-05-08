@@ -65,11 +65,15 @@ const Nieuwsbrief = () => {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (expandedField && expandedRef.current && !expandedRef.current.contains(e.target as Node)) {
-        if (expandedField === 'rss_feeds' && editingField === 'rss_feeds') {
+      if ((expandedField || editingField) && expandedRef.current && !expandedRef.current.contains(e.target as Node)) {
+        if (editingField === 'rss_feeds') {
+          // Stay expanded so user can see the feeds
           setEditingField(null);
+          setExpandedField('rss_feeds');
+        } else {
+          setEditingField(null);
+          setExpandedField(null);
         }
-        setExpandedField(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -205,12 +209,13 @@ const Nieuwsbrief = () => {
                 value={newFeed}
                 onChange={(e) => setNewFeed(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addFeed()}
+                onBlur={() => { if (newFeed.trim()) addFeed(); }}
                 className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={addFeed}
+                onMouseDown={(e) => { e.preventDefault(); if (newFeed.trim()) addFeed(); }}
                 disabled={!newFeed.trim()}
                 className="flex-shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10"
               >
