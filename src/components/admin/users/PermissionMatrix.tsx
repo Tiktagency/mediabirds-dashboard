@@ -50,8 +50,8 @@ export const PermissionMatrix = ({
     };
   };
 
-  // Filter out admins - they have full access
-  const nonAdminUsers = users.filter(u => !u.roles.includes('admin'));
+  // Filter out admins and super_admins - they have full access
+  const nonAdminUsers = users.filter(u => !u.roles.includes('admin') && !u.roles.includes('super_admin'));
 
   if (automations.length === 0) {
     return null;
