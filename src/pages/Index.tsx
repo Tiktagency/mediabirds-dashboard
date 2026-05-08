@@ -126,6 +126,9 @@ const Index = () => {
     const alreadyLogged = sessionStorage.getItem('session_logged');
     if (alreadyLogged) return;
 
+    // Zet flag DIRECT om race condition te voorkomen
+    sessionStorage.setItem('session_logged', 'true');
+
     const logVisit = async () => {
       const { data: profile } = await supabase
         .from('profiles')
@@ -143,7 +146,6 @@ const Index = () => {
         display_name: displayName,
       });
 
-      sessionStorage.setItem('session_logged', 'true');
     };
 
     logVisit();
