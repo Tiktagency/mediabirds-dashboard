@@ -83,11 +83,10 @@ const Landingspagina = () => {
     setIsStarting(true);
     setIsAnimating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
+      const { data, error } = await supabase.functions.invoke('trigger-landing-webhook', {
         body: {
           bedrijfsnaam: selectedCompany.name,
           domain: selectedCompany.domain,
-          app_password: selectedCompany.app_password,
           spreadsheet_id: editSheetId,
           grid_id: editGridId,
         },
@@ -102,7 +101,7 @@ const Landingspagina = () => {
         message = data?.data || message;
       }
 
-      toast({ title: 'Gestart', description: message });
+      toast({ title: 'Resultaat', description: message, duration: 5000 });
     } catch (error) {
       console.error('Error triggering webhook:', error);
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
