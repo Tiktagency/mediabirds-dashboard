@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
 import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
-import { Plus, X, Upload, Loader2 } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -48,7 +48,6 @@ interface EmailSignatureFormProps {
     settings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
     options?: { silent?: boolean }
   ) => Promise<void>;
-  onUploadPhoto: (file: File) => Promise<string | null>;
   onHtmlGenerated?: (html: string) => void;
   onGeneratingChange?: (generating: boolean) => void;
 }
@@ -57,16 +56,14 @@ export const EmailSignatureForm = ({
   selectedSignature,
   isSaving,
   onSave,
-  onUploadPhoto,
   onHtmlGenerated,
   onGeneratingChange,
 }: EmailSignatureFormProps) => {
   const { toast } = useToast();
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSending, setIsSending] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -123,6 +120,7 @@ export const EmailSignatureForm = ({
           text_color: data.text_color,
           socials,
           profile_photo_url: profilePhotoUrl,
+          company_logo_url: companyLogoUrl,
         }, { silent: true });
       }
     }, 1000); // 1 seconde debounce
@@ -143,12 +141,18 @@ export const EmailSignatureForm = ({
     triggerAutoSave();
   }, [socials]);
 
-  // Auto-save bij profielfoto wijziging
+  // Auto-save bij profielfoto of logo wijziging
   useEffect(() => {
     if (profilePhotoUrl !== selectedSignature?.profile_photo_url) {
       triggerAutoSave();
     }
   }, [profilePhotoUrl]);
+
+  useEffect(() => {
+    if (companyLogoUrl !== selectedSignature?.company_logo_url) {
+      triggerAutoSave();
+    }
+  }, [companyLogoUrl]);
 
   // Update form when selected signature changes
   useEffect(() => {
@@ -167,6 +171,7 @@ export const EmailSignatureForm = ({
       });
       setSocials(selectedSignature.socials || []);
       setProfilePhotoUrl(selectedSignature.profile_photo_url);
+      setCompanyLogoUrl(selectedSignature.company_logo_url);
     } else {
       // Reset to defaults for new signature
       reset({
@@ -183,6 +188,7 @@ export const EmailSignatureForm = ({
       });
       setSocials([]);
       setProfilePhotoUrl(null);
+      setCompanyLogoUrl(null);
     }
   }, [selectedSignature, reset]);
 
@@ -200,32 +206,25 @@ export const EmailSignatureForm = ({
     setSocials(updated);
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const url = await onUploadPhoto(file);
-    if (url) {
-      setProfilePhotoUrl(url);
-    }
-    setIsUploading(false);
-  };
-
   const onSubmit = async (data: FormData) => {
-    // Valideer foto URL indien aanwezig
-    if (profilePhotoUrl) {
-      setPhotoError(null);
+    // Valideer foto URLs indien aanwezig
+    setPhotoError(null);
+    const urlsToValidate = [
+      { url: profilePhotoUrl, name: 'profielfoto' },
+      { url: companyLogoUrl, name: 'bedrijfslogo' },
+    ].filter(item => item.url);
+
+    for (const { url, name } of urlsToValidate) {
       try {
         const img = new Image();
-        img.src = profilePhotoUrl;
+        img.src = url!;
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
           setTimeout(() => reject(new Error('timeout')), 5000);
         });
       } catch {
-        setPhotoError('De profielfoto link is niet geldig of niet openbaar toegankelijk');
+        setPhotoError(`De ${name} link is niet geldig of niet openbaar toegankelijk`);
         return;
       }
     }
@@ -243,6 +242,7 @@ export const EmailSignatureForm = ({
       text_color: data.text_color,
       socials,
       profile_photo_url: profilePhotoUrl,
+      company_logo_url: companyLogoUrl,
     };
 
     // Alleen naar webhook sturen via edge function, niet opslaan
@@ -544,45 +544,53 @@ export const EmailSignatureForm = ({
         </CardContent>
       </Card>
 
-      {/* Profile Photo */}
+      {/* Afbeeldingen */}
       <Card className="bg-white/5 border-white/10">
         <CardContent className="pt-6 space-y-4">
-          <Label className="text-white">Profielfoto *</Label>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-white/20 rounded-lg p-4 text-center cursor-pointer hover:border-white/40 transition-colors"
-          >
-            {isUploading ? (
-              <div className="flex flex-col items-center gap-1">
-                <Loader2 className="w-6 h-6 animate-spin text-white/50" />
-                <p className="text-white/50 text-sm">Uploaden...</p>
-              </div>
-            ) : profilePhotoUrl ? (
-              <div className="flex flex-col items-center gap-2">
-                <img
-                  src={profilePhotoUrl}
-                  alt="Profielfoto"
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <p className="text-white/50 text-xs">Klik om te wijzigen</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1">
-                <Upload className="w-6 h-6 text-white/50" />
-                <p className="text-white/50 text-sm">Klik om te uploaden</p>
-                <p className="text-white/30 text-xs">Max 5MB, JPG/PNG/WebP</p>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="profile_photo_url" className="text-white">
+              Profielfoto (URL)
+            </Label>
+            <Input
+              id="profile_photo_url"
+              type="url"
+              value={profilePhotoUrl || ''}
+              onChange={(e) => setProfilePhotoUrl(e.target.value || null)}
+              className="bg-white/10 border-white/20 text-white"
+              placeholder="https://example.com/profielfoto.jpg"
+            />
+            {profilePhotoUrl && (
+              <img 
+                src={profilePhotoUrl} 
+                alt="Preview" 
+                className="w-12 h-12 rounded-full object-cover mt-2"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
             )}
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="company_logo_url" className="text-white">
+              Bedrijfslogo (URL)
+            </Label>
+            <Input
+              id="company_logo_url"
+              type="url"
+              value={companyLogoUrl || ''}
+              onChange={(e) => setCompanyLogoUrl(e.target.value || null)}
+              className="bg-white/10 border-white/20 text-white"
+              placeholder="https://example.com/logo.png"
+            />
+            {companyLogoUrl && (
+              <img 
+                src={companyLogoUrl} 
+                alt="Logo Preview" 
+                className="h-10 object-contain mt-2"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            )}
+          </div>
+
           {photoError && (
             <p className="text-sm text-red-400">{photoError}</p>
           )}
