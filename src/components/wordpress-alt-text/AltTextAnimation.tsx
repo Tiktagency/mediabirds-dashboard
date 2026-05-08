@@ -85,7 +85,7 @@ const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimation
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 w-full h-full">
-      <div className="w-full h-32 rounded bg-gray-100 overflow-hidden mb-4">
+      <div className="w-full aspect-square rounded bg-gray-100 overflow-hidden mb-4">
         <img
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=200&fit=crop"
           alt="Team aan het werk"
