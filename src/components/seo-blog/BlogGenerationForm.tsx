@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Clock, ChevronDown } from 'lucide-react';
+import { Pencil, Check, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
@@ -14,7 +14,6 @@ import { useBlogSchedule } from '@/hooks/useBlogSchedule';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 interface BlogGenerationFormProps {
@@ -36,7 +35,7 @@ export const BlogGenerationForm = ({
 }: BlogGenerationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [adminSettingsOpen, setAdminSettingsOpen] = useState(false);
+
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -687,19 +686,8 @@ export const BlogGenerationForm = ({
       
       {/* Admin-only fields - Collapsible */}
       {isAdmin && (
-        <Collapsible 
-          open={adminSettingsOpen} 
-          onOpenChange={setAdminSettingsOpen}
-          className="pt-6 border-t border-white/10"
-        >
-          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 hover:bg-white/5 rounded-md px-2 transition-colors">
-            <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
-            <ChevronDown className={cn(
-              "h-4 w-4 text-yellow-400/80 transition-transform duration-200",
-              adminSettingsOpen && "rotate-180"
-            )} />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-6 pt-4">
+        <div className="pt-6 border-t border-white/10 space-y-6">
+          <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
             {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
             {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             
@@ -708,8 +696,7 @@ export const BlogGenerationForm = ({
               isAdmin={isAdmin}
               onCategoryChange={refetchCategories}
             />
-          </CollapsibleContent>
-        </Collapsible>
+        </div>
       )}
 
       <ScheduleTrigger
