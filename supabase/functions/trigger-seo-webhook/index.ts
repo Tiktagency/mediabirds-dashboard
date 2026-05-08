@@ -144,9 +144,8 @@ serve(async (req) => {
 
     console.log(`Webhook response status: ${response.status}`);
 
-    let message: string | null = null;
+    let message = 'Geen bericht ontvangen';
     let status = response.ok ? 'success' : 'error';
-    let hasActualMessage = false;
     
     // First get the raw text, then try to parse as JSON
     const rawText = await response.text().catch(() => '');
@@ -160,57 +159,42 @@ serve(async (req) => {
         // Try to extract message from various possible keys
         if (data.Output) {
           message = data.Output;
-          hasActualMessage = true;
-        } else if (data.message && data.message !== 'Workflow was started') {
-          // Ignore "Workflow was started" as it's just an acknowledgment, not final result
+        } else if (data.message) {
           message = data.message;
-          hasActualMessage = true;
         } else if (data.Goed) {
           message = data.Goed;
-          hasActualMessage = true;
         } else if (data.Error) {
           message = data.Error;
           status = 'error';
-          hasActualMessage = true;
         } else if (data.error) {
           message = data.error;
           status = 'error';
-          hasActualMessage = true;
-        } else if (data.status && data.status !== 'success' && data.status !== 'ok') {
-          message = data.status;
-          hasActualMessage = true;
         } else if (typeof data === 'string' && data.trim().length > 0) {
           message = data;
-          hasActualMessage = true;
+        } else {
+          // Stringify hele response als fallback
+          message = JSON.stringify(data);
         }
-        // If it's just { message: "Workflow was started" } or similar, we don't have actual content yet
       } catch (parseError) {
         console.log("Response is not JSON, using raw text");
-        // Not JSON, use the raw text as the message if it's meaningful
-        if (rawText.trim().length > 0 && rawText !== 'OK' && rawText !== 'ok') {
-          message = rawText;
-          hasActualMessage = true;
-        }
+        // Not JSON, use the raw text as the message
+        message = rawText;
       }
     }
 
-    // Only save notification if we have an actual message
-    if (hasActualMessage && message) {
-      const { error: dbError } = await supabase
-        .from('notifications')
-        .insert({
-          message: message,
-          status: status,
-          user_id: userId,
-        });
+    // ALTIJD melding opslaan
+    const { error: dbError } = await supabase
+      .from('notifications')
+      .insert({
+        message: message,
+        status: status,
+        user_id: userId,
+      });
 
-      if (dbError) {
-        console.error("Error saving notification:", dbError);
-      } else {
-        console.log("Notification saved successfully");
-      }
+    if (dbError) {
+      console.error("Error saving notification:", dbError);
     } else {
-      console.log("No actual message in response, skipping notification");
+      console.log("Notification saved successfully");
     }
     
     // Set status to 'active' on success
@@ -249,7 +233,6 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: message,
-        hasMessage: hasActualMessage,
         status: status 
       }),
       {
