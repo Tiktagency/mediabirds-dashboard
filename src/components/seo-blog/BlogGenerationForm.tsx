@@ -494,9 +494,23 @@ export const BlogGenerationForm = ({
 
   if (settingsLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-white/60">Instellingen laden...</p>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+          <div className="h-10 bg-white/10 rounded-md animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-32 bg-white/10 rounded animate-pulse" />
+          <div className="h-20 bg-white/10 rounded-md animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-20 bg-white/10 rounded animate-pulse" />
+          <div className="h-10 bg-white/10 rounded-md animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-4 w-28 bg-white/10 rounded animate-pulse" />
+          <div className="h-10 bg-white/10 rounded-md animate-pulse" />
+        </div>
       </div>
     );
   }
