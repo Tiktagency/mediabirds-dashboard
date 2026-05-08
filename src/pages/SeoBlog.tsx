@@ -380,7 +380,7 @@ const SeoBlog = () => {
                       className="p-1 rounded hover:bg-white/10 transition-colors"
                       title="Annuleren"
                     >
-                      <XCircle className="h-4 w-4 text-red-400" />
+                      <XCircle className="h-6 w-6 text-red-400" />
                     </button>
                     <button
                       onClick={async () => {
@@ -402,7 +402,7 @@ const SeoBlog = () => {
                       className="p-1 rounded hover:bg-white/10 transition-colors"
                       title="Opslaan"
                     >
-                      <Check className="h-4 w-4 text-green-400" />
+                      <Check className="h-6 w-6 text-green-400" />
                     </button>
                   </div>
                 </div>
