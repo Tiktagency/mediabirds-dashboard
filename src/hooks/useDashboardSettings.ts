@@ -42,7 +42,7 @@ const DEFAULT_BUTTON_COLORS: TileColors = {
 };
 
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
-  tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot', 'copyright-branding'],
+  tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot', 'copyright-branding', 'email-handtekening'],
   custom_labels: {},
   theme: 'dark',
   custom_tooltips: {},
