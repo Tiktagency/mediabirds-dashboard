@@ -1,46 +1,64 @@
 
 
-## Nieuw "Rollen" tabblad in het Admin Panel
+## Rollen-tabblad herindelen: rollen horizontaal, machtigingen verticaal + systeemmachtigingen
 
 ### Wat verandert er
-Er komt een vijfde tabblad "Rollen" naast "Gebruikers" in het Admin Panel. Dit tabblad toont een overzicht van alle rollen (Viewer, Operator, Admin, Super Admin) met per rol de standaard machtigingen per automation. Je kunt de standaardmachtigingen per rol aanpassen via checkboxes en er is een reset-knop om terug te gaan naar de standaardinstellingen.
+Het Rollen-tabblad wordt volledig herindeld:
+- **Rollen staan horizontaal** (kolommen): Viewer, Operator, Admin, Super Admin
+- **Machtigingen staan verticaal** (rijen), opgedeeld in twee secties:
+  1. **Systeemmachtigingen** -- nieuwe rijen die laten zien wat elke rol kan op systeemniveau
+  2. **Automatiemachtigingen** -- per automation de V/U/B checkboxes
 
-### Hoe het werkt
-- Een matrix-tabel met rollen als rijen en automations als kolommen
-- Per cel drie checkboxes: Bekijken (V), Uitvoeren (U), Beheren (B)
-- Admin en Super Admin rijen zijn uitgeschakeld (altijd volledige toegang)
-- Een "Reset naar standaard" knop die de standaardwaarden herstelt:
-  - Viewer: alleen Bekijken aan
-  - Operator: Bekijken + Uitvoeren aan
-- De standaarden worden opgeslagen in een nieuwe database-tabel `role_default_permissions`
+### Systeemmachtigingen (alleen-lezen overzicht)
+Deze worden niet opgeslagen in de database maar zijn statisch weergegeven als referentie:
 
-### Database
-Nieuwe tabel `role_default_permissions` met kolommen:
-- `id` (uuid, primary key)
-- `role` (app_role)
-- `automation_name` (text)
-- `can_view` (boolean, default true)
-- `can_execute` (boolean, default false)
-- `can_manage` (boolean, default false)
-- `created_at` / `updated_at` (timestamps)
-- Unieke constraint op (role, automation_name)
-- RLS: admins en super_admins kunnen alles, andere rollen kunnen lezen
+| Machtiging                     | Viewer | Operator | Admin | Super Admin |
+|---                             |---     |---       |---    |---          |
+| Dashboard bekijken             | Ja     | Ja       | Ja    | Ja          |
+| Automations uitvoeren          | Nee    | Ja       | Ja    | Ja          |
+| Admin Panel openen             | Nee    | Nee      | Ja    | Ja          |
+| Gebruikers uitnodigen          | Nee    | Nee      | Ja    | Ja          |
+| Rollen toewijzen/degraderen    | Nee    | Nee      | Ja    | Ja          |
+| Automation-instellingen beheren| Nee    | Nee      | Ja    | Ja          |
+| Andere admins beheren          | Nee    | Nee      | Nee   | Ja          |
+
+### Automatiemachtigingen (bewerkbaar)
+Per automation een rij met drie sub-rijen (Bekijken / Uitvoeren / Beheren). De kolommen Viewer en Operator zijn bewerkbaar via checkboxes, Admin en Super Admin zijn vergrendeld (altijd aan).
+
+### Layout
+```text
++-----------------------------------+--------+----------+-------+-------------+
+| Machtiging                        | Viewer | Operator | Admin | Super Admin |
++===================================+========+==========+=======+=============+
+| SYSTEEMMACHTIGINGEN               |        |          |       |             |
++-----------------------------------+--------+----------+-------+-------------+
+| Dashboard bekijken                |   V    |    V     |   V   |      V      |
+| Automations uitvoeren             |   X    |    V     |   V   |      V      |
+| Admin Panel openen                |   X    |    X     |   V   |      V      |
+| Gebruikers uitnodigen             |   X    |    X     |   V   |      V      |
+| Rollen toewijzen/degraderen       |   X    |    X     |   V   |      V      |
+| Automation-instellingen beheren   |   X    |    X     |   V   |      V      |
+| Andere admins beheren             |   X    |    X     |   X   |      V      |
++-----------------------------------+--------+----------+-------+-------------+
+| AUTOMATIEMACHTIGINGEN             |        |          |       |             |
++-----------------------------------+--------+----------+-------+-------------+
+| SEO Blog - Bekijken              |  [v]   |   [v]    |   V   |      V      |
+| SEO Blog - Uitvoeren             |  [ ]   |   [v]    |   V   |      V      |
+| SEO Blog - Beheren               |  [ ]   |   [ ]    |   V   |      V      |
+| Chatbot - Bekijken               |  [v]   |   [v]    |   V   |      V      |
+| ...                               |        |          |       |             |
++-----------------------------------+--------+----------+-------+-------------+
+```
 
 ### Technische wijzigingen
 
-1. **Database migratie**: Nieuwe tabel `role_default_permissions` aanmaken met RLS policies
+**1. Bestand: `src/components/admin/roles/RolesTab.tsx`** -- volledig herschrijven
+- Nieuwe tabelstructuur: rollen als kolommen, machtigingen als rijen
+- Sectie "Systeemmachtigingen" bovenaan met statische check/cross iconen (niet bewerkbaar, puur informatief)
+- Sectie "Automatiemachtigingen" daaronder: per automation 3 rijen (Bekijken, Uitvoeren, Beheren) met checkboxes voor Viewer/Operator en vergrendelde vinkjes voor Admin/Super Admin
+- De systeemmachtigingen worden gedefinieerd als een constante array in de component, geen database nodig
+- Reset-knop blijft behouden
 
-2. **Nieuw bestand: `src/hooks/useRoleDefaults.ts`**
-   - Hook voor het ophalen, bijwerken en resetten van standaard rolpermissies
-   - Reset-functie herstelt Viewer = can_view only, Operator = can_view + can_execute
-
-3. **Nieuw bestand: `src/components/admin/roles/RolesTab.tsx`**
-   - Toont matrix met rollen (Viewer, Operator) als rijen en automations als kolommen
-   - Checkboxes voor V/U/B per combinatie
-   - Admin/Super Admin rij met uitgeschakelde checkboxes (altijd volledig)
-   - Reset-knop onderaan
-
-4. **Bestand: `src/components/admin/AdminTabs.tsx`**
-   - Grid wijzigen van 4 naar 5 kolommen
-   - Nieuw "Rollen" tabblad toevoegen met Shield-icoon, geplaatst na "Gebruikers"
+**2. Bestand: `src/hooks/useRoleDefaults.ts`** -- geen wijzigingen nodig
+De hook blijft ongewijzigd; alleen de UI-laag verandert.
 
