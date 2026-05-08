@@ -1,39 +1,31 @@
 
-# Auto-save bij bewerken: vinkje en kruisje verwijderen
+# Notities vak: volledige tekst met scroll
 
 ## Wat verandert er
 
-Alle bewerkingsvelden slaan automatisch op wanneer je ergens anders klikt (onBlur). De Check- en XCircle-iconen worden verwijderd. Dit geldt voor drie plekken:
+Het notitieveld toont altijd alle tekst. Als de tekst te lang wordt voor het vak, verschijnt er een scrollfunctie zodat je alles kunt lezen zonder dat tekst buiten het vak valt.
 
-1. **Notities vak** (`SeoBlog.tsx`) -- textarea slaat automatisch op bij onBlur
-2. **Input velden** (`KeywordResearchForm.tsx` -- `renderInputField`) -- input slaat op bij onBlur
-3. **Tekstvelden** (`KeywordResearchForm.tsx` -- `renderTextField`) -- textarea slaat op bij onBlur
+## Wijzigingen
 
-## Hoe het werkt
+**Bestand:** `src/pages/SeoBlog.tsx`
 
-- Wanneer je op een veld klikt om te bewerken, verschijnt het invoerveld (zoals nu)
-- Er zijn **geen** vinkje/kruisje knoppen meer
-- Zodra je buiten het veld klikt (onBlur), wordt de waarde automatisch opgeslagen
-- Ook lege velden worden opgeslagen (waarde wordt `null` in de database)
-- Na opslaan keert het veld terug naar de weergavemodus
+### 1. Container aanpassen (regel 336)
+- De buitenste `div` krijgt een vaste maximale hoogte en `overflow-hidden` zodat het vak niet oneindig groeit.
 
-## Technische wijzigingen
+### 2. Ingeklapte staat verwijderen
+- De "collapsed" staat (regels 350-357) met `truncate` wordt verwijderd. Het notitieveld staat altijd in "expanded" modus -- alle tekst is zichtbaar.
+- `notesEditMode` gebruikt dan alleen `'expanded'` en `'editing'` (geen `'collapsed'` meer).
+- De initialisatie van `notesEditMode` wordt `'expanded'` in plaats van `'collapsed'`.
 
-### 1. `src/pages/SeoBlog.tsx` (Notities)
-- Verwijder de Check en XCircle knoppen uit het editing-blok (regels 377-406)
-- Voeg `onBlur` toe aan de Textarea die `handleSaveNotes` aanroept en terugschakelt naar 'expanded'
-- Vereenvoudig de editing-state: geen knoppen meer, alleen de textarea
+### 3. Expanded staat met scroll (regels 359-365)
+- Voeg `overflow-y-auto` en een `max-h` (bijvoorbeeld `max-h-[200px]`) toe aan het tekstvak zodat er een scrollbar verschijnt wanneer de tekst te lang is.
+- De `onClick` op het expanded vak die terugschakelt naar `'collapsed'` wordt verwijderd (er is geen collapsed meer).
 
-### 2. `src/components/seo-blog/KeywordResearchForm.tsx` (renderInputField)
-- Verwijder Check en XCircle knoppen (regels 282-297)
-- Voeg `onBlur` toe aan de Input die `handleSaveField(field)` aanroept
-- Het veld gaat terug naar weergavemodus na opslaan
+### 4. Editing textarea (regels 370-391)
+- Voeg ook een `max-h-[200px] overflow-y-auto` toe aan de textarea zodat je bij veel tekst kunt scrollen tijdens het bewerken.
 
-### 3. `src/components/seo-blog/KeywordResearchForm.tsx` (renderTextField)
-- Verwijder Check en XCircle knoppen (regels 415-430)
-- Voeg `onBlur` toe aan de Textarea die `handleSaveField(field)` aanroept
-- Het veld gaat terug naar weergavemodus na opslaan
-
-### 4. Opruimen
-- `handleCancelEdit` functie kan verwijderd worden (niet meer nodig)
-- Check en XCircle imports verwijderen als ze nergens anders meer gebruikt worden in KeywordResearchForm
+## Resultaat
+- Je ziet altijd de volledige notitietekst
+- Bij veel tekst verschijnt een scrollbar in het vak
+- Klikken op de tekst doet niets meer (alleen het potlood-icoon opent de bewerkingsmodus)
+- Het potlood-icoon is altijd zichtbaar
