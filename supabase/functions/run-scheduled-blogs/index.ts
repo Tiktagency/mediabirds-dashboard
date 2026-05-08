@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
           hoofdaccent_gradient: blogSettings.hoofdaccent_gradient || '',
           get_afbeelding_url: blogSettings.get_afbeelding_url || '',
           post_blog_url: blogSettings.post_blog_url || '',
-          status: blogSettings.status || 'Draft',
+          status: blogSettings.status || 'draft',
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
           Category: (blogCategories || []).reduce((acc: Record<string, string>, cat: { label: string; value: string }) => {
