@@ -749,7 +749,6 @@ const Blogs = () => {
                 
                 {/* Webhook URLs */}
                 <div className="space-y-3">
-                  <p className="text-xs text-white/50 uppercase tracking-wider">Webhook URLs</p>
                   
                   {['seo_research_webhook', 'subkeywords_webhook', 'blogs_webhook'].map((field) => {
                     const labels: Record<string, string> = {
@@ -857,7 +856,6 @@ const Blogs = () => {
 
                 {/* N8N Workflow Names */}
                 <div className="space-y-3 pt-2">
-                  <p className="text-xs text-white/50 uppercase tracking-wider">N8N Workflow Namen</p>
                   
                   {['seo_research_n8n_name', 'subkeywords_n8n_name', 'blogs_n8n_name'].map((field) => {
                     const labels: Record<string, string> = {
