@@ -72,6 +72,7 @@ export const BlogGenerationForm = ({
     taal: '',
     extra_instructie: '',
     image_type: 'ai_image' as 'ai_image' | 'google_drive',
+    image_style: '' as '' | 'isometric_flat' | 'cinematic_3d' | 'brutalist_raw',
     achtergrond_kleur: '',
     hoofdaccent_gradient_1: '',
     hoofdaccent_gradient_2: '',
@@ -129,6 +130,7 @@ export const BlogGenerationForm = ({
         taal: settings.taal || '',
         extra_instructie: settings.extra_instructie || '',
         image_type: (settings.image_type as 'ai_image' | 'google_drive') || 'ai_image',
+        image_style: (settings.image_style as '' | 'isometric_flat' | 'cinematic_3d' | 'brutalist_raw') || '',
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
@@ -149,6 +151,7 @@ export const BlogGenerationForm = ({
         taal: '',
         extra_instructie: '',
         image_type: 'ai_image',
+        image_style: '',
         achtergrond_kleur: '',
         hoofdaccent_gradient_1: '',
         hoofdaccent_gradient_2: '',
@@ -298,6 +301,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient: formData.image_type === 'ai_image' 
           ? `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}` 
           : '',
+        image_style: formData.image_type === 'ai_image' ? formData.image_style : '',
         // Google Drive velden - alleen vullen als google_drive geselecteerd
         folder_id: formData.image_type === 'google_drive' ? formData.folder_id : '',
         used_folder_id: formData.image_type === 'google_drive' ? formData.used_folder_id : '',
@@ -703,6 +707,39 @@ export const BlogGenerationForm = ({
                       />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Stijl selectie */}
+              <div className="space-y-2 pt-2">
+                <Label className="text-white/70 text-sm">Stijl</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {([
+                    { value: 'isometric_flat', label: 'Isometric flat illustration' },
+                    { value: 'cinematic_3d', label: 'Cinematic 3D interface render' },
+                    { value: 'brutalist_raw', label: 'Brutalist / Raw UI design' },
+                  ] as const).map((option) => {
+                    const isSelected = formData.image_style === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={async () => {
+                          const newValue = isSelected ? '' : option.value;
+                          setFormData(prev => ({ ...prev, image_style: newValue }));
+                          await saveSettings({ image_style: newValue });
+                        }}
+                        className={cn(
+                          "text-left p-3 rounded-md border transition-all duration-200 text-sm",
+                          isSelected
+                            ? "bg-accent text-[#002C1F] border-accent"
+                            : "bg-white/5 border-white/20 text-white/80 hover:bg-white/10"
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
