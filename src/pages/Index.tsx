@@ -136,6 +136,17 @@ const Index = () => {
     return null;
   };
 
+  // Get multiple last runs for tiles with sub-automations
+  const getMultipleLastRuns = (automationName: string) => {
+    if (automationName === 'seo-blog') {
+      return [
+        { label: 'SEO Onderzoek', time: lastRuns['seo-research'] || null },
+        { label: 'Blog Generatie', time: lastRuns['blogs'] || null },
+      ];
+    }
+    return undefined;
+  };
+
   // Get automation setting by name
   const getAutomationSetting = (automationName: string) => {
     return automationSettings.find(s => s.automation_name === automationName);
@@ -326,6 +337,7 @@ const Index = () => {
                 description={description}
                 impact={impact}
                 lastRun={getLastRun(item)}
+                multipleLastRuns={getMultipleLastRuns(item)}
                 impactColors={impactColors}
                 status={automationSetting?.status}
               />
