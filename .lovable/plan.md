@@ -1,43 +1,33 @@
 
 
-## Webhook timeout verhogen naar 10 minuten
+## Stap 2 en 3 verwijderen uit de SEO blog handleiding
 
-### Probleem
-De `fetch()` aanroep naar de webhook heeft geen expliciete timeout ingesteld, waardoor de browser na zijn standaard timeout (meestal ~30-60 seconden) de verbinding verbreekt met een "Failed to fetch" fout, terwijl de webhook nog bezig is.
+### Wat verandert er
+Stap 2 ("URL Database updaten") en stap 3 ("Koppelen met Google Sheets") worden verwijderd uit de handleiding. Alle opvolgende stappen worden hernummerd (4 wordt 2, 5 wordt 3, 6 wordt 4, etc.), zodat de nummering doorlopend blijft van 1 tot 11.
 
-### Oplossing
-Een `AbortController` met een timeout van 10 minuten (600.000 ms) toevoegen aan de `fetch()` aanroep.
+### Overzicht nieuwe nummering
+
+| Oud | Nieuw | Stap |
+|-----|-------|------|
+| 1   | 1     | Toegang regelen |
+| ~~2~~ | -   | ~~URL Database updaten~~ (verwijderd) |
+| ~~3~~ | -   | ~~Koppelen met Google Sheets~~ (verwijderd) |
+| 4   | 2     | Sitemaps toevoegen |
+| 5   | 3     | URL's documenteren |
+| 6   | 4     | Bedrijfskennis invullen |
+| 7   | 5     | Admin Instellingen configureren |
+| 8   | 6     | Testen |
+| 9   | 7     | Basisinstellingen |
+| 10  | 8     | Beeldmateriaal kiezen |
+| 11  | 9     | Publicatie status |
+| 12  | 10    | Categorieen (Optioneel) |
+| 13  | 11    | Finalisering |
 
 ### Technische wijzigingen
 
-**Bestand: `src/components/seo-blog/PageUrlForm.tsx`**
+**Bestand: `src/pages/SeoBlog.tsx`**
 
-Bij de `fetch()` call (rond regel 170) een `AbortController` toevoegen met een `signal` en een `setTimeout` van 600.000 ms:
+1. **Verwijder stap 2** (regels 661-668): Het blok "URL Database updaten".
+2. **Verwijder stap 3** (regels 682-692): Het blok "Koppelen met Google Sheets" inclusief de tip-box.
+3. **Hernummer alle overige stappen**: De nummers in de `<span>` elementen aanpassen van 4->2, 5->3, 6->4, 7->5, 8->6, 9->7, 10->8, 11->9, 12->10, 13->11.
 
-```typescript
-const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minuten
-
-const response = await fetch(WEBHOOK_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(payload),
-  signal: controller.signal,
-});
-
-clearTimeout(timeoutId);
-```
-
-In het `catch`-blok wordt een specifieke foutmelding getoond wanneer de timeout wel wordt bereikt (na 10 minuten):
-
-```typescript
-} catch (error) {
-  const isTimeout = error instanceof DOMException && error.name === 'AbortError';
-  const catchMsg = isTimeout
-    ? `[${companyName}] Timeout: geen antwoord ontvangen na 10 minuten`
-    : `[${companyName}] Fout bij documentatie: ${error instanceof Error ? error.message : String(error)}`;
-  // ...
-}
-```
