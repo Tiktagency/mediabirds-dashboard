@@ -569,7 +569,24 @@ const Nieuwsbrief = () => {
 
             {/* Column 1: Bedrijfsinfo + RSS */}
             <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6 space-y-4">
+              <CardHeader className="pb-2 px-6 pt-6 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-white/70">Bedrijfsinstellingen</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchCompanyInfo}
+                  disabled={isFetchingCompanyInfo || !localData.website}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
+                >
+                  {isFetchingCompanyInfo ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5" />
+                  )}
+                  AI invullen
+                </Button>
+              </CardHeader>
+              <CardContent className="p-6 pt-2 space-y-4">
                 {TEXT_FIELDS.slice(0, 4).map(({ key, label, type, placeholder }) =>
                   renderTextField(key, label, type, placeholder)
                 )}
