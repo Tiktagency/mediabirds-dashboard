@@ -29,7 +29,7 @@ const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimation
       if (cancelled || !isAnimatingRef.current) return;
 
       setFilledFields([]);
-      const timeouts: NodeJS.Timeout[] = [];
+      const timeouts: ReturnType<typeof setTimeout>[] = [];
 
       FIELDS.forEach((field, i) => {
         timeouts.push(
