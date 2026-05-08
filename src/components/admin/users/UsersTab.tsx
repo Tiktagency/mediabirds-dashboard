@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useAutomationSettings } from '@/hooks/useAutomationSettings';
+import { useAuth } from '@/hooks/useAuth';
 import { UserList } from './UserList';
 import { PermissionMatrix } from './PermissionMatrix';
 import { InviteUserModal } from './InviteUserModal';
@@ -12,6 +13,7 @@ import { UserPlus, Users, Shield, Play, Eye } from 'lucide-react';
 export const UsersTab = () => {
   const { users, permissions, isLoading, updateUserRole, updatePermission, deleteUser, refetch } = useUserManagement();
   const { settings: automations } = useAutomationSettings();
+  const { user } = useAuth();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const adminCount = users.filter(u => u.roles.includes('admin')).length;
@@ -99,7 +101,8 @@ export const UsersTab = () => {
       </div>
 
       <UserList 
-        users={users} 
+        users={users}
+        currentUserId={user?.id}
         onUpdateRole={updateUserRole}
         onDelete={deleteUser}
       />
