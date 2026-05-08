@@ -14,8 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd';
-const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
 
 const MondayPlanning = () => {
   const { isLoading: authLoading, user } = useAdminAuth();
