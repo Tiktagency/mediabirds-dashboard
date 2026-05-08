@@ -570,94 +570,97 @@ export const BlogGenerationForm = ({
       {renderRangeField()}
       {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
       
-      {/* Afbeelding section */}
-      <div className="pt-6 border-t border-white/10 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
-        
-        {/* Toggle knoppen */}
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => {
-              handleInputChange('image_type', 'ai_image');
-              await saveSettings({ image_type: 'ai_image' });
-            }}
-            className={cn(
-              "flex-1 transition-all duration-200",
-              formData.image_type === 'ai_image' 
-                ? "bg-accent text-white border-accent hover:bg-accent/90" 
-                : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
-            )}
-          >
-            AI afbeelding
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={async () => {
-              handleInputChange('image_type', 'google_drive');
-              await saveSettings({ image_type: 'google_drive' });
-            }}
-            className={cn(
-              "flex-1 transition-all duration-200",
-              formData.image_type === 'google_drive' 
-                ? "bg-accent text-white border-accent hover:bg-accent/90" 
-                : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
-            )}
-          >
-            Foto Google Drive
-          </Button>
+      {/* Afbeelding section - contained in visual card for clarity */}
+      <div className="pt-6 border-t border-white/10">
+        <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-4">
+          <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
+          
+          {/* Toggle knoppen */}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                handleInputChange('image_type', 'ai_image');
+                await saveSettings({ image_type: 'ai_image' });
+              }}
+              className={cn(
+                "flex-1 transition-all duration-200",
+                formData.image_type === 'ai_image' 
+                  ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                  : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
+              )}
+            >
+              AI afbeelding
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                handleInputChange('image_type', 'google_drive');
+                await saveSettings({ image_type: 'google_drive' });
+              }}
+              className={cn(
+                "flex-1 transition-all duration-200",
+                formData.image_type === 'google_drive' 
+                  ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                  : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
+              )}
+            >
+              Foto Google Drive
+            </Button>
+          </div>
+          
+          {/* AI Afbeelding velden */}
+          {formData.image_type === 'ai_image' && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
+                </div>
+                <div 
+                  className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                  style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                      style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
+                    />
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                    </div>
+                    <div 
+                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                      style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Google Drive velden */}
+          {formData.image_type === 'google_drive' && (
+            <div className="animate-in slide-in-from-top-2 duration-200">
+              {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
+            </div>
+          )}
         </div>
-        
-        {/* AI Afbeelding velden */}
-        {formData.image_type === 'ai_image' && (
-          <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
-              </div>
-              <div 
-                className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
-                  </div>
-                  <div 
-                    className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                    style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
-                  />
-                </div>
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
-                  </div>
-                  <div 
-                    className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                    style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Google Drive velden */}
-        {formData.image_type === 'google_drive' && (
-          <div className="animate-in slide-in-from-top-2 duration-200">
-            {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
-          </div>
-        )}
       </div>
       
-      {/* Status sectie */}
+      {/* Status sectie - met eigen header */}
       <div className="pt-6 border-t border-white/10 space-y-4">
+        <h3 className="text-lg font-semibold text-white">Publicatie</h3>
         {renderField('Status', 'status', 'select', ['draft', 'publish'])}
       </div>
       
