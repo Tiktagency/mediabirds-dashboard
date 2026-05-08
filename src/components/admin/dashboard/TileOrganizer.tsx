@@ -60,6 +60,7 @@ const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secon
   'chatbot': { icon: MessageCircle, variant: 'secondary' },
   'copyright-branding': { icon: Sparkles, variant: 'accent' },
   'email-handtekening': { icon: Mail, variant: 'primary' },
+  'landingspagina': { icon: FileText, variant: 'primary' },
 };
 
 const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent' | 'muted', tileColors: TileColors) => {
