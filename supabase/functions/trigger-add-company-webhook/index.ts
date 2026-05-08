@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { companyName, companyId } = await req.json();
+    const { companyName, companyId, companyDomain } = await req.json();
     if (!companyName || !companyId) {
       throw new Error('companyName en companyId zijn verplicht');
     }
@@ -31,7 +31,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
           'Authorization': authToken,
         },
-        body: JSON.stringify({ bedrijfsnaam: companyName }),
+        body: JSON.stringify({ bedrijfsnaam: companyName, domeinnaam: companyDomain || '' }),
       }
     );
 
