@@ -5,6 +5,7 @@ import NewsTicker from '@/components/NewsTicker';
 import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon, Crown, Shield, Play, Eye } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
@@ -12,6 +13,7 @@ import { useAutomationSettings } from '@/hooks/useAutomationSettings';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProfileModal } from '@/components/ProfileModal';
+import { CompleteProfileModal } from '@/components/CompleteProfileModal';
 import { useNavigate } from 'react-router-dom';
 import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
 import { useTheme } from 'next-themes';
@@ -90,8 +92,25 @@ const Index = () => {
   const { settings: dashboardSettings, isLoading: settingsLoading } = useDashboardSettings();
   const { settings: automationSettings, isLoading: automationsLoading } = useAutomationSettings();
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
   const navigate = useNavigate();
   const { setTheme } = useTheme();
+
+  // Check if profile is complete
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (!data?.first_name || !data?.last_name) {
+            setShowCompleteProfile(true);
+          }
+        });
+    }
+  }, [user]);
 
 
   // Apply theme from settings
@@ -368,6 +387,14 @@ const Index = () => {
         onOpenChange={setProfileModalOpen} 
         user={user} 
       />
+
+      {user && (
+        <CompleteProfileModal
+          open={showCompleteProfile}
+          userId={user.id}
+          onCompleted={() => setShowCompleteProfile(false)}
+        />
+      )}
     </div>
   );
 };
