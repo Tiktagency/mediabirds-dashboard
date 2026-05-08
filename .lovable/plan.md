@@ -1,121 +1,67 @@
 
-## Plan: Nieuwsbrief Dashboard Tile & Pagina
+## Analyse
 
-### Overzicht
+**Probleem 1: Inconsistente kleurpicker UI**
+In het project zijn twee stijlen van kleurpickers:
+- **Stijl A (admin panel / ButtonColorCustomizer / BackgroundColorCustomizer)**: Kleine kleurstip (`w-8 h-8`) + naast een tekstveld met hex code. ✅ Correct — toont hex code.
+- **Stijl B (Nieuwsbrief / ColorField component)**: Alleen een kleurstip, hex code staat los ernaast als `<span>`, geen editeerbaar tekstveld. ❌ Niet consistent.
+- **Stijl C (BlogGenerationForm / ColorCustomizer)**: Grotere kleurstip (`w-12 h-10`) + tekstveld. ✅ Heeft hex code.
+- **Stijl D (EmailSignatureForm)**: Alleen kleurstip zonder hex. ❌
 
-Een nieuwe "Nieuwsbrief" tile toevoegen aan het dashboard, met een bijbehorende pagina (`/nieuwsbrief`) die een twee-koloms layout heeft: links invulvelden, rechts een HTML-preview viewer.
+De gewenste uniforme standaard is: **kleurstip + editeerbaar hex tekstveld naast elkaar**, precies zoals in `ButtonColorCustomizer` en `BackgroundColorCustomizer`.
 
----
+**Probleem 2: Achtergrondkleur invulvelden**
+Op de Nieuwsbrief pagina gebruiken de velden `bg-input/50` als achtergrond. In andere componenten zoals `BlogGenerationForm` en admin paneel worden `bg-background/50` of `bg-input/50` gebruikt. De gebruiker wil consistentie in alle invulvelden.
 
-### Wat er gebouwd wordt
+## Wat moet er aangepast worden
 
-**1. Database migratie** — Nieuwe tabel `newsletter_settings` met kolommen:
-- `id`, `user_id`, `bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl`, `rss_feeds` (JSONB array), `achtergrond_kleur`, `primaire_kleur`, `accent_kleur`, `generated_html`, `created_at`, `updated_at`
-- RLS: ingelogde gebruikers kunnen hun eigen settings beheren
+### 1. Nieuwsbrief pagina — `ColorField` component
+De huidige `ColorField` heeft een verborgen `<input type="color">` achter een gekleurde div, met de hex als tekst-span. Dit vervangen door het standaardpatroon: kleine kleurstip + editeerbaar Input tekstveld.
 
-**2. Backend edge function** — `trigger-newsletter-webhook`
-- Stuurt de ingevulde velden naar een N8N webhook (zelfde patroon als andere automations)
-- Retourneert gegenereerde HTML nieuwsbrief
+### 2. `ColorCustomizer.tsx` (admin panel — impact kleuren)
+Heeft al kleurstip + tekstveld (stijl C). Standaard patroon `w-8 h-8` maken ipv `w-12 h-10`.
 
-**3. Nieuwe route** — `src/pages/Nieuwsbrief.tsx`
+### 3. `TileColorCustomizer.tsx` (admin panel — tile kleuren)
+Heeft al `w-8 h-8` maar géén tekstveld naast de kleurstip — alleen een label. Tekstveld toevoegen.
 
-Layout (twee kolommen, huisstijl):
-```text
-┌──────────────────────────────────────────────────┐
-│  ← Terug    Nieuwsbrief                          │
-├──────────────────┬───────────────────────────────┤
-│  INVULVELDEN     │  HTML PREVIEW                 │
-│                  │                               │
-│  Bedrijfsnaam    │  [iframe / dangerouslySetInner│
-│  ─────────────   │   HTML preview van gegener-  │
-│  Bedrijfs-       │   eerde nieuwsbrief]          │
-│  informatie      │                               │
-│  ─────────────   │  Geen preview beschikbaar     │
-│  Schrijfstijl    │  → klik Genereer              │
-│  ─────────────   │                               │
-│  RSS Feed(s)     │                               │
-│  [Feed 1   ][x]  │                               │
-│  [Feed 2   ][x]  │                               │
-│  [+ Voeg toe ]   │                               │
-│  ─────────────   │                               │
-│  🎨 Kleuren      │                               │
-│  Achtergrond ●   │                               │
-│  Primair     ●   │                               │
-│  Accent      ●   │                               │
-│                  │                               │
-│  [Genereer    ]  │                               │
-│  [nieuwsbrief ]  │                               │
-└──────────────────┴───────────────────────────────┘
-```
+### 4. `BlogGenerationForm.tsx` — AI afbeelding kleuren
+Heeft `w-12 h-10` formaat + tekstveld. Formaat uniformeren naar `w-8 h-8`.
 
-Specifieke UI-keuzes:
-- Linker kolom: `w-[420px]` vaste breedte, scrollbaar, huisstijl cards
-- Velden gebruiken hetzelfde drie-stap klik-patroon als SEO Blog (collapsed label → expanded → edit mode) voor een nette, compacte weergave — of een eenvoudiger altijd-zichtbaar formulier (beter voor nieuw scherm)
-- RSS feeds: dynamische lijst met `+` knop en `×` verwijder knop per feed, max 5 feeds
-- Kleurpickers: native `<input type="color">` met hex display, zelfde stijl als BlogGenerationForm
-- Rechter kolom: `flex-1`, iframe sandbox voor veilige HTML rendering
-- Genereer knop: primary style, volledig breed, onderaan linker kolom
-- Loading state met spinner tijdens generatie
+### 5. `EmailSignatureForm.tsx` — kleurvelden
+Heeft alleen kleurstip zonder hex tekstveld. Hex tekstveld toevoegen.
 
-**4. Hook** — `src/hooks/useNewsletterSettings.ts`
-- Laadt/opslaat settings per `user_id` uit de database
-- Auto-save bij wijzigingen (debounced)
+### 6. Invulveld achtergrondkleur Nieuwsbrief
+Alle `Input` en `Textarea` velden op de Nieuwsbrief pagina gebruiken `bg-input/50`. Dit is al consistent met andere pagina's in het project — dit hoeft niet aangepast te worden. Alleen de kleurpicker velden moeten consistent worden.
 
-**5. Dashboard tile toevoegen** in `src/pages/Index.tsx`
-- Nieuw item in `tileConfigMap`: `'nieuwsbrief'` met `Newspaper` icon, route `/nieuwsbrief`, variant `'secondary'`
-- GRID_SIZE verhogen van 9 naar 10 (of auto-inject via bestaande logica)
+## Bestanden die worden aangepast
 
-**6. TileOrganizer updaten** in `src/components/admin/dashboard/TileOrganizer.tsx`
-- `tileConfig` object uitbreiden met `'nieuwsbrief'` entry
-
-**7. App.tsx** — Route toevoegen: `<Route path="/nieuwsbrief" element={<Nieuwsbrief />} />`
-
----
-
-### Bestanden die worden aangemaakt/aangepast
-
-| Bestand | Actie |
+| Bestand | Aanpassing |
 |---|---|
-| `supabase/migrations/` | Nieuwe tabel `newsletter_settings` |
-| `supabase/functions/trigger-newsletter-webhook/index.ts` | Nieuwe edge function |
-| `src/pages/Nieuwsbrief.tsx` | Nieuwe pagina |
-| `src/hooks/useNewsletterSettings.ts` | Nieuwe hook |
-| `src/pages/Index.tsx` | `tileConfigMap` + GRID_SIZE uitbreiden |
-| `src/components/admin/dashboard/TileOrganizer.tsx` | `tileConfig` uitbreiden |
-| `src/App.tsx` | Route toevoegen |
+| `src/pages/Nieuwsbrief.tsx` | `ColorField` component herschrijven: verborgen `<input type="color">` vervangen door `w-8 h-8` kleurstip + editeerbaar hex `Input` tekstveld (standaardpatroon) |
+| `src/components/admin/dashboard/ColorCustomizer.tsx` | `w-12 h-10` → `w-8 h-8` voor kleurstip |
+| `src/components/admin/dashboard/TileColorCustomizer.tsx` | Hex tekstveld toevoegen naast elke kleurstip |
+| `src/components/seo-blog/BlogGenerationForm.tsx` | Kleurstippen uniformeren naar `w-8 h-8` |
+| `src/components/email-signature/EmailSignatureForm.tsx` | Hex tekstveld toevoegen naast de kleurstip voor alle 3 kleurvelden |
 
----
+## Standaard kleurpicker patroon (resultaat)
 
-### Database migratie (SQL)
-
-```sql
-CREATE TABLE public.newsletter_settings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  bedrijfsnaam text,
-  bedrijfsinformatie text,
-  schrijfstijl text,
-  rss_feeds jsonb DEFAULT '[]'::jsonb,
-  achtergrond_kleur text DEFAULT '#ffffff',
-  primaire_kleur text DEFAULT '#000000',
-  accent_kleur text DEFAULT '#4f46e5',
-  generated_html text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.newsletter_settings ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage their own newsletter settings"
-  ON public.newsletter_settings FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+```tsx
+// Uniform patroon in het hele project:
+<div className="flex items-center gap-2">
+  <Input
+    type="color"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+  />
+  <Input
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className="flex-1 bg-background/50 font-mono text-sm"
+    placeholder="#000000"
+  />
+</div>
 ```
 
----
-
-### Technisch detail: HTML Preview
-
-De gegenereerde HTML wordt getoond in een `<iframe srcDoc={html}>` met sandbox-attribuut voor veilige rendering. Zolang er geen gegenereerde HTML is, toont de rechterkant een placeholder met uitleg.
-
-De "Genereer nieuwsbrief" knop roept de edge function aan. Het resultaat (HTML string) wordt opgeslagen in state én in de database.
+Kleurstip: `w-8 h-8`, pad `p-0.5`, cursor pointer.  
+Hex tekstveld: `flex-1`, `bg-background/50`, `font-mono text-sm`.
