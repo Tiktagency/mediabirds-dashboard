@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNewsletterSettings, NewsletterSettings } from '@/hooks/useNewsletterSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuwsbrief/NewsletterCompanySelector';
@@ -60,7 +59,7 @@ const TEXT_FIELDS: { key: TextFieldKey; label: string; type: 'input' | 'textarea
   { key: 'website', label: 'Website', type: 'input', placeholder: 'https://...' },
 ];
 
-const COLOR_FIELDS: { key: keyof NewsletterSettings; label: string }[] = [
+const COLOR_FIELDS: { key: string; label: string }[] = [
   { key: 'primaire_kleur', label: 'Primaire kleur' },
   { key: 'secundaire_kleur', label: 'Secundaire kleur' },
   { key: 'achtergrond_kleur', label: 'Achtergrond' },
@@ -75,7 +74,6 @@ const COLOR_FIELDS: { key: keyof NewsletterSettings; label: string }[] = [
 
 const Nieuwsbrief = () => {
   const { toast } = useToast();
-  const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -122,21 +120,8 @@ const Nieuwsbrief = () => {
       });
       setLocalFeeds(selectedCompany.rss_feeds || []);
       setGeneratedHtmlLocal(selectedCompany.generated_html || null);
-    } else if (settings) {
-      setLocalData({
-        bedrijfsnaam: settings.bedrijfsnaam || '',
-        tagline: settings.tagline || '',
-        bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
-        doelgroep: settings.doelgroep || '',
-        toon: settings.toon || '',
-        cta_tekst: settings.cta_tekst || '',
-        cta_url: settings.cta_url || '',
-        website: settings.website || '',
-      });
-      setLocalFeeds(settings.rss_feeds);
-      setGeneratedHtmlLocal(settings.generated_html || null);
     }
-  }, [selectedCompany, settings]);
+  }, [selectedCompany]);
 
   const saveToCompany = useCallback(async (patch: Record<string, any>) => {
     if (!selectedCompany) return;
@@ -161,9 +146,6 @@ const Nieuwsbrief = () => {
     const current = localData[field];
     if (selectedCompany) {
       saveToCompany({ [field]: current });
-    } else if (settings) {
-      const original = (settings as any)[field] || '';
-      if (current !== original) saveSettings({ [field]: current });
     }
     toast({ title: 'Opgeslagen' });
   };
@@ -179,8 +161,6 @@ const Nieuwsbrief = () => {
     setLocalFeeds(newFeeds);
     if (selectedCompany) {
       saveToCompany({ rss_feeds: newFeeds });
-    } else if (settings && JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
-      saveSettings({ rss_feeds: newFeeds });
     }
     toast({ title: 'Opgeslagen' });
   };
@@ -198,8 +178,6 @@ const Nieuwsbrief = () => {
     setLocalFeeds(newFeeds);
     if (selectedCompany) {
       saveToCompany({ rss_feeds: newFeeds });
-    } else if (settings) {
-      saveSettings({ rss_feeds: newFeeds });
     }
   };
 
@@ -224,8 +202,6 @@ const Nieuwsbrief = () => {
       setLocalColors(colors);
       if (selectedCompany) {
         await saveToCompany(colors);
-      } else if (settings) {
-        await saveSettings(colors as any);
       }
       toast({ title: 'Kleuren opgehaald!', description: 'Huisstijlkleuren zijn automatisch ingevuld.' });
     } catch (err: any) {
@@ -243,8 +219,6 @@ const Nieuwsbrief = () => {
     setLocalColors(prev => ({ ...prev, [key]: value }));
     if (selectedCompany) {
       saveToCompany({ [key]: value });
-    } else if (settings) {
-      saveSettings({ [key]: value } as any);
     }
   };
 
@@ -399,17 +373,6 @@ const Nieuwsbrief = () => {
     </div>
   );
 
-  if (isLoading || !settings) {
-    return (
-      <div className="min-h-screen hero-gradient flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-10 w-10 text-primary mx-auto" />
-          <p className="mt-3 text-sm text-white/50">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
@@ -437,7 +400,7 @@ const Nieuwsbrief = () => {
           cta_tekst_kleur: localColors.cta_tekst_kleur,
           footer_achtergrond: localColors.footer_achtergrond,
           footer_tekst_kleur: localColors.footer_tekst_kleur,
-          settingsId: selectedCompany?.id || settings.id || undefined,
+          settingsId: selectedCompany.id,
         },
       });
 
@@ -448,8 +411,6 @@ const Nieuwsbrief = () => {
         setGeneratedHtmlLocal(html);
         if (selectedCompany) {
           await saveToCompany({ generated_html: html });
-        } else {
-          await setGeneratedHtml(html);
         }
         toast({ title: 'Nieuwsbrief gegenereerd!', description: 'De preview is bijgewerkt.' });
       } else {
@@ -499,6 +460,20 @@ const Nieuwsbrief = () => {
         <p className="text-white/50 text-lg mb-8 text-center max-w-lg">
           Genereer een op maat gemaakte nieuwsbrief op basis van RSS feeds en huisstijl
         </p>
+
+        {!selectedCompany ? (
+          <div className="flex flex-col items-center justify-center gap-4 text-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+              <Building2 className="w-7 h-7 text-white/20" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-white/50">Selecteer een bedrijf om te beginnen</p>
+              <p className="text-xs text-white/30 max-w-xs">
+                Kies een bedrijf via het menu rechtsboven om de nieuwsbrief instellingen te beheren.
+              </p>
+            </div>
+          </div>
+        ) : (
 
         <div className="w-full max-w-7xl 2xl:max-w-[1600px] space-y-6">
 
@@ -662,6 +637,7 @@ const Nieuwsbrief = () => {
           </Card>
 
         </div>
+        )}
       </div>
     </div>
   );
