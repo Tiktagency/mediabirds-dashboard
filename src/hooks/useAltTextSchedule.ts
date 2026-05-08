@@ -5,13 +5,13 @@ import { useToast } from '@/hooks/use-toast';
 interface AltTextSchedule {
   id: string;
   enabled: boolean;
-  frequency: string;
   interval_value: number;
   interval_unit: 'days' | 'weeks' | 'months';
   day_of_week: number;
   time_of_day: string;
   last_triggered_at: string | null;
   next_trigger_at: string | null;
+  last_processed_company_id: string | null;
   created_at: string;
   updated_at: string;
 }
