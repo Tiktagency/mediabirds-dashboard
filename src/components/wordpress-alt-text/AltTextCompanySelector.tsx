@@ -36,7 +36,11 @@ export interface AltTextCompany {
   created_at: string;
 }
 
-const AltTextCompanySelector = () => {
+interface AltTextCompanySelectorProps {
+  onSelect?: (company: AltTextCompany | null) => void;
+}
+
+const AltTextCompanySelector = ({ onSelect }: AltTextCompanySelectorProps) => {
   const [companies, setCompanies] = useState<AltTextCompany[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +86,7 @@ const AltTextCompanySelector = () => {
 
       if (list.length > 0 && !selectedCompany) {
         setSelectedCompany(list[0]);
+        onSelect?.(list[0]);
       }
     } catch (error) {
       console.error('Error fetching alt text companies:', error);
@@ -96,6 +101,7 @@ const AltTextCompanySelector = () => {
 
   const handleSelectCompany = (company: AltTextCompany) => {
     setSelectedCompany(company);
+    onSelect?.(company);
   };
 
   const handleDeleteCompany = async () => {
