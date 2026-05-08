@@ -1,36 +1,62 @@
 
 
-## Potlood-icoon toevoegen aan alle click-to-edit velden
+## Drie-stappen click-to-edit patroon voor alle formulieren
 
-### Probleem
-In de formulieren **Blog Generatie** en **Zoekwoord Onderzoek** ontbreekt het potlood-icoon bij velden in de niet-bewerkingsmodus. Het icoon is wel aanwezig in het **Pagina URL** formulier (via `renderInputField`). Hierdoor is het voor gebruikers niet duidelijk dat ze op een veld kunnen klikken om het te bewerken.
+### Gewenst gedrag
+1. **Standaard (dicht)**: Veld toont de tekst, geen potlood-icoon zichtbaar
+2. **Klik op veld (open)**: Veld toont de volledige tekst met een potlood-icoon rechts. Klikken buiten het veld klapt het weer dicht
+3. **Klik op potlood (bewerken)**: Pas dan wordt het veld een invoerveld. Auto-save bij blur
 
-### Aanpassingen
+Dit patroon bestaat al in KeywordResearchForm voor textarea-velden (`expandedField` state). Het moet nu worden toegepast op alle velden in alle drie de formulieren.
+
+### Aanpassingen per bestand
 
 **1. `src/components/seo-blog/BlogGenerationForm.tsx`**
-- `Pencil` toevoegen aan de lucide-react import (ontbreekt momenteel volledig)
-- In de `renderField` functie (regel 438-447): het potlood-icoon toevoegen aan de statische `<div>` weergave, rechts uitgelijnd met `flex items-center justify-between`
-- Dit geldt voor alle tekst- en textarea-velden (niet voor select-velden, die hebben al een dropdown-indicator)
+- `expandedField` state toevoegen (bestaat nog niet in dit bestand)
+- Click-outside handler toevoegen (zoals in KeywordResearchForm)
+- `renderField` aanpassen voor tekst- en textarea-velden (niet voor select):
+  - Standaard div: geen potlood, klik zet `expandedField`
+  - Expanded div: toont tekst + potlood-icoon, klik op potlood zet `editingField`
+  - Editing: bestaande Input/Textarea logica blijft
 
 **2. `src/components/seo-blog/KeywordResearchForm.tsx`**
-- In de `renderField` functie (regels 304-309 en 316-321): het potlood-icoon toevoegen aan de statische weergave van reguliere velden (niet-Google ID velden)
-- Voor Google ID velden met waarde hebben al aparte iconen (kopieer/bewerk/verwijder), daar hoeft niets te veranderen
-- Voor reguliere velden en lege Google ID velden: potlood-icoon toevoegen
+- `renderInputField`: zelfde drie-stappen patroon toepassen (standaard velden en lege Google ID velden)
+  - Standaard: geen potlood, klik zet `expandedField`
+  - Expanded: toont tekst + potlood, klik op potlood zet `editingField`
+- `renderTextField`: werkt al correct met dit patroon - collapsed toont geen potlood, expanded toont potlood. Maar momenteel toont collapsed WEL een potlood (door de laatste wijziging). Dit moet worden teruggedraaid zodat collapsed geen potlood toont.
+
+**3. `src/components/seo-blog/PageUrlForm.tsx`**
+- `expandedField` state toevoegen
+- Click-outside handler toevoegen
+- `renderInputField` aanpassen: standaard zonder potlood, klik opent expanded met potlood, klik op potlood opent editing
 
 ### Technische details
 
-De wijziging is steeds hetzelfde patroon - de statische `<div>` krijgt `flex items-center justify-between` en een `<Pencil>` icoon:
+Elke `renderInputField`/`renderField` krijgt drie states:
 
 ```text
-BlogGenerationForm - renderField (niet-select velden):
-  <div className="... flex items-center justify-between ...">
-    <span className="truncate">{value || placeholder}</span>
-    <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
+State 1 - Collapsed (standaard):
+  <div onClick={() => setExpandedField(field)}>
+    <span>{value || 'Niet ingesteld'}</span>
+    // GEEN potlood
   </div>
 
-KeywordResearchForm - renderField (reguliere velden):
-  Zelfde aanpak voor de div op regel 316-321
-  Google ID velden met waarde (regel 304-309) behouden hun bestaande iconen
+State 2 - Expanded (veld aangeklikt):
+  <div className="expanded-field-container relative">
+    <div>{value}</div>
+    <Button onClick={() => { setExpandedField(null); setEditingField(field); }}>
+      <Pencil />
+    </Button>
+  </div>
+
+State 3 - Editing (potlood aangeklikt):
+  <Input autoFocus onBlur={handleSave} />
 ```
 
-De styling van het potlood-icoon (`h-3.5 w-3.5 text-white/40 shrink-0 ml-2`) is consistent met het `PageUrlForm` patroon.
+De click-outside handler sluit expanded velden wanneer je ergens anders klikt:
+
+```text
+useEffect: document.addEventListener('mousedown', handler)
+  als expandedField en klik NIET in .expanded-field-container:
+    setExpandedField(null)
+```
