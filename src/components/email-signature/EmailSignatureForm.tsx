@@ -225,6 +225,8 @@ export const EmailSignatureForm = ({
         background_color: selectedSignature.background_color,
         gradient_end_color: selectedSignature.gradient_end_color || '#16213e',
         text_color: selectedSignature.text_color,
+        profile_photo_url: selectedSignature.profile_photo_url || '',
+        company_logo_url: selectedSignature.company_logo_url || '',
       });
       setSocials(selectedSignature.socials || []);
       setProfilePhotoUrl(selectedSignature.profile_photo_url);
