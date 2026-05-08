@@ -1,51 +1,37 @@
 
 
-## Veldopslag bevestigen met 1-seconde melding
+## Progressiebalk zichtbaar maken
 
 ### Probleem
 
-De `localStorage`-opslag werkt technisch correct in de code (elke `onChange` slaat op), maar er is geen visuele bevestiging. Daarnaast wordt een extra `onBlur`-melding gevraagd.
+De progressiebalk animatie werkt technisch correct (de waarde loopt netjes op van 0 naar 100), maar de balk is **onzichtbaar** omdat de achtergrondkleur en de vulkleur exact dezelfde kleur zijn:
+
+- Achtergrond (`bg-secondary`): `hsl(130, 17%, 84%)` -- lichtgroen
+- Vulling (`bg-primary`): `hsl(130, 17%, 84%)` -- dezelfde lichtgroen
+
+### Oplossing
+
+De Progress indicator in de LeadsGenerator krijgt een eigen zichtbare kleur via een className override, zodat de balk duidelijk opvalt tegen de achtergrond.
 
 ### Wat wordt er aangepast
 
 **`src/pages/LeadsGenerator.tsx`**
 
-1. **onBlur handler toevoegen** aan elk invoerveld (Plaatsnaam, Country, elke Zoekterm)
-2. Wanneer een veld wordt verlaten (`onBlur`) en het veld is **niet leeg**, wordt een korte toast getoond:
-   - Titel: "Opgeslagen"
-   - Duur: **1 seconde** (1000ms)
-3. De `localStorage`-opslag blijft op `onChange` (elke toetsaanslag), zodat er nooit data verloren gaat
-4. De `TOAST_REMOVE_DELAY` in `src/hooks/use-toast.ts` wordt verlaagd zodat korte toasts ook snel verdwijnen uit de DOM (momenteel staat deze op 3000ms, wat betekent dat een 1-seconde toast pas na 3 seconden wordt opgeruimd)
+Op de `<Progress>` component wordt een custom indicator-kleur meegegeven. De achtergrond van de progressiebalk wordt donker/transparant gemaakt en de indicator krijgt de primaire groene kleur:
 
-### Technische details
-
-**Nieuwe functie in LeadsGenerator:**
 ```typescript
-const handleFieldBlur = (fieldName: string, value: string) => {
-  if (value.trim()) {
-    toast({
-      title: 'Opgeslagen',
-      duration: 1000,
-    });
-  }
-};
-```
-
-**Op elk Input element wordt `onBlur` toegevoegd:**
-```typescript
-<Input
-  value={plaatsnaam}
-  onChange={(e) => updatePlaatsnaam(e.target.value)}
-  onBlur={() => handleFieldBlur('Plaatsnaam', plaatsnaam)}
-  ...
+<Progress 
+  value={progress} 
+  className="h-2 bg-white/10 [&>div]:bg-primary" 
 />
 ```
 
-Hetzelfde voor Country en elke Zoekterm.
+- `bg-white/10`: donkere transparante achtergrond zodat de balk zichtbaar is op het donkere scherm
+- `[&>div]:bg-primary`: de indicator behoudt de groene kleur maar is nu zichtbaar tegen de donkere achtergrond
 
 ### Bestanden die worden aangepast
 
 | Bestand | Wijziging |
 |---|---|
-| `src/pages/LeadsGenerator.tsx` | `onBlur` handler toevoegen aan alle invoervelden met 1-seconde "Opgeslagen" toast |
+| `src/pages/LeadsGenerator.tsx` | Progress className aanpassen zodat achtergrond en vulling verschillende kleuren hebben |
 
