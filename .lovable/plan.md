@@ -1,124 +1,172 @@
 
-# Plan: Super Admin Rol Toevoegen
+# Plan: Bewerkbare SEO Blog Handleiding Titel (Alleen Super Admin)
 
 ## Overzicht
-Een nieuwe "Super Admin" rol toevoegen aan het bestaande role-based access control systeem. Super Admin is het hoogste niveau met volledige toegang inclusief het beheren van andere admins.
+Een potloodicoon toevoegen achter de "SEO blog handleiding" titel die:
+- Alleen zichtbaar is bij hover
+- Alleen zichtbaar is voor Super Admins
+- Tekst bewerkbaar maakt bij klik
+- Opslaanfunctie bevat om wijzigingen te persisteren
 
 ---
 
-## Rol Hiërarchie (na implementatie)
+## 1. Database Tabel Aanmaken
 
-| Rol | Kleur | Rechten |
-|-----|-------|---------|
-| **Super Admin** | Paars | Alles + beheren van admins |
-| Admin | Rood | Volledige toegang behalve super admin functies |
-| Operator | Blauw | Bekijken + uitvoeren |
-| Viewer | Groen | Alleen bekijken |
-
----
-
-## 1. Database Migratie
-
-**Actie:** `app_role` enum uitbreiden met `'super_admin'`
+**Nieuwe tabel:** `app_settings`
 
 ```sql
-ALTER TYPE public.app_role ADD VALUE 'super_admin';
-```
-
----
-
-## 2. Edge Functions Aanpassen
-
-### `supabase/functions/manage-user-roles/index.ts`
-- `validateRole()` functie: `['super_admin', 'admin', 'operator', 'viewer']`
-- Admin check aanpassen: zowel `admin` als `super_admin` mogen rollen beheren
-
-### `supabase/functions/invite-user/index.ts`
-- `validateRole()` functie uitbreiden
-- Admin check aanpassen voor super_admin
-
----
-
-## 3. Frontend Types Aanpassen
-
-### `src/hooks/useUserManagement.ts`
-```typescript
-export type AppRole = 'super_admin' | 'admin' | 'operator' | 'viewer';
-```
-
-### `src/hooks/useAuth.ts`
-```typescript
-export type UserRole = 'super_admin' | 'admin' | 'operator' | 'viewer';
-// + isSuperAdmin boolean toevoegen
-```
-
-### `src/hooks/useUserPermissions.ts`
-```typescript
-// + isSuperAdmin flag toevoegen
-const isSuperAdmin = userRoles.includes('super_admin');
-```
-
----
-
-## 4. UI Componenten Aanpassen
-
-### `src/components/admin/users/UserList.tsx`
-
-**roleConfig uitbreiden:**
-```typescript
-super_admin: { 
-  label: 'Super Admin', 
-  icon: <Crown className="w-3 h-3" />, 
-  color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
-}
-```
-
-**Select opties toevoegen:**
-```tsx
-<SelectItem value="super_admin">
-  <span className="flex items-center gap-2">
-    <Crown className="w-3 h-3" /> Super Admin
-  </span>
-</SelectItem>
-```
-
-### `src/components/admin/users/UsersTab.tsx`
-
-**Stats grid uitbreiden naar 5 kolommen:**
-- Super Admin counter met paarse kleur
-
-### `src/components/admin/users/InviteUserModal.tsx`
-
-**Super Admin optie toevoegen:**
-```tsx
-<SelectItem value="super_admin">Super Admin - Hoogste toegang</SelectItem>
-```
-
-### `src/components/admin/users/PermissionMatrix.tsx`
-
-**Badge toevoegen:**
-```tsx
-<Badge className="bg-purple-500/10 border-purple-500/30 text-purple-400">
-  Super Admin = Volledige toegang + admin beheer
-</Badge>
-```
-
-**Filter aanpassen:**
-```typescript
-const nonAdminUsers = users.filter(u => 
-  !u.roles.includes('admin') && !u.roles.includes('super_admin')
+CREATE TABLE public.app_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key text UNIQUE NOT NULL,
+  value text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
+
+-- RLS inschakelen
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+-- Iedereen mag lezen
+CREATE POLICY "Anyone can read settings" ON public.app_settings
+  FOR SELECT TO authenticated USING (true);
+
+-- Alleen super_admin mag schrijven
+CREATE POLICY "Super admins can update settings" ON public.app_settings
+  FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'super_admin'));
+
+-- Initiële waarde invoegen
+INSERT INTO public.app_settings (key, value) 
+VALUES ('seo_guide_title', 'SEO blog handleiding');
 ```
 
 ---
 
-## 5. Admin Panel Toegang
+## 2. Frontend Wijzigingen
 
-### `src/hooks/useAdminAuth.ts`
-Admin panel toegang voor beide:
+### Bestand: `src/pages/SeoBlog.tsx`
+
+**Imports toevoegen:**
 ```typescript
-const isAdminUser = roles.includes('admin') || roles.includes('super_admin');
+import { Pencil, Save } from 'lucide-react';
 ```
+
+**isSuperAdmin uit useAuth halen:**
+```typescript
+const { isLoading: authLoading, user, isAdmin, isSuperAdmin } = useAuth();
+```
+
+**Nieuwe state variabelen:**
+```typescript
+const [guideTitle, setGuideTitle] = useState('SEO blog handleiding');
+const [isEditingTitle, setIsEditingTitle] = useState(false);
+const [editedTitle, setEditedTitle] = useState('');
+const [isSavingTitle, setIsSavingTitle] = useState(false);
+```
+
+**Titel laden bij mount:**
+```typescript
+useEffect(() => {
+  const loadGuideTitle = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'seo_guide_title')
+      .single();
+    
+    if (data?.value) {
+      setGuideTitle(data.value);
+    }
+  };
+  loadGuideTitle();
+}, []);
+```
+
+**Opslaan functie:**
+```typescript
+const handleSaveTitle = async () => {
+  if (!editedTitle.trim()) return;
+  
+  setIsSavingTitle(true);
+  const { error } = await supabase
+    .from('app_settings')
+    .update({ value: editedTitle.trim(), updated_at: new Date().toISOString() })
+    .eq('key', 'seo_guide_title');
+  
+  if (!error) {
+    setGuideTitle(editedTitle.trim());
+    setIsEditingTitle(false);
+  }
+  setIsSavingTitle(false);
+};
+```
+
+**SheetTitle vervangen (regel 403-405):**
+
+Van:
+```tsx
+<SheetHeader>
+  <SheetTitle className="text-white text-xl">SEO blog handleiding</SheetTitle>
+</SheetHeader>
+```
+
+Naar:
+```tsx
+<SheetHeader>
+  <SheetTitle className="text-white text-xl flex items-center gap-2 group">
+    {isEditingTitle ? (
+      <>
+        <input
+          type="text"
+          value={editedTitle}
+          onChange={(e) => setEditedTitle(e.target.value)}
+          className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:border-white/40"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSaveTitle();
+            if (e.key === 'Escape') setIsEditingTitle(false);
+          }}
+        />
+        <button
+          onClick={handleSaveTitle}
+          disabled={isSavingTitle}
+          className="p-1 rounded hover:bg-white/10 text-green-400"
+          title="Opslaan"
+        >
+          <Save className="h-4 w-4" />
+        </button>
+      </>
+    ) : (
+      <>
+        {guideTitle}
+        {isSuperAdmin && (
+          <button
+            onClick={() => {
+              setEditedTitle(guideTitle);
+              setIsEditingTitle(true);
+            }}
+            className="p-1 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Bewerken"
+          >
+            <Pencil className="h-4 w-4 text-white/60" />
+          </button>
+        )}
+      </>
+    )}
+  </SheetTitle>
+</SheetHeader>
+```
+
+---
+
+## Gebruikerservaring
+
+| Actie | Resultaat |
+|-------|-----------|
+| Hover over titel (niet super admin) | Geen verandering |
+| Hover over titel (super admin) | Potloodicoon verschijnt |
+| Klik op potlood | Invoerveld verschijnt met huidige tekst |
+| Druk op Enter of klik opslaan | Titel wordt opgeslagen in database |
+| Druk op Escape | Bewerkingsmodus geannuleerd |
 
 ---
 
@@ -126,14 +174,5 @@ const isAdminUser = roles.includes('admin') || roles.includes('super_admin');
 
 | Bestand | Wijziging |
 |---------|-----------|
-| Database migratie | `app_role` enum uitbreiden |
-| `supabase/functions/manage-user-roles/index.ts` | validateRole + admin check |
-| `supabase/functions/invite-user/index.ts` | validateRole + admin check |
-| `src/hooks/useUserManagement.ts` | AppRole type |
-| `src/hooks/useAuth.ts` | UserRole type + isSuperAdmin |
-| `src/hooks/useUserPermissions.ts` | isSuperAdmin flag |
-| `src/hooks/useAdminAuth.ts` | Admin check uitbreiden |
-| `src/components/admin/users/UserList.tsx` | roleConfig + Select |
-| `src/components/admin/users/UsersTab.tsx` | Stats grid |
-| `src/components/admin/users/InviteUserModal.tsx` | Select opties |
-| `src/components/admin/users/PermissionMatrix.tsx` | Badges + filter |
+| Database migratie | `app_settings` tabel aanmaken |
+| `src/pages/SeoBlog.tsx` | Bewerkbare titel met hover potlood |
