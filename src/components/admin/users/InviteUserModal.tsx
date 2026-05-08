@@ -111,7 +111,7 @@ export const InviteUserModal = ({ open, onOpenChange, onSuccess }: InviteUserMod
             <Button variant="outline" onClick={handleClose} disabled={isLoading}>
               Annuleren
             </Button>
-            <Button onClick={handleInvite} disabled={isLoading}>
+            <Button onClick={handleInvite} disabled={isLoading} variant="primaryCustom">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
