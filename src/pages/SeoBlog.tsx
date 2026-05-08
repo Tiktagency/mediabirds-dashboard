@@ -707,7 +707,7 @@ const SeoBlog = () => {
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">7</span>
                   <div className="text-sm text-white/70">
                     <p className="font-medium text-green-300">Sitemaps toevoegen</p>
-                    <p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden.</p>
+                    <p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden. Druk tot slot op de knop URL's documenteren</p>
                   </div>
                 </div>
               </div>
