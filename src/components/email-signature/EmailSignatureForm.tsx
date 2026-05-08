@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
 import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { Plus, X, Upload, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Select,
   SelectContent,
@@ -43,7 +44,10 @@ const platformOptions = [
 interface EmailSignatureFormProps {
   selectedSignature: EmailSignatureSettings | null;
   isSaving: boolean;
-  onSave: (settings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onSave: (
+    settings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    options?: { silent?: boolean }
+  ) => Promise<void>;
   onUploadPhoto: (file: File) => Promise<string | null>;
 }
 
@@ -114,7 +118,7 @@ export const EmailSignatureForm = ({
           text_color: data.text_color,
           socials,
           profile_photo_url: profilePhotoUrl,
-        });
+        }, { silent: true });
       }
     }, 1000); // 1 seconde debounce
   };
@@ -236,24 +240,18 @@ export const EmailSignatureForm = ({
       profile_photo_url: profilePhotoUrl,
     };
 
-    // Alleen naar webhook sturen, niet opslaan
+    // Alleen naar webhook sturen via edge function, niet opslaan
     setIsSending(true);
     try {
-      const webhookResponse = await fetch(
-        'https://tikt.app.n8n.cloud/webhook-test/0d19dda2-8df2-4952-a93a-5c9c49b4edd8',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(signatureData),
-        }
-      );
-      
-      if (!webhookResponse.ok) {
-        throw new Error('Webhook request failed');
+      const response = await supabase.functions.invoke('trigger-email-signature', {
+        body: signatureData,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
       }
-      
-      const webhookData = await webhookResponse.text();
-      console.log('Webhook response:', webhookData);
+
+      console.log('Webhook response:', response.data);
     } catch (error) {
       console.error('Error calling webhook:', error);
     } finally {
