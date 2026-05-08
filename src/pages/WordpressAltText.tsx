@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import HeroSection from '@/components/HeroSection';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import workflowImage from '@/assets/wordpress-alt-text-workflow.png';
+import AltTextCompanySelector, { AltTextCompany } from '@/components/wordpress-alt-text/AltTextCompanySelector';
 
 const WordpressAltText = () => {
   const { isLoading } = useAdminAuth();
+  const [companies, setCompanies] = useState<AltTextCompany[]>([]);
 
   if (isLoading) {
     return (
@@ -38,13 +39,11 @@ const WordpressAltText = () => {
           Alt-tekst wordpress
         </h1>
         
-        <div className="flex flex-col items-center gap-10 max-w-5xl w-full pb-12">
-          <img 
-            src={workflowImage} 
-            alt="WordPress Alt Text Workflow" 
-            className="max-w-3xl w-full h-auto rounded-lg shadow-lg"
-          />
-          
+        <div className="flex flex-col items-center gap-6 max-w-5xl w-full pb-12">
+          <div className="self-end">
+            <AltTextCompanySelector onCompaniesChange={setCompanies} />
+          </div>
+
           <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white w-full">
             <CardContent className="pt-6">
               <p className="text-base mb-4 leading-relaxed">
@@ -53,28 +52,18 @@ const WordpressAltText = () => {
               </p>
               <div className="mt-4">
                 <p className="font-semibold mb-3 text-white/90">Dit is momenteel actief voor de volgende sites:</p>
-                <ul className="space-y-2 ml-4">
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Mediabird</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Reneko Kozijnen</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Chiefmachers</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Maanderzand</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                    <span>Vdzandtkeukens</span>
-                  </li>
-                </ul>
+                {companies.length > 0 ? (
+                  <ul className="space-y-2 ml-4">
+                    {companies.map((company) => (
+                      <li key={company.id} className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                        <span>{company.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-white/50 text-sm ml-4">Nog geen bedrijven toegevoegd.</p>
+                )}
               </div>
             </CardContent>
           </Card>
