@@ -15,6 +15,7 @@ export interface BlogSettings {
   folder_id: string | null;
   used_folder_id: string | null;
   image_type: string | null;
+  image_style: string | null;
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
   status: string | null;
