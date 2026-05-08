@@ -21,18 +21,20 @@ serve(async (req) => {
       );
     }
 
-    const { workflowName } = await req.json();
+    const body = await req.json();
+    // Support both single workflowName and array workflowNames
+    const workflowNames: string[] = body.workflowNames || (body.workflowName ? [body.workflowName] : []);
     
-    if (!workflowName) {
+    if (!workflowNames.length) {
       return new Response(
-        JSON.stringify({ error: 'workflowName is required' }),
+        JSON.stringify({ error: 'workflowName or workflowNames is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Fetching executions for workflow: ${workflowName}`);
+    console.log(`Fetching executions for workflows: ${workflowNames.join(', ')}`);
 
-    // First, get all workflows to find the one matching the name
+    // Fetch all workflows once
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
       method: 'GET',
       headers: {
@@ -44,9 +46,8 @@ serve(async (req) => {
     if (!workflowsResponse.ok) {
       const errorText = await workflowsResponse.text();
       console.error('Failed to fetch workflows:', errorText);
-      // Return graceful fallback instead of 500 when n8n is unreachable
       return new Response(
-        JSON.stringify({ error: 'n8n temporarily unavailable', lastRun: null, workflowId: null, workflowName: null, executionId: null }),
+        JSON.stringify({ error: 'n8n temporarily unavailable', results: workflowNames.map(name => ({ workflowName: name, lastRun: null })) }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -54,53 +55,49 @@ serve(async (req) => {
     const workflowsData = await workflowsResponse.json();
     console.log(`Found ${workflowsData.data?.length || 0} workflows`);
 
-    // Find workflow by name (case-insensitive partial match)
-    const workflow = workflowsData.data?.find((w: any) => 
-      w.name.toLowerCase().includes(workflowName.toLowerCase())
-    );
-
-    if (!workflow) {
-      console.log(`Workflow "${workflowName}" not found`);
-      return new Response(
-        JSON.stringify({ error: `Workflow "${workflowName}" not found`, lastRun: null }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    // For each requested workflow name, find and fetch executions in parallel
+    const results = await Promise.all(workflowNames.map(async (workflowName) => {
+      const workflow = workflowsData.data?.find((w: any) =>
+        w.name.toLowerCase().includes(workflowName.toLowerCase())
       );
-    }
 
-    console.log(`Found workflow: ${workflow.name} (ID: ${workflow.id})`);
-
-    // Get executions for this workflow, filtered by success status
-    const executionsResponse = await fetch(
-      `https://tikt.app.n8n.cloud/api/v1/executions?workflowId=${workflow.id}&status=success&limit=1`,
-      {
-        method: 'GET',
-        headers: {
-          'X-N8N-API-KEY': n8nApiKey,
-          'Content-Type': 'application/json',
-        },
+      if (!workflow) {
+        console.log(`Workflow "${workflowName}" not found`);
+        return { workflowName, lastRun: null };
       }
-    );
 
-    if (!executionsResponse.ok) {
-      const errorText = await executionsResponse.text();
-      console.error('Failed to fetch executions:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch executions from n8n' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      try {
+        const executionsResponse = await fetch(
+          `https://tikt.app.n8n.cloud/api/v1/executions?workflowId=${workflow.id}&status=success&limit=1`,
+          {
+            method: 'GET',
+            headers: { 'X-N8N-API-KEY': n8nApiKey, 'Content-Type': 'application/json' },
+          }
+        );
 
-    const executionsData = await executionsResponse.json();
-    console.log(`Found ${executionsData.data?.length || 0} successful executions`);
+        if (!executionsResponse.ok) {
+          return { workflowName, lastRun: null };
+        }
 
-    const lastExecution = executionsData.data?.[0];
-    
+        const executionsData = await executionsResponse.json();
+        const lastExecution = executionsData.data?.[0];
+        return {
+          workflowName,
+          lastRun: lastExecution?.stoppedAt || lastExecution?.startedAt || null,
+        };
+      } catch {
+        return { workflowName, lastRun: null };
+      }
+    }));
+
+    // Legacy single-workflow support: if only one was requested, also return flat fields
+    const single = results[0];
     return new Response(
       JSON.stringify({
-        workflowId: workflow.id,
-        workflowName: workflow.name,
-        lastRun: lastExecution?.stoppedAt || lastExecution?.startedAt || null,
-        executionId: lastExecution?.id || null,
+        results,
+        // Legacy fields for backwards compat
+        workflowName: single?.workflowName,
+        lastRun: single?.lastRun ?? null,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
