@@ -88,7 +88,13 @@ export const ProfileModal = ({ open, onOpenChange, user }: ProfileModalProps) =>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent 
+        className="sm:max-w-md bg-card border-border"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          document.body.style.pointerEvents = '';
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-foreground">Mijn Profiel</DialogTitle>
         </DialogHeader>
