@@ -1,64 +1,48 @@
 
-## Analyse: Ontbrekende velden in automatische triggers
+## Analyse: Wat vertraagt het project?
 
-### Blog trigger (`run-scheduled-blogs`) — ontbrekende velden
+### Huidige knelpunten op de Index pagina
 
-De handmatige "Start" knop stuurt in `blogData`:
-- `page_url_spreadsheet_id` — uit `page_url_settings.google_sheet_id`
-- `page_url_grid_id` — uit `page_url_settings.google_file_id`
-- `page_urls` — het hele `page_urls` JSON object uit `page_url_settings`
-- `folder_id` (alleen als `image_type === 'google_drive'`)
-- `used_folder_id` (alleen als `image_type === 'google_drive'`)
-- `image_type` — `'ai_image'` of `'google_drive'`
-- `aantal_woorden` als string range `"500-1500"` ✅ (zit er al in)
+**Parallelle waterval van DB-queries bij opstarten:**
+- `useAuth` — 2x rollen ophalen (getSession + onAuthStateChange)
+- `useDashboardSettings` — apart `getUser()` + dashboard query
+- `useAutomationSettings` — automation_settings query
+- `useAutomationStatus` — automation_status query + realtime channel
+- `useN8nExecutions` × 3 — 3 aparte edge function calls (chatbot, monday, alttext)
+- Index.tsx zelf — nog een `profiles` query voor complete-profile check
 
-De scheduler stuurt **niet**:
-- `page_url_spreadsheet_id`, `page_url_grid_id`, `page_urls` — ontbreekt volledig
-- `folder_id`, `used_folder_id` — worden altijd leeg gestuurd
-- `image_type` — wordt niet meegestuurd
+**Totaal: ~8 aparte netwerkaanvragen serieel/overlappend bij eerste load.**
 
-### SEO trigger (`run-scheduled-seo`) — is al correct
+De pagina toont een spinner zolang `isLoading || settingsLoading || automationsLoading` — dus de gebruiker ziet niets totdat alle drie klaar zijn.
 
-De SEO scheduler stuurt alle velden die ook de handmatige knop stuurt (`blogTopic`, `audienceIntent`, `businessDescription`, etc.). Dit is al correct.
+### Plan: Compactere, snellere architectuur
 
-### Fix: `run-scheduled-blogs/index.ts`
+**1. Parallelle queries samenvoegen in `useAuth`**
+`getSession()` + rollen ophalen dubbel (zowel in getSession als in onAuthStateChange). Deduplicate: één fetch bij initiële sessie, onAuthStateChange alleen voor daadwerkelijke auth-wijzigingen.
 
-Na het ophalen van `blogSettings` ook `page_url_settings` ophalen:
+**2. Skeleton UI i.p.v. volledige spinner**
+Dashboard laadt direct met skeleton tiles, zodat de gebruiker meteen iets ziet. Zware data (n8n executions) laadt op de achtergrond.
 
-```typescript
-const { data: pageUrlSettings } = await supabase
-  .from('page_url_settings')
-  .select('*')
-  .eq('company_id', company.id)
-  .maybeSingle();
-```
+**3. `useN8nExecutions` samenvoegen tot één call**
+Nu 3 aparte edge function calls. Eén gecombineerde call die alle 3 workflows tegelijk ophaalt.
 
-Dan de payload uitbreiden:
+**4. `useDashboardSettings` — verwijder dubbele `getUser()`**
+Haalt `user` op via `supabase.auth.getUser()` intern, terwijl `useAuth` dit al doet. Geef de `user` door als parameter.
 
-```typescript
-const blogPayload = {
-  bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
-  // ... bestaande velden ...
-  
-  // image type velden
-  image_type: blogSettings.image_type || 'ai_image',
-  folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.folder_id || '') : '',
-  used_folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
-  achtergrond_kleur: blogSettings.image_type !== 'google_drive' ? (blogSettings.achtergrond_kleur || '') : '',
-  hoofdaccent_gradient: blogSettings.image_type !== 'google_drive' ? (blogSettings.hoofdaccent_gradient || '') : '',
-  
-  // page URL velden
-  page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
-  page_url_grid_id: pageUrlSettings?.google_file_id || '',
-  page_urls: pageUrlSettings?.page_urls || {},
-  
-  timestamp: new Date().toISOString(),
-  triggered_from: 'scheduled',
-};
-```
+**5. Index.tsx: `profiles` query buiten de kritieke render-path**
+De `showCompleteProfile` check blokkeert niets maar veroorzaakt wel een extra query. Dit kan na de eerste render.
 
-### Bestand
+### Concrete wijzigingen
 
 | Bestand | Aanpassing |
 |---|---|
-| `supabase/functions/run-scheduled-blogs/index.ts` | `page_url_settings` ophalen + ontbrekende velden toevoegen aan payload |
+| `src/hooks/useAuth.ts` | Dedupliceer rollen-fetch, verwijder dubbele getSession/onAuthStateChange logica |
+| `src/hooks/useN8nExecutions.ts` | Meerdere workflows in één edge function call |
+| `supabase/functions/get-n8n-executions/index.ts` | Accepteer array van workflowNames |
+| `src/pages/Index.tsx` | Skeleton loading i.p.v. volledige spinner, `useN8nExecutions` één keer aanroepen |
+| `src/hooks/useDashboardSettings.ts` | Accepteer optionele `userId` om dubbele `getUser()` te vermijden |
+
+### Niet aanraken
+- Alle feature-logica, automations, UI components
+- Supabase queries met RLS (die zijn correct)
+- `useAutomationStatus` realtime channel (werkt goed)
