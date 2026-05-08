@@ -75,6 +75,7 @@ const COLOR_FIELDS: { key: string; label: string }[] = [
 
 const Nieuwsbrief = () => {
   const { toast } = useToast();
+  const { isAdmin } = useAdminAuth();
   const colorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
