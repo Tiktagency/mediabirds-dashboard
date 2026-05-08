@@ -1,39 +1,51 @@
 
 
-## Progressiebalk animatie fix + ERROR melding
+## Veldopslag bevestigen met 1-seconde melding
 
 ### Probleem
 
-1. **Progressiebalk laadt niet visueel** -- De Progress component heeft `transition-all` maar geen expliciete `duration`, waardoor de browser de animatie mogelijk niet vloeiend toont bij kleine stappen (0.33% per seconde).
-2. **Geen duidelijke ERROR melding** -- Als de webhook snel stopt zonder een goed antwoord terug te sturen, krijg je een vage foutmelding in plaats van een duidelijk "ERROR" bericht.
+De `localStorage`-opslag werkt technisch correct in de code (elke `onChange` slaat op), maar er is geen visuele bevestiging. Daarnaast wordt een extra `onBlur`-melding gevraagd.
 
-### Oplossing
+### Wat wordt er aangepast
 
-**1. Progress component (`src/components/ui/progress.tsx`)**
+**`src/pages/LeadsGenerator.tsx`**
 
-De CSS-klasse `transition-all` wordt vervangen door een expliciete transitie met duur, zodat de balk vloeiend beweegt:
-- `transition-all` wordt `transition-all duration-1000 ease-linear`
-- Dit zorgt dat elke stap (elke seconde) vloeiend geanimeerd wordt over 1 seconde
+1. **onBlur handler toevoegen** aan elk invoerveld (Plaatsnaam, Country, elke Zoekterm)
+2. Wanneer een veld wordt verlaten (`onBlur`) en het veld is **niet leeg**, wordt een korte toast getoond:
+   - Titel: "Opgeslagen"
+   - Duur: **1 seconde** (1000ms)
+3. De `localStorage`-opslag blijft op `onChange` (elke toetsaanslag), zodat er nooit data verloren gaat
+4. De `TOAST_REMOVE_DELAY` in `src/hooks/use-toast.ts` wordt verlaagd zodat korte toasts ook snel verdwijnen uit de DOM (momenteel staat deze op 3000ms, wat betekent dat een 1-seconde toast pas na 3 seconden wordt opgeruimd)
 
-**2. Foutafhandeling in LeadsGenerator (`src/pages/LeadsGenerator.tsx`)**
+### Technische details
 
-- Wanneer de edge function een error teruggeeft (ook als de webhook snel stopt): toon een toast met titel **"ERROR"** en een rode variant
-- Wanneer de webhook wel een antwoord stuurt maar `success: false`: ook "ERROR" tonen
-- Check ook of de response data leeg is of geen bruikbaar bericht bevat -- ook dan "ERROR"
-- De foutmelding wordt specifieker:
-  - Timeout (5 min): "Timeout: geen antwoord binnen 5 minuten"
-  - Webhook stopt snel zonder antwoord: "ERROR: de webhook heeft geen resultaat teruggestuurd"
-  - Overige fouten: "ERROR: er ging iets mis bij het verwerken"
+**Nieuwe functie in LeadsGenerator:**
+```typescript
+const handleFieldBlur = (fieldName: string, value: string) => {
+  if (value.trim()) {
+    toast({
+      title: 'Opgeslagen',
+      duration: 1000,
+    });
+  }
+};
+```
 
-**3. Edge function (`supabase/functions/trigger-leads-webhook/index.ts`)**
+**Op elk Input element wordt `onBlur` toegevoegd:**
+```typescript
+<Input
+  value={plaatsnaam}
+  onChange={(e) => updatePlaatsnaam(e.target.value)}
+  onBlur={() => handleFieldBlur('Plaatsnaam', plaatsnaam)}
+  ...
+/>
+```
 
-- Als de webhook een niet-200 status teruggeeft, wordt dit als error behandeld met de response body als foutmelding
-- Dit zorgt ervoor dat snelle mislukkingen correct als fout worden doorgestuurd naar de frontend
+Hetzelfde voor Country en elke Zoekterm.
 
-### Technische wijzigingen
+### Bestanden die worden aangepast
 
 | Bestand | Wijziging |
 |---|---|
-| `src/components/ui/progress.tsx` | `transition-all` naar `transition-all duration-1000 ease-linear` op de Indicator |
-| `src/pages/LeadsGenerator.tsx` | Error handling verbeteren: expliciete "ERROR" titel, check op lege/mislukte response |
-| `supabase/functions/trigger-leads-webhook/index.ts` | Niet-200 status van webhook als error behandelen |
+| `src/pages/LeadsGenerator.tsx` | `onBlur` handler toevoegen aan alle invoervelden met 1-seconde "Opgeslagen" toast |
+
