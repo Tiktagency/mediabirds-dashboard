@@ -1,60 +1,74 @@
 
 
-## Fix: Dubbele login log entries
+## Fix: Dubbele login log entries definitief oplossen
 
 ### Probleem
-Bij inloggen verschijnen er steeds 2 entries in het login log. Dit komt doordat `useAuth` twee keer de user-state bijwerkt (via zowel `getSession()` als `onAuthStateChange`), wat ertoe leidt dat de useEffect twee keer triggert voordat de sessionStorage flag betrouwbaar wordt gelezen.
+Ondanks de module-level guard (`sessionLogPending`) en `sessionStorage` check worden er nog steeds 2 entries per login aangemaakt. De client-side guards zijn niet voldoende omdat `useAuth` twee onafhankelijke state-updates triggert die in aparte React render-cycli terechtkomen.
 
-### Oplossing
-Voeg een **module-level variabele** toe als extra synchrone guard naast sessionStorage. Een module-level variabele wordt direct gedeeld tussen alle renders zonder enige vertraging, terwijl sessionStorage soms niet snel genoeg wordt gelezen tussen twee snelle re-renders.
+### Oplossing: Database-level deduplicatie
 
-### Technische aanpassing
+Een database-functie die controleert of er al een recente login is (binnen 30 seconden) voor dezelfde gebruiker. Als die er al is, wordt er niets geinsert. Dit is onmogelijk te omzeilen, ongeacht hoeveel keer de client de functie aanroept.
 
-**Bestand: `src/pages/Index.tsx`**
+### Technische aanpassingen
 
-Voeg buiten de component een variabele toe:
+**Stap 1: Database-functie aanmaken (migratie)**
 
-```typescript
-// Buiten de component (module-level)
-let sessionLogPending = false;
+Een nieuwe PostgreSQL-functie `log_user_visit` die:
+1. Checkt of er al een entry is voor deze user in de laatste 30 seconden
+2. Zo ja: doet niets (returns false)
+3. Zo nee: insert een nieuwe rij (returns true)
+
+```sql
+CREATE OR REPLACE FUNCTION public.log_user_visit(
+  p_user_id uuid,
+  p_email text,
+  p_display_name text
+) RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  -- Check of er al een log is binnen de laatste 30 seconden
+  IF EXISTS (
+    SELECT 1 FROM public.login_logs
+    WHERE user_id = p_user_id
+      AND logged_in_at > now() - interval '30 seconds'
+  ) THEN
+    RETURN false;
+  END IF;
+
+  INSERT INTO public.login_logs (user_id, email, display_name)
+  VALUES (p_user_id, p_email, p_display_name);
+
+  RETURN true;
+END;
+$$;
 ```
 
-Pas de useEffect aan:
+**Stap 2: Client-code aanpassen (`src/pages/Index.tsx`)**
+
+Vervang de directe `.insert()` door een `.rpc('log_user_visit', ...)` aanroep. De bestaande sessionStorage en module-level guards blijven als eerste verdedigingslijn, maar de database garandeert nu dat er nooit duplicaten kunnen ontstaan.
 
 ```typescript
-useEffect(() => {
-  if (!user || isLoading) return;
-
-  const alreadyLogged = sessionStorage.getItem('session_logged');
-  if (alreadyLogged || sessionLogPending) return;
-
-  // Zet BEIDE flags direct
-  sessionLogPending = true;
-  sessionStorage.setItem('session_logged', 'true');
-
-  const logVisit = async () => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('id', user.id)
-      .single();
-
-    const displayName = profile?.first_name
-      ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-      : user.email;
-
-    await supabase.from('login_logs').insert({
-      user_id: user.id,
-      email: user.email,
-      display_name: displayName,
-    });
-  };
-
-  logVisit();
-}, [user, isLoading]);
+// In de logVisit functie:
+await supabase.rpc('log_user_visit', {
+  p_user_id: user.id,
+  p_email: user.email,
+  p_display_name: displayName,
+});
 ```
 
-De module-level `sessionLogPending` variabele is sneller dan sessionStorage en voorkomt dat twee bijna-gelijktijdige effect-runs beide doorlopen. SessionStorage blijft erbij voor persistentie bij page refreshes.
+### Waarom dit werkt
+- De database-functie is **atomair**: zelfs als twee requests tegelijk binnenkomen, worden ze sequentieel uitgevoerd
+- De 30-seconden window vangt alle mogelijke race conditions op
+- Client-side guards (sessionStorage + module-level var) voorkomen onnodige network requests
+- Drie lagen van bescherming: module-var, sessionStorage, database
 
 ### Samenvatting
-Een bestand, drie regels extra code.
+
+| Onderdeel | Actie |
+|---|---|
+| Database migratie | Nieuwe functie `log_user_visit` met 30-seconden dedup |
+| `src/pages/Index.tsx` | `.insert()` vervangen door `.rpc('log_user_visit')` |
+
