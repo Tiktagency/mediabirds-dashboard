@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2 } from 'lucide-react';
+import { Bell, X, Search, FileText, Link as LinkIcon, BookOpen, Lightbulb, FolderOpen, Settings2, PenTool, CheckCircle2, Link2, User } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -13,6 +13,7 @@ import { KeywordResearchForm } from '@/components/seo-blog/KeywordResearchForm';
 import { BlogGenerationForm } from '@/components/seo-blog/BlogGenerationForm';
 import { PageUrlForm } from '@/components/seo-blog/PageUrlForm';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Notification {
   id: string;
@@ -22,6 +23,11 @@ interface Notification {
 }
 
 type ActiveView = 'none' | 'keyword' | 'blog' | 'pageurl';
+
+interface ManagedByUser {
+  id: string;
+  email: string | null;
+}
 
 const SeoBlog = () => {
   const { isLoading: authLoading, user, isAdmin } = useAuth();
@@ -33,6 +39,8 @@ const SeoBlog = () => {
   const [lastReadTime, setLastReadTime] = useState<string | null>(
     localStorage.getItem('notifications_last_read')
   );
+  const [managedByUsers, setManagedByUsers] = useState<ManagedByUser[]>([]);
+  const [managedBy, setManagedBy] = useState<string | null>(null);
 
   // Load notifications from database
   useEffect(() => {
@@ -79,6 +87,62 @@ const SeoBlog = () => {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Fetch admin/operator users for "Beheerd door" dropdown
+  useEffect(() => {
+    const fetchManagedByUsers = async () => {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['admin', 'operator', 'super_admin']);
+
+      if (!roleData || roleData.length === 0) return;
+
+      const userIds = roleData.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      if (profiles) {
+        setManagedByUsers(profiles);
+      }
+    };
+
+    fetchManagedByUsers();
+  }, []);
+
+  // Load managed_by when company changes
+  useEffect(() => {
+    if (!selectedCompany) {
+      setManagedBy(null);
+      return;
+    }
+    
+    const fetchManagedBy = async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('managed_by')
+        .eq('id', selectedCompany.id)
+        .single();
+
+      setManagedBy((data as any)?.managed_by || null);
+    };
+
+    fetchManagedBy();
+  }, [selectedCompany]);
+
+  const handleManagedByChange = async (userId: string) => {
+    if (!selectedCompany) return;
+    
+    const value = userId === 'none' ? null : userId;
+    setManagedBy(value);
+
+    await supabase
+      .from('companies')
+      .update({ managed_by: value } as any)
+      .eq('id', selectedCompany.id);
+  };
 
   if (authLoading) {
     return (
@@ -204,9 +268,38 @@ const SeoBlog = () => {
         <h1 className="hero-title text-white mb-4 fade-in-up text-center">
           SEO
         </h1>
-        <p className="text-white/50 text-lg mb-12 text-center max-w-lg">
+        <p className="text-white/50 text-lg mb-4 text-center max-w-lg">
           Beheer je zoekwoord onderzoek en blog generatie op één plek
         </p>
+        
+        {selectedCompany && (
+          <div className="flex items-center gap-2 mb-12">
+            <User className="h-4 w-4 text-white/40" />
+            <span className="text-white/40 text-sm">Beheerd door:</span>
+            {isAdmin ? (
+              <Select
+                value={managedBy || 'none'}
+                onValueChange={handleManagedByChange}
+              >
+                <SelectTrigger className="w-[220px] bg-white/5 border-white/20 text-white h-8 text-sm">
+                  <SelectValue placeholder="Selecteer beheerder" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-white/20">
+                  <SelectItem value="none" className="text-white/60">Geen</SelectItem>
+                  {managedByUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id} className="text-white/80">
+                      {u.email || 'Onbekend'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className="text-white/70 text-sm">
+                {managedByUsers.find(u => u.id === managedBy)?.email || 'Niet ingesteld'}
+              </span>
+            )}
+          </div>
+        )}
         
         {/* Mini Dashboard - Arrow-shaped navigation */}
         <div className="flex w-full max-w-4xl mb-12">
