@@ -36,6 +36,8 @@ const formSchema = z.object({
   background_color: z.string().min(1, 'Achtergrondkleur is verplicht'),
   gradient_end_color: z.string().optional(),
   text_color: z.string().min(1, 'Tekstkleur is verplicht'),
+  profile_photo_url: z.string().url('Ongeldige URL').min(1, 'Profielfoto URL is verplicht'),
+  company_logo_url: z.string().url('Ongeldige URL').min(1, 'Bedrijfslogo URL is verplicht'),
 });
 
 type FormData = z.infer<typeof formSchema>;
