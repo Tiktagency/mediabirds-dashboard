@@ -24,6 +24,10 @@ const formSchema = z.object({
   last_name: z.string().min(1, 'Achternaam is verplicht'),
   email: z.string().email('Ongeldig email adres'),
   job_title: z.string().min(1, 'Functie is verplicht'),
+  phone_number: z.string()
+    .regex(/^[+]?[\d\s\-()]+$/, 'Ongeldig telefoonnummer formaat')
+    .optional()
+    .or(z.literal('')),
   website: z.string().url('Ongeldige URL').optional().or(z.literal('')),
   background_type: z.enum(['gradient', 'solid']),
   background_color: z.string().min(1, 'Achtergrondkleur is verplicht'),
@@ -83,6 +87,7 @@ export const EmailSignatureForm = ({
       last_name: '',
       email: '',
       job_title: '',
+      phone_number: '',
       website: '',
       background_type: 'solid',
       background_color: '#1a1a2e',
@@ -113,6 +118,7 @@ export const EmailSignatureForm = ({
           last_name: data.last_name,
           email: data.email,
           job_title: data.job_title,
+          phone_number: data.phone_number || null,
           website: data.website || null,
           background_type: data.background_type,
           background_color: data.background_color,
@@ -134,7 +140,7 @@ export const EmailSignatureForm = ({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [watchedFields.name, watchedFields.first_name, watchedFields.last_name, watchedFields.email, watchedFields.job_title, watchedFields.website, watchedFields.background_type, watchedFields.background_color, watchedFields.gradient_end_color, watchedFields.text_color]);
+  }, [watchedFields.name, watchedFields.first_name, watchedFields.last_name, watchedFields.email, watchedFields.job_title, watchedFields.phone_number, watchedFields.website, watchedFields.background_type, watchedFields.background_color, watchedFields.gradient_end_color, watchedFields.text_color]);
 
   // Auto-save bij socials wijziging
   useEffect(() => {
@@ -163,6 +169,7 @@ export const EmailSignatureForm = ({
         last_name: selectedSignature.last_name,
         email: selectedSignature.email,
         job_title: selectedSignature.job_title,
+        phone_number: selectedSignature.phone_number || '',
         website: selectedSignature.website || '',
         background_type: selectedSignature.background_type,
         background_color: selectedSignature.background_color,
@@ -180,6 +187,7 @@ export const EmailSignatureForm = ({
         last_name: '',
         email: '',
         job_title: '',
+        phone_number: '',
         website: '',
         background_type: 'solid',
         background_color: '#1a1a2e',
@@ -235,6 +243,7 @@ export const EmailSignatureForm = ({
       last_name: data.last_name,
       email: data.email,
       job_title: data.job_title,
+      phone_number: data.phone_number || null,
       website: data.website || null,
       background_type: data.background_type,
       background_color: data.background_color,
@@ -400,6 +409,20 @@ export const EmailSignatureForm = ({
             />
             {errors.job_title && (
               <p className="text-sm text-red-400">{errors.job_title.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone_number" className="text-white">Telefoonnummer (optioneel)</Label>
+            <Input
+              id="phone_number"
+              type="tel"
+              {...register('phone_number')}
+              className="bg-white/10 border-white/20 text-white"
+              placeholder="+31 6 12345678"
+            />
+            {errors.phone_number && (
+              <p className="text-sm text-red-400">{errors.phone_number.message}</p>
             )}
           </div>
 
