@@ -20,6 +20,7 @@ export interface DashboardSettings {
     low: string;
   };
   tile_colors: TileColors;
+  saved_hours_colors: TileColors;
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +28,11 @@ export interface DashboardSettings {
 const DEFAULT_TILE_COLORS: TileColors = {
   background: '#cfddd0',
   text: '#002C1F',
+};
+
+const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
+  background: '#f2eadc',
+  text: '#412700',
 };
 
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
@@ -40,6 +46,7 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
     low: '#6b7280',
   },
   tile_colors: DEFAULT_TILE_COLORS,
+  saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
 };
 
 export const useDashboardSettings = () => {
@@ -69,6 +76,7 @@ export const useDashboardSettings = () => {
           custom_tooltips: data.custom_tooltips || DEFAULT_SETTINGS.custom_tooltips,
           impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
           tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
+          saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
         } as DashboardSettings);
       } else {
         // Create default settings for this user
@@ -151,6 +159,21 @@ export const useDashboardSettings = () => {
     });
   };
 
+  const updateSavedHoursColors = async (colors: { background?: string; text?: string }) => {
+    const newColors = { ...settings?.saved_hours_colors, ...colors };
+    // Store in dashboard_colors.saved_hours_colors for persistence
+    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    await supabase
+      .from('user_dashboard_settings')
+      .update({ dashboard_colors: { ...currentDashboardColors, saved_hours_colors: newColors } })
+      .eq('id', settings?.id);
+    setSettings(prev => prev ? { ...prev, saved_hours_colors: newColors } : null);
+    toast({
+      title: 'Opgeslagen',
+      description: 'Saved hours kleuren bijgewerkt',
+    });
+  };
+
   const updateTheme = async (theme: 'dark' | 'light') => {
     await updateSettings({ theme });
   };
@@ -167,6 +190,7 @@ export const useDashboardSettings = () => {
     updateCustomTooltip,
     updateImpactColors,
     updateTileColors,
+    updateSavedHoursColors,
     updateTheme,
     refetch: fetchSettings,
   };
