@@ -213,17 +213,14 @@ export const useLogSettings = () => {
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Take only 100 most recent
-      const recentLogs = combinedLogs.slice(0, 100);
-
       // Extract all unique automation names from unfiltered data for the dropdown
       // Only update automation names on initial load (no filters)
       if (!filters?.automation && !filters?.status) {
-        const uniqueNames = [...new Set(recentLogs.map(log => log.automation_name))];
+        const uniqueNames = [...new Set(combinedLogs.map(log => log.automation_name))];
         setAllAutomationNames(uniqueNames);
       }
 
-      setLogs(recentLogs);
+      setLogs(combinedLogs);
     } catch (error) {
       console.error('Error fetching logs:', error);
     } finally {
