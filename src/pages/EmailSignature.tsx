@@ -1,12 +1,19 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EmailSignatureForm } from '@/components/email-signature/EmailSignatureForm';
 import { SignatureList } from '@/components/email-signature/SignatureList';
 import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
-import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Copy, Check } from 'lucide-react';
 
 const EmailSignature = () => {
+  const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const { toast } = useToast();
+
   const {
     signatures,
     selectedSignature,
@@ -66,23 +73,64 @@ const EmailSignature = () => {
                 isSaving={isSaving}
                 onSave={saveSettings}
                 onUploadPhoto={uploadProfilePhoto}
+                onHtmlGenerated={(html) => setGeneratedHtml(html)}
+                onGeneratingChange={(generating) => setIsGenerating(generating)}
               />
             </div>
 
             {/* Right: HTML Output */}
             <div className="order-3">
               <Card className="bg-white/5 border-white/10 h-full">
-                <CardHeader>
-                  <CardTitle className="text-white text-lg">HTML Code</CardTitle>
-                  <CardDescription className="text-white/50">
-                    Kopieer deze code naar je email programma
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-white text-lg">HTML Code</CardTitle>
+                    <CardDescription className="text-white/50">
+                      Kopieer deze code naar je email programma
+                    </CardDescription>
+                  </div>
+                  {generatedHtml && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(generatedHtml);
+                        setIsCopied(true);
+                        toast({
+                          title: 'Gekopieerd',
+                          description: 'HTML code is naar het klembord gekopieerd',
+                        });
+                        setTimeout(() => setIsCopied(false), 2000);
+                      }}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          Gekopieerd
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 mr-1" />
+                          Kopieer
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[300px] overflow-auto">
-                    <span className="text-white/30">
-                      Vul het formulier in en klik op "Handtekening genereren" om de HTML code te zien.
-                    </span>
+                  <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[300px] max-h-[500px] overflow-auto">
+                    {isGenerating ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>HTML code genereren...</span>
+                      </div>
+                    ) : generatedHtml ? (
+                      <pre className="whitespace-pre-wrap break-all">{generatedHtml}</pre>
+                    ) : (
+                      <span className="text-white/30">
+                        Vul het formulier in en klik op "Handtekening genereren" om de HTML code te zien.
+                      </span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
