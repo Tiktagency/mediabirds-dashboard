@@ -491,6 +491,7 @@ export const KeywordResearchForm = ({
 
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-white mb-6">Zoekwoord onderzoek instellingen</h2>
       {renderInputField('Bedrijf', 'bedrijfsnaam', true)}
       
       {renderTextField(
