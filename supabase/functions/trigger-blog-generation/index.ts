@@ -105,7 +105,18 @@ serve(async (req) => {
     } catch {
       // No body or failed to parse body - continue with defaults
     }
-    
+
+    // SECURITY: only allow auth-token secret names from a fixed allowlist to prevent env exfiltration
+    const ALLOWED_SECRET_NAMES = new Set([
+      'BLOG_WEBHOOK_AUTH_TOKEN',
+      'SEO_WEBHOOK_AUTH_TOKEN',
+      'N8N_WEBHOOK_AUTH_TOKEN',
+      'TIKT_WEBHOOK_AUTH_TOKEN',
+    ]);
+    if (authTokenSecretName && !ALLOWED_SECRET_NAMES.has(authTokenSecretName)) {
+      throw new Error('Ongeldige authTokenSecretName');
+    }
+
     // Fallback to environment variables if no webhook URL in request
     if (!webhookUrl) {
       const picked = pickWebhookEnv();
@@ -116,7 +127,7 @@ serve(async (req) => {
 
     // Get auth token - prefer the one specified in request, fallback to env vars
     let authToken: string | undefined;
-    
+
     if (authTokenSecretName) {
       authToken = Deno.env.get(authTokenSecretName);
     }
