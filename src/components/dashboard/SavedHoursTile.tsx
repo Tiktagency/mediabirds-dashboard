@@ -1,5 +1,6 @@
 import { Clock } from 'lucide-react';
 import { useSavedHours } from '@/hooks/useSavedHours';
+import { SavedHoursInfoTooltip } from './SavedHoursInfoTooltip';
 import type { TileColors } from '@/hooks/useDashboardSettings';
 
 interface SavedHoursTileProps {
@@ -12,17 +13,32 @@ const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
 };
 
 export const SavedHoursTile = ({ tileColors }: SavedHoursTileProps) => {
-  const { totalHours, isLoading } = useSavedHours();
+  const { 
+    totalHours, 
+    executionCount, 
+    periodStart, 
+    periodEnd, 
+    breakdownByCompany, 
+    isLoading 
+  } = useSavedHours();
   const colors = tileColors || DEFAULT_SAVED_HOURS_COLORS;
 
   return (
     <div 
-      className="h-32 rounded-xl border flex flex-col items-center justify-center gap-2 p-4"
+      className="h-32 rounded-xl border flex flex-col items-center justify-center gap-2 p-4 relative"
       style={{ 
         backgroundColor: colors.background,
         borderColor: `${colors.background}40`,
       }}
     >
+      <SavedHoursInfoTooltip
+        totalHours={totalHours}
+        executionCount={executionCount}
+        periodStart={periodStart}
+        periodEnd={periodEnd}
+        breakdownByCompany={breakdownByCompany}
+        textColor={colors.text}
+      />
       <Clock className="w-6 h-6" style={{ color: colors.text }} />
       <span className="text-xs font-medium" style={{ color: colors.text }}>Bespaard deze maand</span>
       {isLoading ? (
