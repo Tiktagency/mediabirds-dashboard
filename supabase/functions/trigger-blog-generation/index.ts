@@ -147,9 +147,9 @@ serve(async (req) => {
       throw new Error('Webhook URL configuratie is ongeldig');
     }
 
-    // Create AbortController with 180 second timeout
+    // Create AbortController with 240 second timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 180000);
+    const timeoutId = setTimeout(() => controller.abort(), 240000);
 
     // Prepare payload - use blogData if provided, otherwise use basic payload
     const webhookPayload = blogData ? {
