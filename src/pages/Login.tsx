@@ -122,6 +122,17 @@ const Login = () => {
           .eq('id', data.session.user.id)
           .single();
 
+        // Log the login
+        const displayName = profile?.first_name
+          ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+          : data.session.user.email;
+
+        await supabase.from('login_logs').insert({
+          user_id: data.session.user.id,
+          email: data.session.user.email,
+          display_name: displayName,
+        });
+
         if (!profile?.first_name || !profile?.last_name) {
           setLoggedInUserId(data.session.user.id);
           setShowCompleteProfile(true);
