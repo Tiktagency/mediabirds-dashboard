@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const NEWSLETTER_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/f223c287-e186-4ebf-a8c1-7e9e70b0e17c';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -24,7 +26,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) {
@@ -46,22 +47,7 @@ serve(async (req) => {
       settingsId,
     } = body;
 
-    // Get webhook URL from automation_settings
-    const { data: automationData } = await supabase
-      .from('automation_settings')
-      .select('webhook_url, webhook_backup_url, status')
-      .eq('automation_name', 'nieuwsbrief')
-      .single();
-
-    const webhookUrl = automationData?.webhook_url || Deno.env.get('N8N_WEBHOOK');
-    const authToken = Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN');
-
-    if (!webhookUrl) {
-      return new Response(JSON.stringify({ error: 'Geen webhook URL geconfigureerd voor nieuwsbrief' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const authToken = Deno.env.get('TIKT_WEBHOOK_AUTH_TOKEN');
 
     const payload = {
       bedrijfsnaam,
@@ -74,26 +60,52 @@ serve(async (req) => {
       user_id: user.id,
     };
 
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+    let webhookResponse: Response;
+    try {
+      webhookResponse = await fetch(NEWSLETTER_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!webhookResponse.ok) {
       const errorText = await webhookResponse.text();
       console.error('Webhook error:', errorText);
-      return new Response(JSON.stringify({ error: `Webhook fout: ${webhookResponse.status}` }), {
+      return new Response(JSON.stringify({ error: `Webhook fout: ${webhookResponse.status}`, details: errorText }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const responseData = await webhookResponse.json().catch(() => ({}));
-    const generatedHtml = responseData?.html || responseData?.generated_html || responseData?.content || null;
+    // Parse response: try JSON first, fall back to plain text
+    const responseText = await webhookResponse.text();
+    let generatedHtml: string | null = null;
+    let message: string | null = null;
+    let responseData: Record<string, unknown> = {};
+
+    try {
+      responseData = JSON.parse(responseText);
+      generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
+      message = (responseData?.message || responseData?.Output) as string | null;
+    } catch {
+      // Plain text or HTML response
+      const trimmed = responseText.trim();
+      if (trimmed.startsWith('<')) {
+        generatedHtml = trimmed;
+      } else {
+        message = trimmed;
+      }
+    }
 
     // Save generated HTML to database if available
     if (generatedHtml && settingsId) {
@@ -104,13 +116,14 @@ serve(async (req) => {
         .eq('user_id', user.id);
     }
 
-    return new Response(JSON.stringify({ success: true, html: generatedHtml, data: responseData }), {
+    return new Response(JSON.stringify({ success: true, html: generatedHtml, message, data: responseData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: 'Interne serverfout' }), {
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    return new Response(JSON.stringify({ error: isTimeout ? 'Timeout: nieuwsbrief genereren duurde te lang' : 'Interne serverfout' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
