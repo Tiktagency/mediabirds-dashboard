@@ -42,7 +42,7 @@ const ChatWidget = () => {
         className={`fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 hover:scale-110 transition-all duration-200 shadow-lg z-50 ${isOpen ? 'hidden' : ''}`}
         size="icon"
       >
-        <MessageCircle className="h-6 w-6 text-white" />
+        <MessageCircle className="h-6 w-6 text-[#002C1F]" />
       </Button>
 
       {/* Chat Window */}
