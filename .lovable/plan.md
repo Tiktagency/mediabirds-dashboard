@@ -1,52 +1,61 @@
 
-# Plan: Pagina URL's als Aparte Array Versturen
+# Plan: Webhook Body Structuur Aanpassen
 
 ## Overzicht
 
-De webhook payload aanpassen zodat de pagina URL's als een aparte array worden verstuurd in plaats van als onderdeel van het hoofdobject.
+De webhook payload aanpassen naar het gewenste array-formaat met twee objecten: één voor de URL's en één voor de document IDs.
 
 ---
 
 ## Wijziging in `src/components/seo-blog/PageUrlForm.tsx`
 
-**Huidige payload structuur (regels 136-141):**
+**Huidige payload (regels 134-141):**
 ```typescript
 const payload = {
   bedrijfsnaam: selectedCompany.name,
   spreadsheet_id: googleSheetId,
   grid_id: googleFileId,
-  page_urls: pageUrls,  // Object: {"1": "url1", "2": "url2"}
+  page_urls: urls.filter(url => url.trim()).map(url => url.trim()),
 };
 ```
 
-**Nieuwe payload structuur:**
+**Nieuwe payload:**
 ```typescript
-const payload = {
-  bedrijfsnaam: selectedCompany.name,
-  spreadsheet_id: googleSheetId,
-  grid_id: googleFileId,
-  page_urls: urls.filter(url => url.trim()).map(url => url.trim()),  // Array: ["url1", "url2"]
-};
+const payload = [
+  // Object 1: Genummerde URL's
+  urls.reduce((acc, url, index) => {
+    if (url.trim()) {
+      acc[(index + 1).toString()] = url.trim();
+    }
+    return acc;
+  }, {} as Record<string, string>),
+  // Object 2: Document IDs
+  {
+    "Document ID": googleSheetId,
+    "Slide ID": googleFileId,
+  }
+];
 ```
 
 ---
 
 ## Resultaat
 
-| Aspect | Oud | Nieuw |
-|--------|-----|-------|
-| Type | Object `{"1": "...", "2": "..."}` | Array `["...", "..."]` |
-| Format | Genummerde keys | Simpele array van strings |
-
-**Voorbeeld nieuwe payload:**
+**Nieuwe webhook body structuur:**
 ```json
-{
-  "bedrijfsnaam": "MediaBirds",
-  "spreadsheet_id": "abc123",
-  "grid_id": "xyz789",
-  "page_urls": [
-    "https://example.com/sitemap.xml",
-    "https://example.com/services"
-  ]
-}
+[
+  {
+    "1": "https://example.com/sitemap1.xml",
+    "2": "https://example.com/sitemap2.xml"
+  },
+  {
+    "Document ID": "1IL1nRE-eiVFw0HtR8CCDiUC-6kBXb6aOOErRnwj3Pfk",
+    "Slide ID": "0"
+  }
+]
 ```
+
+| Element | Inhoud |
+|---------|--------|
+| Array[0] | URL's met genummerde keys ("1", "2", ...) |
+| Array[1] | Document ID en Slide ID |
