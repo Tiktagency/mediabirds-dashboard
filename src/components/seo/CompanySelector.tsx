@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, Building2, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Building2, Plus, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -39,6 +39,7 @@ export interface Company {
   seo_research_n8n_name: string | null;
   subkeywords_n8n_name: string | null;
   blogs_n8n_name: string | null;
+  domain: string | null;
 }
 
 interface CompanySelectorProps {
@@ -55,6 +56,9 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
+  const [newCompanyDomain, setNewCompanyDomain] = useState('');
+  const [showConfirmAdd, setShowConfirmAdd] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -154,31 +158,35 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
     }
   };
 
-  const handleAddCompany = async () => {
-    if (!newCompanyName.trim()) {
+  const handleRequestAdd = () => {
+    if (!newCompanyName.trim() || !newCompanyDomain.trim()) {
       toast({
-        title: 'Vul een bedrijfsnaam in',
+        title: 'Vul alle velden in',
         variant: 'destructive',
       });
       return;
     }
+    setIsDialogOpen(false);
+    setShowConfirmAdd(true);
+  };
 
-    setIsSaving(true);
+  const handleConfirmAdd = async () => {
+    setIsCreating(true);
     try {
       const { data, error } = await supabase
         .from('companies')
         .insert({
           name: newCompanyName.trim(),
+          domain: newCompanyDomain.trim(),
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Await webhook call to save Google Doc IDs
       try {
         const { data: webhookResult, error: webhookError } = await supabase.functions.invoke('trigger-add-company-webhook', {
-          body: { companyName: newCompanyName.trim(), companyId: data.id },
+          body: { companyName: newCompanyName.trim(), companyId: data.id, companyDomain: newCompanyDomain.trim() },
         });
 
         if (webhookError || !webhookResult?.success) {
@@ -203,11 +211,10 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         });
       }
 
-      // Reset form and close dialog
       setNewCompanyName('');
-      setIsDialogOpen(false);
+      setNewCompanyDomain('');
+      setShowConfirmAdd(false);
 
-      // Refresh companies and select the new one
       await fetchCompanies();
       if (data) {
         handleSelectCompany(data);
@@ -220,7 +227,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         variant: 'destructive',
       });
     } finally {
-      setIsSaving(false);
+      setIsCreating(false);
     }
   };
 
@@ -308,8 +315,17 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
                 autoFocus
               />
             </div>
+            <div className="space-y-2">
+              <Label className="text-white/70">Website domeinnaam</Label>
+              <Input
+                value={newCompanyDomain}
+                onChange={(e) => setNewCompanyDomain(e.target.value)}
+                placeholder="bijv. mediabirds.nl"
+                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
+              />
+            </div>
             <p className="text-sm text-white/50">
-              Na het toevoegen kun je de overige gegevens op de pagina invullen.
+              Na het toevoegen worden de bijbehorende documenten automatisch aangemaakt.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <Button
@@ -320,11 +336,11 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
                 Annuleren
               </Button>
               <Button
-                onClick={handleAddCompany}
-                disabled={isSaving || !newCompanyName.trim()}
+                onClick={handleRequestAdd}
+                disabled={!newCompanyName.trim() || !newCompanyDomain.trim()}
                 className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
-                {isSaving ? 'Toevoegen...' : 'Toevoegen'}
+                Toevoegen
               </Button>
             </div>
           </div>
@@ -351,6 +367,36 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isDeleting ? 'Verwijderen...' : 'Verwijderen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showConfirmAdd} onOpenChange={(open) => { if (!open && !isCreating) { setShowConfirmAdd(false); setIsDialogOpen(true); } }}>
+        <AlertDialogContent className="bg-card border-white/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              Bedrijf toevoegen?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Weet je zeker dat je <strong className="text-white/80">{newCompanyName}</strong> ({newCompanyDomain}) wilt toevoegen? De bijbehorende documenten worden automatisch aangemaakt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/20 text-white" disabled={isCreating}>
+              Annuleren
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAdd}
+              disabled={isCreating}
+              className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Bezig met aanmaken...
+                </>
+              ) : 'Bevestigen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
