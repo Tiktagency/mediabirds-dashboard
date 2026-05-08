@@ -1,18 +1,26 @@
 
 
-## Fix: animatie stopt niet na webhook response
+## Informatie-icoon bij "Applicatie wachtwoord"
 
-### Probleem
-In de `handleStart` functie in `WordpressAltText.tsx` wordt `setIsAnimating(true)` aangezet bij het starten, maar `setIsAnimating(false)` wordt nergens aangeroepen in de `finally` block. Alleen `setIsStarting(false)` staat daar. Daardoor blijft de animatie eindeloos doorlopen.
+### Wat wordt er toegevoegd
+Een klein informatie-icoontje (i) rechts naast het label "Applicatie wachtwoord:" dat bij hover een tooltip toont met stapsgewijze instructies voor het aanmaken van een applicatie wachtwoord in WordPress.
 
-### Oplossing
-In `src/pages/WordpressAltText.tsx` regel 95, `setIsAnimating(false)` toevoegen in de `finally` block:
+### Tooltip inhoud
+De tooltip bevat een overzichtelijke stappen-lijst:
 
-```typescript
-} finally {
-  setIsStarting(false);
-  setIsAnimating(false);
-}
-```
+1. Ga naar de achterkant van je WordPress website
+2. Navigeer naar **Gebruikers** en selecteer **Mediabirds**
+3. Scroll naar het kopje **Applicatie wachtwoorden**
+4. Gebruik als naam: **n8n alt tekst**
+5. Klik op **"Applicatie wachtwoord toevoegen"**
 
-Dit is de enige wijziging die nodig is -- 1 regel toevoegen.
+### Technische aanpassing
+
+**Bestand: `src/pages/WordpressAltText.tsx`**
+
+- Import `TooltipProvider`, `Tooltip`, `TooltipTrigger`, `TooltipContent` uit `@/components/ui/tooltip`
+- Import `Info` icoon uit `lucide-react`
+- Bij het label "Applicatie wachtwoord:" (rond regel 178) een `Info`-icoon toevoegen met een Tooltip die de stappen weergeeft
+- De tooltip krijgt styling passend bij het donkere thema (bg-card, border-border, text-white)
+- De stappen worden als genummerde lijst weergegeven met bold tekst voor de belangrijke termen
+
