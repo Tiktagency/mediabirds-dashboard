@@ -36,20 +36,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { bedrijfsnaam, domain } = await req.json();
+    const { company_id, bedrijfsnaam, domain } = await req.json();
 
-    // Fetch the company's app_password from database
+    // Fetch the company's app_password server-side using the service role key
+    // The password is never sent to or from the frontend
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    
-    let app_password = null;
-    if (domain) {
+
+    let app_password: string | null = null;
+    if (company_id) {
       const { data: company } = await supabaseAdmin
         .from('alt_text_companies')
         .select('app_password')
-        .eq('domain', domain)
+        .eq('id', company_id)
         .maybeSingle();
       app_password = company?.app_password || null;
     }
