@@ -538,6 +538,7 @@ export type Database = {
       }
       landing_schedules: {
         Row: {
+          company_id: string | null
           created_at: string
           day_of_week: number
           enabled: boolean
@@ -551,6 +552,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           day_of_week?: number
           enabled?: boolean
@@ -564,6 +566,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           day_of_week?: number
           enabled?: boolean
@@ -576,7 +579,15 @@ export type Database = {
           time_of_day?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "landing_schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "landing_companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       log_settings: {
         Row: {

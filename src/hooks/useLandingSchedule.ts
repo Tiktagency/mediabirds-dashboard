@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface LandingSchedule {
   id: string;
+  company_id: string | null;
   enabled: boolean;
   interval_value: number;
   interval_unit: 'days' | 'weeks' | 'months';
@@ -55,19 +56,25 @@ const calculateNextTrigger = (
   return next;
 };
 
-export const useLandingSchedule = () => {
+export const useLandingSchedule = (companyId: string | null | undefined) => {
   const [schedule, setSchedule] = useState<LandingSchedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!companyId) {
+      setSchedule(null);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSchedule = async () => {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('landing_schedules')
         .select('*')
-        .limit(1)
+        .eq('company_id', companyId)
         .maybeSingle();
 
       if (error) {
@@ -79,9 +86,11 @@ export const useLandingSchedule = () => {
       setIsLoading(false);
     };
     fetchSchedule();
-  }, []);
+  }, [companyId]);
 
   const updateSchedule = async (updates: UpdateScheduleData) => {
+    if (!companyId) return { success: false, error: 'No company selected' };
+
     setIsSaving(true);
 
     let nextTriggerAt: string | undefined;
@@ -110,7 +119,10 @@ export const useLandingSchedule = () => {
       } else {
         const { data, error } = await supabase
           .from('landing_schedules')
-          .insert(updateData)
+          .insert({
+            company_id: companyId,
+            ...updateData,
+          })
           .select()
           .single();
         if (error) throw error;
