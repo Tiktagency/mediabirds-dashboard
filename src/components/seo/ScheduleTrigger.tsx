@@ -92,37 +92,40 @@ export const ScheduleTrigger = ({
   updateSchedule, 
   getNextTriggerDisplay 
 }: ScheduleTriggerProps) => {
-  // Local state for form controls
-  const [enabled, setEnabled] = useState(false);
-  const [intervalValue, setIntervalValue] = useState(1);
-  const [intervalUnit, setIntervalUnit] = useState<'days' | 'weeks' | 'months'>('weeks');
-  const [dayOfWeek, setDayOfWeek] = useState(1);
-  const [hours, setHours] = useState('10');
-  const [minutes, setMinutes] = useState('00');
+  // Optimistic override for enabled – only active between toggle click and DB response
+  const [enabledOverride, setEnabledOverride] = useState<boolean | null>(null);
+  const enabled = enabledOverride ?? schedule?.enabled ?? false;
 
-  // Sync local state with schedule data
+  // Local state for form controls (non-enabled fields)
+  const [intervalValue, setIntervalValue] = useState(schedule?.interval_value ?? 1);
+  const [intervalUnit, setIntervalUnit] = useState<'days' | 'weeks' | 'months'>(
+    (schedule?.interval_unit as 'days' | 'weeks' | 'months') || 'weeks'
+  );
+  const [dayOfWeek, setDayOfWeek] = useState(schedule?.day_of_week ?? 1);
+  const [hours, setHours] = useState(() => {
+    if (schedule?.time_of_day) return schedule.time_of_day.slice(0, 2);
+    return '10';
+  });
+  const [minutes, setMinutes] = useState(() => {
+    if (schedule?.time_of_day) return schedule.time_of_day.slice(3, 5);
+    return '00';
+  });
+
+  // Sync non-enabled fields when schedule prop updates
   useEffect(() => {
-    if (schedule) {
-      setEnabled(schedule.enabled);
-      setIntervalValue(schedule.interval_value || 1);
-      setIntervalUnit(schedule.interval_unit || 'weeks');
-      setDayOfWeek(schedule.day_of_week);
-      const timeParts = schedule.time_of_day.slice(0, 5).split(':');
-      setHours(timeParts[0]);
-      setMinutes(timeParts[1]);
-    } else {
-      setEnabled(false);
-      setIntervalValue(1);
-      setIntervalUnit('weeks');
-      setDayOfWeek(1);
-      setHours('10');
-      setMinutes('00');
-    }
+    if (!schedule) return;
+    setIntervalValue(schedule.interval_value || 1);
+    setIntervalUnit((schedule.interval_unit as 'days' | 'weeks' | 'months') || 'weeks');
+    setDayOfWeek(schedule.day_of_week);
+    const timeParts = schedule.time_of_day.slice(0, 5).split(':');
+    setHours(timeParts[0]);
+    setMinutes(timeParts[1]);
   }, [schedule]);
 
   const handleEnabledChange = async (newEnabled: boolean) => {
-    setEnabled(newEnabled);
+    setEnabledOverride(newEnabled);
     await updateSchedule({ enabled: newEnabled });
+    setEnabledOverride(null);
   };
 
   const handleIntervalValueChange = async (newValue: number) => {
