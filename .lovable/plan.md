@@ -1,43 +1,57 @@
 
 
-## Toevoeg-dialoog Landingspagina gelijktrekken met SEO-pagina
+## Start-knop koppelen aan eigen webhook
 
 ### Wat verandert er
 
-Het "Bedrijf toevoegen"-dialoog op de Landingspagina wordt vereenvoudigd zodat het identiek werkt aan dat van de `/seo-blog` pagina: alleen **Bedrijfsnaam** en **Website domeinnaam** als invoervelden. De overige velden (applicatie wachtwoord, spreadsheet ID, grid ID) worden niet meer in het dialoog getoond -- die kunnen later op de pagina zelf worden ingevuld.
+De Start-knop op de Landingspagina stuurt de data naar een **eigen webhook URL** in plaats van de alt-text webhook. De edge function wacht op het antwoord van n8n en stuurt dat terug. Het antwoord wordt als toast-melding 5 seconden in beeld getoond.
 
-De auto-fill vanuit `alt_text_companies` (domeinnaam + applicatie wachtwoord) blijft behouden op basis van de bedrijfsnaam.
+### Stappen
 
-### Aanpassingen in `src/components/landing/LandingCompanySelector.tsx`
+**1. Nieuwe edge function: `trigger-landing-webhook`**
 
-1. **Dialoogvelden verwijderen**: de invoervelden voor applicatie wachtwoord, spreadsheet ID en grid ID worden verwijderd uit het dialoog
-2. **State opschonen**: `newCompanyPassword`, `newSpreadsheetId`, `newGridId` worden niet meer gebruikt in het dialoog (maar nog wel gereset bij confirm)
-3. **Auto-fill aanpassen**: bij name blur wordt nu ook het domeinnaam-veld ingevuld vanuit `alt_text_companies`, en het `app_password` wordt meegestuurd bij insert maar niet getoond
-4. **Bevestigingsdialoog**: tekst wordt gelijkgetrokken met de SEO-versie ("bijbehorende documenten" hint verwijderd, alleen naam + domein getoond)
-5. **Insert aanpassen**: bij het aanmaken wordt `domain` + eventueel gevonden `app_password` direct meegestuurd, maar zonder spreadsheet/grid velden
+Een eigen edge function die:
+- De payload ontvangt (bedrijfsnaam, domain, app_password, spreadsheet_id, grid_id)
+- POST stuurt naar `https://tikt.app.n8n.cloud/webhook/a726f693-304a-4400-b08c-40d2748517f8`
+- Wacht op het antwoord en stuurt dat terug naar de frontend
+- Authenticatie via `BLOG_WEBHOOK_AUTH_TOKEN` (al geconfigureerd)
+
+**2. Landingspagina aanpassen**
+
+- `handleStart` roept `trigger-landing-webhook` aan in plaats van `trigger-alt-text-webhook`
+- Het webhook-antwoord wordt als toast getoond met een duur van 5 seconden (5000ms)
 
 ### Technische details
 
-**Dialoog wordt vereenvoudigd naar:**
-```
-- Bedrijfsnaam (verplicht, met auto-fill op blur)
-- Website domeinnaam (optioneel)
-```
+**Nieuwe edge function `supabase/functions/trigger-landing-webhook/index.ts`:**
+- Zelfde structuur als `trigger-alt-text-webhook` (auth check, CORS, etc.)
+- Haalt `app_password` op uit `landing_companies` (niet `alt_text_companies`)
+- Stuurt naar de nieuwe webhook URL
+- Wacht op response en stuurt die terug
 
-**handleNameBlur blijft**: zoekt in `alt_text_companies` en vult `domain` en `app_password` in (app_password wordt intern opgeslagen maar niet als veld getoond).
-
-**handleConfirmAdd insert:**
+**Aanpassing `src/pages/Landingspagina.tsx` -- `handleStart`:**
 ```typescript
-.insert({
-  name: newCompanyName.trim(),
-  domain: newCompanyDomain.trim() || null,
-  app_password: newCompanyPassword.trim() || null, // auto-filled, not shown
-})
+const { data, error } = await supabase.functions.invoke('trigger-landing-webhook', {
+  body: {
+    bedrijfsnaam: selectedCompany.name,
+    domain: selectedCompany.domain,
+    spreadsheet_id: editSheetId,
+    grid_id: editGridId,
+  },
+});
+
+// Toast met 5 seconden duur
+toast({
+  title: 'Resultaat',
+  description: message,
+  duration: 5000,
+});
 ```
 
 ### Bestanden
 
-| Bestand | Wijziging |
+| Bestand | Actie |
 |---|---|
-| `src/components/landing/LandingCompanySelector.tsx` | Dialoogvelden reduceren tot naam + domein, zoals SEO CompanySelector |
+| `supabase/functions/trigger-landing-webhook/index.ts` | Nieuw -- eigen edge function voor landingspagina webhook |
+| `src/pages/Landingspagina.tsx` | `handleStart` aanpassen: nieuwe function + toast 5 sec |
 
