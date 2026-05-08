@@ -200,7 +200,7 @@ const WordpressAltText = () => {
             </div>
 
             {/* Right: Animation panel */}
-            <div className="w-full lg:w-72 flex-shrink-0">
+            <div className="w-full lg:w-72 flex-shrink-0 flex flex-col">
               <AltTextAnimation isAnimating={isAnimating} onAnimationComplete={handleAnimationComplete} />
             </div>
           </div>
