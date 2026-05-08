@@ -115,7 +115,15 @@ Deno.serve(async (req) => {
           console.error(`[run-scheduled-blogs] Error fetching categories for ${company.name}:`, categoriesError);
         }
 
+        // Fetch page_url_settings for this company
+        const { data: pageUrlSettings } = await supabase
+          .from('page_url_settings')
+          .select('*')
+          .eq('company_id', company.id)
+          .maybeSingle();
+
         // Prepare blog payload (same as manual trigger)
+        const imageType = blogSettings.image_type || 'ai_image';
         const blogPayload = {
           bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
           bedrijfsomschrijving: blogSettings.bedrijfsomschrijving || '',
@@ -123,13 +131,19 @@ Deno.serve(async (req) => {
           aantal_woorden: blogSettings.aantal_woorden || '500-1500',
           taal: blogSettings.taal || '',
           extra_instructie: blogSettings.extra_instructie || '',
-          achtergrond_kleur: blogSettings.achtergrond_kleur || '',
-          hoofdaccent_gradient: blogSettings.hoofdaccent_gradient || '',
+          achtergrond_kleur: imageType !== 'google_drive' ? (blogSettings.achtergrond_kleur || '') : '',
+          hoofdaccent_gradient: imageType !== 'google_drive' ? (blogSettings.hoofdaccent_gradient || '') : '',
           get_afbeelding_url: blogSettings.get_afbeelding_url || '',
           post_blog_url: blogSettings.post_blog_url || '',
           status: blogSettings.status || 'draft',
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
+          image_type: imageType,
+          folder_id: imageType === 'google_drive' ? (blogSettings.folder_id || '') : '',
+          used_folder_id: imageType === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
+          page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
+          page_url_grid_id: pageUrlSettings?.google_file_id || '',
+          page_urls: pageUrlSettings?.page_urls || {},
           Category: (blogCategories || []).reduce((acc: Record<string, string>, cat: { label: string; value: string }) => {
             acc[cat.label] = cat.value;
             return acc;
