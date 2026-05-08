@@ -169,12 +169,12 @@ const LeadsGenerator = () => {
         </p>
 
         {isRunning && (
-          <div className="w-full max-w-lg mb-4">
+          <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl mb-4">
             <Progress value={progress} className="h-2 bg-white/10 [&>div]:bg-primary" />
           </div>
         )}
 
-        <div className="w-full max-w-lg space-y-4">
+        <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl space-y-4">
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
             <div className="space-y-2">
               <Label className="text-white/70">Plaatsnaam</Label>

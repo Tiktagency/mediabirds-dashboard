@@ -166,7 +166,7 @@ const WordpressAltText = () => {
         </p>
 
         {/* Global Schedule Trigger */}
-        <div className="w-full max-w-2xl mb-6">
+        <div className="w-full max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mb-6">
           <ScheduleTrigger
             companyId="global"
             isAdmin={isAdmin}
@@ -179,7 +179,7 @@ const WordpressAltText = () => {
         </div>
 
         {selectedCompany ? (
-          <div className="flex flex-col lg:flex-row gap-6 max-w-2xl w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl w-full items-stretch">
             {/* Left: Company fields + Start button */}
             <div className="flex-1 w-full space-y-4">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
