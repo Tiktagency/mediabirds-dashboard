@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Users, Trash2, Shield, Eye, Play, Crown } from 'lucide-react';
+import { Users, Trash2, Shield, Eye, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import type { UserProfile, AppRole } from '@/hooks/useUserManagement';
@@ -16,11 +16,6 @@ interface UserListProps {
 }
 
 const roleConfig: Record<AppRole, { label: string; icon: React.ReactNode; color: string }> = {
-  super_admin: { 
-    label: 'Super Admin', 
-    icon: <Crown className="w-3 h-3" />, 
-    color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
-  },
   admin: { 
     label: 'Admin', 
     icon: <Shield className="w-3 h-3" />, 
@@ -90,11 +85,6 @@ export const UserList = ({ users, onUpdateRole, onDelete }: UserListProps) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="super_admin">
-                        <span className="flex items-center gap-2">
-                          <Crown className="w-3 h-3" /> Super Admin
-                        </span>
-                      </SelectItem>
                       <SelectItem value="admin">
                         <span className="flex items-center gap-2">
                           <Shield className="w-3 h-3" /> Admin

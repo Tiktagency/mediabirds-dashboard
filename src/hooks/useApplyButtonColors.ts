@@ -10,11 +10,11 @@ export const useApplyButtonColors = () => {
     const root = document.documentElement;
     const colors = settings?.button_colors;
 
-    // Altijd fallback kleuren toepassen voor consistente branding
-    const DEFAULT_BG = '#cfddd0';
-    const DEFAULT_TEXT = '#002C1F';
-
-    root.style.setProperty('--button-primary-bg', colors?.background || DEFAULT_BG);
-    root.style.setProperty('--button-primary-text', colors?.text || DEFAULT_TEXT);
+    if (colors?.background) {
+      root.style.setProperty('--button-primary-bg', colors.background);
+    }
+    if (colors?.text) {
+      root.style.setProperty('--button-primary-text', colors.text);
+    }
   }, [settings?.button_colors, isLoading]);
 };
