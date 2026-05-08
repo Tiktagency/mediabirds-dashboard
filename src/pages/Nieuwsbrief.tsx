@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,7 @@ const COLOR_FIELDS: { key: string; label: string }[] = [
 
 const Nieuwsbrief = () => {
   const { toast } = useToast();
+  const colorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -217,9 +218,11 @@ const Nieuwsbrief = () => {
 
   const handleColorChange = (key: string, value: string) => {
     setLocalColors(prev => ({ ...prev, [key]: value }));
-    if (selectedCompany) {
+    if (!selectedCompany) return;
+    if (colorDebounceRef.current) clearTimeout(colorDebounceRef.current);
+    colorDebounceRef.current = setTimeout(() => {
       saveToCompany({ [key]: value });
-    }
+    }, 600);
   };
 
   const renderTextField = (field: TextFieldKey, label: string, type: 'input' | 'textarea', placeholder: string) => {
