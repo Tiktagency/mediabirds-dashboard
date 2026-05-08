@@ -376,11 +376,9 @@ const SeoBlog = () => {
                     className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] resize-none field-sizing-content"
                     style={{ fieldSizing: 'content' } as React.CSSProperties}
                     autoFocus
-                    ref={(el) => {
-                      if (el) {
-                        const len = el.value.length;
-                        el.setSelectionRange(len, len);
-                      }
+                    onFocus={(e) => {
+                      const len = e.currentTarget.value.length;
+                      e.currentTarget.setSelectionRange(len, len);
                     }}
                   onBlur={async () => {
                     setNotes(notesDraft);
