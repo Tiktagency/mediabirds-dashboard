@@ -222,6 +222,19 @@ const Blogs = () => {
     const result = await saveSettings(updateData);
     
     if (result.success) {
+      // If bedrijfsnaam was updated, also update the companies table
+      if (field === 'bedrijfsnaam' && selectedCompany) {
+        const { error: companyError } = await supabase
+          .from('companies')
+          .update({ name: formData.bedrijfsnaam })
+          .eq('id', selectedCompany.id);
+        
+        if (!companyError) {
+          // Update the selectedCompany state to reflect the new name
+          setSelectedCompany(prev => prev ? { ...prev, name: formData.bedrijfsnaam } : null);
+        }
+      }
+      
       toast({
         title: "Opgeslagen",
         description: "Veld succesvol opgeslagen",
