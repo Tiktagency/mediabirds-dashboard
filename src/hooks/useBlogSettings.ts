@@ -19,6 +19,7 @@ export interface BlogSettings {
 export const useBlogSettings = (companyId: string | null) => {
   const [settings, setSettings] = useState<BlogSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export const useBlogSettings = (companyId: string | null) => {
   const saveSettings = async (newSettings: Partial<Omit<BlogSettings, 'id' | 'created_at' | 'updated_at'>>) => {
     if (!companyId) return { success: false, error: 'No company selected' };
 
-    setIsLoading(true);
+    setIsSaving(true);
     setError(null);
 
     try {
@@ -86,12 +87,12 @@ export const useBlogSettings = (companyId: string | null) => {
         setSettings(data as BlogSettings);
       }
 
-      setIsLoading(false);
+      setIsSaving(false);
       return { success: true, error: null };
     } catch (err: any) {
       console.error('Error saving blog settings:', err);
       setError(err.message);
-      setIsLoading(false);
+      setIsSaving(false);
       return { success: false, error: err.message };
     }
   };
@@ -99,6 +100,7 @@ export const useBlogSettings = (companyId: string | null) => {
   return {
     settings,
     isLoading,
+    isSaving,
     error,
     saveSettings,
   };
