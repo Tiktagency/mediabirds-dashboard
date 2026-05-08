@@ -10,20 +10,19 @@ const FIXED_BLOG_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2
 // Calculate the next trigger date by adding interval to current next_trigger_at
 // This preserves the original time and prevents timezone drift
 function calculateNextTrigger(
-  frequency: string,
+  intervalValue: number,
+  intervalUnit: string,
   currentNextTriggerAt: string
 ): Date {
   // Start from the current scheduled time to preserve timezone/time consistency
   const next = new Date(currentNextTriggerAt);
   
-  if (frequency === 'daily') {
-    next.setDate(next.getDate() + 1);
-  } else if (frequency === 'weekly') {
-    next.setDate(next.getDate() + 7);
-  } else if (frequency === 'biweekly') {
-    next.setDate(next.getDate() + 14);
-  } else if (frequency === 'monthly') {
-    next.setMonth(next.getMonth() + 1);
+  if (intervalUnit === 'days') {
+    next.setDate(next.getDate() + intervalValue);
+  } else if (intervalUnit === 'weeks') {
+    next.setDate(next.getDate() + (intervalValue * 7));
+  } else if (intervalUnit === 'months') {
+    next.setMonth(next.getMonth() + intervalValue);
   }
   
   return next;
@@ -158,9 +157,16 @@ Deno.serve(async (req) => {
         }
 
         if (triggerSuccess) {
+          // Use new interval fields, falling back to frequency for backwards compatibility
+          const intervalValue = schedule.interval_value || 1;
+          const intervalUnit = schedule.interval_unit || 
+            (schedule.frequency === 'daily' ? 'days' : 
+             schedule.frequency === 'monthly' ? 'months' : 'weeks');
+          
           // Only update schedule on success
           const nextTrigger = calculateNextTrigger(
-            schedule.frequency,
+            intervalValue,
+            intervalUnit,
             schedule.next_trigger_at
           );
 
