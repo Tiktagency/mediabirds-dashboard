@@ -1,54 +1,26 @@
 
 
-# Plan: Toast Auto-Dismiss na 4 Seconden en HTML Output Opschonen
+# Plan: Emailhandtekening Key Correct Parsen
 
-## Overzicht
+## Probleem
 
-Dit plan omvat twee aanpassingen:
-1. **Toast notificaties** automatisch laten verdwijnen na 4 seconden (in plaats van handmatig sluiten)
-2. **HTML code output** opschonen door aanhalingstekens te verwijderen
-
----
-
-## Wijziging 1: Toast Auto-Dismiss na 4 Seconden
-
-### Bestand: `src/hooks/use-toast.ts`
-
-De huidige instelling `TOAST_REMOVE_DELAY = 1000000` (ongeveer 16 minuten) zorgt ervoor dat toasts praktisch nooit automatisch verdwijnen.
-
-**Huidige code (regel 9):**
-```typescript
-const TOAST_REMOVE_DELAY = 1000000
+De webhook response heeft dit formaat:
+```json
+[{"Emailhandtekening":"<html code hier>"}]
 ```
 
-**Nieuwe code:**
-```typescript
-const TOAST_REMOVE_DELAY = 4000
-```
+De huidige code zoekt naar keys `html`, `output`, `Output`, of `message`, maar niet naar `Emailhandtekening`. Hierdoor wordt de volledige JSON string getoond in plaats van alleen de HTML waarde.
 
-### Bestand: `src/components/ui/toaster.tsx`
-
-De ToastProvider moet een `duration` prop krijgen om de auto-dismiss tijd in te stellen:
-
-**Huidige code (regel 15):**
-```typescript
-<ToastProvider>
-```
-
-**Nieuwe code:**
-```typescript
-<ToastProvider duration={4000}>
-```
-
----
-
-## Wijziging 2: HTML Output Zonder Aanhalingstekens
+## Oplossing
 
 ### Bestand: `src/components/email-signature/EmailSignatureForm.tsx`
 
-Na het parsen van de webhook response, worden eventuele omringende aanhalingstekens verwijderd voordat de HTML wordt doorgegeven.
+Pas de parsing logica aan om:
+1. Te herkennen dat de response een array is (begint met `[`)
+2. Het eerste element uit de array te pakken
+3. De waarde van de `Emailhandtekening` key te extraheren
 
-**Huidige logica (regels 277-288):**
+**Huidige code (regels 277-291):**
 ```typescript
 if (responseData?.rawText) {
   let htmlCode = responseData.rawText;
@@ -58,17 +30,30 @@ if (responseData?.rawText) {
   } catch {
     // Gebruik raw text als het geen JSON is
   }
+  if (typeof htmlCode === 'string') {
+    htmlCode = htmlCode.replace(/^["']|["']$/g, '');
+  }
   onHtmlGenerated?.(htmlCode);
 }
 ```
 
-**Nieuwe logica:**
+**Nieuwe code:**
 ```typescript
 if (responseData?.rawText) {
   let htmlCode = responseData.rawText;
   try {
     const parsed = JSON.parse(responseData.rawText);
-    htmlCode = parsed.html || parsed.output || parsed.Output || parsed.message || responseData.rawText;
+    
+    // Als het een array is, pak het eerste element
+    const data = Array.isArray(parsed) ? parsed[0] : parsed;
+    
+    // Zoek de HTML in bekende keys (inclusief Emailhandtekening)
+    htmlCode = data?.Emailhandtekening || 
+               data?.html || 
+               data?.output || 
+               data?.Output || 
+               data?.message || 
+               responseData.rawText;
   } catch {
     // Gebruik raw text als het geen JSON is
   }
@@ -80,24 +65,15 @@ if (responseData?.rawText) {
 }
 ```
 
-Dit regex-patroon `^["']|["']$` verwijdert:
-- `^["']` - een aanhalingsteken aan het begin van de string
-- `["']$` - een aanhalingsteken aan het einde van de string
+## Technische Details
 
----
-
-## Samenvatting Wijzigingen
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/hooks/use-toast.ts` | `TOAST_REMOVE_DELAY` van 1000000 naar 4000 |
-| `src/components/ui/toaster.tsx` | `duration={4000}` toevoegen aan ToastProvider |
-| `src/components/email-signature/EmailSignatureForm.tsx` | Regex om aanhalingstekens te strippen van HTML output |
-
----
+| Aspect | Aanpassing |
+|--------|------------|
+| Array handling | `Array.isArray(parsed) ? parsed[0] : parsed` pakt eerste element als het een array is |
+| Nieuwe key | `Emailhandtekening` toegevoegd als eerste optie in de chain |
+| Backwards compatible | Bestaande keys (`html`, `output`, etc.) blijven werken |
 
 ## Resultaat
 
-1. Alle toast notificaties verdwijnen automatisch na 4 seconden
-2. De HTML code in het rechter paneel bevat geen omringende `"` of `'` tekens meer
+De HTML code in het rechter paneel toont nu alleen de pure HTML, zonder de `[{"Emailhandtekening":"` wrapper.
 
