@@ -125,12 +125,13 @@ export type Database = {
       blog_settings: {
         Row: {
           aantal_woorden: string | null
-          afbeelding_prompt: string | null
+          achtergrond_kleur: string | null
           bedrijfsnaam: string | null
           bedrijfsomschrijving: string | null
           company_id: string
           created_at: string
           get_afbeelding_url: string | null
+          hoofdaccent_gradient: string | null
           id: string
           post_blog_url: string | null
           schrijfstijl: string | null
@@ -139,12 +140,13 @@ export type Database = {
         }
         Insert: {
           aantal_woorden?: string | null
-          afbeelding_prompt?: string | null
+          achtergrond_kleur?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null
           company_id: string
           created_at?: string
           get_afbeelding_url?: string | null
+          hoofdaccent_gradient?: string | null
           id?: string
           post_blog_url?: string | null
           schrijfstijl?: string | null
@@ -153,12 +155,13 @@ export type Database = {
         }
         Update: {
           aantal_woorden?: string | null
-          afbeelding_prompt?: string | null
+          achtergrond_kleur?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null
           company_id?: string
           created_at?: string
           get_afbeelding_url?: string | null
+          hoofdaccent_gradient?: string | null
           id?: string
           post_blog_url?: string | null
           schrijfstijl?: string | null
