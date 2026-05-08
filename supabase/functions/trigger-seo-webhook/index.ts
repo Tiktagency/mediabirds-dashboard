@@ -225,6 +225,26 @@ serve(async (req) => {
         onConflict: 'automation_name'
       });
 
+    // Log workflow execution for accurate per-company tracking
+    const bedrijfsnaam = formData?.bedrijfsnaam as string | undefined;
+    if (bedrijfsnaam) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('name', bedrijfsnaam)
+        .maybeSingle();
+      
+      if (company) {
+        await supabase.from('workflow_executions').insert({
+          company_id: company.id,
+          workflow_type: 'seo_research',
+          triggered_by: userId,
+          success: true,
+        });
+        console.log(`Logged workflow execution for company: ${bedrijfsnaam}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
