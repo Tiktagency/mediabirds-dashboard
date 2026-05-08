@@ -1,21 +1,32 @@
 
 
-## Plan: Domeinnaam verplicht bij aanmaken nieuwsbrief bedrijf
+## Plan: Kleuren behouden bij wisselen auto/custom modus
 
-### Wat verandert
-Het "Nieuw bedrijf toevoegen" dialoog krijgt een extra verplicht veld voor de domeinnaam. Bij het opslaan wordt automatisch de `website` kolom gevuld met `https://{domein}`.
+### Probleem
+Bij het wisselen tussen "Automatisch" en "Custom" kleurmodus worden de kleuren niet opgeslagen naar de database. Als je in auto-modus kleuren ophaalt en dan naar custom switcht, gaan de kleuren mogelijk verloren bij een page refresh of bedrijfswisseling.
 
-### Aanpassingen in `src/components/nieuwsbrief/NewsletterCompanySelector.tsx`
+### Oplossing
+Sla de huidige `localColors` op naar de database bij elke mode-switch. Dit zorgt ervoor dat:
+1. Kleuren die in auto-modus zijn opgehaald bewaard blijven als je naar custom switcht
+2. Kleuren die in custom-modus zijn aangepast bewaard blijven als je naar auto switcht
 
-1. **Nieuwe state**: `newCompanyDomain` (string) naast de bestaande `newCompanyName`
-2. **Dialog uitbreiden**: Extra `<Input>` veld met label "Domeinnaam" en placeholder "bijv. tikt.nl" onder het naam-veld
-3. **Validatie**: `handleRequestAdd` controleert dat beide velden ingevuld zijn
-4. **Insert aanpassen**: Bij `handleConfirmAdd` wordt het insert-object uitgebreid:
-   ```ts
-   { name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim(), website: `https://${newCompanyDomain.trim()}` }
-   ```
-5. **Reset**: `newCompanyDomain` wordt geleegd na succesvol aanmaken
-6. **Bevestigingsdialoog**: Toont ook de domeinnaam ter controle
+### Aanpassing in `src/pages/Nieuwsbrief.tsx`
 
-Geen database wijzigingen nodig — de `website` kolom bestaat al op `newsletter_companies`.
+1. Maak twee handler functies voor de mode-switch knoppen (regel 626-646):
+   - `handleSwitchToCustom`: slaat alle huidige `localColors` op naar de database via `saveToCompany`, zet daarna `colorMode` naar `'custom'`
+   - `handleSwitchToAuto`: slaat alle huidige `localColors` op naar de database, zet `colorMode` naar `'auto'`
+2. Vervang de directe `setColorMode` calls in de toggle-knoppen door deze handlers
+3. Toon een korte toast "Kleuren opgeslagen" bij het wisselen
+
+### Technisch detail
+```ts
+const handleSwitchColorMode = async (mode: 'custom' | 'auto') => {
+  setColorMode(mode);
+  if (selectedCompany) {
+    await saveToCompany(localColors);
+  }
+};
+```
+
+De twee `onClick` handlers op regel 627 en 637 worden vervangen door `() => handleSwitchColorMode('custom')` en `() => handleSwitchColorMode('auto')`.
 
