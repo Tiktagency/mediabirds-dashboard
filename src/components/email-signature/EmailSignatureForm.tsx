@@ -67,9 +67,10 @@ export const EmailSignatureForm = ({
     watch,
     setValue,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: 'onChange',
     defaultValues: {
       name: 'Mijn Handtekening',
       first_name: '',
@@ -535,7 +536,7 @@ export const EmailSignatureForm = ({
       {/* Submit */}
       <Button
         type="submit"
-        disabled={isSending}
+        disabled={isSending || !isValid}
         className="w-full bg-primary hover:bg-primary/90"
       >
         {isSending ? (
