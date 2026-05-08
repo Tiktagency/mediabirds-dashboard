@@ -284,6 +284,10 @@ export const EmailSignatureForm = ({
         } catch {
           // Gebruik raw text als het geen JSON is (waarschijnlijk pure HTML)
         }
+        // Verwijder omringende aanhalingstekens indien aanwezig
+        if (typeof htmlCode === 'string') {
+          htmlCode = htmlCode.replace(/^["']|["']$/g, '');
+        }
         onHtmlGenerated?.(htmlCode);
       }
 
