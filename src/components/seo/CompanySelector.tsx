@@ -387,7 +387,10 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
               Annuleren
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmAdd}
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmAdd();
+              }}
               disabled={isCreating}
               className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
             >
