@@ -1,73 +1,102 @@
 
-# Plan: Knopkleuren Customizer Toevoegen
+# Plan: Knopkleuren Toepassen in Hele Applicatie
 
-## Overzicht
+## Probleem
 
-Vervang het "Thema" component door een nieuwe "Knopkleuren" customizer waarmee gebruikers de achtergrond- en tekstkleur van knoppen in de applicatie kunnen aanpassen.
+De knopkleuren die in het Admin Panel worden ingesteld, werken alleen in de preview binnen het admin panel zelf. Knoppen zoals "Emailhandtekening genereren" op andere pagina's gebruiken nog steeds de standaard `bg-primary` kleur.
 
 ---
 
-## Technische Wijzigingen
+## Oplossing
 
-### 1. Hook uitbreiden (`src/hooks/useDashboardSettings.ts`)
+Pas de opgeslagen knopkleuren toe via CSS variabelen die globaal worden ingesteld. Dit zorgt ervoor dat alle primaire knoppen in de applicatie automatisch de aangepaste kleuren gebruiken.
 
-**Nieuwe interface en defaults:**
+---
+
+## Technische Aanpak
+
+### 1. Nieuwe hook: `useApplyButtonColors`
+
+Maak een hook die de knopkleuren uit dashboard settings haalt en als CSS variabelen toepast:
+
 ```typescript
-export interface DashboardSettings {
-  // ... bestaande velden
-  button_colors: TileColors;  // NIEUW
-}
-
-const DEFAULT_BUTTON_COLORS: TileColors = {
-  background: '#cfddd0',  // Sage green (primary)
-  text: '#002C1F',        // Dark green
+// src/hooks/useApplyButtonColors.ts
+export const useApplyButtonColors = () => {
+  const { settings } = useDashboardSettings();
+  
+  useEffect(() => {
+    const root = document.documentElement;
+    const colors = settings?.button_colors;
+    
+    if (colors?.background) {
+      root.style.setProperty('--button-primary-bg', colors.background);
+    }
+    if (colors?.text) {
+      root.style.setProperty('--button-primary-text', colors.text);
+    }
+  }, [settings?.button_colors]);
 };
 ```
 
-**Nieuwe functie toevoegen:**
+### 2. Hook toepassen in App.tsx
+
+Wrap de applicatie met een component dat de hook aanroept:
+
 ```typescript
-const updateButtonColors = async (colors: { background?: string; text?: string }) => {
-  const newColors = { ...settings?.button_colors, ...colors };
-  const currentDashboardColors = (settings as any)?.dashboard_colors || {};
-  await supabase
-    .from('user_dashboard_settings')
-    .update({ dashboard_colors: { ...currentDashboardColors, button_colors: newColors } })
-    .eq('id', settings?.id);
-  setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
-  toast({ title: 'Opgeslagen', description: 'Knopkleuren bijgewerkt' });
+const AppContent = () => {
+  useApplyButtonColors();
+  return (
+    <Routes>
+      {/* ... routes */}
+    </Routes>
+  );
 };
 ```
 
-### 2. Nieuw component maken (`src/components/admin/dashboard/ButtonColorCustomizer.tsx`)
+### 3. CSS variabelen toevoegen aan index.css
 
-Vergelijkbaar met TileColorCustomizer:
-- Preview van een knop met huidige kleuren
-- Kleurpickers voor achtergrond en tekst
-- Reset knop naar standaardwaarden
+Voeg default waarden en een custom class toe:
 
-```typescript
-interface ButtonColorCustomizerProps {
-  colors: TileColors;
-  onUpdate: (colors: { background?: string; text?: string }) => Promise<void>;
-  onReset: () => Promise<void>;
+```css
+:root {
+  --button-primary-bg: #cfddd0;
+  --button-primary-text: #002C1F;
+}
+
+.btn-primary-custom {
+  background-color: var(--button-primary-bg) !important;
+  color: var(--button-primary-text) !important;
+}
+
+.btn-primary-custom:hover {
+  opacity: 0.9;
 }
 ```
 
-### 3. DashboardTab aanpassen (`src/components/admin/dashboard/DashboardTab.tsx`)
+### 4. Button variant toevoegen
 
-**Verwijderen:**
-- ThemeSwitch import
-- ThemeSwitch component
-- updateTheme uit hook destructuring
+Voeg een "primaryCustom" variant toe aan de Button component die de CSS variabelen gebruikt:
 
-**Toevoegen:**
-- ButtonColorCustomizer import
-- ButtonColorCustomizer component op de plek van ThemeSwitch
-- updateButtonColors uit hook destructuring
+```typescript
+// In buttonVariants
+primaryCustom: "bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:opacity-90",
+```
 
-### 4. ThemeSwitch component behouden (niet verwijderen)
+### 5. Knoppen updaten
 
-Het bestand `ThemeSwitch.tsx` blijft bestaan voor eventueel toekomstig gebruik, maar wordt niet meer geïmporteerd in DashboardTab.
+Pas de belangrijkste primaire knoppen aan om de custom variant te gebruiken:
+
+**EmailSignatureForm.tsx:**
+```tsx
+<Button
+  type="submit"
+  variant="primaryCustom"  // Was: className="bg-primary hover:bg-primary/90"
+  disabled={isSending || !isValid}
+  className="w-full"
+>
+```
+
+Andere pagina's met primaire actieknoppen worden ook bijgewerkt.
 
 ---
 
@@ -75,27 +104,17 @@ Het bestand `ThemeSwitch.tsx` blijft bestaan voor eventueel toekomstig gebruik, 
 
 | Bestand | Actie |
 |---------|-------|
-| `src/hooks/useDashboardSettings.ts` | `button_colors` + `updateButtonColors` toevoegen |
-| `src/components/admin/dashboard/ButtonColorCustomizer.tsx` | Nieuw component aanmaken |
-| `src/components/admin/dashboard/DashboardTab.tsx` | ThemeSwitch vervangen door ButtonColorCustomizer |
+| `src/hooks/useApplyButtonColors.ts` | Nieuw - hook voor CSS variabelen |
+| `src/App.tsx` | Hook integreren |
+| `src/index.css` | CSS variabelen toevoegen |
+| `src/components/ui/button.tsx` | `primaryCustom` variant toevoegen |
+| `src/components/email-signature/EmailSignatureForm.tsx` | Button variant updaten |
+| Andere pagina's met primaire knoppen | Button variant updaten |
 
 ---
 
-## Opslag
+## Resultaat
 
-Button colors worden opgeslagen in de bestaande `dashboard_colors` JSONB kolom:
-```json
-{
-  "tile_colors": { "background": "#cfddd0", "text": "#002C1F" },
-  "saved_hours_colors": { "background": "#f2eadc", "text": "#412700" },
-  "button_colors": { "background": "#cfddd0", "text": "#002C1F" }
-}
-```
-
----
-
-## Visueel Resultaat
-
-De tweede rij in het Dashboard tabblad bevat dan:
-- **Links**: Knopkleuren customizer (nieuw)
-- **Rechts**: Impact Kleuren (bestaand)
+- Knopkleuren ingesteld in Admin Panel worden direct toegepast op alle primaire knoppen
+- "Emailhandtekening genereren" en vergelijkbare knoppen krijgen automatisch de ingestelde kleuren
+- Fallback naar default sage green (#cfddd0) als er geen custom kleuren zijn ingesteld
