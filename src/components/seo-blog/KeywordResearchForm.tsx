@@ -314,10 +314,11 @@ export const KeywordResearchForm = ({
               </Tooltip>
             ) : (
               <div 
-                className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
+                className={`flex-1 flex items-center justify-between px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
                 onClick={() => canEdit && setEditingField(field)}
               >
-                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+                <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
+                {!isGoogleIdField && <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />}
               </div>
             )}
             
@@ -434,10 +435,11 @@ export const KeywordResearchForm = ({
           </div>
         ) : (
           <div 
-            className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors"
+            className="flex items-center justify-between px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
             onClick={() => setExpandedField(field)}
           >
-            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
+            <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
           </div>
         )}
       </div>
