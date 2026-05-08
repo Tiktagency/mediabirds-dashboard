@@ -29,15 +29,15 @@ function validateUUID(uuid: unknown, fieldName: string): string {
   return uuid;
 }
 
-function validateRole(role: unknown): 'super_admin' | 'admin' | 'operator' | 'viewer' {
+function validateRole(role: unknown): 'admin' | 'operator' | 'viewer' {
   if (typeof role !== 'string') {
     throw new Error('Role must be a string');
   }
-  const validRoles = ['super_admin', 'admin', 'operator', 'viewer'];
+  const validRoles = ['admin', 'operator', 'viewer'];
   if (!validRoles.includes(role)) {
     throw new Error(`Role must be one of: ${validRoles.join(', ')}`);
   }
-  return role as 'super_admin' | 'admin' | 'operator' | 'viewer';
+  return role as 'admin' | 'operator' | 'viewer';
 }
 
 serve(async (req) => {
@@ -74,14 +74,15 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin or super_admin using service role
+    // Check if user is admin using service role
     const { data: adminCheck } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['admin', 'super_admin']);
+      .eq('role', 'admin')
+      .single();
 
-    if (!adminCheck || adminCheck.length === 0) {
+    if (!adminCheck) {
       return new Response(JSON.stringify({ error: 'Geen admin rechten' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

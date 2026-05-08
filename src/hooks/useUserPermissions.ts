@@ -5,7 +5,6 @@ import { AppRole, UserPermission } from './useUserManagement';
 interface UserPermissionsState {
   roles: AppRole[];
   permissions: UserPermission[];
-  isSuperAdmin: boolean;
   isAdmin: boolean;
   isOperator: boolean;
   isViewer: boolean;
@@ -16,7 +15,6 @@ export const useUserPermissions = () => {
   const [state, setState] = useState<UserPermissionsState>({
     roles: [],
     permissions: [],
-    isSuperAdmin: false,
     isAdmin: false,
     isOperator: false,
     isViewer: false,
@@ -52,15 +50,13 @@ export const useUserPermissions = () => {
       }
 
       const userRoles = (roles || []).map(r => r.role as AppRole);
-      const isSuperAdmin = userRoles.includes('super_admin');
-      const isAdmin = userRoles.includes('admin') || isSuperAdmin;
+      const isAdmin = userRoles.includes('admin');
       const isOperator = userRoles.includes('operator');
       const isViewer = userRoles.includes('viewer');
 
       setState({
         roles: userRoles,
         permissions: (permissions as UserPermission[]) || [],
-        isSuperAdmin,
         isAdmin,
         isOperator,
         isViewer,
@@ -77,8 +73,8 @@ export const useUserPermissions = () => {
   }, [fetchUserPermissions]);
 
   const canView = useCallback((automationName: string): boolean => {
-    // Super Admins and Admins can view everything
-    if (state.isSuperAdmin || state.isAdmin) return true;
+    // Admins can view everything
+    if (state.isAdmin) return true;
     
     // Check specific permission first (overrides role default)
     const permission = state.permissions.find(p => p.automation_name === automationName);
@@ -93,8 +89,8 @@ export const useUserPermissions = () => {
   }, [state.isAdmin, state.isOperator, state.isViewer, state.permissions]);
 
   const canExecute = useCallback((automationName: string): boolean => {
-    // Super Admins and Admins can execute everything
-    if (state.isSuperAdmin || state.isAdmin) return true;
+    // Admins can execute everything
+    if (state.isAdmin) return true;
     
     // Check specific permission first (overrides role default)
     const permission = state.permissions.find(p => p.automation_name === automationName);
@@ -109,8 +105,8 @@ export const useUserPermissions = () => {
   }, [state.isAdmin, state.isOperator, state.permissions]);
 
   const canManage = useCallback((automationName: string): boolean => {
-    // Super Admins and Admins can manage
-    if (state.isSuperAdmin || state.isAdmin) return true;
+    // Only admins can manage
+    if (state.isAdmin) return true;
     
     const permission = state.permissions.find(p => p.automation_name === automationName);
     return permission?.can_manage ?? false;

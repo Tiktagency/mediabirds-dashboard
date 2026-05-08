@@ -24,9 +24,10 @@ export const useAdminAuth = () => {
               .from('user_roles')
               .select('role')
               .eq('user_id', currentSession.user.id)
-              .in('role', ['admin', 'super_admin']);
+              .eq('role', 'admin')
+              .maybeSingle();
 
-            const hasAdminRole = roles && roles.length > 0;
+            const hasAdminRole = !!roles;
             setIsAdmin(hasAdminRole);
             setIsLoading(false);
           }, 0);
@@ -48,9 +49,10 @@ export const useAdminAuth = () => {
           .from('user_roles')
           .select('role')
           .eq('user_id', currentSession.user.id)
-          .in('role', ['admin', 'super_admin']);
+          .eq('role', 'admin')
+          .maybeSingle();
 
-        const hasAdminRole = roles && roles.length > 0;
+        const hasAdminRole = !!roles;
         setIsAdmin(hasAdminRole);
       } else {
         navigate('/login');
