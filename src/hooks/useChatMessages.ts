@@ -32,23 +32,21 @@ export const useChatMessages = () => {
 
   const sendMessageToWebhook = async (messageText: string) => {
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          message: messageText,
-          timestamp: new Date().toISOString(),
-          sender: 'user'
-        }),
+      const { data, error } = await supabase.functions.invoke('trigger-monday-planning', {
+        body: { message: messageText },
       });
-
-      const responseText = await response.text();
+      if (error) {
+        console.error('Edge function error:', error);
+        return null;
+      }
+      const responseText = (data as { text?: string })?.text;
       if (!responseText) return null;
-
-      const responseData = JSON.parse(responseText);
+      let responseData: unknown;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        return responseText;
+      }
       return parseWebhookResponse(responseData);
     } catch (error) {
       console.error('Error sending message to webhook:', error);
