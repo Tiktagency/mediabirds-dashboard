@@ -204,7 +204,10 @@ export const PageUrlForm = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-white mb-6">Pagina URL Instellingen</h2>
+      <div className="text-center mb-6">
+        <h2 className="text-xl font-semibold text-white">Pagina URL Instellingen</h2>
+        <p className="text-sm text-white/50 mt-1">Beheer sitemap URLs voor interne linkbuilding</p>
+      </div>
       
       {/* Bedrijfsnaam - Read only with gradient border */}
       <div className="space-y-2">
