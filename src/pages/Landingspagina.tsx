@@ -176,7 +176,7 @@ const Landingspagina = () => {
         <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
 
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 overflow-y-auto">
+      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 pb-8 overflow-y-auto">
         <h1 className="hero-title text-2xl sm:text-4xl text-foreground mb-2 fade-in-up">Landingspagina</h1>
         <p className="text-sm sm:text-base text-muted-foreground text-center max-w-xl mb-3">
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
