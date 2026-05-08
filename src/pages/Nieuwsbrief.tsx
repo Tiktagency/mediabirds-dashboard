@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, Loader2, Newspaper, Palette, Download, Pencil } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 const MAX_RSS_FEEDS = 5;
 
 type LocalData = { bedrijfsnaam: string; bedrijfsinformatie: string; schrijfstijl: string };
-type AnyField = keyof LocalData | 'rss_feeds';
+type AnyField = keyof LocalData | string;
 
 const ColorField = ({
   label,
@@ -47,11 +47,10 @@ const Nieuwsbrief = () => {
   const { toast } = useToast();
   const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [newFeed, setNewFeed] = useState('');
-  const [editingField, setEditingField] = useState<AnyField | null>(null);
-  const [expandedField, setExpandedField] = useState<AnyField | null>(null);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
   const [localData, setLocalData] = useState<LocalData>({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
-  const expandedRef = useRef<HTMLDivElement>(null);
+  const [localFeeds, setLocalFeeds] = useState<string[]>([]);
 
   useEffect(() => {
     if (settings) {
@@ -60,25 +59,20 @@ const Nieuwsbrief = () => {
         bedrijfsinformatie: settings.bedrijfsinformatie || '',
         schrijfstijl: settings.schrijfstijl || '',
       });
+      setLocalFeeds(settings.rss_feeds);
     }
   }, [settings]);
 
+  // Click outside: collapse expanded fields
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if ((expandedField || editingField) && expandedRef.current && !expandedRef.current.contains(e.target as Node)) {
-        if (editingField === 'rss_feeds') {
-          // Stay expanded so user can see the feeds
-          setEditingField(null);
-          setExpandedField('rss_feeds');
-        } else {
-          setEditingField(null);
-          setExpandedField(null);
-        }
+      if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
+        setExpandedField(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [expandedField, editingField]);
+  }, [expandedField]);
 
   const handleSaveField = (field: keyof LocalData) => {
     setEditingField(null);
@@ -87,19 +81,38 @@ const Nieuwsbrief = () => {
     const original = settings[field] || '';
     if (current === original) return;
     saveSettings({ [field]: current });
-    toast({ title: 'Opgeslagen', description: `${field} is bijgewerkt.` });
+    toast({ title: 'Opgeslagen' });
   };
 
-  const addFeed = () => {
-    const trimmed = newFeed.trim();
-    if (!trimmed || !settings || settings.rss_feeds.length >= MAX_RSS_FEEDS) return;
-    saveSettings({ rss_feeds: [...settings.rss_feeds, trimmed] });
-    setNewFeed('');
-  };
-
-  const removeFeed = (index: number) => {
+  const handleSaveFeed = (index: number, value: string) => {
+    setEditingField(null);
     if (!settings) return;
-    saveSettings({ rss_feeds: settings.rss_feeds.filter((_, i) => i !== index) });
+    const newFeeds = [...localFeeds];
+    if (value.trim()) {
+      newFeeds[index] = value.trim();
+    } else {
+      newFeeds.splice(index, 1);
+    }
+    setLocalFeeds(newFeeds);
+    if (JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
+      saveSettings({ rss_feeds: newFeeds });
+      toast({ title: 'Opgeslagen' });
+    }
+  };
+
+  const handleAddFeed = () => {
+    if (localFeeds.length >= MAX_RSS_FEEDS) return;
+    const newFeeds = [...localFeeds, ''];
+    setLocalFeeds(newFeeds);
+    setEditingField(`rss_feed_${newFeeds.length - 1}`);
+    setExpandedField(null);
+  };
+
+  const handleRemoveFeed = (index: number) => {
+    if (!settings) return;
+    const newFeeds = localFeeds.filter((_, i) => i !== index);
+    setLocalFeeds(newFeeds);
+    saveSettings({ rss_feeds: newFeeds });
   };
 
   const renderTextField = (
@@ -141,9 +154,9 @@ const Nieuwsbrief = () => {
 
     if (isExpanded) {
       return (
-        <div className="space-y-1.5" ref={expandedRef}>
+        <div className="space-y-1.5 expanded-field-container">
           <Label className="text-xs font-medium text-white/50">{label}</Label>
-          <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2 group">
+          <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2">
             <p className="text-sm text-white/80 whitespace-pre-wrap pr-8">
               {value || <span className="italic text-white/30">{placeholder}</span>}
             </p>
@@ -175,101 +188,88 @@ const Nieuwsbrief = () => {
     );
   };
 
-  const renderRssFeeds = () => {
-    if (!settings) return null;
-    const isEditing = editingField === 'rss_feeds';
-    const isExpanded = expandedField === 'rss_feeds';
-    const feedCount = settings.rss_feeds.length;
+  const renderRssFeedItem = (index: number, feedValue: string) => {
+    const fieldId = `rss_feed_${index}`;
+    const isEditing = editingField === fieldId;
+    const isExpanded = expandedField === fieldId;
 
-    // Editing state
     if (isEditing) {
       return (
-        <div className="space-y-2" ref={expandedRef}>
-          <Label className="text-xs font-medium text-white/50">
-            RSS feeds
-            <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
-          </Label>
-          {feedCount > 0 && (
-            <div className="space-y-2">
-              {settings.rss_feeds.map((feed, i) => (
-                <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 group">
-                  <span className="flex-1 text-sm text-white/70 truncate font-mono">{feed}</span>
-                  <button onClick={() => removeFeed(i)} className="text-white/30 hover:text-red-400 transition-colors">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          {feedCount < MAX_RSS_FEEDS && (
-            <div className="flex gap-2">
-              <Input
-                autoFocus={feedCount === 0}
-                placeholder="https://example.com/feed.xml"
-                value={newFeed}
-                onChange={(e) => setNewFeed(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addFeed()}
-                onBlur={() => { if (newFeed.trim()) addFeed(); }}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onMouseDown={(e) => { e.preventDefault(); if (newFeed.trim()) addFeed(); }}
-                disabled={!newFeed.trim()}
-                className="flex-shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <Input
+          autoFocus
+          value={feedValue}
+          onChange={(e) => {
+            const updated = [...localFeeds];
+            updated[index] = e.target.value;
+            setLocalFeeds(updated);
+          }}
+          onBlur={() => handleSaveFeed(index, feedValue)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSaveFeed(index, feedValue)}
+          placeholder="https://example.com/feed.xml"
+          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 font-mono text-sm"
+        />
       );
     }
 
-    // Expanded state
     if (isExpanded) {
       return (
-        <div className="space-y-2" ref={expandedRef}>
-          <Label className="text-xs font-medium text-white/50">
-            RSS feeds
-            <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
-          </Label>
-          <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2 group">
-            {feedCount > 0 ? (
-              <div className="space-y-1 pr-8">
-                {settings.rss_feeds.map((feed, i) => (
-                  <p key={i} className="text-sm text-white/70 font-mono truncate">{feed}</p>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm italic text-white/30 pr-8">Geen feeds toegevoegd</p>
-            )}
-            <button
-              onClick={() => { setEditingField('rss_feeds'); }}
-              className="absolute top-2 right-2 text-white/30 hover:text-white transition-colors"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-          </div>
+        <div className="expanded-field-container relative px-3 py-2 pr-10 rounded-md bg-white/5 border border-white/10 text-white min-h-[40px]">
+          <span className={`font-mono text-sm break-all ${!feedValue ? 'text-white/30' : 'text-white/80'}`}>
+            {feedValue || 'https://example.com/feed.xml'}
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpandedField(null); setEditingField(fieldId); }}
+            className="absolute top-2 right-2 text-white/30 hover:text-white transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
         </div>
       );
     }
 
-    // Collapsed state
     return (
-      <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-white/50">RSS feeds</Label>
-        <div
-          onClick={() => setExpandedField('rss_feeds')}
-          className="h-[40px] flex items-center bg-white/5 border border-white/10 rounded-md px-3 cursor-pointer hover:bg-white/10 transition-colors"
-        >
-          {feedCount > 0 ? (
-            <span className="text-sm text-white/70">{feedCount} feed{feedCount !== 1 ? 's' : ''} toegevoegd</span>
-          ) : (
-            <span className="text-sm text-white/30 italic">Geen feeds toegevoegd</span>
-          )}
+      <div
+        onClick={() => setExpandedField(fieldId)}
+        className="h-[40px] flex items-center bg-white/5 border border-white/10 rounded-md px-3 cursor-pointer hover:bg-white/10 transition-colors overflow-hidden"
+      >
+        <span className={`text-sm truncate font-mono ${feedValue ? 'text-white/70' : 'text-white/30 italic'}`}>
+          {feedValue || 'https://example.com/feed.xml'}
+        </span>
+      </div>
+    );
+  };
+
+  const renderRssFeeds = () => {
+    const feedCount = localFeeds.length;
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-white/50">
+          RSS feeds
+          <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
+        </Label>
+        <div className="space-y-2">
+          {localFeeds.map((feed, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex-1">{renderRssFeedItem(i, feed)}</div>
+              <button
+                onClick={() => handleRemoveFeed(i)}
+                className="text-white/30 hover:text-destructive transition-colors flex-shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
+        {feedCount < MAX_RSS_FEEDS && (
+          <Button
+            variant="outline"
+            onClick={handleAddFeed}
+            className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Feed toevoegen
+          </Button>
+        )}
       </div>
     );
   };
