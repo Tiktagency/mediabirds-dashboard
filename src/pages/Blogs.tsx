@@ -54,7 +54,8 @@ const Blogs = () => {
     aantal_woorden: [500, 1500] as [number, number], // Range slider values
     taal: '',
     achtergrond_kleur: '',
-    hoofdaccent_gradient: '',
+    hoofdaccent_gradient_1: '',
+    hoofdaccent_gradient_2: '',
     get_afbeelding_url: '',
     post_blog_url: '',
   });
@@ -82,9 +83,20 @@ const Blogs = () => {
     return [500, 1500];
   };
 
+  // Helper to parse gradient string to two colors
+  const parseGradientString = (gradientStr: string | null): [string, string] => {
+    if (!gradientStr) return ['', ''];
+    const parts = gradientStr.split(',');
+    if (parts.length === 2) {
+      return [parts[0].trim(), parts[1].trim()];
+    }
+    return [gradientStr, ''];
+  };
+
   // Load settings into form when they change
   useEffect(() => {
     if (settings) {
+      const [gradient1, gradient2] = parseGradientString(settings.hoofdaccent_gradient);
       setFormData({
         bedrijfsnaam: settings.bedrijfsnaam || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
@@ -92,7 +104,8 @@ const Blogs = () => {
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
         achtergrond_kleur: settings.achtergrond_kleur || '',
-        hoofdaccent_gradient: settings.hoofdaccent_gradient || '',
+        hoofdaccent_gradient_1: gradient1,
+        hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
       });
@@ -104,7 +117,8 @@ const Blogs = () => {
         aantal_woorden: [500, 1500],
         taal: '',
         achtergrond_kleur: '',
-        hoofdaccent_gradient: '',
+        hoofdaccent_gradient_1: '',
+        hoofdaccent_gradient_2: '',
         get_afbeelding_url: '',
         post_blog_url: '',
       });
@@ -195,7 +209,8 @@ const Blogs = () => {
 
   const isFormComplete = () => {
     const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
-    const adminFields = ['achtergrond_kleur', 'hoofdaccent_gradient', 'get_afbeelding_url', 'post_blog_url'];
+    const imageFields = ['achtergrond_kleur', 'hoofdaccent_gradient_1', 'hoofdaccent_gradient_2'];
+    const adminFields = ['get_afbeelding_url', 'post_blog_url'];
     
     for (const field of requiredStringFields) {
       if (!formData[field as keyof typeof formData]) return false;
@@ -203,6 +218,11 @@ const Blogs = () => {
     
     // Check range slider has valid values
     if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
+    
+    // Image fields must be filled
+    for (const field of imageFields) {
+      if (!formData[field as keyof typeof formData]) return false;
+    }
     
     // Admin fields must also be filled (they're stored in DB by admin)
     for (const field of adminFields) {
@@ -218,6 +238,9 @@ const Blogs = () => {
     if (field === 'aantal_woorden') {
       // Convert array to string format "min-max"
       updateData[field] = `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`;
+    } else if (field === 'hoofdaccent_gradient_1' || field === 'hoofdaccent_gradient_2') {
+      // Combine both gradient fields into single string for storage
+      updateData['hoofdaccent_gradient'] = `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`;
     } else {
       updateData[field] = formData[field as keyof typeof formData] || null;
     }
@@ -257,6 +280,7 @@ const Blogs = () => {
   const handleCancelEdit = () => {
     // Reset to saved values
     if (settings) {
+      const [gradient1, gradient2] = parseGradientString(settings.hoofdaccent_gradient);
       setFormData({
         bedrijfsnaam: settings.bedrijfsnaam || '',
         bedrijfsomschrijving: settings.bedrijfsomschrijving || '',
@@ -264,7 +288,8 @@ const Blogs = () => {
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
         achtergrond_kleur: settings.achtergrond_kleur || '',
-        hoofdaccent_gradient: settings.hoofdaccent_gradient || '',
+        hoofdaccent_gradient_1: gradient1,
+        hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
       });
@@ -293,7 +318,7 @@ const Blogs = () => {
         aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
         taal: formData.taal,
         achtergrond_kleur: formData.achtergrond_kleur,
-        hoofdaccent_gradient: formData.hoofdaccent_gradient,
+        hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         timestamp: new Date().toISOString(),
@@ -350,7 +375,7 @@ const Blogs = () => {
     const isEditing = editingField === field;
     const isExpanded = expandedField === field;
     const value = formData[field] as string;
-    const canEdit = adminOnly ? isAdmin : isAdmin;
+    const canEdit = adminOnly ? isAdmin : true;
     const isTextField = type === 'text' || type === 'textarea';
 
     // Auto-resize textarea when editing
@@ -614,11 +639,22 @@ const Blogs = () => {
             {renderRangeField()}
             {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
             
+            {/* Afbeelding section - accessible to all users */}
+            <div className="pt-6 border-t border-white/10 space-y-4">
+              <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
+              {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
+              <div className="space-y-2">
+                <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+                  {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                </div>
+              </div>
+            </div>
+            
             {/* Admin-only fields - visible to all, editable by admins only */}
             <div className="pt-6 border-t border-white/10 space-y-6">
               <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-              {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, true)}
-              {renderField('Hoofdaccent gradient', 'hoofdaccent_gradient', 'text', undefined, true)}
               {renderField('GET afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
               {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             </div>
