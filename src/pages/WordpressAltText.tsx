@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AltTextCompanySelector from '@/components/wordpress-alt-text/AltTextCompanySelector';
 import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextCompanySelector';
+import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { Pencil, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +20,11 @@ const WordpressAltText = () => {
   const [editName, setEditName] = useState('');
   const [editDomain, setEditDomain] = useState('');
   const [isStarting, setIsStarting] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleAnimationComplete = useCallback(() => {
+    setIsAnimating(false);
+  }, []);
 
   useEffect(() => {
     setEditName(selectedCompany?.name || '');
@@ -56,6 +62,7 @@ const WordpressAltText = () => {
   const handleStart = async () => {
     if (!selectedCompany) return;
     setIsStarting(true);
+    setIsAnimating(true);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
         body: {
@@ -155,13 +162,14 @@ const WordpressAltText = () => {
       </div>
       
       <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6">
-        <h1 className="hero-title text-white mb-12 fade-in-up">
+        <h1 className="hero-title text-foreground mb-8 fade-in-up">
           Alt-tekst wordpress
         </h1>
 
         {selectedCompany ? (
-          <div className="space-y-6 max-w-md w-full">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 space-y-4">
+          <div className="space-y-6 max-w-2xl w-full flex flex-col items-center">
+            <AltTextAnimation isAnimating={isAnimating} onAnimationComplete={handleAnimationComplete} />
+            <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4 max-w-md w-full">
               <div className="space-y-2">
                 <Label className="text-white/70">Bedrijfsnaam:</Label>
                 {renderEditableField(
@@ -187,7 +195,7 @@ const WordpressAltText = () => {
             <Button
               onClick={handleStart}
               disabled={isStarting}
-              className="w-full bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900 font-semibold py-3"
+              className="w-full max-w-md bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
             >
               {isStarting ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
@@ -197,7 +205,7 @@ const WordpressAltText = () => {
             </Button>
           </div>
         ) : (
-          <p className="text-white/40 text-sm">Selecteer een bedrijf om de gegevens te zien</p>
+          <p className="text-muted-foreground text-sm">Selecteer een bedrijf om de gegevens te zien</p>
         )}
       </div>
     </div>
