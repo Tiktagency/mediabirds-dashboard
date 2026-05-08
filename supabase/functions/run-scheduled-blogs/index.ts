@@ -129,7 +129,10 @@ Deno.serve(async (req) => {
           status: blogSettings.status || 'Draft',
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
-          categories: blogCategories || [],
+          Category: (blogCategories || []).reduce((acc: Record<string, string>, cat: { label: string; value: string }) => {
+            acc[cat.label] = cat.value;
+            return acc;
+          }, {}),
           timestamp: new Date().toISOString(),
           triggered_from: 'scheduled',
         };
