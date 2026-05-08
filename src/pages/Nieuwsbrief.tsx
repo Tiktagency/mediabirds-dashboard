@@ -598,76 +598,137 @@ const Nieuwsbrief = () => {
 
             {/* Live kleur preview */}
             <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
                   <Newspaper className="w-3.5 h-3.5 text-white/50" />
                   <Label className="text-xs font-medium text-white/50">Kleur preview</Label>
                 </div>
-                {/* Preview container */}
-                <div className="rounded-lg overflow-hidden border border-white/10 text-[13px] leading-snug" style={{ backgroundColor: localColors.achtergrond_kleur }}>
+                {/* Scrollable preview container */}
+                <div className="rounded-lg overflow-hidden border border-white/10" style={{ maxHeight: '560px', overflowY: 'auto' }}>
+                  <div style={{ backgroundColor: localColors.achtergrond_kleur, fontFamily: 'Arial, sans-serif' }}>
 
-                  {/* Header / intro */}
-                  <div className="px-5 py-5" style={{ backgroundColor: localColors.achtergrond_kleur }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: localColors.primaire_kleur }}>T</div>
-                      <span className="font-semibold text-xs" style={{ color: localColors.tekst_kleur }}>{localData.bedrijfsnaam || 'Bedrijfsnaam'}</span>
+                    {/* Sectie 1 — Intro */}
+                    <div style={{ padding: '28px 28px 20px 28px', backgroundColor: localColors.achtergrond_kleur }}>
+                      <p style={{ fontSize: '13px', lineHeight: '1.7', color: localColors.tekst_kleur, margin: 0 }}>
+                        <strong>Beste ondernemer,</strong><br />
+                        Welkom bij de nieuwste editie van onze AI-nieuwsbrief — speciaal samengesteld voor jou als MKB-ondernemer.
+                        In deze editie nemen we je mee in de vijf grootste AI-ontwikkelingen van deze maand, een opvallend AI-feitje
+                        en praktische tips die je direct kunt toepassen.
+                      </p>
                     </div>
-                    <p className="font-bold text-base mb-1" style={{ color: localColors.tekst_kleur }}>
-                      AI-update: wat betekent dit voor jouw bedrijf?
-                    </p>
-                    <p className="text-xs italic" style={{ color: localColors.subtekst_kleur }}>
-                      De laatste ontwikkelingen in AI, vertaald naar jouw praktijk.
-                    </p>
-                  </div>
 
-                  {/* Divider */}
-                  <div className="h-[3px] mx-5 rounded-full mb-4" style={{ backgroundColor: localColors.primaire_kleur }} />
+                    {/* Sectie 2 — Oranje full-width divider */}
+                    <div style={{ height: '3px', backgroundColor: localColors.primaire_kleur }} />
 
-                  {/* AI Ontwikkeling card */}
-                  <div className="mx-5 mb-4 rounded-lg p-4" style={{ backgroundColor: localColors.kaart_achtergrond }}>
-                    <div className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold text-white mb-2" style={{ backgroundColor: localColors.primaire_kleur }}>
-                      🚀 AI-ONTWIKKELING
+                    {/* Sectie 3 — AI-ontwikkelingen */}
+                    <div style={{ padding: '20px 28px', backgroundColor: localColors.achtergrond_kleur }}>
+                      {/* Sectietitel */}
+                      <div style={{ borderLeft: `3px solid ${localColors.primaire_kleur}`, paddingLeft: '10px', marginBottom: '14px' }}>
+                        <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: 0 }}>
+                          De 5 grootste AI-ontwikkelingen van maart
+                        </p>
+                      </div>
+
+                      {/* Kaart */}
+                      <div style={{ backgroundColor: localColors.kaart_achtergrond, borderRadius: '8px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                        {/* Badge rij */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                          <div style={{
+                            width: '22px', height: '22px', borderRadius: '50%',
+                            backgroundColor: localColors.primaire_kleur,
+                            color: '#fff', fontSize: '11px', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                          }}>1</div>
+                          <span style={{
+                            backgroundColor: localColors.primaire_kleur, color: '#fff',
+                            fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px'
+                          }}>Baanbrekend</span>
+                        </div>
+                        {/* Titel */}
+                        <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: '0 0 6px 0' }}>
+                          Google lanceert Gemini 2.0 voor zakelijke gebruikers
+                        </p>
+                        {/* Body */}
+                        <p style={{ fontSize: '11px', color: localColors.subtekst_kleur, margin: '0 0 10px 0', lineHeight: '1.6' }}>
+                          Google heeft zijn nieuwste AI-model Gemini 2.0 beschikbaar gesteld voor bedrijven.
+                          Het model is sneller, nauwkeuriger en ondersteunt nu ook multimodale input zoals afbeeldingen en audio.
+                        </p>
+                        {/* Dunne lijn */}
+                        <div style={{ height: '1px', backgroundColor: localColors.subtekst_kleur, opacity: 0.15, margin: '10px 0' }} />
+                        {/* MKB-tip */}
+                        <p style={{ fontSize: '11px', fontStyle: 'italic', color: localColors.primaire_kleur, margin: 0 }}>
+                          💡 MKB-tip: Gebruik Gemini 2.0 om klantcommunicatie te automatiseren en direct tijd te besparen op terugkerende taken.
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-semibold text-sm mb-1" style={{ color: localColors.tekst_kleur }}>
-                      Google lanceert Gemini 2.0 voor zakelijke gebruikers
-                    </p>
-                    <p className="text-xs mb-2" style={{ color: localColors.tekst_kleur }}>
-                      Google heeft zijn nieuwste AI-model Gemini 2.0 beschikbaar gesteld voor bedrijven. Het model is sneller en nauwkeuriger dan zijn voorganger.
-                    </p>
-                    <p className="text-xs italic" style={{ color: localColors.primaire_kleur }}>
-                      💡 MKB-tip: Gebruik Gemini 2.0 om klantcommunicatie te automatiseren en tijd te besparen.
-                    </p>
-                  </div>
 
-                  {/* AI Feitje */}
-                  <div className="mx-5 mb-4 px-4 py-3 rounded-lg" style={{ backgroundColor: localColors.accent_kleur }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: localColors.subtekst_kleur }}>🧠 AI Feitje</p>
-                    <p className="font-bold text-sm mb-0.5" style={{ color: localColors.tekst_kleur }}>
-                      72% van de MKB-bedrijven gebruikt AI nog niet
-                    </p>
-                    <p className="text-xs italic" style={{ color: localColors.subtekst_kleur }}>
-                      Terwijl concurrenten al tijdwinst boeken, loopt een groot deel van het MKB achter op het gebied van AI-adoptie.
-                    </p>
-                  </div>
-
-                  {/* CTA footer */}
-                  <div className="px-5 py-5 rounded-b-lg" style={{ backgroundColor: localColors.secundaire_kleur }}>
-                    <p className="font-semibold text-sm mb-1" style={{ color: localColors.footer_tekst_kleur }}>
-                      {localData.tagline || 'Minder druk, meer tijd'}
-                    </p>
-                    <p className="text-xs mb-3" style={{ color: localColors.footer_tekst_kleur, opacity: 0.75 }}>
-                      {localData.bedrijfsomschrijving
-                        ? localData.bedrijfsomschrijving.substring(0, 80) + (localData.bedrijfsomschrijving.length > 80 ? '…' : '')
-                        : 'Ontdek hoe automatisering jouw bedrijf verder helpt.'}
-                    </p>
-                    <div
-                      className="inline-block px-4 py-2 rounded text-xs font-semibold"
-                      style={{ backgroundColor: localColors.primaire_kleur, color: localColors.cta_tekst_kleur }}
-                    >
-                      {localData.cta_tekst || 'Plan een vrijblijvende sessie'}
+                    {/* Sectie 4 — AI Feitje */}
+                    <div style={{ padding: '0 28px 20px 28px', backgroundColor: localColors.achtergrond_kleur }}>
+                      {/* Sectietitel */}
+                      <div style={{ borderLeft: `3px solid ${localColors.primaire_kleur}`, paddingLeft: '10px', marginBottom: '12px' }}>
+                        <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: 0 }}>
+                          Wist je dat…
+                        </p>
+                      </div>
+                      {/* Accent kaart */}
+                      <div style={{
+                        backgroundColor: localColors.accent_kleur,
+                        borderLeft: `3px solid ${localColors.primaire_kleur}`,
+                        borderRadius: '6px',
+                        padding: '14px 16px'
+                      }}>
+                        <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: '0 0 6px 0' }}>
+                          💡 72% van de MKB-bedrijven gebruikt AI nog niet
+                        </p>
+                        <p style={{ fontSize: '11px', fontStyle: 'italic', color: localColors.subtekst_kleur, margin: 0, lineHeight: '1.6' }}>
+                          Terwijl concurrenten al tijdwinst boeken, loopt een groot deel van het MKB achter op het gebied van AI-adoptie.
+                          Dit is hét moment om de voorsprong te pakken.
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
+                    {/* Sectie 5 — CTA */}
+                    <div style={{ padding: '28px', backgroundColor: localColors.primaire_kleur, textAlign: 'center' }}>
+                      <p style={{ fontSize: '15px', fontWeight: 700, color: localColors.cta_tekst_kleur, margin: '0 0 6px 0' }}>
+                        {localData.cta_tekst || 'Klaar om AI in te zetten voor jouw bedrijf?'}
+                      </p>
+                      <p style={{ fontSize: '11px', color: localColors.cta_tekst_kleur, opacity: 0.85, margin: '0 0 16px 0' }}>
+                        Plan een vrijblijvend gesprek en ontdek de mogelijkheden.
+                      </p>
+                      <div style={{
+                        display: 'inline-block',
+                        backgroundColor: '#fff',
+                        color: localColors.primaire_kleur,
+                        fontSize: '11px', fontWeight: 700,
+                        padding: '8px 20px',
+                        borderRadius: '6px',
+                        cursor: 'pointer'
+                      }}>
+                        {localData.cta_tekst || 'Plan een vrijblijvende sessie'} →
+                      </div>
+                    </div>
+
+                    {/* Sectie 6 — Footer */}
+                    <div style={{ padding: '20px 28px', backgroundColor: localColors.achtergrond_kleur, textAlign: 'center' }}>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: '0 0 2px 0' }}>
+                        {localData.bedrijfsnaam || 'Bedrijfsnaam'}
+                      </p>
+                      <p style={{ fontSize: '11px', color: localColors.tekst_kleur, margin: '0 0 4px 0' }}>
+                        {localData.tagline || 'Jouw tagline hier'}
+                      </p>
+                      <a href="#" style={{ fontSize: '11px', color: localColors.primaire_kleur, textDecoration: 'none' }}>
+                        {localData.website || 'www.jouwwebsite.nl'}
+                      </a>
+                      <div style={{ height: '1px', backgroundColor: localColors.subtekst_kleur, opacity: 0.2, margin: '12px 0' }} />
+                      <p style={{ fontSize: '10px', color: localColors.subtekst_kleur, margin: '0 0 2px 0' }}>
+                        Afmelden van deze nieuwsbrief
+                      </p>
+                      <p style={{ fontSize: '10px', color: localColors.subtekst_kleur, margin: 0 }}>
+                        © {new Date().getFullYear()} {localData.bedrijfsnaam || 'Bedrijfsnaam'}. Alle rechten voorbehouden.
+                      </p>
+                    </div>
+
+                  </div>
                 </div>
               </CardContent>
             </Card>
