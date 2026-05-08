@@ -563,7 +563,8 @@ export const KeywordResearchForm = ({
         <Button
           onClick={handleStartResearch}
           disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
-          className="w-full seo-button-primary gap-2"
+          variant="primaryCustom"
+          className="w-full gap-2"
         >
           {isSubmitting ? (
             <>
