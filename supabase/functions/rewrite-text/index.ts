@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -135,6 +136,27 @@ BELANGRIJK: Blijf STRIKT onder de ${wordCount} woorden.`;
 
     const data = await response.json();
     const generatedText = data.choices?.[0]?.message?.content || "";
+
+    // Track usage in automation_status
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      
+      if (supabaseUrl && serviceRoleKey) {
+        const supabase = createClient(supabaseUrl, serviceRoleKey);
+        await supabase
+          .from("automation_status")
+          .upsert({
+            automation_name: "copyright-branding",
+            status: "active",
+            last_run: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+          }, { onConflict: "automation_name" });
+      }
+    } catch (trackingError) {
+      console.error("Failed to track usage:", trackingError);
+      // Don't fail the request if tracking fails
+    }
 
     return new Response(
       JSON.stringify({ text: generatedText }),
