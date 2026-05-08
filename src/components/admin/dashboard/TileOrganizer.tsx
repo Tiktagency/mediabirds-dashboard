@@ -282,13 +282,29 @@ export const TileOrganizer = ({
 }: TileOrganizerProps) => {
   const GRID_SIZE = 9;
   
-  // Pad the tile order to always have 9 slots
-  const paddedOrder = [...tileOrder];
-  while (paddedOrder.length < GRID_SIZE) {
-    paddedOrder.push(`__empty_${paddedOrder.length}`);
-  }
+  // Pad the tile order and auto-detect missing tiles from tileConfig
+  const buildItems = () => {
+    const allTileKeys = Object.keys(tileConfig);
+    let items = [...tileOrder];
+
+    // Auto-detect missing tiles
+    const missingTiles = allTileKeys.filter(key => !items.includes(key));
+    for (const tile of missingTiles) {
+      const emptyIndex = items.findIndex(i => i.startsWith('__empty_'));
+      if (emptyIndex !== -1) {
+        items[emptyIndex] = tile;
+      } else {
+        items.push(tile);
+      }
+    }
+
+    while (items.length < GRID_SIZE) {
+      items.push(`__empty_${items.length}`);
+    }
+    return items.slice(0, GRID_SIZE);
+  };
   
-  const [items, setItems] = useState(paddedOrder.slice(0, GRID_SIZE));
+  const [items, setItems] = useState(buildItems());
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
