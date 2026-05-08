@@ -1,61 +1,49 @@
 
+# Handleiding aanpassen: stappen verwijderen en wijzigen
 
-# Folder ID opslaan en meesturen bij verwijderen
+## Overzicht
 
-## Wat verandert er
+De SEO blog handleiding in `src/pages/SeoBlog.tsx` wordt aangepast:
 
-1. Een nieuwe kolom `folder_id` wordt toegevoegd aan de `companies` tabel om de bedrijfsmap-ID op te slaan
-2. Bij het aanmaken van een bedrijf wordt de "Folder bedrijf" -> "Folder ID" uit de webhook-response opgeslagen in deze kolom
-3. Bij het verwijderen van een bedrijf wordt de `folder_id` meegestuurd in de POST-request naar de webhook
+- **Verwijderen**: Stap 3 (Bedrijfsdocument aanmaken), Stap 4 (Klantmap organiseren), Stap 5 (Bedrijf selecteren), Stap 14 (Spreadsheet koppeling herhalen), Stap 15 (API Koppelingen)
+- **Wijzigen**: Stap 6 en Stap 9 krijgen nieuwe inhoud
+- **Hernummeren**: Alle overgebleven stappen worden doorlopend genummerd van 1 t/m 12
 
-## Aanpassingen
+## Nieuwe stappenstructuur
 
-### 1. Database migratie
+| Nieuw nr | Oud nr | Titel | Wijziging |
+|----------|--------|-------|-----------|
+| 1 | 1 | Toegang regelen | Ongewijzigd |
+| 2 | 2 | URL Database updaten | Ongewijzigd |
+| 3 | 6 | Koppelen met Google Sheets | **Nieuwe tekst** + bestaande tip behouden |
+| 4 | 7 | Sitemaps toevoegen | Ongewijzigd |
+| 5 | 8 | Bedrijfskennis invullen | Ongewijzigd |
+| 6 | 9 | Admin Instellingen configureren | **Nieuwe tekst** |
+| 7 | 10 | Testen | Ongewijzigd |
+| 8 | 11 | Basisinstellingen | Ongewijzigd |
+| 9 | 12 | Beeldmateriaal kiezen | Ongewijzigd (referentie naar "Stap 4" verwijderd) |
+| 10 | 13 | Publicatie status | Ongewijzigd |
+| 11 | 16 | Categorieen (Optioneel) | Ongewijzigd |
+| 12 | 17 | Finalisering | Ongewijzigd |
 
-Nieuwe kolom toevoegen aan de `companies` tabel:
+## Gewijzigde inhoud
 
-```sql
-ALTER TABLE public.companies ADD COLUMN folder_id text;
-```
+**Stap 3 (was 6):**
+> Ga naar pagina URL instellingen. Open het "SEO pagina URL's" bestand in google drive. Haal de Grid ID op en vul in.
+> Tip: (bestaande tip behouden)
 
-### 2. Edge function: `trigger-add-company-webhook` aanpassen
+**Stap 6 (was 9):**
+> Admin Instellingen configureren
+> Klap de Admin instellingen open. Open het bestand [BEDRIJFSNAAM] seo in Google Drive:
+> Open het tab "Zoekwoord nieuw": Haal de Grid ID op en vul in
 
-Na het ontvangen van de webhook-response wordt naast de bestaande document-ID's ook de Folder ID opgeslagen:
+## Overige aanpassingen
 
-```typescript
-const folder = webhookData['Folder bedrijf'] || {};
-```
+- **Deel 1** bevat nu stappen 1-2 (was 1-4)
+- **Deel 2** bevat nu stappen 3-4 (was 5-7)
+- **Deel 4** bevat nu stappen 8-12 (was 11-17)
+- In stap 9 (Beeldmateriaal) wordt de referentie "bedrijfsmap (uit Stap 4)" gewijzigd naar "bedrijfsmap" zonder stapverwijzing
 
-En bij de company update:
+## Technisch
 
-```typescript
-await supabase
-  .from('companies')
-  .update({ folder_id: toNull(folder['Folder ID']) })
-  .eq('id', companyId);
-```
-
-### 3. CompanySelector.tsx aanpassen
-
-De `Company` interface heeft al alle velden uit de tabel. Na de migratie wordt `folder_id` automatisch beschikbaar via het `*` select.
-
-Bij het verwijderen wordt de `folder_id` meegestuurd:
-
-```typescript
-body: { bedrijfsnaam: companyToDelete.name, folderId: companyToDelete.folder_id }
-```
-
-### 4. Edge function: `trigger-delete-company-webhook` aanpassen
-
-De function accepteert nu ook `folderId` en stuurt deze mee naar de webhook:
-
-```typescript
-const { bedrijfsnaam, folderId } = await req.json();
-body: JSON.stringify({ bedrijfsnaam, folderId })
-```
-
-## Technische details
-
-- De `Company` interface in CompanySelector.tsx moet uitgebreid worden met `folder_id: string | null`
-- De `companies` tabel query gebruikt `select('*')`, dus de nieuwe kolom is automatisch beschikbaar na de migratie
-- Als een bedrijf geen folder_id heeft (bijv. oudere bedrijven), wordt `null` meegestuurd -- de webhook kan hier mee omgaan
+Alleen het bestand `src/pages/SeoBlog.tsx` wordt aangepast, regels 636-845 (de guide content).
