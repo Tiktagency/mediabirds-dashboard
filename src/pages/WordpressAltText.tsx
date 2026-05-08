@@ -208,7 +208,7 @@ const WordpressAltText = () => {
                         className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
                       >
                         <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
-                          {editPassword ? '••••••••••••' : 'abcd efgh ijkl 1234'}
+                          {editPassword ? '•'.repeat(editPassword.length) : 'abcd efgh ijkl 1234'}
                         </span>
                       </div>
                     )}
