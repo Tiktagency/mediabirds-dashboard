@@ -203,7 +203,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
     try {
       const { data, error } = await supabase
         .from('newsletter_companies' as any)
-        .insert({ name: newCompanyName.trim() })
+        .insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim() })
         .select()
         .single();
 
