@@ -1,35 +1,39 @@
-## Plan: Stijl-opties toevoegen aan "AI afbeelding"
+## Plan: Hover-previews bij stijl-opties op /seo-blog
 
 ### Doel
-Onder de "AI afbeelding" optie op `/seo-blog` (Blog Generatie) een nieuwe sectie "Stijl" toevoegen met 3 selecteerbare stijlen waarvan er steeds maar 1 geselecteerd kan zijn:
-- Isometric flat illustration
-- Cinematic 3D interface render
-- Brutalist / Raw UI design
+Bij elke stijl-optie (Isometric, Cinematic, Brutalist) onder "AI afbeelding" een klein "i"-icoontje tonen. Bij hover verschijnt een tooltip met een voorbeeldafbeelding zodat gebruikers zien hoe de stijl eruitziet.
 
-### Database wijziging
-Nieuwe kolom `image_style` toevoegen aan tabel `blog_settings` (type `text`, nullable, default `null`). De waarden worden opgeslagen als korte slug:
-- `isometric_flat`
-- `cinematic_3d`
-- `brutalist_raw`
+### Afbeeldingen
+- **Isometric flat illustration** → `user-uploads://Schermafbeelding_2026-04-30_om_09.20.15.png` (oranje kiosk illustratie)
+- **Cinematic 3D interface render** → `user-uploads://Schermafbeelding_2026-04-30_om_09.21.50.png` (3D robot met dashboards)
+- **Brutalist / Raw UI design** → placeholder (gebruiker maakt deze later) — toon voorlopig een nette "Voorbeeld komt binnenkort" tekst in de tooltip
 
-### UI wijzigingen in `src/components/seo-blog/BlogGenerationForm.tsx`
-1. `image_style` toevoegen aan `formData` state (type union van de 3 slugs of `''`).
-2. Bij ophalen van settings (rond regel 131) en bij reset (rond regel 151) `image_style` meeladen / leegmaken.
-3. In het AI-afbeelding blok (na de gradient-velden, vóór regel 708) een nieuwe sectie "Stijl" renderen met 3 klikbare kaartjes/knoppen in een grid, gestyled in dezelfde glassmorphism look als de bestaande `AI afbeelding`/`Foto Google Drive` toggle. Geselecteerde optie krijgt een lichtere achtergrond + witte border, niet-geselecteerde een subtiele border.
-4. Klikken op een optie zet `formData.image_style` direct én roept `saveSettings({ image_style: <waarde> })` aan (zelfde patroon als de image_type toggle op regel 610-611), zodat het meteen in de database staat.
+### Implementatie
 
-### Webhook payload
-In de submit-handler (rond regel 297) bij `image_type === 'ai_image'` ook `image_style: formData.image_style` meesturen; bij `google_drive` leeg/weglaten (consistent met bestaande conditional-pattern).
+**1. Assets kopiëren**
+Beide uploads kopiëren naar `src/assets/`:
+- `src/assets/style-isometric-flat.png`
+- `src/assets/style-cinematic-3d.png`
 
-### Validatie
-`image_style` is **optioneel** — geen blokkering van de Start-knop. Als de gebruiker niets kiest blijft het leeg.
+**2. UI-wijziging in `src/components/seo-blog/BlogGenerationForm.tsx`** (regels 713-744)
 
-### Hook / types
-`BlogSettings` interface in `src/hooks/useBlogSettings.ts` uitbreiden met `image_style: string | null`.
+- Imports toevoegen: `Info` icoon van `lucide-react`, `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` van `@/components/ui/tooltip`, en de twee preview-afbeeldingen.
+- Het `options` array uitbreiden met een `preview` veld (image-import of `null` voor brutalist).
+- In elke stijl-knop rechtsboven een klein `Info` icoontje plaatsen (12-14px, `text-white/50 hover:text-white/90`), gewikkeld in een `Tooltip`. Hover op het icoon toont een `TooltipContent` met:
+  - Indien `preview` aanwezig: `<img>` (ca. 240x180px, `rounded-md`) met daaronder een klein label.
+  - Indien `null` (brutalist): tekst "Voorbeeld komt binnenkort".
+- Klik op het icoon mag NIET de stijlselectie triggeren → `e.stopPropagation()` + `e.preventDefault()` op de tooltip-trigger.
+- `TooltipProvider` toevoegen rondom de stijl-grid (of hergebruiken indien al aanwezig hoger in de boom).
+
+**3. Styling tooltip**
+Standaard `TooltipContent` styling overschrijven met `p-2 bg-[#002C1F]/95 border border-white/20` zodat het past bij de glassmorphism look van de form.
 
 ### Bestanden
 | Bestand | Wijziging |
 |---------|-----------|
-| migratie | Kolom `image_style` toevoegen aan `blog_settings` |
-| `src/hooks/useBlogSettings.ts` | `image_style` toevoegen aan interface |
-| `src/components/seo-blog/BlogGenerationForm.tsx` | State, UI sectie met 3 opties, save bij klik, payload-veld |
+| `src/assets/style-isometric-flat.png` | Nieuw (kopie van upload 1) |
+| `src/assets/style-cinematic-3d.png` | Nieuw (kopie van upload 2) |
+| `src/components/seo-blog/BlogGenerationForm.tsx` | Info-icoon + tooltip met preview per stijl-optie |
+
+### Later
+Wanneer je de derde afbeelding (brutalist) hebt gemaakt, upload je deze en vervangen we de placeholder-tekst door het beeld op dezelfde manier.
