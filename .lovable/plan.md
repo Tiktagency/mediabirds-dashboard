@@ -1,100 +1,130 @@
 
-# Plan: Telefoonnummer Veld Toevoegen
+# Plan: Meerdere Emails, Plaatsnamen en Telefoonnummers
 
 ## Overzicht
 
-Voeg een optioneel telefoonnummer veld toe onder het "Functie" invulveld. Het veld valideert op een geldig telefoonnummerformaat.
+Maak het mogelijk om maximaal 2 emails, 2 telefoonnummers en 2 plaatsnamen toe te voegen aan een email handtekening. Dit wordt gerealiseerd door de enkelvoudige velden om te zetten naar arrays (JSONB in de database).
 
 ---
 
-## Wijzigingen
+## Database Wijzigingen
 
-### 1. Database: Nieuwe kolom toevoegen
+### Migratie SQL
 
-**Migratie SQL:**
 ```sql
+-- Voeg nieuwe array kolommen toe
 ALTER TABLE email_signature_settings 
-ADD COLUMN phone_number TEXT;
+ADD COLUMN emails JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN phone_numbers JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN locations JSONB DEFAULT '[]'::jsonb;
+
+-- Migreer bestaande data naar arrays
+UPDATE email_signature_settings 
+SET 
+  emails = CASE WHEN email IS NOT NULL THEN jsonb_build_array(email) ELSE '[]'::jsonb END,
+  phone_numbers = CASE WHEN phone_number IS NOT NULL THEN jsonb_build_array(phone_number) ELSE '[]'::jsonb END,
+  locations = CASE WHEN location IS NOT NULL THEN jsonb_build_array(location) ELSE '[]'::jsonb END;
 ```
 
-Dit voegt een optioneel veld toe voor het telefoonnummer.
+De oude kolommen (`email`, `phone_number`, `location`) worden behouden voor backwards compatibility.
 
 ---
 
-### 2. Hook: Interface uitbreiden
+## Hook Wijzigingen
 
 **Bestand: `src/hooks/useEmailSignatureSettings.ts`**
 
-Voeg `phone_number` toe aan de `EmailSignatureSettings` interface (regel 11-29):
+### Interface uitbreiden
 
 ```typescript
 export interface EmailSignatureSettings {
   // ... bestaande velden ...
-  job_title: string;
-  phone_number: string | null;  // Nieuw - na job_title
-  website: string | null;
+  email: string;           // Primaire email (verplicht, backwards compat)
+  emails: string[];        // Extra emails (max 2)
+  phone_number: string | null;
+  phone_numbers: string[]; // Extra telefoonnummers (max 2)
+  location: string | null;
+  locations: string[];     // Extra plaatsnamen (max 2)
   // ...
 }
 ```
 
-Update de `saveSettings` functie om `phone_number` mee te nemen in zowel update (regel 113-127) als insert (regel 135-150) queries.
+### parseSignature functie updaten
+
+Zorg dat `emails`, `phone_numbers` en `locations` correct als arrays worden geparsed.
+
+### saveSettings functie updaten
+
+Voeg de nieuwe array velden toe aan zowel de update als insert queries.
 
 ---
 
-### 3. Formulier: Telefoonnummer veld toevoegen
+## Formulier Wijzigingen
 
 **Bestand: `src/components/email-signature/EmailSignatureForm.tsx`**
 
-#### Zod schema uitbreiden (regel 21-32):
-Voeg phone_number validatie toe met optioneel regex patroon:
+### State toevoegen voor extra velden
+
 ```typescript
-phone_number: z.string()
-  .regex(/^[+]?[\d\s\-()]+$/, 'Ongeldig telefoonnummer formaat')
-  .optional()
-  .or(z.literal('')),
+const [extraEmails, setExtraEmails] = useState<string[]>([]);
+const [extraPhoneNumbers, setExtraPhoneNumbers] = useState<string[]>([]);
+const [extraLocations, setExtraLocations] = useState<string[]>([]);
 ```
 
-#### DefaultValues uitbreiden (regel 80-91):
-```typescript
-phone_number: '',
+### UI Component: Dynamische velden
+
+Voor elk type (email, telefoonnummer, plaatsnaam) wordt een component gemaakt met:
+- Het eerste (primaire) veld (email is verplicht)
+- Een "+" knop om een extra veld toe te voegen (max 1 extra = 2 totaal)
+- Een "x" knop bij extra velden om ze te verwijderen
+
+Voorbeeld voor Email sectie:
+```text
++------------------------------------------+
+| Email *                                  |
+| [jan@bedrijf.nl                    ]     |
+| [+] Extra email toevoegen                |
++------------------------------------------+
+
+Na toevoegen:
++------------------------------------------+
+| Email *                                  |
+| [jan@bedrijf.nl                    ]     |
+|                                          |
+| Extra email                              |
+| [info@bedrijf.nl               ] [x]     |
++------------------------------------------+
 ```
 
-#### Auto-save effect uitbreiden (regel 137):
-Voeg `watchedFields.phone_number` toe aan de dependency array.
+### Validatie uitbreiden
 
-#### Reset bij selectedSignature (regel 160-171 en 177-188):
+Het Zod schema wordt uitgebreid om arrays te valideren:
+
 ```typescript
-phone_number: selectedSignature.phone_number || '',
-// en voor defaults:
-phone_number: '',
+extra_emails: z.array(
+  z.string().email('Ongeldig email adres').or(z.literal(''))
+).max(1),
+extra_phone_numbers: z.array(
+  z.string().regex(/^[+]?[\d\s\-()]+$/, 'Ongeldig telefoonnummer').or(z.literal(''))
+).max(1),
+extra_locations: z.array(
+  z.string().or(z.literal(''))
+).max(1),
 ```
 
-#### triggerAutoSave data uitbreiden (regel 110-124):
-```typescript
-phone_number: data.phone_number || null,
-```
+### Data flow
 
-#### signatureData in onSubmit uitbreiden (regel 232-246):
-```typescript
-phone_number: data.phone_number || null,
-```
+1. Bij laden: primaire velden gaan naar form, extra waarden naar state arrays
+2. Bij opslaan: combineer primair veld + extra array en stuur naar backend
+3. Auto-save werkt ook voor de extra velden
 
-#### Nieuw invulveld toevoegen na Functie (na regel 404):
-```typescript
-<div className="space-y-2">
-  <Label htmlFor="phone_number" className="text-white">Telefoonnummer (optioneel)</Label>
-  <Input
-    id="phone_number"
-    type="tel"
-    {...register('phone_number')}
-    className="bg-white/10 border-white/20 text-white"
-    placeholder="+31 6 12345678"
-  />
-  {errors.phone_number && (
-    <p className="text-sm text-red-400">{errors.phone_number.message}</p>
-  )}
-</div>
-```
+---
+
+## Edge Function Wijzigingen
+
+**Bestand: `supabase/functions/trigger-email-signature/index.ts`**
+
+De webhook payload bevat nu ook de array velden zodat n8n hier gebruik van kan maken.
 
 ---
 
@@ -102,14 +132,45 @@ phone_number: data.phone_number || null,
 
 | Component | Wijziging |
 |-----------|-----------|
-| Database | Nieuwe kolom `phone_number` (TEXT, nullable) |
-| `useEmailSignatureSettings.ts` | `phone_number` in interface en queries |
-| `EmailSignatureForm.tsx` | Nieuw optioneel telefoonnummer veld met validatie |
+| Database | 3 nieuwe JSONB kolommen: `emails`, `phone_numbers`, `locations` |
+| Hook | Arrays toevoegen aan interface en queries |
+| Formulier | Dynamische UI voor meerdere waarden per type (max 2) |
+| Edge Function | Extra velden meesturen in payload |
+
+## Visueel Voorbeeld
+
+```text
++------------------------------------------+
+| Email *                                  |
+| [jan@bedrijf.nl                    ]     |
+| [+] Extra email toevoegen                |
++------------------------------------------+
+| Telefoonnummer (optioneel)               |
+| [+31 6 12345678                    ]     |
+| [+] Extra telefoonnummer toevoegen       |
++------------------------------------------+
+| Plaatsnaam (optioneel)                   |
+| [Amsterdam                         ]     |
+| [+] Extra plaatsnaam toevoegen           |
++------------------------------------------+
+```
+
+Na toevoegen van extra waarden (max bereikt):
+
+```text
++------------------------------------------+
+| Email *                                  |
+| [jan@bedrijf.nl                    ]     |
+|                                          |
+| Extra email                              |
+| [info@bedrijf.nl               ] [x]     |
++------------------------------------------+
+```
 
 ## Resultaat
 
-- Nieuw tekstveld "Telefoonnummer (optioneel)" onder het Functie veld
-- Validatie op geldig telefoonnummerformaat (cijfers, spaties, +, -, haakjes)
-- Het veld is optioneel en kan leeg gelaten worden
-- Auto-save werkt voor dit veld
-- Waarde wordt meegestuurd naar de webhook
+- Gebruikers kunnen tot 2 emails, 2 telefoonnummers en 2 plaatsnamen invoeren
+- De eerste waarde blijft het primaire/verplichte veld (alleen email is verplicht)
+- Extra velden zijn optioneel en kunnen worden verwijderd
+- Auto-save werkt voor alle velden
+- Alle waarden worden meegestuurd naar de n8n webhook
