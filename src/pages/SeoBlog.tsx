@@ -406,7 +406,7 @@ const SeoBlog = () => {
           <div className="mt-6 space-y-8 text-white/80 pb-8">
             {/* Intro */}
             <p className="text-sm text-white/60">
-              Volg deze stappen om het SEO-dashboard voor een nieuw bedrijf te configureren. Na configuratie voert het systeem automatisch zoekwoordonderzoek uit en worden er SEO-geoptimaliseerde blogs gegenereerd.
+              Volg dit stappenplan om een nieuwe klant volledig in te richten voor automatische bloggeneratie in het Mediabirds Dashboard.
             </p>
 
             {/* ID's Uitleg Sectie */}
@@ -454,102 +454,126 @@ const SeoBlog = () => {
               </div>
             </div>
 
-            {/* Deel 1: Google Drive */}
+            {/* Deel 1: Google Drive Inrichten */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/20">
                   <FolderOpen className="h-5 w-5 text-blue-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Deel 1: Google Drive Voorbereiding</h3>
+                <h3 className="text-lg font-semibold text-white">Deel 1: Google Drive Inrichten</h3>
               </div>
+              <p className="text-sm text-white/60 -mt-2">Doel: De database en documentstructuur voor de klant klaarzetten.</p>
               
-              <div className="space-y-3 pl-2">
+              <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">1</span>
-                  <p className="text-sm text-white/70">Zorg voor toegang tot de map <a href="https://drive.google.com/drive/folders/1u8PyUe6-ZntBG_EhuU_nnkv4YpoWjEst?hl=nl" target="_blank" rel="noopener noreferrer" className="text-blue-300 underline hover:text-blue-200">"SEO"</a> (beheerd door Tikt).</p>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-blue-300">Toegang regelen</p>
+                    <p>Vraag toegang tot de centrale map <a href="https://drive.google.com/drive/folders/1u8PyUe6-ZntBG_EhuU_nnkv4YpoWjEst?hl=nl" target="_blank" rel="noopener noreferrer" className="text-blue-300 underline hover:text-blue-200">"SEO"</a> in Google Drive (beheerd door Tikt).</p>
+                  </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">2</span>
                   <div className="text-sm text-white/70">
-                    <p>Open het bestand <span className="text-blue-300">SEO pagina URL's</span>:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Voeg een nieuw tabblad toe met de bedrijfsnaam</li>
-                      <li>Kopieer de kolomstructuur van een bestaande sheet</li>
-                    </ul>
+                    <p className="font-medium text-blue-300">URL Database updaten</p>
+                    <p>Open het bestand "SEO pagina URL's". Maak een nieuwe tab (sheet) aan en geef deze de naam van het bedrijf. Kopieer de kolommen van een bestaande bedrijfssheet naar deze nieuwe sheet.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">3</span>
                   <div className="text-sm text-white/70">
-                    <p>Kopieer <span className="text-blue-300">TEMPLATE: [BEDRIJFSNAAM] seo</span>:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Hernoem naar [Bedrijfsnaam] SEO</li>
-                      <li>Maak map [Bedrijfsnaam] aan en verplaats sheet</li>
-                    </ul>
+                    <p className="font-medium text-blue-300">Bedrijfsdocument aanmaken</p>
+                    <p>Ga terug naar de hoofdmap "SEO". Kopieer het bestand "TEMPLATE: [BEDRIJFSNAAM] seo". Hernoem de kopie naar: [BEDRIJFSNAAM] seo (verwijder het woord 'TEMPLATE').</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs font-medium text-blue-300">4</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-blue-300">Klantmap organiseren</p>
+                    <p>Maak een nieuwe map aan binnen de map "SEO" met de naam van het bedrijf. Verplaats het zojuist aangemaakte bestand ([BEDRIJFSNAAM] seo) naar deze map.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Deel 2: Dashboard Config */}
+            {/* Deel 2: Mediabirds Dashboard - Pagina URL's */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-500/20">
                   <Settings2 className="h-5 w-5 text-green-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Deel 2: Dashboard Basisconfiguratie</h3>
+                <h3 className="text-lg font-semibold text-white">Deel 2: Mediabirds Dashboard - Pagina URL's</h3>
               </div>
+              <p className="text-sm text-white/60 -mt-2">Doel: De sitemap koppelen voor interne linkbuilding.</p>
               
-              <div className="space-y-3 pl-2">
+              <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">1</span>
-                  <p className="text-sm text-white/70">Ga naar <span className="text-green-300">SEO</span> en voeg rechtsboven een nieuw bedrijf toe.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">2</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">5</span>
                   <div className="text-sm text-white/70">
-                    <p>Ga naar <span className="text-green-300">Pagina URL</span> instellingen:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Vul de Spreadsheet ID en Grid ID in</li>
-                    </ul>
+                    <p className="font-medium text-green-300">Bedrijf selecteren</p>
+                    <p>Ga naar het Mediabirds Dashboard → SEO. Selecteer rechtsboven in de dropdown het juiste bedrijf of voeg een nieuw bedrijf toe.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">3</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">6</span>
                   <div className="text-sm text-white/70">
-                    <p>Sitemap indexeren:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Ga naar [domeinnaam.nl]/sitemap.xml</li>
-                      <li>Selecteer relevante URL's en voeg toe</li>
-                    </ul>
+                    <p className="font-medium text-green-300">Koppelen met Google Sheets</p>
+                    <p>Ga naar Pagina URL Instellingen. Vul hier de Spreadsheet ID en de Sheet ID (Grid ID) in van de sheet die je in Stap 2 hebt aangemaakt.</p>
+                    <div className="mt-2 p-2 rounded bg-yellow-500/10 border border-yellow-500/30 flex items-start gap-2">
+                      <Lightbulb className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-yellow-300">Tip: Je vindt deze ID's in de URL van je browser wanneer de specifieke sheet openstaat.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-medium text-green-300">7</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-green-300">Sitemaps toevoegen</p>
+                    <p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Deel 3: Zoekwoordonderzoek */}
+            {/* Deel 3: Zoekwoord Onderzoek */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-orange-500/20">
                   <Search className="h-5 w-5 text-orange-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Deel 3: Zoekwoordonderzoek</h3>
+                <h3 className="text-lg font-semibold text-white">Deel 3: Zoekwoord Onderzoek</h3>
               </div>
+              <p className="text-sm text-white/60 -mt-2">Doel: De AI voeden met de juiste zoekwoorddata.</p>
               
-              <div className="space-y-3 pl-2">
+              <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">1</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">8</span>
                   <div className="text-sm text-white/70">
-                    <p>Open <span className="text-orange-300">Admin instellingen</span> en koppel ID's:</p>
+                    <p className="font-medium text-orange-300">Bedrijfskennis invullen</p>
+                    <p>Vul de gevraagde velden in op basis van de briefing of jouw kennis van het bedrijf.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">9</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-orange-300">Admin Instellingen configureren</p>
+                    <p>Klap de Admin instellingen open. Open het bestand [BEDRIJFSNAAM] seo in Google Drive:</p>
                     <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li><span className="text-orange-300">Hoofdzoekwoorden</span>: ID's van eerste sheet</li>
-                      <li><span className="text-orange-300">Nieuwe zoekwoorden</span>: ID's van tweede sheet</li>
+                      <li><span className="text-orange-300">Hoofdzoekwoorden:</span> Gebruik de Spreadsheet ID en Sheet ID van de eerste tab.</li>
+                      <li><span className="text-orange-300">Nieuwe zoekwoorden:</span> Gebruik de Spreadsheet ID en Sheet ID van de tweede tab (Zoekwoord nieuwe).</li>
                     </ul>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">2</span>
-                  <p className="text-sm text-white/70">Klik op de testknop. Werkt het niet? Neem contact op met Luc de Graag.</p>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-xs font-medium text-orange-300">10</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-orange-300">Testen</p>
+                    <p>Klik op de knop om de koppeling te testen.</p>
+                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
+                      <li>Werkt het? Ga door naar stap 11.</li>
+                      <li>Foutmelding? Neem contact op met Luc de Graag.</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -560,49 +584,96 @@ const SeoBlog = () => {
                 <div className="p-2 rounded-lg bg-pink-500/20">
                   <PenTool className="h-5 w-5 text-pink-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Deel 4: Blog Generatie & Publicatie</h3>
+                <h3 className="text-lg font-semibold text-white">Deel 4: Blog Generatie</h3>
               </div>
+              <p className="text-sm text-white/60 -mt-2">Doel: De daadwerkelijke creatie en publicatie van content instellen.</p>
               
-              <div className="space-y-3 pl-2">
+              <div className="space-y-4 pl-2">
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">1</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">11</span>
                   <div className="text-sm text-white/70">
-                    <p><span className="text-pink-300">Beeldmateriaal</span> configureren:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li><span className="text-pink-300">AI-afbeeldingen</span>: Voer hex-kleurcodes huisstijl in</li>
-                      <li><span className="text-pink-300">Eigen foto's</span>: Maak mappen "Foto's [Bedrijfsnaam]" en "Gebruikte foto's [Bedrijfsnaam]" aan, koppel Folder ID's</li>
-                    </ul>
+                    <p className="font-medium text-pink-300">Basisinstellingen</p>
+                    <p>Vul de velden in tot en met de sectie "Taal".</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">2</span>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">12</span>
                   <div className="text-sm text-white/70">
-                    <p><span className="text-pink-300">Publicatie & API</span>:</p>
-                    <ul className="mt-1 ml-4 space-y-1 text-white/60 list-disc">
-                      <li>Kies Draft (concept) of Direct Publiceren</li>
-                      <li>WordPress API-URL's invullen:</li>
-                    </ul>
-                    <div className="mt-2 space-y-1">
-                      <code className="block px-2 py-1 rounded bg-white/5 text-xs text-white/60">
-                        Media: https://[domeinnaam]/wp-json/wp/v2/media
-                      </code>
-                      <code className="block px-2 py-1 rounded bg-white/5 text-xs text-white/60">
-                        Posts: https://[domeinnaam]/wp-json/wp/v2/posts
-                      </code>
+                    <p className="font-medium text-pink-300">Beeldmateriaal kiezen</p>
+                    <p>Maak een keuze tussen AI-gegenereerde afbeeldingen of eigen foto's:</p>
+                    <div className="mt-2 space-y-2">
+                      <div className="p-2 rounded bg-pink-500/10 border border-pink-500/30">
+                        <p className="text-xs font-medium text-pink-300">Optie A: AI Afbeeldingen</p>
+                        <p className="text-xs text-white/60 mt-1">Vul de hex-kleurcodes in die passen bij de huisstijl.</p>
+                      </div>
+                      <div className="p-2 rounded bg-pink-500/10 border border-pink-500/30">
+                        <p className="text-xs font-medium text-pink-300">Optie B: Eigen foto's</p>
+                        <ul className="text-xs text-white/60 mt-1 ml-3 space-y-1 list-disc">
+                          <li>Maak in de bedrijfsmap (uit Stap 4) twee mappen aan: Foto's [bedrijfsnaam] en Gebruikte foto's [bedrijfsnaam].</li>
+                          <li>Kopieer de Folder ID's uit de URL-balk van je browser.</li>
+                          <li>Plak deze ID's in de juiste velden in het dashboard.</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">3</span>
-                  <p className="text-sm text-white/70">Activeer <span className="text-pink-300">Automatische trigger</span> en stel frequentie in (advies: 4-8 blogs/maand).</p>
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">13</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-pink-300">Publicatie status</p>
+                    <p>Kies tussen Draft (concept) of Publish (direct live).</p>
+                    <div className="mt-2 p-2 rounded bg-yellow-500/10 border border-yellow-500/30 flex items-start gap-2">
+                      <Lightbulb className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-yellow-300">Advies: Begin altijd met 'Draft' om de kwaliteit van de eerste blogs te controleren.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">14</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-pink-300">Spreadsheet koppeling herhalen</p>
+                    <p>Vul de Spreadsheet ID en Sheet ID in van het bestand [BEDRIJFSNAAM] seo (eerste tab) voor de blog-output.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">15</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-pink-300">API Koppelingen (WordPress)</p>
+                    <p>Stel de verbinding met de website in door de volgende URL's aan te passen:</p>
+                    <div className="mt-2 space-y-1">
+                      <code className="block px-2 py-1 rounded bg-white/5 text-xs text-white/60">
+                        POST afbeelding URL: https://[domeinnaam]/wp-json/wp/v2/media
+                      </code>
+                      <code className="block px-2 py-1 rounded bg-white/5 text-xs text-white/60">
+                        POST blog URL: https://[domeinnaam]/wp-json/wp/v2/posts
+                      </code>
+                    </div>
+                    <p className="text-xs text-white/50 mt-1">(Vervang [domeinnaam] door de werkelijke URL van de klant, bijv. mediabirds.nl).</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">16</span>
+                  <div className="text-sm text-white/70">
+                    <p className="font-medium text-pink-300">Categorieën (Optioneel)</p>
+                    <p>Indien de klant specifieke WordPress-categorieën gebruikt, vul deze dan in het betreffende veld in.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-500/20 flex items-center justify-center text-xs font-medium text-pink-300">17</span>
+                  <div className="text-sm text-white/70">
+                    <p>Vraag Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Succes Banner */}
-            <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center gap-3">
+            <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30 flex items-start gap-3">
               <CheckCircle2 className="h-6 w-6 text-green-400 flex-shrink-0" />
-              <p className="text-green-300 font-medium text-sm">Klaar! Het systeem is nu volledig geconfigureerd voor automatische SEO-content.</p>
+              <div>
+                <p className="text-green-300 font-medium text-sm">Klaar! De automatische blogflow is nu ingesteld.</p>
+                <p className="text-green-300/70 text-xs mt-1">Vergeet niet een laatste check te doen op de eerste gegenereerde concepten.</p>
+              </div>
             </div>
           </div>
         </SheetContent>
