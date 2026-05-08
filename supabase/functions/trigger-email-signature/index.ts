@@ -8,23 +8,34 @@ const corsHeaders = {
 
 const PRIMARY_WEBHOOK_URL = "https://tikt.app.n8n.cloud/webhook/0d19dda2-8df2-4952-a93a-5c9c49b4edd8";
 
-async function tryWebhook(url: string, payload: unknown, authToken?: string): Promise<{ ok: boolean; status: number; text: string }> {
+async function tryWebhook(url: string, payload: unknown, authToken?: string): Promise<{ ok: boolean; status: number; text: string; timedOut?: boolean }> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  
+
   if (authToken) {
     headers["Authorization"] = authToken;
   }
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  
-  const text = await response.text();
-  return { ok: response.ok, status: response.status, text };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300_000);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    return { ok: response.ok, status: response.status, text };
+  } catch (e) {
+    if ((e as any).name === "AbortError") {
+      return { ok: false, status: 504, text: "Timeout: webhook gaf geen antwoord binnen 5 minuten", timedOut: true };
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function shouldFallback(status: number, text: string): boolean {
