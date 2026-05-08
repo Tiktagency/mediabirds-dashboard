@@ -1,50 +1,38 @@
 
 
-## Achtergrondkleur customizer + reset knop hernoemen
+## "Opslaan" knop toevoegen aan Knopkleuren en Achtergrondkleur
 
-### Wat wordt er gedaan
+### Wat verandert er
 
-1. **Nieuwe component: `BackgroundColorCustomizer`** -- Zelfde opzet als `ButtonColorCustomizer`, met een kleurenkiezer voor de achtergrondkleur van alle pagina's en een "Reset" knop.
+Beide componenten krijgen lokale state zodat kleurwijzigingen alleen in de preview zichtbaar zijn. Pas bij klikken op "Opslaan" worden de kleuren daadwerkelijk opgeslagen en toegepast op de hele applicatie.
 
-2. **Achtergrondkleur opslaan in `dashboard_colors`** -- Nieuw veld `background_color` (type `string`, standaard `#0d0d0d`) wordt opgeslagen in de bestaande `dashboard_colors` JSONB kolom, net als bij button_colors. Geen database migratie nodig.
-
-3. **Hook: `useApplyButtonColors` uitbreiden** -- De bestaande hook wordt uitgebreid (en hernoemd naar `useApplyCustomColors` of blijft hetzelfde) om ook de achtergrondkleur toe te passen via `document.documentElement.style.setProperty` op de `--background` CSS variabele.
-
-4. **Reset knop bij Knopkleuren hernoemen** -- De tekst "Reset naar standaard" wordt gewijzigd naar "Reset".
-
-5. **DashboardTab aanpassen** -- De nieuwe `BackgroundColorCustomizer` wordt onderaan de pagina toegevoegd.
-
-### Technische details
-
-**Nieuw bestand: `src/components/admin/dashboard/BackgroundColorCustomizer.tsx`**
-- Zelfde structuur als `ButtonColorCustomizer`
-- Preview: een klein vierkant met de gekozen achtergrondkleur
-- Twee velden: achtergrondkleur (color picker + hex input)
-- Reset knop met standaardwaarde `#0d0d0d`
-
-**`src/hooks/useDashboardSettings.ts`**
-- Toevoegen: `background_color: string` aan het `DashboardSettings` interface
-- Default: `#0d0d0d`
-- Nieuwe functie `updateBackgroundColor` die opslaat in `dashboard_colors.background_color`
-- Uitlezen uit `dashboardColors?.background_color`
-
-**`src/hooks/useApplyButtonColors.ts`**
-- Naast button colors ook `settings?.background_color` uitlezen
-- Omzetten van hex naar HSL en toepassen op `--background` CSS variabele (zowel `:root` als `.dark`)
+### Technische aanpassingen
 
 **`src/components/admin/dashboard/ButtonColorCustomizer.tsx`**
-- Regel 95: "Reset naar standaard" wordt "Reset"
+- Lokale state `localColors` toevoegen (geinitialiseerd met huidige `colors` prop)
+- Color inputs wijzigen naar `localColors` in plaats van direct `onUpdate` aan te roepen
+- Preview toont `localColors`
+- "Opslaan" knop naast "Reset" die `onUpdate(localColors)` aanroept
+- Reset knop reset ook de lokale state
+- `useEffect` om `localColors` te synchroniseren als `colors` prop van buitenaf verandert
 
-**`src/components/admin/dashboard/DashboardTab.tsx`**
-- Import en render van `BackgroundColorCustomizer` onderaan, na de bestaande grid secties
+**`src/components/admin/dashboard/BackgroundColorCustomizer.tsx`**
+- Lokale state `localColor` toevoegen (geinitialiseerd met huidige `color` prop)
+- Color inputs wijzigen naar `localColor`
+- Preview toont `localColor`
+- "Opslaan" knop naast "Reset" die `onUpdate(localColor)` aanroept
+- Reset knop reset ook de lokale state
+- `useEffect` om `localColor` te synchroniseren als `color` prop verandert
+
+**Layout van de knoppen (beide componenten)**
+- De huidige enkele "Reset" knop wordt vervangen door een flex-row met twee knoppen naast elkaar:
+  - Links: "Reset" (outline variant, zoals nu)
+  - Rechts: "Opslaan" (default/primary variant)
 
 ### Bestanden die worden aangepast
 
 | Bestand | Actie |
 |---|---|
-| `src/components/admin/dashboard/BackgroundColorCustomizer.tsx` | Nieuw bestand |
-| `src/hooks/useDashboardSettings.ts` | `background_color` toevoegen + update functie |
-| `src/hooks/useApplyButtonColors.ts` | Achtergrondkleur toepassen op CSS variabele |
-| `src/components/admin/dashboard/ButtonColorCustomizer.tsx` | "Reset naar standaard" -> "Reset" |
-| `src/components/admin/dashboard/DashboardTab.tsx` | BackgroundColorCustomizer toevoegen |
+| `src/components/admin/dashboard/ButtonColorCustomizer.tsx` | Lokale state + Opslaan knop |
+| `src/components/admin/dashboard/BackgroundColorCustomizer.tsx` | Lokale state + Opslaan knop |
 
