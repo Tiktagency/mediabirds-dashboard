@@ -16,6 +16,17 @@ import { useNavigate } from 'react-router-dom';
 import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
 import { useTheme } from 'next-themes';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Tile configuration mapping automation_name to route, icon, and variant
 interface TileConfig {
@@ -210,13 +221,28 @@ const Index = () => {
             )}
           </div>
 
-          <button 
-            onClick={signOut}
-            className="hover:opacity-70 transition-opacity cursor-pointer"
-            style={{ color: '#232323' }}
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button 
+                className="hover:opacity-70 transition-opacity cursor-pointer"
+                style={{ color: '#232323' }}
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-card border-border">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Weet je zeker dat je wilt uitloggen?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Je wordt uitgelogd en moet opnieuw inloggen om toegang te krijgen tot het dashboard.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                <AlertDialogAction onClick={signOut}>Uitloggen</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
