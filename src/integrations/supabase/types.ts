@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      alt_text_companies: {
+        Row: {
+          created_at: string
+          domain: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string | null
