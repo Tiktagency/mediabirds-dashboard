@@ -16,6 +16,7 @@ import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
 import { cn } from '@/lib/utils';
+import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
 
 interface BlogGenerationFormProps {
   selectedCompany: Company | null;
@@ -71,6 +72,7 @@ export const BlogGenerationForm = ({
     getNextTriggerDisplay 
   } = useBlogSchedule(selectedCompany?.id || null);
   const isScheduleEnabled = blogSchedule?.enabled || false;
+  const { settings: pageUrlSettings } = usePageUrlSettings(selectedCompany?.id || null);
 
   // Helper to parse range string to array
   const parseRangeString = (rangeStr: string | null): [number, number] => {
@@ -628,6 +630,24 @@ export const BlogGenerationForm = ({
         <h3 className="text-lg font-semibold text-white">Google Documenten</h3>
         {renderField('Spreadsheet ID', 'google_sheet_id', 'text', undefined, false)}
         {renderField('Grid ID', 'google_slides_id', 'text', undefined, false)}
+      </div>
+
+      {/* Pagina URL's - gesynchroniseerd met Pagina URL Instellingen */}
+      <div className="pt-6 border-t border-white/10 space-y-4">
+        <h3 className="text-lg font-semibold text-white">Pagina URL's</h3>
+        <p className="text-xs text-white/40">Deze velden worden beheerd via de Pagina URL pagina</p>
+        <div className="space-y-2">
+          <Label className="text-white/70 text-sm">Spreadsheet ID</Label>
+          <div className="px-3 py-2 rounded-md bg-white/5 border-2 border-transparent text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]">
+            {pageUrlSettings?.google_sheet_id || <span className="text-white/40 italic">Niet ingesteld</span>}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-white/70 text-sm">Grid ID</Label>
+          <div className="px-3 py-2 rounded-md bg-white/5 border-2 border-transparent text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]">
+            {pageUrlSettings?.google_file_id || <span className="text-white/40 italic">Niet ingesteld</span>}
+          </div>
+        </div>
       </div>
       
       {/* Admin-only fields - Collapsible */}
