@@ -1,31 +1,24 @@
 
-# Notities vak: volledige tekst met scroll
+# Notities: editing-modus uitklappen, weergavemodus compact met scroll
 
 ## Wat verandert er
 
-Het notitieveld toont altijd alle tekst. Als de tekst te lang wordt voor het vak, verschijnt er een scrollfunctie zodat je alles kunt lezen zonder dat tekst buiten het vak valt.
+- **Weergavemodus (expanded)**: Blijft zoals nu -- maximale hoogte van 200px met scrollbar bij lange tekst. Het vak rekt niet uit.
+- **Bewerkingsmodus (editing)**: De textarea krijgt **geen maximale hoogte-beperking**, zodat je alle tekst in één keer kunt zien zonder te scrollen. Wanneer je klaar bent (onBlur), krimpt het vak weer terug naar de compacte weergave met scroll.
 
 ## Wijzigingen
 
 **Bestand:** `src/pages/SeoBlog.tsx`
 
-### 1. Container aanpassen (regel 336)
-- De buitenste `div` krijgt een vaste maximale hoogte en `overflow-hidden` zodat het vak niet oneindig groeit.
+### 1. Textarea in editing-modus (regel 364)
+- Verwijder `max-h-[200px] overflow-y-auto` van de textarea class.
+- Verander `min-h-[80px]` naar `min-h-[80px]` (blijft) en voeg `h-auto` toe zodat de textarea automatisch meegroeit met de inhoud.
+- De textarea mag dus onbeperkt groeien zodat alle tekst zichtbaar is tijdens het bewerken.
 
-### 2. Ingeklapte staat verwijderen
-- De "collapsed" staat (regels 350-357) met `truncate` wordt verwijderd. Het notitieveld staat altijd in "expanded" modus -- alle tekst is zichtbaar.
-- `notesEditMode` gebruikt dan alleen `'expanded'` en `'editing'` (geen `'collapsed'` meer).
-- De initialisatie van `notesEditMode` wordt `'expanded'` in plaats van `'collapsed'`.
-
-### 3. Expanded staat met scroll (regels 359-365)
-- Voeg `overflow-y-auto` en een `max-h` (bijvoorbeeld `max-h-[200px]`) toe aan het tekstvak zodat er een scrollbar verschijnt wanneer de tekst te lang is.
-- De `onClick` op het expanded vak die terugschakelt naar `'collapsed'` wordt verwijderd (er is geen collapsed meer).
-
-### 4. Editing textarea (regels 370-391)
-- Voeg ook een `max-h-[200px] overflow-y-auto` toe aan de textarea zodat je bij veel tekst kunt scrollen tijdens het bewerken.
+### 2. Weergavemodus (regel 352)
+- Blijft ongewijzigd: `max-h-[200px] overflow-y-auto` zorgt ervoor dat het vak compact blijft met een scrollbar.
 
 ## Resultaat
-- Je ziet altijd de volledige notitietekst
-- Bij veel tekst verschijnt een scrollbar in het vak
-- Klikken op de tekst doet niets meer (alleen het potlood-icoon opent de bewerkingsmodus)
-- Het potlood-icoon is altijd zichtbaar
+- Bij het bewerken zie je al je tekst volledig (textarea groeit mee)
+- Zodra je klaar bent krimpt het vak terug naar max 200px met scrollbar
+- Het vak rekt niet uit in de weergavemodus
