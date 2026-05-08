@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ProfileModal } from '@/components/ProfileModal';
 import { CompleteProfileModal } from '@/components/CompleteProfileModal';
+import { LoginLogsPanel } from '@/components/dashboard/LoginLogsPanel';
 import { useNavigate } from 'react-router-dom';
 import { ImpactLevel } from '@/components/dashboard/AutomationInfoTooltip';
 import { useTheme } from 'next-themes';
@@ -90,7 +91,7 @@ const tileConfigMap: Record<string, TileConfig> = {
 };
 
 const Index = () => {
-  const { isLoading, signOut, user, isAdmin, roles } = useAuth();
+  const { isLoading, signOut, user, isAdmin, isSuperAdmin, roles } = useAuth();
   const { lastRun: chatbotLastRun } = useN8nExecutions('MEDIABIRDS klantenservice chatbot');
   const { lastRun: mondayLastRun } = useN8nExecutions('MEDIABIRDS monday planning');
   const { lastRun: altTextLastRun } = useN8nExecutions('MEDIABIRDS Alt-text Wordpress');
@@ -262,6 +263,7 @@ const Index = () => {
         >
           Mediabirds
         </h1>
+        {isSuperAdmin && <LoginLogsPanel />}
         <div className="absolute top-6 right-6 flex items-center gap-4">
           <div className="flex items-center gap-2">
             {roleBadge && (
