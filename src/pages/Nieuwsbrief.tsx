@@ -521,90 +521,138 @@ const Nieuwsbrief = () => {
             </Card>
           </div>
 
-          {/* Row 2: Kleuren links, Preview rechts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* Row 2: Kleuren + trigger + knop links, Preview rechts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
 
-            {/* Kleuren card */}
-            <Card className="bg-white/5 border-white/10">
-              <CardContent className="p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-3.5 h-3.5 text-white/50" />
-                    <Label className="text-xs font-medium text-white/50">
-                      Huisstijl kleuren
-                    </Label>
-                  </div>
-                  {/* Mode toggle */}
-                  <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
-                    <button
-                      onClick={() => setColorMode('custom')}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                        colorMode === 'custom'
-                          ? 'bg-white/15 text-white'
-                          : 'text-white/40 hover:text-white/70'
-                      }`}
-                    >
-                      <Settings2 className="w-3 h-3" />
-                      Custom
-                    </button>
-                    <button
-                      onClick={() => setColorMode('auto')}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                        colorMode === 'auto'
-                          ? 'bg-white/15 text-white'
-                          : 'text-white/40 hover:text-white/70'
-                      }`}
-                    >
-                      <Wand2 className="w-3 h-3" />
-                      Automatisch
-                    </button>
-                  </div>
-                </div>
+            {/* Linkerkolom: kleuren + trigger + knop */}
+            <div className="flex flex-col gap-4">
 
-                {colorMode === 'auto' && (
-                  <div className="space-y-2">
-                    {!localData.website && (
-                      <div className="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        Vul eerst een website URL in om kleuren automatisch op te halen.
-                      </div>
-                    )}
-                    <Button
-                      onClick={handleFetchColors}
-                      disabled={isFetchingColors || !localData.website}
-                      className="w-full gap-2"
-                      variant="outline"
-                    >
-                      {isFetchingColors ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Kleuren ophalen…
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-4 h-4" />
-                          Kleuren ophalen van website
-                        </>
+              {/* Kleuren card */}
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Palette className="w-3.5 h-3.5 text-white/50" />
+                      <Label className="text-xs font-medium text-white/50">
+                        Huisstijl kleuren
+                      </Label>
+                    </div>
+                    {/* Mode toggle */}
+                    <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
+                      <button
+                        onClick={() => setColorMode('custom')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                          colorMode === 'custom'
+                            ? 'bg-white/15 text-white'
+                            : 'text-white/40 hover:text-white/70'
+                        }`}
+                      >
+                        <Settings2 className="w-3 h-3" />
+                        Custom
+                      </button>
+                      <button
+                        onClick={() => setColorMode('auto')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                          colorMode === 'auto'
+                            ? 'bg-white/15 text-white'
+                            : 'text-white/40 hover:text-white/70'
+                        }`}
+                      >
+                        <Wand2 className="w-3 h-3" />
+                        Automatisch
+                      </button>
+                    </div>
+                  </div>
+
+                  {colorMode === 'auto' && (
+                    <div className="space-y-2">
+                      {!localData.website && (
+                        <div className="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          Vul eerst een website URL in om kleuren automatisch op te halen.
+                        </div>
                       )}
-                    </Button>
-                  </div>
-                )}
+                      <Button
+                        onClick={handleFetchColors}
+                        disabled={isFetchingColors || !localData.website}
+                        className="w-full gap-2"
+                        variant="outline"
+                      >
+                        {isFetchingColors ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Kleuren ophalen…
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4" />
+                            Kleuren ophalen van website
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
 
-                <div className={`grid grid-cols-2 gap-3 ${colorMode === 'auto' ? 'opacity-60 pointer-events-none' : ''}`}>
-                  {COLOR_FIELDS.map(({ key, label }) => (
-                    <ColorField
-                      key={key}
-                      label={label}
-                      value={localColors[key as string] || '#000000'}
-                      onChange={(v) => handleColorChange(key as string, v)}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  <div className={`grid grid-cols-2 gap-3 ${colorMode === 'auto' ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {COLOR_FIELDS.map(({ key, label }) => (
+                      <ColorField
+                        key={key}
+                        label={label}
+                        value={localColors[key as string] || '#000000'}
+                        onChange={(v) => handleColorChange(key as string, v)}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Automatische Trigger */}
+              <Card className="bg-white/5 border-white/10">
+                <CardContent className="p-6">
+                  <ScheduleTrigger
+                    companyId={selectedCompany?.id ?? null}
+                    isAdmin={isAdmin}
+                    schedule={newsletterSchedule as any}
+                    isLoading={scheduleLoading}
+                    isSaving={scheduleSaving}
+                    updateSchedule={updateSchedule as any}
+                    getNextTriggerDisplay={getNextTriggerDisplay}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Generate button */}
+              <Button
+                className="w-full gap-2 h-11"
+                onClick={handleGenerate}
+                disabled={isGenerating || !!newsletterSchedule?.enabled}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Nieuwsbrief genereren…
+                  </>
+                ) : (
+                  <>
+                    {newsletterSchedule?.enabled ? (
+                      <>
+                        <Clock className="w-4 h-4" />
+                        Automatische trigger actief
+                      </>
+                    ) : (
+                      <>
+                        <Newspaper className="w-4 h-4" />
+                        Genereer nieuwsbrief
+                      </>
+                    )}
+                  </>
+                )}
+              </Button>
+
+            </div>{/* einde linkerkolom */}
 
             {/* Live kleur preview */}
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-white/5 border-white/10 h-full">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Newspaper className="w-3.5 h-3.5 text-white/50" />
@@ -740,49 +788,6 @@ const Nieuwsbrief = () => {
               </CardContent>
             </Card>
           </div>
-
-          {/* Automatische Trigger */}
-          <Card className="bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <ScheduleTrigger
-                companyId={selectedCompany?.id ?? null}
-                isAdmin={isAdmin}
-                schedule={newsletterSchedule as any}
-                isLoading={scheduleLoading}
-                isSaving={scheduleSaving}
-                updateSchedule={updateSchedule as any}
-                getNextTriggerDisplay={getNextTriggerDisplay}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Generate button full width */}
-          <Button
-            className="w-full gap-2 h-11"
-            onClick={handleGenerate}
-            disabled={isGenerating || !!newsletterSchedule?.enabled}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Nieuwsbrief genereren…
-              </>
-            ) : (
-              <>
-                {newsletterSchedule?.enabled ? (
-                  <>
-                    <Clock className="w-4 h-4" />
-                    Automatische trigger actief
-                  </>
-                ) : (
-                  <>
-                    <Newspaper className="w-4 h-4" />
-                    Genereer nieuwsbrief
-                  </>
-                )}
-              </>
-            )}
-          </Button>
 
           {/* Preview full width */}
           <Card className="bg-white/5 border-white/10">
