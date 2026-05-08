@@ -630,7 +630,7 @@ const Nieuwsbrief = () => {
                       </div>
 
                       {/* Kaart */}
-                      <div style={{ backgroundColor: localColors.kaart_achtergrond, borderRadius: '8px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                      <div style={{ backgroundColor: localColors.achtergrond_kleur, borderRadius: '8px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                         {/* Badge rij */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                           <div style={{
@@ -672,7 +672,7 @@ const Nieuwsbrief = () => {
                       </div>
                       {/* Accent kaart */}
                       <div style={{
-                        backgroundColor: localColors.accent_kleur,
+                        backgroundColor: localColors.kaart_achtergrond,
                         borderLeft: `3px solid ${localColors.primaire_kleur}`,
                         borderRadius: '6px',
                         padding: '14px 16px'
