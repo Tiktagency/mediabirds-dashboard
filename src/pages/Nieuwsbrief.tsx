@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuwsbrief/NewsletterCompanySelector';
+import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
+import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const MAX_RSS_FEEDS = 5;
 
@@ -72,8 +75,16 @@ const COLOR_FIELDS: { key: string; label: string }[] = [
 
 const Nieuwsbrief = () => {
   const { toast } = useToast();
+  const { isAdmin } = useAdminAuth();
   const colorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
+  const {
+    schedule: newsletterSchedule,
+    isLoading: scheduleLoading,
+    isSaving: scheduleSaving,
+    updateSchedule,
+    getNextTriggerDisplay,
+  } = useNewsletterSchedule(selectedCompany?.id ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
@@ -730,8 +741,27 @@ const Nieuwsbrief = () => {
             </Card>
           </div>
 
+          {/* Automatische Trigger */}
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-6">
+              <ScheduleTrigger
+                companyId={selectedCompany?.id ?? null}
+                isAdmin={isAdmin}
+                schedule={newsletterSchedule as any}
+                isLoading={scheduleLoading}
+                isSaving={scheduleSaving}
+                updateSchedule={updateSchedule as any}
+                getNextTriggerDisplay={getNextTriggerDisplay}
+              />
+            </CardContent>
+          </Card>
+
           {/* Generate button full width */}
-          <Button className="w-full gap-2 h-11" onClick={handleGenerate} disabled={isGenerating}>
+          <Button
+            className="w-full gap-2 h-11"
+            onClick={handleGenerate}
+            disabled={isGenerating || !!newsletterSchedule?.enabled}
+          >
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -739,8 +769,17 @@ const Nieuwsbrief = () => {
               </>
             ) : (
               <>
-                <Newspaper className="w-4 h-4" />
-                Genereer nieuwsbrief
+                {newsletterSchedule?.enabled ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    Automatische trigger actief
+                  </>
+                ) : (
+                  <>
+                    <Newspaper className="w-4 h-4" />
+                    Genereer nieuwsbrief
+                  </>
+                )}
               </>
             )}
           </Button>
