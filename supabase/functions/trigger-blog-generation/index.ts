@@ -89,10 +89,11 @@ serve(async (req) => {
     
     const userId = user.id;
     
-    // Parse request body to get dynamic webhook URL and auth token secret name
+    // Parse request body to get dynamic webhook URL, auth token secret name, and blog data
     let webhookUrl: string | null = null;
     let webhookSource = 'request_body';
     let authTokenSecretName: string | null = null;
+    let blogData: Record<string, any> | null = null;
     
     try {
       const body = await req.json();
@@ -103,6 +104,10 @@ serve(async (req) => {
       if (body.authTokenSecretName) {
         authTokenSecretName = body.authTokenSecretName;
         console.log('Auth token secret name provided:', authTokenSecretName);
+      }
+      if (body.blogData) {
+        blogData = body.blogData;
+        console.log('Blog data provided in request body');
       }
     } catch {
       console.log('No body or failed to parse body');
@@ -175,6 +180,15 @@ serve(async (req) => {
 
     console.log("Calling n8n webhook");
 
+    // Prepare payload - use blogData if provided, otherwise use basic payload
+    const webhookPayload = blogData ? {
+      ...blogData,
+      triggered_from: 'edge_function',
+    } : {
+      timestamp: new Date().toISOString(),
+      triggered_from: 'edge_function',
+    };
+
     // Call n8n webhook with authentication
     const response = await fetch(webhookUrl, {
       method: 'POST',
@@ -182,10 +196,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': authToken!, // Send token as-is without Bearer prefix
       },
-      body: JSON.stringify({
-        timestamp: new Date().toISOString(),
-        triggered_from: 'edge_function',
-      }),
+      body: JSON.stringify(webhookPayload),
       signal: controller.signal,
     });
 
