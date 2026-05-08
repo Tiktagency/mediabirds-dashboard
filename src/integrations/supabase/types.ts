@@ -301,6 +301,53 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_schedules: {
+        Row: {
+          company_id: string
+          created_at: string
+          day_of_week: number
+          enabled: boolean
+          frequency: string
+          id: string
+          last_triggered_at: string | null
+          next_trigger_at: string | null
+          time_of_day: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          frequency?: string
+          id?: string
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          day_of_week?: number
+          enabled?: boolean
+          frequency?: string
+          id?: string
+          last_triggered_at?: string | null
+          next_trigger_at?: string | null
+          time_of_day?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_settings: {
         Row: {
           bedrijfsomschrijving: string | null
