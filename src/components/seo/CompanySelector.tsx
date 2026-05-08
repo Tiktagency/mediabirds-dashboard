@@ -52,6 +52,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
@@ -68,10 +69,11 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         const { data } = await supabase
           .from('user_roles')
           .select('role')
-        .eq('user_id', user.id)
-        .in('role', ['admin', 'super_admin'])
-        .maybeSingle();
-        setIsAdmin(!!data);
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'super_admin']);
+        const roles = (data || []).map(r => r.role);
+        setIsAdmin(roles.includes('admin') || roles.includes('super_admin'));
+        setIsSuperAdmin(roles.includes('super_admin'));
       }
     };
 
@@ -291,7 +293,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
                 <Building2 className="w-4 h-4 mr-2" />
                 {company.name}
               </div>
-              {isAdmin && (
+              {isSuperAdmin && (
                 <Trash2
                   className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 ml-2"
                   onClick={(e) => {
