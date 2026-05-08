@@ -195,9 +195,9 @@ export const ScheduleTrigger = ({
           <>
             <div className="h-px bg-white/10" />
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Interval Value + Unit */}
-              <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+              <div className="space-y-1.5">
                 <Label className="text-white/50 text-xs flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   Frequentie
