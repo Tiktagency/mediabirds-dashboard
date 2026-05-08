@@ -55,6 +55,8 @@ export const useApplyDashboardColors = (colors: DashboardColors | undefined) => 
       root.style.setProperty('--sidebar-primary', hexToHslValues(colors.primary));
       root.style.setProperty('--sidebar-accent', hexToHslValues(colors.primary));
       root.style.setProperty('--sidebar-ring', hexToHslValues(colors.primary));
+      root.style.setProperty('--chart-1', hexToHslValues(colors.primary));
+      root.style.setProperty('--chart-2', hexToHslValues(colors.primary));
     }
     
     // Apply background color
@@ -64,6 +66,7 @@ export const useApplyDashboardColors = (colors: DashboardColors | undefined) => 
       root.style.setProperty('--popover', hexToHslValues(colors.background));
       root.style.setProperty('--tikt-primary', hexToHslValues(colors.background));
       root.style.setProperty('--sidebar-background', hexToHslValues(colors.background));
+      root.style.setProperty('--banner-edge', hexToHslValues(colors.background));
     }
     
     // Apply foreground color
@@ -78,6 +81,7 @@ export const useApplyDashboardColors = (colors: DashboardColors | undefined) => 
       root.style.setProperty('--sidebar-foreground', hexToHslValues(colors.foreground));
       root.style.setProperty('--sidebar-primary-foreground', hexToHslValues(colors.foreground));
       root.style.setProperty('--sidebar-accent-foreground', hexToHslValues(colors.foreground));
+      root.style.setProperty('--destructive-foreground', hexToHslValues(colors.foreground));
     }
     
     // Apply input background color
@@ -94,6 +98,9 @@ export const useApplyDashboardColors = (colors: DashboardColors | undefined) => 
     // Apply muted colors
     if (colors.muted) {
       root.style.setProperty('--muted', hexToHslValues(colors.muted));
+      root.style.setProperty('--chart-3', hexToHslValues(colors.muted));
+      root.style.setProperty('--chart-4', hexToHslValues(colors.muted));
+      root.style.setProperty('--chart-5', hexToHslValues(colors.muted));
     }
     
     if (colors.mutedForeground) {

@@ -29,7 +29,7 @@ export const DashboardColorCustomizer = ({ colors, onUpdate, onReset }: Dashboar
   };
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-border w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <Palette className="h-5 w-5" />
@@ -39,43 +39,45 @@ export const DashboardColorCustomizer = ({ colors, onUpdate, onReset }: Dashboar
           Pas de kleuren van je dashboard aan.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {colorFields.map(({ key, label, description }) => (
-          <div key={key} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor={key} className="text-foreground">{label}</Label>
-                <p className="text-xs text-muted-foreground">{description}</p>
+      <CardContent>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {colorFields.map(({ key, label, description }) => (
+            <div key={key} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-6 h-6 rounded-md border border-border shadow-sm shrink-0"
+                  style={{ backgroundColor: colors[key] }}
+                />
+                <div className="min-w-0">
+                  <Label htmlFor={key} className="text-foreground text-sm truncate block">{label}</Label>
+                  <p className="text-xs text-muted-foreground truncate">{description}</p>
+                </div>
               </div>
-              <div
-                className="w-8 h-8 rounded-md border border-border shadow-sm"
-                style={{ backgroundColor: colors[key] }}
-              />
+              <div className="flex items-center gap-1">
+                <Input
+                  type="color"
+                  id={`${key}-picker`}
+                  value={colors[key]}
+                  onChange={(e) => handleColorChange(key, e.target.value)}
+                  className="w-10 h-8 p-0.5 cursor-pointer shrink-0"
+                />
+                <Input
+                  type="text"
+                  id={key}
+                  value={colors[key]}
+                  onChange={(e) => handleColorChange(key, e.target.value)}
+                  placeholder="#000000"
+                  className="flex-1 font-mono text-xs h-8 min-w-0"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="color"
-                id={`${key}-picker`}
-                value={colors[key]}
-                onChange={(e) => handleColorChange(key, e.target.value)}
-                className="w-12 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                type="text"
-                id={key}
-                value={colors[key]}
-                onChange={(e) => handleColorChange(key, e.target.value)}
-                placeholder="#000000"
-                className="flex-1 font-mono text-sm"
-              />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
         
         <Button
           variant="outline"
           onClick={onReset}
-          className="w-full mt-4"
+          className="mt-4"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           Reset naar standaard
