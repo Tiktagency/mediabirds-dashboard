@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Clock, Save, Workflow } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, ChevronUp, Clock, Check, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -22,15 +21,12 @@ interface AutomationCardProps {
   impactColors?: ImpactColors;
 }
 
-
-
 const defaultImpactColors: ImpactColors = {
   high: '#ef4444',
   medium: '#eab308',
   low: '#6b7280',
 };
 
-// Helper to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -41,27 +37,45 @@ const hexToRgba = (hex: string, alpha: number): string => {
 export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpactColors }: AutomationCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [localSetting, setLocalSetting] = useState(setting);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savedIndicator, setSavedIndicator] = useState(false);
+  const isInitialMount = useRef(true);
 
-  const hasChanges = JSON.stringify(localSetting) !== JSON.stringify(setting);
+  // Sync localSetting when prop changes (e.g. after refetch)
+  useEffect(() => {
+    setLocalSetting(setting);
+  }, [setting]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await onUpdate(setting.id, {
-      display_name: localSetting.display_name,
-      description: localSetting.description,
-      impact_level: localSetting.impact_level,
-      status: localSetting.status,
-      n8n_workflow_name: localSetting.n8n_workflow_name,
-      time_saved_per_execution: localSetting.time_saved_per_execution,
-    });
-    setIsSaving(false);
-  };
+  // Debounced auto-save
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const hasChanges = JSON.stringify(localSetting) !== JSON.stringify(setting);
+    if (!hasChanges) return;
+
+    const timer = setTimeout(async () => {
+      await onUpdate(setting.id, {
+        display_name: localSetting.display_name,
+        description: localSetting.description,
+        impact_level: localSetting.impact_level,
+        status: localSetting.status,
+        n8n_workflow_name: localSetting.n8n_workflow_name,
+        time_saved_per_execution: localSetting.time_saved_per_execution,
+      });
+      setSavedIndicator(true);
+      setTimeout(() => setSavedIndicator(false), 2000);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [localSetting]);
 
   const handleStatusChange = async (status: AutomationStatusType) => {
     setLocalSetting(prev => ({ ...prev, status }));
-    // Auto-save status changes immediately
     await onUpdate(setting.id, { status });
+    setSavedIndicator(true);
+    setTimeout(() => setSavedIndicator(false), 2000);
   };
 
   const getImpactStyle = (level: ImpactLevel) => {
@@ -88,6 +102,12 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
             >
               {setting.impact_level}
             </Badge>
+            {savedIndicator && (
+              <span className="flex items-center gap-1 text-xs text-green-500 animate-in fade-in">
+                <Check className="w-3 h-3" />
+                Opgeslagen
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <StatusToggle 
@@ -138,28 +158,19 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
               <SelectContent>
                 <SelectItem value="high">
                   <span className="flex items-center gap-2">
-                    <span 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: impactColors.high }}
-                    />
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: impactColors.high }} />
                     High
                   </span>
                 </SelectItem>
                 <SelectItem value="medium">
                   <span className="flex items-center gap-2">
-                    <span 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: impactColors.medium }}
-                    />
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: impactColors.medium }} />
                     Medium
                   </span>
                 </SelectItem>
                 <SelectItem value="low">
                   <span className="flex items-center gap-2">
-                    <span 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: impactColors.low }}
-                    />
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: impactColors.low }} />
                     Low
                   </span>
                 </SelectItem>
@@ -208,16 +219,6 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
               </p>
             </div>
           </div>
-
-
-          {hasChanges && (
-            <div className="flex justify-end pt-4 border-t border-border/30">
-              <Button onClick={handleSave} disabled={isSaving}>
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Opslaan...' : 'Wijzigingen opslaan'}
-              </Button>
-            </div>
-          )}
         </CardContent>
       )}
     </Card>
