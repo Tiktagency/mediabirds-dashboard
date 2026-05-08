@@ -14,7 +14,6 @@ import { useAuth } from '@/hooks/useAuth';
 import CompanySelector, { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
-import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 
 interface Notification {
   id: string;
@@ -59,7 +58,6 @@ const ZoekwoordOnderzoek = () => {
   }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useSeoSettings(selectedCompany?.id || null);
-  const { schedule: seoSchedule } = useSeoSchedule(selectedCompany?.id || null);
 
   // Load settings into form when they change
   useEffect(() => {
@@ -603,19 +601,13 @@ const ZoekwoordOnderzoek = () => {
                   <div className="pt-6 border-t border-white/10">
                     <Button
                       onClick={handleStartResearch}
-                      disabled={isSubmitting || !isFormComplete() || seoSchedule?.enabled}
+                      disabled={isSubmitting || !isFormComplete()}
                       className="w-full seo-button-primary gap-2"
-                      title={seoSchedule?.enabled ? 'Automatische trigger is actief' : undefined}
                     >
                       {isSubmitting ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           Bezig...
-                        </>
-                      ) : seoSchedule?.enabled ? (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          Automatische trigger actief
                         </>
                       ) : (
                         <>
