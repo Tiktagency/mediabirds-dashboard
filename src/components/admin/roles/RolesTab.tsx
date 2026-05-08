@@ -2,10 +2,10 @@ import { useRoleDefaults } from '@/hooks/useRoleDefaults';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Check, X } from 'lucide-react';
 
+const ROLES = ['viewer', 'operator', 'admin', 'super_admin'] as const;
 const EDITABLE_ROLES = ['viewer', 'operator'] as const;
-const LOCKED_ROLES = ['admin', 'super_admin'] as const;
 
 const ROLE_LABELS: Record<string, string> = {
   viewer: 'Viewer',
@@ -14,11 +14,28 @@ const ROLE_LABELS: Record<string, string> = {
   super_admin: 'Super Admin',
 };
 
-const PERMISSION_FIELDS = [
-  { key: 'can_view' as const, label: 'V' },
-  { key: 'can_execute' as const, label: 'U' },
-  { key: 'can_manage' as const, label: 'B' },
+const PERMISSION_LABELS: Record<string, string> = {
+  can_view: 'Bekijken',
+  can_execute: 'Uitvoeren',
+  can_manage: 'Beheren',
+};
+
+interface SystemPermission {
+  label: string;
+  roles: Record<string, boolean>;
+}
+
+const SYSTEM_PERMISSIONS: SystemPermission[] = [
+  { label: 'Dashboard bekijken', roles: { viewer: true, operator: true, admin: true, super_admin: true } },
+  { label: 'Automations uitvoeren', roles: { viewer: false, operator: true, admin: true, super_admin: true } },
+  { label: 'Admin Panel openen', roles: { viewer: false, operator: false, admin: true, super_admin: true } },
+  { label: 'Gebruikers uitnodigen', roles: { viewer: false, operator: false, admin: true, super_admin: true } },
+  { label: 'Rollen toewijzen/degraderen', roles: { viewer: false, operator: false, admin: true, super_admin: true } },
+  { label: 'Automation-instellingen beheren', roles: { viewer: false, operator: false, admin: true, super_admin: true } },
+  { label: 'Andere admins beheren', roles: { viewer: false, operator: false, admin: false, super_admin: true } },
 ];
+
+const PERMISSION_FIELDS = ['can_view', 'can_execute', 'can_manage'] as const;
 
 export const RolesTab = () => {
   const { automations, isLoading, getPermission, updatePermission, resetToDefaults } = useRoleDefaults();
@@ -31,17 +48,15 @@ export const RolesTab = () => {
     );
   }
 
-  if (automations.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">Geen automations gevonden.</p>;
-  }
+  const isEditable = (role: string) => (EDITABLE_ROLES as readonly string[]).includes(role);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Standaard rolmachtigingen</h3>
+          <h3 className="text-lg font-semibold text-foreground">Rolmachtigingen overzicht</h3>
           <p className="text-sm text-muted-foreground">
-            Beheer de standaard machtigingen per rol. V = Bekijken, U = Uitvoeren, B = Beheren.
+            Bekijk systeemmachtigingen en beheer automatiemachtigingen per rol.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={resetToDefaults} className="gap-2">
@@ -54,60 +69,79 @@ export const RolesTab = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-card/50">
-              <TableHead className="min-w-[120px]">Rol</TableHead>
-              {automations.map(name => (
-                <TableHead key={name} className="text-center min-w-[100px]">
-                  <span className="text-xs">{name}</span>
+              <TableHead className="min-w-[220px]">Machtiging</TableHead>
+              {ROLES.map(role => (
+                <TableHead key={role} className="text-center min-w-[100px]">
+                  {ROLE_LABELS[role]}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Editable roles */}
-            {EDITABLE_ROLES.map(role => (
-              <TableRow key={role}>
-                <TableCell className="font-medium">{ROLE_LABELS[role]}</TableCell>
-                {automations.map(automation => {
-                  const perm = getPermission(role, automation);
-                  return (
-                    <TableCell key={automation} className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {PERMISSION_FIELDS.map(field => (
-                          <label key={field.key} className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
-                            <Checkbox
-                              checked={perm[field.key]}
-                              onCheckedChange={(checked) =>
-                                updatePermission(role, automation, field.key, !!checked)
-                              }
-                            />
-                            {field.label}
-                          </label>
-                        ))}
-                      </div>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
+            {/* Section header: Systeemmachtigingen */}
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableCell colSpan={5} className="font-semibold text-xs uppercase tracking-wider text-muted-foreground py-2">
+                Systeemmachtigingen
+              </TableCell>
+            </TableRow>
 
-            {/* Locked roles (admin / super_admin) */}
-            {LOCKED_ROLES.map(role => (
-              <TableRow key={role} className="opacity-50">
-                <TableCell className="font-medium">{ROLE_LABELS[role]}</TableCell>
-                {automations.map(automation => (
-                  <TableCell key={automation} className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {PERMISSION_FIELDS.map(field => (
-                        <label key={field.key} className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Checkbox checked disabled />
-                          {field.label}
-                        </label>
-                      ))}
-                    </div>
+            {SYSTEM_PERMISSIONS.map((perm) => (
+              <TableRow key={perm.label}>
+                <TableCell className="text-sm">{perm.label}</TableCell>
+                {ROLES.map(role => (
+                  <TableCell key={role} className="text-center">
+                    {perm.roles[role] ? (
+                      <Check className="w-4 h-4 text-primary mx-auto" />
+                    ) : (
+                      <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
             ))}
+
+            {/* Section header: Automatiemachtigingen */}
+            {automations.length > 0 && (
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableCell colSpan={5} className="font-semibold text-xs uppercase tracking-wider text-muted-foreground py-2">
+                  Automatiemachtigingen
+                </TableCell>
+              </TableRow>
+            )}
+
+            {automations.map((automation) =>
+              PERMISSION_FIELDS.map((field, fieldIdx) => (
+                <TableRow key={`${automation}-${field}`} className={fieldIdx === 0 ? 'border-t border-border/20' : ''}>
+                  <TableCell className="text-sm">
+                    <span className={fieldIdx === 0 ? 'font-medium' : 'pl-4 text-muted-foreground'}>
+                      {fieldIdx === 0 ? `${automation} — ` : ''}
+                      {PERMISSION_LABELS[field]}
+                    </span>
+                  </TableCell>
+                  {ROLES.map(role => {
+                    if (isEditable(role)) {
+                      const perm = getPermission(role, automation);
+                      return (
+                        <TableCell key={role} className="text-center">
+                          <Checkbox
+                            checked={perm[field]}
+                            onCheckedChange={(checked) =>
+                              updatePermission(role, automation, field, !!checked)
+                            }
+                            className="mx-auto"
+                          />
+                        </TableCell>
+                      );
+                    }
+                    return (
+                      <TableCell key={role} className="text-center">
+                        <Check className="w-4 h-4 text-primary mx-auto opacity-50" />
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
