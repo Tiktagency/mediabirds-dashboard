@@ -1,18 +1,30 @@
-## Plan: `image_style` meesturen bij geplande blog-runs
+## Plan: Stijl verplicht bij AI-afbeelding
 
 ### Probleem
-In `supabase/functions/run-scheduled-blogs/index.ts` wordt het volledige formulier al meegestuurd, maar het nieuwe veld `image_style` ontbreekt. Bij handmatige runs wordt het wel meegestuurd.
+In `BlogGenerationForm.tsx` controleert `isFormComplete()` bij `image_type === 'ai_image'` wel op achtergrondkleur en gradient, maar niet op `image_style`. Hierdoor kan de "Genereer blog"-knop actief worden zonder dat er een stijl gekozen is.
 
 ### Wijziging
-In `run-scheduled-blogs/index.ts` in het `blogPayload` object (rond regel 127-153) één regel toevoegen, consistent met het patroon van `achtergrond_kleur` / `hoofdaccent_gradient` (alleen versturen bij AI-image, anders leeg):
+In `src/components/seo-blog/BlogGenerationForm.tsx` rond regel 191-194 de AI-image-validatie uitbreiden zodat ook `image_style` aanwezig moet zijn:
 
 ```ts
-image_style: imageType !== 'google_drive' ? (blogSettings.image_style || '') : '',
+if (formData.image_type === 'ai_image') {
+  if (
+    !formData.achtergrond_kleur ||
+    !formData.hoofdaccent_gradient_1 ||
+    !formData.hoofdaccent_gradient_2 ||
+    !formData.image_style
+  ) {
+    return false;
+  }
+}
 ```
+
+### Effect
+- Knop blijft `disabled` zolang er bij AI-afbeelding nog geen stijl (isometric / cinematic / brutalist) is geselecteerd.
+- Bij Google Drive verandert er niets.
+- Geen database- of edge-functionwijzigingen nodig.
 
 ### Bestanden
 | Bestand | Wijziging |
 |---------|-----------|
-| `supabase/functions/run-scheduled-blogs/index.ts` | `image_style` toevoegen aan `blogPayload` |
-
-Geen database- of frontend-wijzigingen nodig — het veld staat al in `blog_settings` en wordt bij wijziging automatisch opgeslagen.
+| `src/components/seo-blog/BlogGenerationForm.tsx` | `image_style` toevoegen aan verplichte velden in `isFormComplete()` |
