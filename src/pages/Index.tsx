@@ -247,27 +247,30 @@ const Index = () => {
   
   // Get ordered items from dashboard settings (keep all 9 positions including empty slots)
   const getOrderedItems = () => {
+    const allTileKeys = Object.keys(tileConfigMap);
+    let items: string[] = [];
+
     if (dashboardSettings.tile_order?.length) {
-      const items = [...dashboardSettings.tile_order];
-      // Pad to ensure 9 items
-      while (items.length < GRID_SIZE) {
-        items.push(`__empty_${items.length}`);
+      items = [...dashboardSettings.tile_order];
+    } else {
+      items = ['saved-hours', ...allTileKeys.filter(k => k !== 'saved-hours')];
+    }
+
+    // Auto-detect missing tiles from tileConfigMap
+    const missingTiles = allTileKeys.filter(key => !items.includes(key));
+    for (const tile of missingTiles) {
+      const emptyIndex = items.findIndex(i => i.startsWith('__empty_'));
+      if (emptyIndex !== -1) {
+        items[emptyIndex] = tile;
+      } else {
+        items.push(tile);
       }
-      return items.slice(0, GRID_SIZE);
     }
-    // Default: saved-hours first, then other tiles + empty placeholders
-    const defaultTiles = [
-      'saved-hours',
-      'monday-planning',
-      'seo-blog',
-      'wordpress-alt-text',
-      'chatbot',
-      'email-handtekening',
-    ];
-    while (defaultTiles.length < GRID_SIZE) {
-      defaultTiles.push(`__empty_${defaultTiles.length}`);
+
+    while (items.length < GRID_SIZE) {
+      items.push(`__empty_${items.length}`);
     }
-    return defaultTiles;
+    return items.slice(0, GRID_SIZE);
   };
   
   const orderedItems = getOrderedItems();
