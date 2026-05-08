@@ -65,14 +65,19 @@ serve(async (req) => {
     
     if (supabaseUrl && supabaseServiceKey) {
       try {
-        const response = await fetch(`${supabaseUrl}/rest/v1/automation_settings?select=n8n_workflow_name,time_saved_per_execution`, {
+        // Fetch automation_settings for base workflow names and time saved
+        const settingsResponse = await fetch(`${supabaseUrl}/rest/v1/automation_settings?select=automation_name,n8n_workflow_name,time_saved_per_execution`, {
           headers: {
             'apikey': supabaseServiceKey,
             'Authorization': `Bearer ${supabaseServiceKey}`,
           },
         });
-        if (response.ok) {
-          const settings = await response.json();
+        
+        let zoekwoordTimeSaved = 30; // default
+        let blogsTimeSaved = 30; // default
+        
+        if (settingsResponse.ok) {
+          const settings = await settingsResponse.json();
           settings.forEach((s: any) => {
             if (s.n8n_workflow_name) {
               const nameLower = s.n8n_workflow_name.toLowerCase();
@@ -81,12 +86,54 @@ serve(async (req) => {
                 timeSavedMap[nameLower] = s.time_saved_per_execution;
               }
             }
+            // Store time_saved for mapping to company workflows
+            if (s.automation_name === 'zoekwoord-onderzoek' && s.time_saved_per_execution) {
+              zoekwoordTimeSaved = s.time_saved_per_execution;
+            }
+            if (s.automation_name === 'blogs' && s.time_saved_per_execution) {
+              blogsTimeSaved = s.time_saved_per_execution;
+            }
           });
-          console.log('Configured workflow names:', configuredWorkflowNames);
-          console.log('Time saved map:', timeSavedMap);
+          console.log('Configured workflow names from settings:', configuredWorkflowNames);
         }
+        
+        // Fetch company-specific workflow names
+        const companiesResponse = await fetch(`${supabaseUrl}/rest/v1/companies?select=seo_research_n8n_name,subkeywords_n8n_name,blogs_n8n_name`, {
+          headers: {
+            'apikey': supabaseServiceKey,
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+        });
+        
+        if (companiesResponse.ok) {
+          const companies = await companiesResponse.json();
+          companies.forEach((c: any) => {
+            // SEO Research workflows (e.g., "TIKT zoekwoorden", "MEDIABIRDS zoekwoorden")
+            if (c.seo_research_n8n_name) {
+              const nameLower = c.seo_research_n8n_name.toLowerCase();
+              configuredWorkflowNames.push(nameLower);
+              timeSavedMap[nameLower] = zoekwoordTimeSaved;
+            }
+            // Subkeywords workflows
+            if (c.subkeywords_n8n_name) {
+              const nameLower = c.subkeywords_n8n_name.toLowerCase();
+              configuredWorkflowNames.push(nameLower);
+              timeSavedMap[nameLower] = zoekwoordTimeSaved;
+            }
+            // Blogs workflows (e.g., "TIKT seo", "MEDIABIRDS seo")
+            if (c.blogs_n8n_name) {
+              const nameLower = c.blogs_n8n_name.toLowerCase();
+              configuredWorkflowNames.push(nameLower);
+              timeSavedMap[nameLower] = blogsTimeSaved;
+            }
+          });
+          console.log('Added company workflow names:', companies.length, 'companies');
+        }
+        
+        console.log('All configured workflow names:', configuredWorkflowNames);
+        console.log('Time saved map:', timeSavedMap);
       } catch (e) {
-        console.error('Error fetching automation_settings:', e);
+        console.error('Error fetching settings/companies:', e);
       }
     }
 
