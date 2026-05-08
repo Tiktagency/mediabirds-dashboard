@@ -1,116 +1,70 @@
 
+Doel: de “Handtekening genereren”-knop moet aantoonbaar wél een POST doen met alle data, en jij moet direct feedback krijgen als n8n de webhook niet accepteert (nu faalt het stil/verwarrend).
 
-# Plan: Auto-save zonder melding & Webhook via Edge Function
+Wat ik heb gevonden (uit de netwerk- en console-logs)
+- De app verstuurt wel degelijk een request naar de backend-functie `trigger-email-signature` (status 200).
+- Die backend-functie verstuurt vervolgens een POST naar jouw n8n URL.
+- n8n antwoordt met:
+  `{"code":404,"message":"This webhook is not registered for POST requests. Did you mean to make a GET request?"}`
+- Dit is typisch voor n8n wanneer:
+  - je de **/webhook-test/** URL gebruikt terwijl de workflow niet in “test listening” staat, of
+  - de webhook-node niet op POST staat, of
+  - je eigenlijk de **/webhook/** (productie) URL moet gebruiken (zoals bij je andere automatiseringen).
 
-## Probleem Analyse
+Waarom het “nog steeds niet werkt”
+- De data wordt verstuurd, maar n8n weigert de POST op deze endpoint. Daarnaast retourneert onze backend-functie nu altijd `success: true` (ook als n8n faalt), waardoor het lijkt alsof alles goed ging.
 
-1. **Toast melding bij auto-save**: De `saveSettings` functie in `useEmailSignatureSettings.ts` toont altijd een "Opgeslagen" toast. Bij auto-save is dit ongewenst.
+Aanpak (simpel en zoals andere automatiseringen)
 
-2. **Webhook CORS fout**: De browser blokkeert directe fetch naar `https://tikt.app.n8n.cloud/webhook-test/...` vanwege CORS. Dit moet via een backend edge function.
+1) Backend-functie `trigger-email-signature` robuust maken (zoals trigger-blog/SEO)
+Bestand: `supabase/functions/trigger-email-signature/index.ts`
 
-## Oplossing
+Wijzigingen:
+- Return niet altijd `success: true`. Gebruik:
+  - `success: response.ok`
+  - `status: response.status`
+  - `rawText` (volledige response body)
+- Voeg logging toe (alleen status/route, geen secrets) zodat we in de backend logs precies zien wat er gebeurt.
+- Voeg optioneel een Authorization header toe, net als andere automations:
+  - `Authorization: Deno.env.get('TIKT_WEBHOOK_AUTH_TOKEN') ?? Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN')` (als aanwezig)
+- Belangrijk: “kijk naar andere automatiseringen”
+  - Andere automations gebruiken meestal `/webhook/` (niet `/webhook-test/`).
+  - Ik implementeer daarom een “slimme fallback”:
+    1) Eerst POST naar exact de door jou gegeven URL (`.../webhook-test/...`)
+    2) Als n8n antwoordt met die “not registered for POST” boodschap of status 404:
+       - automatisch nogmaals POST naar dezelfde URL maar dan met `webhook-test` vervangen door `webhook`.
+    3) We geven terug welke URL uiteindelijk gebruikt is (`attemptedUrls` + `usedUrl`).
 
-### 1. Silent Auto-Save
+Resultaat:
+- Als jouw n8n workflow actief is op productie-webhook, werkt het zonder dat jij iets hoeft aan te passen.
+- Als je écht test-webhook wilt, blijft dat ook werken zodra n8n “listening for test” staat.
 
-**Bestand: `src/hooks/useEmailSignatureSettings.ts`**
+2) Frontend: toon duidelijke feedback (geen “het gebeurt niks” meer)
+Bestand: `src/components/email-signature/EmailSignatureForm.tsx`
 
-Voeg een optionele `silent` parameter toe aan de `saveSettings` functie:
+Wijzigingen:
+- Voeg `useToast()` toe (zoals BlogGenerationForm) en toon een toast na klikken op “Handtekening genereren”:
+  - Succes: toon (korte) succesmelding + eventueel response tekst.
+  - Fout: toon foutmelding met de exacte n8n response (“not registered for POST…”) zodat meteen duidelijk is wat er misgaat.
+- Verwerk de response van `supabase.functions.invoke('trigger-email-signature')` als:
+  - `if (response.error)` => toast error
+  - `else if (!response.data?.success)` => toast error met `status` + `rawText`
+  - `else` => toast success
+- Dit verandert niets aan auto-save: dat blijft stil en automatisch.
 
-```typescript
-const saveSettings = async (
-  newSettings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
-  options?: { silent?: boolean }
-) => {
-  // ... bestaande logica ...
-  
-  // Alleen toast tonen als niet silent
-  if (!options?.silent) {
-    toast({
-      title: 'Opgeslagen',
-      description: 'Je email handtekening is opgeslagen',
-    });
-  }
-};
-```
+3) (Optioneel maar aanbevolen) UI: zet de volledige webhook response ook in het rechter “HTML Code” paneel
+- Niet vereist voor de fix, maar dit maakt het debuggen/gebruik veel duidelijker (je ziet meteen wat n8n teruggeeft).
+- Alleen als jij dit wilt; ik kan het direct meenemen.
 
-### 2. Edge Function voor Webhook
+Testplan (end-to-end)
+1. Vul verplichte velden in → er mag géén “Opgeslagen” toast komen (auto-save is silent).
+2. Klik “Handtekening genereren”:
+   - Je moet direct een toast krijgen met succes of met de echte fout uit n8n.
+3. Controleer dat n8n nu wél een run triggert:
+   - Als het nog 404 is, dan ligt het aan n8n endpoint/methode; de UI zal dat nu expliciet tonen, en de fallback naar `/webhook/` vangt het meestal direct af.
 
-**Nieuw bestand: `supabase/functions/trigger-email-signature/index.ts`**
-
-Maak een edge function die de webhook aanroept:
-
-```typescript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const signatureData = await req.json();
-    
-    const webhookUrl = "https://tikt.app.n8n.cloud/webhook-test/0d19dda2-8df2-4952-a93a-5c9c49b4edd8";
-    
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(signatureData),
-    });
-
-    const responseText = await response.text();
-    
-    return new Response(
-      JSON.stringify({ success: true, data: responseText }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-});
-```
-
-### 3. Form Aanpassen
-
-**Bestand: `src/components/email-signature/EmailSignatureForm.tsx`**
-
-**Auto-save met silent optie (regel 104):**
-```typescript
-await onSave({...}, { silent: true });
-```
-
-**Webhook via edge function aanroepen (regels 241-260):**
-```typescript
-const response = await supabase.functions.invoke('trigger-email-signature', {
-  body: signatureData,
-});
-
-if (response.error) {
-  throw new Error(response.error.message);
-}
-
-console.log('Webhook response:', response.data);
-```
-
-## Samenvatting Wijzigingen
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `useEmailSignatureSettings.ts` | `silent` parameter toevoegen aan `saveSettings` |
-| `trigger-email-signature/index.ts` | Nieuwe edge function voor webhook proxy |
-| `EmailSignatureForm.tsx` | Auto-save met `silent: true`, webhook via edge function |
-
-## Resultaat
-
-- Auto-save: Gegevens worden opgeslagen zonder melding
-- Handtekening genereren: Stuurt data via edge function naar webhook (geen CORS probleem)
-- Geen "Opgeslagen" melding meer bij klik op de knop
-
+Technisch (waarom dit dit oplost)
+- We sturen al een POST, maar n8n weigert de endpoint. De echte fix is:
+  1) correcte endpoint gebruiken (vaak `/webhook/` i.p.v. `/webhook-test/`), en/of
+  2) correcte auth header meegeven, en
+  3) het falen niet verbergen: success/status/response doorgeven en zichtbaar maken in de UI.
