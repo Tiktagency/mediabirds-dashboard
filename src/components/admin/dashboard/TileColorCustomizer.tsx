@@ -1,15 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Palette, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Palette, Clock, RotateCcw } from 'lucide-react';
 import type { TileColors } from '@/hooks/useDashboardSettings';
 
 interface TileColorCustomizerProps {
   colors: TileColors;
   onUpdate: (colors: { background?: string; text?: string }) => Promise<void>;
+  onReset: () => Promise<void>;
 }
 
-export const TileColorCustomizer = ({ colors, onUpdate }: TileColorCustomizerProps) => {
+export const TileColorCustomizer = ({ colors, onUpdate, onReset }: TileColorCustomizerProps) => {
   return (
     <Card className="bg-card/50 border-border/30">
       <CardHeader>
@@ -84,6 +86,16 @@ export const TileColorCustomizer = ({ colors, onUpdate }: TileColorCustomizerPro
             </div>
           </div>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onReset}
+          className="w-full mt-2"
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Reset naar standaard
+        </Button>
       </CardContent>
     </Card>
   );
