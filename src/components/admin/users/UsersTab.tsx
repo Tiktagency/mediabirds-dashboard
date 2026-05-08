@@ -36,7 +36,7 @@ export const UsersTab = () => {
             Beheer gebruikers, rollen en automation permissies.
           </p>
         </div>
-        <Button onClick={() => setInviteModalOpen(true)} className="gap-2">
+        <Button onClick={() => setInviteModalOpen(true)} variant="primaryCustom" className="gap-2">
           <UserPlus className="w-4 h-4" />
           Gebruiker uitnodigen
         </Button>
