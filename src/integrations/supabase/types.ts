@@ -184,6 +184,8 @@ export type Database = {
           company_id: string
           created_at: string
           get_afbeelding_url: string | null
+          google_sheet_id: string | null
+          google_slides_id: string | null
           hoofdaccent_gradient: string | null
           id: string
           post_blog_url: string | null
@@ -200,6 +202,8 @@ export type Database = {
           company_id: string
           created_at?: string
           get_afbeelding_url?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
           post_blog_url?: string | null
@@ -216,6 +220,8 @@ export type Database = {
           company_id?: string
           created_at?: string
           get_afbeelding_url?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
           post_blog_url?: string | null

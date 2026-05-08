@@ -14,6 +14,8 @@ export interface BlogSettings {
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
   status: string | null;
+  google_sheet_id: string | null;
+  google_slides_id: string | null;
   created_at: string;
   updated_at: string;
 }
