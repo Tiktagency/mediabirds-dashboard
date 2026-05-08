@@ -1,95 +1,51 @@
 
 
-## Fix: Nieuwe dashboard tiles verschijnen automatisch
+## Leads Generator: velden aanpassen + webhook koppeling
 
-### Het probleem
+### Wat wordt er gedaan
 
-Elke gebruiker heeft een `tile_order` array in `user_dashboard_settings` die exact bepaalt welke tiles zichtbaar zijn. Wanneer een nieuwe automation wordt toegevoegd aan `tileConfigMap`, wordt deze **niet** automatisch toegevoegd aan bestaande gebruikers hun `tile_order`. Hierdoor zie je de tile nooit.
+1. De drie bestaande invulvelden worden vervangen door: **Plaatsnaam**, **Country** en **Zoektermen** (dynamisch, meerdere regels)
+2. Een nieuwe edge function `trigger-leads-webhook` stuurt de data als POST naar de n8n webhook
+3. De Start-knop roept deze edge function aan
 
-Huidige tile_order voor alle gebruikers:
-```
-[saved-hours, monday-planning, seo-blog, wordpress-alt-text, chatbot, 
- copyright-branding, email-handtekening, landingspagina, __empty_8]
-```
+### Wijzigingen
 
-`leads-generator` ontbreekt hier volledig.
+**`src/pages/LeadsGenerator.tsx`**
 
-### Oplossing (twee delen)
+De state variabelen worden vervangen:
+- `bedrijfsnaam` en `locatie` en `beschrijving` worden vervangen door `plaatsnaam` (string), `country` (string), en `zoektermen` (string array, start met `['']`)
+- Nieuw veld **Plaatsnaam**: gewoon tekstveld
+- Nieuw veld **Country**: gewoon tekstveld (Engels)
+- Nieuw veld **Zoektermen**: een lijst van tekstvelden, start met 1 veld. Elke regel heeft een X-knop om te verwijderen (behalve als er maar 1 is). Onderaan een "+ Extra zoekterm" knop om een nieuw leeg veld toe te voegen
+- Validatie: Start is enabled als plaatsnaam, country en minstens 1 niet-lege zoekterm zijn ingevuld
+- De Start-knop roept `supabase.functions.invoke('trigger-leads-webhook', { body: { Plaatsnaam, Country, searchStringsArray } })` aan
 
-#### Deel 1: Bestaande data fixen
+**Nieuw: `supabase/functions/trigger-leads-webhook/index.ts`**
 
-Een database update die `leads-generator` toevoegt aan de `tile_order` van alle bestaande gebruikers. De `__empty_8` slot wordt vervangen door `leads-generator`.
+- CORS headers (standaard)
+- Authenticatie check (JWT validatie)
+- Ontvangt `{ Plaatsnaam, Country, searchStringsArray }` uit de request body
+- Stuurt een POST naar `https://tikt.app.n8n.cloud/webhook/02ec49ee-d7cf-4e3e-bfba-7d71206d290b` met auth token (`BLOG_WEBHOOK_AUTH_TOKEN`)
+- Geeft het webhook-resultaat terug aan de frontend
 
-#### Deel 2: Code aanpassen zodat dit nooit meer voorkomt
+### Payload voorbeeld
 
-In `src/pages/Index.tsx` wordt de `getOrderedItems()` functie aangepast zodat deze:
-1. De `tile_order` uit de database leest (zoals nu)
-2. Checkt of er tiles in `tileConfigMap` zitten die **niet** in de `tile_order` staan
-3. Ontbrekende tiles automatisch toevoegt (op de eerste lege `__empty_` plek, of aan het einde)
-
-Zo verschijnt elke nieuwe tile die je toevoegt aan `tileConfigMap` automatisch op het dashboard, zelfs als de gebruiker zijn `tile_order` niet heeft bijgewerkt.
-
-### Technische details
-
-**Database update (via insert tool)**
-
-```sql
-UPDATE user_dashboard_settings
-SET tile_order = jsonb_set(
-  tile_order,
-  -- vervang __empty_8 door leads-generator
-)
-```
-
-Concreet: voor elke gebruiker wordt `leads-generator` toegevoegd op de plek van een empty slot.
-
-**`src/pages/Index.tsx` -- `getOrderedItems()` aanpassen**
-
-```typescript
-const getOrderedItems = () => {
-  const allTileKeys = Object.keys(tileConfigMap); // alle bekende tiles
-  let items: string[] = [];
-
-  if (dashboardSettings.tile_order?.length) {
-    items = [...dashboardSettings.tile_order];
-  } else {
-    // Default volgorde
-    items = ['saved-hours', ...allTileKeys.filter(k => k !== 'saved-hours')];
-  }
-
-  // Zoek tiles die in tileConfigMap staan maar NIET in items
-  const missingTiles = allTileKeys.filter(
-    key => !items.includes(key)
-  );
-
-  // Voeg ontbrekende tiles toe op lege plekken
-  for (const tile of missingTiles) {
-    const emptyIndex = items.findIndex(i => i.startsWith('__empty_'));
-    if (emptyIndex !== -1) {
-      items[emptyIndex] = tile;
-    } else {
-      items.push(tile);
-    }
-  }
-
-  // Zorg voor GRID_SIZE items
-  while (items.length < GRID_SIZE) {
-    items.push(`__empty_${items.length}`);
-  }
-
-  return items.slice(0, GRID_SIZE);
-};
+```json
+{
+  "Plaatsnaam": "Amsterdam",
+  "Country": "Netherlands",
+  "searchStringsArray": [
+    "marketing bureau",
+    "webdesign",
+    "SEO specialist"
+  ]
+}
 ```
 
-**`src/components/admin/dashboard/TileOrganizer.tsx`**
-
-Dezelfde logica toevoegen zodat de admin TileOrganizer ook nieuwe tiles toont die nog niet in de opgeslagen `tile_order` staan.
-
-### Bestanden die worden aangepast
+### Bestanden
 
 | Bestand | Actie |
 |---|---|
-| `src/pages/Index.tsx` | `getOrderedItems()` aanpassen met auto-detect van ontbrekende tiles |
-| `src/components/admin/dashboard/TileOrganizer.tsx` | Zelfde auto-detect logica toevoegen |
-| Database (data update) | `leads-generator` toevoegen aan tile_order van alle bestaande gebruikers |
+| `src/pages/LeadsGenerator.tsx` | Velden vervangen + webhook aanroep |
+| `supabase/functions/trigger-leads-webhook/index.ts` | Nieuw -- proxy naar n8n webhook |
 
