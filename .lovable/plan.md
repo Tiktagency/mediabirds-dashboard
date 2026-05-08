@@ -1,60 +1,88 @@
 
-# Plan: Forceer Selecteerbaarheid voor Alle Elementen in Email Handtekening Preview
+# Plan: Auto-save bij Genereren en Forceer Selectie op Alle Elementen
 
-## Probleem
-Het oranje achtergrondvlak in de gegenereerde email handtekening is niet selecteerbaar. Dit komt waarschijnlijk doordat de gegenereerde HTML inline styles bevat zoals `user-select: none` of `-webkit-user-select: none` die de Tailwind classes overschrijven.
+## Probleem 1: Gegevens worden niet opgeslagen bij genereren
 
-## Oplossing
-Voeg extra CSS styling toe die ook webkit prefixes afdwingt en pointer-events correct instelt. Dit zorgt ervoor dat ALLE elementen selecteerbaar worden, ongeacht hun inline styles.
-
-## Wijziging
-
-**Bestand:** `src/pages/EmailSignature.tsx`
-
-**Regels 131-135:** Uitbreiden met inline style die selectie afdwingt
-
+Huidige situatie in `EmailSignature.tsx`:
 ```tsx
-// Was:
-<div 
-  className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
-  style={{ width: '154%' }}
-  dangerouslySetInnerHTML={{ __html: generatedHtml }} 
-/>
-
-// Wordt:
-<div 
-  className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
-  style={{ width: '154%' }}
->
-  <style>{`
-    .email-signature-preview * {
-      user-select: text !important;
-      -webkit-user-select: text !important;
-      -moz-user-select: text !important;
-      -ms-user-select: text !important;
-      cursor: text !important;
-      pointer-events: auto !important;
-    }
-  `}</style>
-  <div 
-    className="email-signature-preview"
-    dangerouslySetInnerHTML={{ __html: generatedHtml }} 
-  />
-</div>
+onHtmlGenerated={(html) => {
+  setGeneratedHtml(html);
+  if (selectedSignature) {  // ← Dit is null bij nieuwe handtekening!
+    saveSettings({...selectedSignature, generated_html: html}, { silent: true });
+  }
+}}
 ```
 
+Bij een nieuwe handtekening worden de formuliergegevens niet opgeslagen.
+
+**Oplossing**: De save-actie moet in `EmailSignatureForm.tsx` gebeuren, direct na succesvolle webhook response. Dan zijn alle formuliergegevens beschikbaar.
+
+## Probleem 2: Oranje vlak niet selecteerbaar
+
+De huidige CSS override werkt niet volledig omdat:
+- Gegenereerde HTML kan inline styles hebben met `!important`
+- CSS in `<style>` block komt vóór de HTML elementen
+
+**Oplossing**: Pas JavaScript toe om na het renderen alle inline styles te verwijderen/overschrijven.
+
+---
+
+## Wijzigingen
+
+### 1. EmailSignatureForm.tsx - Auto-save na genereren
+
+**Regels 251-371 (onSubmit functie)**: Na succesvolle HTML generatie, sla alle gegevens automatisch op
+
+```tsx
+// Na regel 353 (na onHtmlGenerated)
+// Sla alle gegevens inclusief HTML op
+signatureData.generated_html = htmlCode;
+await onSave(signatureData, { silent: true });
+```
+
+### 2. EmailSignature.tsx - Verwijder dubbele save logica
+
+**Regels 102-110**: Vereenvoudig de callback omdat save nu in het formulier gebeurt
+
+```tsx
+onHtmlGenerated={(html) => {
+  setGeneratedHtml(html);
+}}
+```
+
+### 3. EmailSignature.tsx - Forceer selectie via JavaScript
+
+**Regels 131-149**: Gebruik `useEffect` met `ref` om inline styles te overschrijven na render
+
+```tsx
+// Nieuwe ref en useEffect toevoegen
+const previewRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  if (previewRef.current && generatedHtml) {
+    // Forceer selecteerbaarheid op ALLE elementen
+    const allElements = previewRef.current.querySelectorAll('*');
+    allElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.setProperty('user-select', 'text', 'important');
+      htmlEl.style.setProperty('-webkit-user-select', 'text', 'important');
+      htmlEl.style.setProperty('cursor', 'text', 'important');
+      htmlEl.style.setProperty('pointer-events', 'auto', 'important');
+    });
+  }
+}, [generatedHtml]);
+```
+
+---
+
 ## Technische Details
-- `user-select: text !important` - Standaard CSS
-- `-webkit-user-select: text !important` - Safari/Chrome
-- `-moz-user-select: text !important` - Firefox  
-- `-ms-user-select: text !important` - Edge/IE
-- `pointer-events: auto !important` - Zorgt dat klikken/selecteren werkt op alle elementen
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `EmailSignatureForm.tsx` | Save alle data + HTML na succesvolle generatie |
+| `EmailSignature.tsx` | Verwijder dubbele save, voeg JS-based style override toe |
 
 ## Resultaat
-Na deze wijziging zijn alle elementen in de email handtekening preview selecteerbaar:
-- Oranje achtergrondvlakken
-- Tekst
-- Afbeeldingen
-- Tabellen en cellen
 
-Dit werkt voor zowel de huidige als toekomstige gegenereerde handtekeningen.
+1. Bij "Handtekening genereren" worden automatisch alle formuliergegevens + HTML opgeslagen
+2. ALLE elementen in de preview (inclusief oranje vlakken) zijn selecteerbaar via JavaScript DOM manipulatie
