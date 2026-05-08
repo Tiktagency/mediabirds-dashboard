@@ -59,8 +59,15 @@ const FREQUENCIES = [
   { value: 'monthly', label: 'Maandelijks' },
 ];
 
+const HOURS = Array.from({ length: 24 }, (_, i) => 
+  i.toString().padStart(2, '0')
+);
 
-export const ScheduleTrigger = ({ 
+const MINUTES = Array.from({ length: 60 }, (_, i) => 
+  i.toString().padStart(2, '0')
+);
+
+export const ScheduleTrigger = ({
   companyId, 
   isAdmin, 
   schedule, 
@@ -73,7 +80,8 @@ export const ScheduleTrigger = ({
   const [enabled, setEnabled] = useState(false);
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
   const [dayOfWeek, setDayOfWeek] = useState(1);
-  const [timeOfDay, setTimeOfDay] = useState('10:00');
+  const [hours, setHours] = useState('10');
+  const [minutes, setMinutes] = useState('00');
 
   // Sync local state with schedule data
   useEffect(() => {
@@ -81,12 +89,15 @@ export const ScheduleTrigger = ({
       setEnabled(schedule.enabled);
       setFrequency(schedule.frequency);
       setDayOfWeek(schedule.day_of_week);
-      setTimeOfDay(schedule.time_of_day.slice(0, 5)); // Remove seconds
+      const timeParts = schedule.time_of_day.slice(0, 5).split(':');
+      setHours(timeParts[0]);
+      setMinutes(timeParts[1]);
     } else {
       setEnabled(false);
       setFrequency('weekly');
       setDayOfWeek(1);
-      setTimeOfDay('10:00');
+      setHours('10');
+      setMinutes('00');
     }
   }, [schedule]);
 
@@ -105,10 +116,14 @@ export const ScheduleTrigger = ({
     await updateSchedule({ day_of_week: newDay });
   };
 
-  const handleTimeChange = async (newTime: string) => {
-    if (!newTime) return;
-    setTimeOfDay(newTime);
-    await updateSchedule({ time_of_day: `${newTime}:00` });
+  const handleHoursChange = async (newHours: string) => {
+    setHours(newHours);
+    await updateSchedule({ time_of_day: `${newHours}:${minutes}:00` });
+  };
+
+  const handleMinutesChange = async (newMinutes: string) => {
+    setMinutes(newMinutes);
+    await updateSchedule({ time_of_day: `${hours}:${newMinutes}:00` });
   };
 
   if (isLoading) {
@@ -201,19 +216,47 @@ export const ScheduleTrigger = ({
                 </div>
               )}
 
-              {/* Time */}
+              {/* Time - Hours and Minutes */}
               <div className="space-y-1.5">
                 <Label className="text-white/50 text-xs flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Tijd
                 </Label>
-                <Input
-                  type="time"
-                  value={timeOfDay}
-                  onChange={(e) => handleTimeChange(e.target.value)}
-                  disabled={!isAdmin || isSaving}
-                  className="bg-white/5 border-white/20 text-white text-sm h-9 [&::-webkit-calendar-picker-indicator]:invert"
-                />
+                <div className="flex items-center gap-1">
+                  {/* Hours */}
+                  <Select
+                    value={hours}
+                    onValueChange={handleHoursChange}
+                    disabled={!isAdmin || isSaving}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9 w-16">
+                      <SelectValue placeholder="Uur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <span className="text-white/60 text-lg font-bold">:</span>
+                  
+                  {/* Minutes */}
+                  <Select
+                    value={minutes}
+                    onValueChange={handleMinutesChange}
+                    disabled={!isAdmin || isSaving}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9 w-16">
+                      <SelectValue placeholder="Min" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MINUTES.map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
