@@ -4,13 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Sparkles, Clock, Copy, Trash2 } from 'lucide-react';
+import { Pencil, Check, XCircle, Sparkles, Clock, Copy, Trash2, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
 import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -31,6 +33,7 @@ export const KeywordResearchForm = ({
 }: KeywordResearchFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminSettingsOpen, setAdminSettingsOpen] = useState(false);
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -491,7 +494,10 @@ export const KeywordResearchForm = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-white mb-6">Zoekwoord onderzoek instellingen</h2>
+      <div className="text-center mb-6">
+        <h2 className="text-xl font-semibold text-white">Zoekwoord onderzoek instellingen</h2>
+        <p className="text-sm text-white/50 mt-1">Configureer je AI-gestuurd SEO onderzoek</p>
+      </div>
       {renderInputField('Bedrijf', 'bedrijfsnaam', true)}
       
       {renderTextField(
@@ -521,33 +527,44 @@ export const KeywordResearchForm = ({
 
       {/* Admin instellingen */}
       {isAdmin && (
-        <div className="pt-6 border-t border-white/10 space-y-6">
-          <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-          
-          {/* Hoofd zoekwoorden sectie */}
-          <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📊</span>
-              <h4 className="text-sm font-semibold text-white/90">Hoofd zoekwoorden</h4>
+        <Collapsible 
+          open={adminSettingsOpen} 
+          onOpenChange={setAdminSettingsOpen}
+          className="pt-6 border-t border-white/10"
+        >
+          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 hover:bg-white/5 rounded-md px-2 transition-colors">
+            <p className="text-sm text-yellow-400/80 font-medium">Admin instellingen</p>
+            <ChevronDown className={cn(
+              "h-4 w-4 text-yellow-400/80 transition-transform duration-200",
+              adminSettingsOpen && "rotate-180"
+            )} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-6 pt-4">
+            {/* Hoofd zoekwoorden sectie */}
+            <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                <h4 className="text-sm font-semibold text-white/90">Hoofd zoekwoorden</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>{renderInputField('Spreadsheet ID', 'hoofd_google_sheet_id')}</div>
+                <div>{renderInputField('Grid ID', 'hoofd_google_slides_id')}</div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>{renderInputField('Spreadsheet ID', 'hoofd_google_sheet_id')}</div>
-              <div>{renderInputField('Grid ID', 'hoofd_google_slides_id')}</div>
+            
+            {/* Nieuwe zoekwoorden sectie */}
+            <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🆕</span>
+                <h4 className="text-sm font-semibold text-white/90">Nieuwe zoekwoorden</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>{renderInputField('Spreadsheet ID', 'nieuw_google_sheet_id')}</div>
+                <div>{renderInputField('Grid ID', 'nieuw_google_slides_id')}</div>
+              </div>
             </div>
-          </div>
-          
-          {/* Nieuwe zoekwoorden sectie */}
-          <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🆕</span>
-              <h4 className="text-sm font-semibold text-white/90">Nieuwe zoekwoorden</h4>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>{renderInputField('Spreadsheet ID', 'nieuw_google_sheet_id')}</div>
-              <div>{renderInputField('Grid ID', 'nieuw_google_slides_id')}</div>
-            </div>
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       <ScheduleTrigger
