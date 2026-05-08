@@ -132,23 +132,27 @@ const EmailSignature = () => {
                       variant="outline"
                       size="sm"
                       className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-                      onClick={() => {
-                        if (previewRef.current) {
-                          const selection = window.getSelection();
-                          const range = document.createRange();
-                          range.selectNodeContents(previewRef.current);
-                          selection?.removeAllRanges();
-                          selection?.addRange(range);
+                      onClick={async () => {
+                        try {
+                          const blob = new Blob([generatedHtml!], { type: 'text/html' });
+                          const clipboardItem = new ClipboardItem({ 'text/html': blob });
+                          await navigator.clipboard.write([clipboardItem]);
                           
                           toast({
-                            title: 'Geselecteerd',
-                            description: 'Druk op Ctrl+C (of Cmd+C) om te kopiëren',
+                            title: 'Gekopieerd',
+                            description: 'Handtekening is gekopieerd met opmaak - plak direct in je e-mail',
+                          });
+                        } catch (err) {
+                          await navigator.clipboard.writeText(generatedHtml!);
+                          toast({
+                            title: 'Gekopieerd',
+                            description: 'HTML code gekopieerd (plak in bronweergave van je e-mail)',
                           });
                         }
                       }}
                     >
                       <Copy className="w-4 h-4 mr-1" />
-                      Selecteer
+                      Kopieer
                     </Button>
                   )}
                 </CardHeader>
