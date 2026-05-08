@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
 
 interface Notification {
   id: string;
@@ -47,6 +48,7 @@ const SeoBlog = () => {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [notesEditMode, setNotesEditMode] = useState<'expanded' | 'editing'>('expanded');
   const [notesDraft, setNotesDraft] = useState('');
+  const { settings: pageUrlSettings, isLoading: pageUrlLoading, isSaving: pageUrlSaving, saveSettings: savePageUrlSettings, reloadSettings: reloadPageUrlSettings } = usePageUrlSettings(selectedCompany?.id || null);
 
   // Load notifications from database
   useEffect(() => {
@@ -549,6 +551,7 @@ const SeoBlog = () => {
               isAdmin={isAdmin}
               user={user}
               saveNotification={saveNotification}
+              pageUrlSettings={pageUrlSettings}
             />
           </div>
           
@@ -562,6 +565,11 @@ const SeoBlog = () => {
               isAdmin={isAdmin}
               user={user}
               saveNotification={saveNotification}
+              pageUrlSettings={pageUrlSettings}
+              pageUrlLoading={pageUrlLoading}
+              pageUrlSaving={pageUrlSaving}
+              savePageUrlSettings={savePageUrlSettings}
+              reloadPageUrlSettings={reloadPageUrlSettings}
             />
           </div>
         </div>

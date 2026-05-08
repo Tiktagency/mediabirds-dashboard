@@ -16,7 +16,15 @@ import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
 import { cn } from '@/lib/utils';
-import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
+
+
+interface PageUrlSettings {
+  id?: string;
+  company_id: string;
+  google_sheet_id: string;
+  google_file_id: string;
+  page_urls: Record<string, string>;
+}
 
 interface BlogGenerationFormProps {
   selectedCompany: Company | null;
@@ -24,6 +32,7 @@ interface BlogGenerationFormProps {
   isAdmin: boolean;
   user: { id: string } | null;
   saveNotification: (message: string, status: 'success' | 'error') => Promise<void>;
+  pageUrlSettings?: PageUrlSettings | null;
 }
 
 const FIXED_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2-44fb-88bf-50e0c16f17ac';
@@ -34,6 +43,7 @@ export const BlogGenerationForm = ({
   isAdmin,
   user,
   saveNotification,
+  pageUrlSettings,
 }: BlogGenerationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +82,7 @@ export const BlogGenerationForm = ({
     getNextTriggerDisplay 
   } = useBlogSchedule(selectedCompany?.id || null);
   const isScheduleEnabled = blogSchedule?.enabled || false;
-  const { settings: pageUrlSettings } = usePageUrlSettings(selectedCompany?.id || null);
+  
 
   // Helper to parse range string to array
   const parseRangeString = (rangeStr: string | null): [number, number] => {
