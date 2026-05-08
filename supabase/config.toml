@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.run-scheduled-seo]
 verify_jwt = false
+
+[functions.run-scheduled-blogs]
+verify_jwt = false
