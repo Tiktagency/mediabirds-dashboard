@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { EmailSignatureForm } from '@/components/email-signature/EmailSignatureForm';
 import { SignatureList } from '@/components/email-signature/SignatureList';
 import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
@@ -46,7 +47,7 @@ const EmailSignature = () => {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+          <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-6">
             {/* Left: Signature List */}
             <div className="order-2 lg:order-1">
               <SignatureList
@@ -58,7 +59,7 @@ const EmailSignature = () => {
               />
             </div>
 
-            {/* Right: Form */}
+            {/* Middle: Form */}
             <div className="order-1 lg:order-2">
               <EmailSignatureForm
                 selectedSignature={selectedSignature}
@@ -66,6 +67,25 @@ const EmailSignature = () => {
                 onSave={saveSettings}
                 onUploadPhoto={uploadProfilePhoto}
               />
+            </div>
+
+            {/* Right: HTML Output */}
+            <div className="order-3">
+              <Card className="bg-white/5 border-white/10 h-full">
+                <CardHeader>
+                  <CardTitle className="text-white text-lg">HTML Code</CardTitle>
+                  <CardDescription className="text-white/50">
+                    Kopieer deze code naar je email programma
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[300px] overflow-auto">
+                    <span className="text-white/30">
+                      Vul het formulier in en klik op "Handtekening genereren" om de HTML code te zien.
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
