@@ -332,6 +332,7 @@ export type Database = {
           email: string
           emails: Json | null
           first_name: string
+          generated_html: string | null
           gradient_end_color: string | null
           id: string
           job_title: string
@@ -356,6 +357,7 @@ export type Database = {
           email: string
           emails?: Json | null
           first_name: string
+          generated_html?: string | null
           gradient_end_color?: string | null
           id?: string
           job_title: string
@@ -380,6 +382,7 @@ export type Database = {
           email?: string
           emails?: Json | null
           first_name?: string
+          generated_html?: string | null
           gradient_end_color?: string | null
           id?: string
           job_title?: string
