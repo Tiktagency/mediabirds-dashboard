@@ -152,11 +152,21 @@ const LandingCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
 
       toast({ title: 'Bedrijf verwijderd', description: `${companyToDelete.name} is succesvol verwijderd` });
 
-      if (selectedCompany?.id === companyToDelete.id) {
-        setSelectedCompany(null);
-      }
+      const wasSelected = selectedCompany?.id === companyToDelete.id;
       setCompanyToDelete(null);
-      await fetchCompanies();
+
+      const { data } = await supabase
+        .from('landing_companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+      const list = (data || []) as LandingCompany[];
+      setCompanies(list);
+
+      if (wasSelected) {
+        const next = list.length > 0 ? list[0] : null;
+        setSelectedCompany(next);
+        onSelect?.(next);
+      }
     } catch (error) {
       console.error('Error deleting company:', error);
       toast({ title: 'Fout bij verwijderen', description: 'Er ging iets mis bij het verwijderen van het bedrijf', variant: 'destructive' });
