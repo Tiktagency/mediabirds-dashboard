@@ -1,72 +1,58 @@
 
 
-# "Laatste succesvol uitgevoerd" tonen bij Email Handtekening
+# "Beheerd door" Dropdown op SEO Pagina
 
-## Probleem
-De Email Handtekening tile toont geen "Laatste succesvol uitgevoerd" in de tooltip, omdat:
-1. De `trigger-email-signature` edge function de `automation_status` tabel niet bijwerkt na een succesvolle generatie
-2. De tooltip de sectie verbergt als er geen data is
+## Wat wordt er gebouwd
+Onder de subtitel "Beheer je zoekwoord onderzoek en blog generatie op een plek" komt een dropdown te staan met de tekst "Beheerd door: [naam]". In deze dropdown staan alle gebruikers met de rol **admin** of **operator**. De geselecteerde beheerder wordt per bedrijf opgeslagen.
 
-## Oplossingen
+## Wijzigingen
 
-### 1. Edge function aanpassen
-**Bestand:** `supabase/functions/trigger-email-signature/index.ts`
+### 1. Database: Kolom toevoegen aan `companies` tabel
+Een nieuwe kolom `managed_by` (uuid, nullable) wordt toegevoegd aan de `companies` tabel. Deze slaat de user ID op van de beheerder.
 
-Na een succesvolle webhook-aanroep, de `automation_status` tabel updaten met de huidige timestamp als `last_run`. Dit zorgt ervoor dat elke succesvolle handtekening-generatie wordt bijgehouden.
+```sql
+ALTER TABLE companies ADD COLUMN managed_by uuid;
+```
 
-### 2. Tooltip altijd tonen
-**Bestand:** `src/components/dashboard/AutomationInfoTooltip.tsx`
+### 2. Frontend: Dropdown component in SeoBlog.tsx
+- Onder de subtitel op regel 207-209 komt een nieuwe sectie
+- Bij het laden van de pagina worden alle gebruikers met rol `admin` of `operator` opgehaald via een query op `profiles` + `user_roles`
+- De dropdown toont de email/naam van deze gebruikers
+- Bij selectie wordt de `companies.managed_by` kolom bijgewerkt
+- Alleen admins kunnen de beheerder wijzigen; andere gebruikers zien alleen de naam
 
-De "Laatste succesvol uitgevoerd" sectie altijd tonen, ook als er geen data is. In dat geval wordt "Nooit" weergegeven.
+### 3. Data ophalen
+Query om admin/operator gebruikers op te halen:
 
-### 3. Database record aanmaken
-Een initieel record aanmaken in de `automation_status` tabel voor `email-handtekening` zodat de data correct kan worden opgeslagen.
+```typescript
+// Haal alle user_ids op met admin of operator rol
+const { data: roleData } = await supabase
+  .from('user_roles')
+  .select('user_id, role')
+  .in('role', ['admin', 'operator', 'super_admin']);
+
+// Haal bijbehorende profielen op
+const userIds = roleData.map(r => r.user_id);
+const { data: profiles } = await supabase
+  .from('profiles')
+  .select('id, email')
+  .in('id', userIds);
+```
+
+### 4. Visueel ontwerp
+- Tekst "Beheerd door:" in `text-white/50` stijl, consistent met de subtitel
+- Dropdown in dezelfde stijl als de CompanySelector (donker thema)
+- Positie: direct onder de subtitel, voor de navigatie-tiles
+- Alleen zichtbaar wanneer een bedrijf is geselecteerd
 
 ## Technische Details
 
-### Edge function wijziging
-Na een succesvolle webhook response (`result.ok === true`), een upsert uitvoeren op de `automation_status` tabel:
+**Bestanden die worden aangepast:**
+- `src/pages/SeoBlog.tsx` - Dropdown toevoegen + state/logica voor managed_by
+- Database migratie - `managed_by` kolom toevoegen
 
-```typescript
-// Na succesvolle webhook
-if (result.ok) {
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-  await supabaseClient
-    .from('automation_status')
-    .upsert({
-      automation_name: 'email-handtekening',
-      status: 'active',
-      last_run: new Date().toISOString(),
-      last_updated: new Date().toISOString(),
-    }, { onConflict: 'automation_name' });
-}
-```
+**Bestaande patronen die worden hergebruikt:**
+- `Select` component uit `@/components/ui/select`
+- Supabase client queries zoals in CompanySelector
+- Styling consistent met de rest van de SEO pagina
 
-### Tooltip wijziging
-De conditie die de sectie verbergt aanpassen zodat het altijd getoond wordt wanneer de tooltip zichtbaar is:
-
-```tsx
-{/* Altijd tonen als er geen multipleLastRuns zijn */}
-{!hasMultipleLastRunsData && (
-  <div>
-    <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
-      Laatste succesvol uitgevoerd
-    </p>
-    <p className="text-sm text-white/80">
-      {formatLastRun(lastRun) || 'Nooit'}
-    </p>
-  </div>
-)}
-```
-
-### Database migratie
-Insert van een initieel record zodat de edge function kan updaten:
-
-```sql
-INSERT INTO automation_status (automation_name, status, last_run)
-VALUES ('email-handtekening', 'active', NULL)
-ON CONFLICT (automation_name) DO NOTHING;
-```
