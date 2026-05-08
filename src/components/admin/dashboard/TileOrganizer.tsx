@@ -20,12 +20,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GripVertical, LayoutGrid, Pencil, CalendarDays, Search, FileText, Image, MessageCircle, Clock, BarChart3, Sparkles, LucideIcon } from 'lucide-react';
 import type { AutomationSetting } from '@/hooks/useAutomationSettings';
+import type { TileColors } from '@/hooks/useDashboardSettings';
 import { TileLabelEditModal } from './TileLabelEditModal';
 
 interface TileOrganizerProps {
   tileOrder: string[];
   automations: AutomationSetting[];
   customLabels: Record<string, string>;
+  tileColors: TileColors;
   onReorder: (newOrder: string[]) => Promise<void>;
   onUpdateLabel: (automationName: string, label: string) => Promise<void>;
 }
@@ -37,6 +39,7 @@ interface GridTileProps {
   customLabel: string;
   status?: 'active' | 'inactive' | 'testmode';
   isEmpty: boolean;
+  tileColors: TileColors;
   onUpdateLabel: (label: string) => void;
 }
 
@@ -56,14 +59,17 @@ const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secon
   'copyright-branding': { icon: Sparkles, variant: 'accent' },
 };
 
-const variantClasses = {
-  primary: 'bg-primary text-[#002C1F]',
-  secondary: 'bg-secondary text-[#002C1F]',
-  accent: 'bg-accent text-[#002C1F]',
-  muted: 'bg-muted text-muted-foreground',
+const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent' | 'muted', tileColors: TileColors) => {
+  if (variant === 'muted') {
+    return { className: 'bg-muted text-muted-foreground', style: {} };
+  }
+  return {
+    className: '',
+    style: { backgroundColor: tileColors.background, color: tileColors.text },
+  };
 };
 
-const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel }: GridTileProps) => {
+const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, onUpdateLabel }: GridTileProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
@@ -98,14 +104,18 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
 
-  // Saved Hours tile - white with purple accent (scaled down, simplified)
+  // Saved Hours tile - with dynamic colors
   if (isSavedHours) {
     return (
       <>
         <div
           ref={setNodeRef}
-          style={style}
-          className="h-20 rounded-lg bg-white border border-[#cfddd0]/30 flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
+          style={{
+            ...style,
+            backgroundColor: tileColors.background,
+            borderColor: `${tileColors.background}40`,
+          }}
+          className="h-20 rounded-lg border flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
@@ -121,20 +131,24 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
               setIsModalOpen(true);
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-[#cfddd0]/10 rounded transition-opacity z-10"
+            className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded transition-opacity z-10"
+            style={{ color: tileColors.text }}
           >
-            <Pencil className="w-2.5 h-2.5 text-[#002C1F]" />
+            <Pencil className="w-2.5 h-2.5" />
           </button>
           
           {/* Drag handle */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
-            <GripVertical className="w-4 h-4 text-[#002C1F]" />
+          <div 
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none"
+            style={{ color: tileColors.text }}
+          >
+            <GripVertical className="w-4 h-4" />
           </div>
 
           {/* Centered content */}
           <div className="flex flex-col items-center justify-center gap-1">
-            <Clock className="w-4 h-4 text-[#002C1F]" />
-            <span className="text-[10px] text-[#002C1F] font-medium leading-tight text-center px-1">
+            <Clock className="w-4 h-4" style={{ color: tileColors.text }} />
+            <span className="text-[10px] font-medium leading-tight text-center px-1" style={{ color: tileColors.text }}>
               {customLabel || name}
             </span>
           </div>
@@ -151,13 +165,18 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     );
   }
 
-  // Regular automation tile - scaled down version
+  // Regular automation tile - with dynamic colors
+  const variantStyle = getVariantStyle(config.variant, tileColors);
+  
   return (
     <>
       <div
         ref={setNodeRef}
-        style={style}
-        className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center relative group cursor-grab active:cursor-grabbing`}
+        style={{
+          ...style,
+          ...variantStyle.style,
+        }}
+        className={`h-20 rounded-lg ${variantStyle.className} flex items-center justify-center relative group cursor-grab active:cursor-grabbing`}
         {...attributes}
         {...listeners}
       >
@@ -173,20 +192,24 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
             setIsModalOpen(true);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-background/20 rounded transition-opacity z-10"
+          className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded transition-opacity z-10"
+          style={{ color: tileColors.text }}
         >
           <Pencil className="w-2.5 h-2.5" />
         </button>
         
         {/* Drag handle */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none">
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none"
+          style={{ color: tileColors.text }}
+        >
           <GripVertical className="w-4 h-4" />
         </div>
 
         {/* Centered content */}
         <div className="flex flex-col items-center justify-center gap-1">
-          <Icon className="w-4 h-4" />
-          <span className="text-[10px] font-semibold leading-tight text-center px-1">
+          <Icon className="w-4 h-4" style={{ color: tileColors.text }} />
+          <span className="text-[10px] font-semibold leading-tight text-center px-1" style={{ color: tileColors.text }}>
             {customLabel || name}
           </span>
         </div>
@@ -202,33 +225,42 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, onUpdateLabel
     </>
   );
 };
-const DragOverlayTile = ({ id, name, status }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode' }) => {
+
+const DragOverlayTile = ({ id, name, status, tileColors }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode'; tileColors: TileColors }) => {
   const isSavedHours = id === 'saved-hours';
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
 
   if (isSavedHours) {
     return (
-      <div className="h-20 rounded-lg bg-white border border-[#cfddd0]/30 flex items-center justify-center shadow-lg relative">
+      <div 
+        className="h-20 rounded-lg border flex items-center justify-center shadow-lg relative"
+        style={{ backgroundColor: tileColors.background, borderColor: `${tileColors.background}40` }}
+      >
         {status && (
           <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
         <div className="flex flex-col items-center justify-center gap-1">
-          <Clock className="w-4 h-4 text-[#002C1F]" />
-          <span className="text-[10px] text-[#002C1F] font-medium leading-tight">{name}</span>
+          <Clock className="w-4 h-4" style={{ color: tileColors.text }} />
+          <span className="text-[10px] font-medium leading-tight" style={{ color: tileColors.text }}>{name}</span>
         </div>
       </div>
     );
   }
 
+  const variantStyle = getVariantStyle(config.variant, tileColors);
+
   return (
-    <div className={`h-20 rounded-lg ${variantClasses[config.variant]} flex items-center justify-center shadow-lg relative`}>
+    <div 
+      className={`h-20 rounded-lg ${variantStyle.className} flex items-center justify-center shadow-lg relative`}
+      style={variantStyle.style}
+    >
       {status && (
         <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
       )}
       <div className="flex flex-col items-center justify-center gap-1">
-        <Icon className="w-4 h-4" />
-        <span className="text-[10px] font-semibold leading-tight">{name}</span>
+        <Icon className="w-4 h-4" style={{ color: tileColors.text }} />
+        <span className="text-[10px] font-semibold leading-tight" style={{ color: tileColors.text }}>{name}</span>
       </div>
     </div>
   );
@@ -238,6 +270,7 @@ export const TileOrganizer = ({
   tileOrder, 
   automations, 
   customLabels,
+  tileColors,
   onReorder, 
   onUpdateLabel 
 }: TileOrganizerProps) => {
@@ -330,6 +363,7 @@ export const TileOrganizer = ({
                     customLabel={customLabels[id] || ''}
                     status={automation?.status}
                     isEmpty={isEmpty}
+                    tileColors={tileColors}
                     onUpdateLabel={(label) => onUpdateLabel(id, label)}
                   />
                 );
@@ -344,6 +378,7 @@ export const TileOrganizer = ({
                   id={activeId}
                   name={customLabels[activeId] || getAutomationName(activeId)} 
                   status={activeTile?.status}
+                  tileColors={tileColors}
                 />
               </div>
             ) : null}
