@@ -23,7 +23,6 @@ const EmailSignature = () => {
     createNewSignature,
     saveSettings,
     deleteSignature,
-    uploadProfilePhoto,
   } = useEmailSignatureSettings();
 
   return (
@@ -72,7 +71,6 @@ const EmailSignature = () => {
                 selectedSignature={selectedSignature}
                 isSaving={isSaving}
                 onSave={saveSettings}
-                onUploadPhoto={uploadProfilePhoto}
                 onHtmlGenerated={(html) => setGeneratedHtml(html)}
                 onGeneratingChange={(generating) => setIsGenerating(generating)}
               />
