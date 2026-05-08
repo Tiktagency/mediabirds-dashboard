@@ -84,7 +84,7 @@ export const useNewsletterSchedule = (companyId: string | null) => {
         console.error('Error fetching newsletter schedule:', error);
         setSchedule(null);
       } else {
-        setSchedule(data as NewsletterSchedule | null);
+        setSchedule(data as unknown as NewsletterSchedule | null);
       }
       setIsLoading(false);
     };
@@ -130,7 +130,7 @@ export const useNewsletterSchedule = (companyId: string | null) => {
           .single();
 
         if (error) throw error;
-        setSchedule(data as NewsletterSchedule);
+        setSchedule(data as unknown as NewsletterSchedule);
       }
 
       toast({ title: 'Opgeslagen', description: 'Trigger instellingen succesvol opgeslagen', duration: 3000 });
