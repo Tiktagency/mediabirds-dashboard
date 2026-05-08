@@ -59,14 +59,30 @@ Deno.serve(async (req) => {
       "https://tikt.app.n8n.cloud/webhook/b6d054ac-4c1b-4091-8369-f3f7e1bbca72";
     const authToken = Deno.env.get("BLOG_WEBHOOK_AUTH_TOKEN");
 
-    const webhookResponse = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `${authToken}`,
-      },
-      body: JSON.stringify({ bedrijfsnaam, domain, app_password }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300_000);
+    let webhookResponse: Response;
+    try {
+      webhookResponse = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${authToken}`,
+        },
+        body: JSON.stringify({ bedrijfsnaam, domain, app_password }),
+        signal: controller.signal,
+      });
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if ((e as any).name === "AbortError") {
+        return new Response(
+          JSON.stringify({ success: false, error: "Timeout: webhook gaf geen antwoord binnen 5 minuten" }),
+          { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      throw e;
+    }
+    clearTimeout(timeoutId);
 
     const responseData = await webhookResponse.text();
 
