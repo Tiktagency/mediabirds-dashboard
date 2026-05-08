@@ -4,12 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Check, XCircle, Sparkles, Clock } from 'lucide-react';
+import { Pencil, Check, XCircle, Sparkles, Clock, Copy, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useSeoSettings } from '@/hooks/useSeoSettings';
 import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -230,15 +231,40 @@ export const KeywordResearchForm = ({
     }
   };
 
+  const handleCopyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    toast({
+      title: "Gekopieerd",
+      description: "ID gekopieerd naar klembord",
+      duration: 2000,
+    });
+  };
+
+  const handleClearField = async (field: string) => {
+    setFormData(prev => ({ ...prev, [field]: '' }));
+    const result = await saveSettings({ [field]: null });
+    if (result.success) {
+      toast({
+        title: "Verwijderd",
+        description: "Veld is leeggemaakt",
+        duration: 2000,
+      });
+    }
+  };
+
   const renderInputField = (
     label: string,
     field: keyof typeof formData,
     hasGradientBorder: boolean = false
   ) => {
     const isEditing = editingField === field;
-    const isExpanded = expandedField === field;
     const value = formData[field];
     const canEdit = isAdmin;
+    const isGoogleIdField = field.includes('google');
+
+    const borderStyles = hasGradientBorder 
+      ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+      : 'bg-white/5 border border-white/10';
 
     return (
       <div className="space-y-2">
@@ -254,7 +280,7 @@ export const KeywordResearchForm = ({
             <Button
               size="icon"
               variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+              className="text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
               onClick={() => handleSaveField(field)}
             >
               <Check className="h-4 w-4" />
@@ -262,46 +288,82 @@ export const KeywordResearchForm = ({
             <Button
               size="icon"
               variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
               onClick={handleCancelEdit}
             >
               <XCircle className="h-4 w-4" />
             </Button>
           </div>
-        ) : isExpanded ? (
-          <div className="expanded-field-container relative">
-            <div className={`px-3 py-2 pr-12 rounded-md text-white/80 min-h-[40px] ${
-              hasGradientBorder 
-                ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
-                : 'bg-white/5 border border-white/10'
-            }`}>
-              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
-            </div>
-            {canEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedField(null);
-                  setEditingField(field);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
         ) : (
-          <div 
-            className={`px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
-              hasGradientBorder 
-                ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
-                : 'bg-white/5 border border-white/10'
-            }`}
-            onClick={() => setExpandedField(field)}
-          >
-            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+          <div className="flex items-center gap-2">
+            {/* Tekst container met tooltip voor Google ID velden */}
+            {isGoogleIdField && value ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
+                    onClick={() => canEdit && setEditingField(field)}
+                  >
+                    {value}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[400px] break-all bg-background border-white/20">
+                  <p className="font-mono text-xs">{value}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div 
+                className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${borderStyles}`}
+                onClick={() => canEdit && setEditingField(field)}
+              >
+                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+              </div>
+            )}
+            
+            {/* Iconen container - alleen voor Google ID velden met waarde */}
+            {canEdit && isGoogleIdField && value && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                      onClick={() => handleCopyToClipboard(value)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Kopiëren</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                      onClick={() => setEditingField(field)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Bewerken</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                      onClick={() => handleClearField(field)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Verwijderen</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
         )}
       </div>
