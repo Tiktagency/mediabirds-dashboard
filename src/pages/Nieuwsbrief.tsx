@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 const MAX_RSS_FEEDS = 5;
 
 type LocalData = { bedrijfsnaam: string; bedrijfsinformatie: string; schrijfstijl: string };
+type AnyField = keyof LocalData | 'rss_feeds';
 
 const ColorField = ({
   label,
@@ -24,7 +25,7 @@ const ColorField = ({
   onChange: (v: string) => void;
 }) => (
   <div className="space-y-1.5">
-    <span className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</span>
+    <span className="text-xs font-medium text-white/50">{label}</span>
     <div className="flex items-center gap-2">
       <Input
         type="color"
@@ -47,8 +48,8 @@ const Nieuwsbrief = () => {
   const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
   const [isGenerating, setIsGenerating] = useState(false);
   const [newFeed, setNewFeed] = useState('');
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [expandedField, setExpandedField] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<AnyField | null>(null);
+  const [expandedField, setExpandedField] = useState<AnyField | null>(null);
   const [localData, setLocalData] = useState<LocalData>({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
   const expandedRef = useRef<HTMLDivElement>(null);
 
@@ -62,16 +63,18 @@ const Nieuwsbrief = () => {
     }
   }, [settings]);
 
-  // Click outside to collapse expanded field
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (expandedField && expandedRef.current && !expandedRef.current.contains(e.target as Node)) {
+        if (expandedField === 'rss_feeds' && editingField === 'rss_feeds') {
+          setEditingField(null);
+        }
         setExpandedField(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [expandedField]);
+  }, [expandedField, editingField]);
 
   const handleSaveField = (field: keyof LocalData) => {
     setEditingField(null);
@@ -83,7 +86,19 @@ const Nieuwsbrief = () => {
     toast({ title: 'Opgeslagen', description: `${field} is bijgewerkt.` });
   };
 
-  const renderField = (
+  const addFeed = () => {
+    const trimmed = newFeed.trim();
+    if (!trimmed || !settings || settings.rss_feeds.length >= MAX_RSS_FEEDS) return;
+    saveSettings({ rss_feeds: [...settings.rss_feeds, trimmed] });
+    setNewFeed('');
+  };
+
+  const removeFeed = (index: number) => {
+    if (!settings) return;
+    saveSettings({ rss_feeds: settings.rss_feeds.filter((_, i) => i !== index) });
+  };
+
+  const renderTextField = (
     field: keyof LocalData,
     label: string,
     type: 'input' | 'textarea',
@@ -96,7 +111,7 @@ const Nieuwsbrief = () => {
     if (isEditing) {
       return (
         <div className="space-y-1.5">
-          <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+          <Label className="text-xs font-medium text-white/50">{label}</Label>
           {type === 'input' ? (
             <Input
               autoFocus
@@ -123,7 +138,7 @@ const Nieuwsbrief = () => {
     if (isExpanded) {
       return (
         <div className="space-y-1.5" ref={expandedRef}>
-          <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+          <Label className="text-xs font-medium text-white/50">{label}</Label>
           <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2 group">
             <p className="text-sm text-white/80 whitespace-pre-wrap pr-8">
               {value || <span className="italic text-white/30">{placeholder}</span>}
@@ -139,10 +154,9 @@ const Nieuwsbrief = () => {
       );
     }
 
-    // Collapsed
     return (
       <div className="space-y-1.5">
-        <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+        <Label className="text-xs font-medium text-white/50">{label}</Label>
         <div
           onClick={() => setExpandedField(field)}
           className="h-[40px] flex items-center bg-white/5 border border-white/10 rounded-md px-3 cursor-pointer hover:bg-white/10 transition-colors"
@@ -151,6 +165,104 @@ const Nieuwsbrief = () => {
             <span className="text-sm text-white/70 truncate">{value}</span>
           ) : (
             <span className="text-sm text-white/30 italic">{placeholder}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderRssFeeds = () => {
+    if (!settings) return null;
+    const isEditing = editingField === 'rss_feeds';
+    const isExpanded = expandedField === 'rss_feeds';
+    const feedCount = settings.rss_feeds.length;
+
+    // Editing state
+    if (isEditing) {
+      return (
+        <div className="space-y-2" ref={expandedRef}>
+          <Label className="text-xs font-medium text-white/50">
+            RSS feeds
+            <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
+          </Label>
+          {feedCount > 0 && (
+            <div className="space-y-2">
+              {settings.rss_feeds.map((feed, i) => (
+                <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 group">
+                  <span className="flex-1 text-sm text-white/70 truncate font-mono">{feed}</span>
+                  <button onClick={() => removeFeed(i)} className="text-white/30 hover:text-red-400 transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {feedCount < MAX_RSS_FEEDS && (
+            <div className="flex gap-2">
+              <Input
+                autoFocus={feedCount === 0}
+                placeholder="https://example.com/feed.xml"
+                value={newFeed}
+                onChange={(e) => setNewFeed(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addFeed()}
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={addFeed}
+                disabled={!newFeed.trim()}
+                className="flex-shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Expanded state
+    if (isExpanded) {
+      return (
+        <div className="space-y-2" ref={expandedRef}>
+          <Label className="text-xs font-medium text-white/50">
+            RSS feeds
+            <span className="ml-1.5 text-white/30">({feedCount}/{MAX_RSS_FEEDS})</span>
+          </Label>
+          <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2 group">
+            {feedCount > 0 ? (
+              <div className="space-y-1 pr-8">
+                {settings.rss_feeds.map((feed, i) => (
+                  <p key={i} className="text-sm text-white/70 font-mono truncate">{feed}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm italic text-white/30 pr-8">Geen feeds toegevoegd</p>
+            )}
+            <button
+              onClick={() => { setEditingField('rss_feeds'); }}
+              className="absolute top-2 right-2 text-white/30 hover:text-white transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Collapsed state
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-white/50">RSS feeds</Label>
+        <div
+          onClick={() => setExpandedField('rss_feeds')}
+          className="h-[40px] flex items-center bg-white/5 border border-white/10 rounded-md px-3 cursor-pointer hover:bg-white/10 transition-colors"
+        >
+          {feedCount > 0 ? (
+            <span className="text-sm text-white/70">{feedCount} feed{feedCount !== 1 ? 's' : ''} toegevoegd</span>
+          ) : (
+            <span className="text-sm text-white/30 italic">Geen feeds toegevoegd</span>
           )}
         </div>
       </div>
@@ -168,17 +280,6 @@ const Nieuwsbrief = () => {
     );
   }
 
-  const addFeed = () => {
-    const trimmed = newFeed.trim();
-    if (!trimmed || settings.rss_feeds.length >= MAX_RSS_FEEDS) return;
-    saveSettings({ rss_feeds: [...settings.rss_feeds, trimmed] });
-    setNewFeed('');
-  };
-
-  const removeFeed = (index: number) => {
-    saveSettings({ rss_feeds: settings.rss_feeds.filter((_, i) => i !== index) });
-  };
-
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
@@ -187,9 +288,9 @@ const Nieuwsbrief = () => {
 
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
         body: {
-          bedrijfsnaam: settings.bedrijfsnaam,
-          bedrijfsinformatie: settings.bedrijfsinformatie,
-          schrijfstijl: settings.schrijfstijl,
+          bedrijfsnaam: localData.bedrijfsnaam,
+          bedrijfsinformatie: localData.bedrijfsinformatie,
+          schrijfstijl: localData.schrijfstijl,
           rss_feeds: settings.rss_feeds,
           achtergrond_kleur: settings.achtergrond_kleur,
           primaire_kleur: settings.primaire_kleur,
@@ -231,14 +332,9 @@ const Nieuwsbrief = () => {
 
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
-      {/* Dashboard button */}
       <div className="absolute top-6 left-6 z-10">
         <Link to="/">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-          >
+          <Button variant="outline" size="sm" className="bg-white/5 border-white/20 text-white hover:bg-white/10">
             Dashboard
           </Button>
         </Link>
@@ -259,65 +355,17 @@ const Nieuwsbrief = () => {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6 space-y-5">
 
-                {renderField('bedrijfsnaam', 'Bedrijfsnaam', 'input', 'bijv. Mediabirds')}
-                {renderField('bedrijfsinformatie', 'Bedrijfsinformatie', 'textarea', 'Beschrijf je bedrijf, producten of diensten…')}
-                {renderField('schrijfstijl', 'Schrijfstijl', 'textarea', 'bijv. Professioneel en informatief, of juist speels en toegankelijk…')}
+                {renderTextField('bedrijfsnaam', 'Bedrijfsnaam', 'input', 'bijv. Mediabirds')}
+                {renderTextField('bedrijfsinformatie', 'Bedrijfsinformatie', 'textarea', 'Beschrijf je bedrijf, producten of diensten…')}
+                {renderTextField('schrijfstijl', 'Schrijfstijl', 'textarea', 'bijv. Professioneel en informatief, of juist speels en toegankelijk…')}
 
-                {/* RSS Feeds */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">
-                    RSS Feeds
-                    <span className="ml-1.5 text-white/30 normal-case tracking-normal">
-                      ({settings.rss_feeds.length}/{MAX_RSS_FEEDS})
-                    </span>
-                  </Label>
-
-                  {settings.rss_feeds.length > 0 && (
-                    <div className="space-y-2">
-                      {settings.rss_feeds.map((feed, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 group"
-                        >
-                          <span className="flex-1 text-sm text-white/70 truncate font-mono">{feed}</span>
-                          <button
-                            onClick={() => removeFeed(i)}
-                            className="text-white/30 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {settings.rss_feeds.length < MAX_RSS_FEEDS && (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="https://example.com/feed.xml"
-                        value={newFeed}
-                        onChange={(e) => setNewFeed(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && addFeed()}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm font-mono"
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={addFeed}
-                        disabled={!newFeed.trim()}
-                        className="flex-shrink-0 bg-white/5 border-white/10 text-white hover:bg-white/10"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                {renderRssFeeds()}
 
                 {/* Kleuren */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Palette className="w-3.5 h-3.5 text-white/50" />
-                    <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">
+                    <Label className="text-xs font-medium text-white/50">
                       Huisstijl kleuren
                     </Label>
                   </div>
@@ -342,11 +390,7 @@ const Nieuwsbrief = () => {
 
                 {/* Generate button */}
                 <div className="pt-2">
-                  <Button
-                    className="w-full gap-2 h-11"
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                  >
+                  <Button className="w-full gap-2 h-11" onClick={handleGenerate} disabled={isGenerating}>
                     {isGenerating ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
