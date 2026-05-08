@@ -1,39 +1,35 @@
+## Plan: Stijl-opties toevoegen aan "AI afbeelding"
 
+### Doel
+Onder de "AI afbeelding" optie op `/seo-blog` (Blog Generatie) een nieuwe sectie "Stijl" toevoegen met 3 selecteerbare stijlen waarvan er steeds maar 1 geselecteerd kan zijn:
+- Isometric flat illustration
+- Cinematic 3D interface render
+- Brutalist / Raw UI design
 
-## Plan: Fix automatische trigger die zichzelf uitzet
+### Database wijziging
+Nieuwe kolom `image_style` toevoegen aan tabel `blog_settings` (type `text`, nullable, default `null`). De waarden worden opgeslagen als korte slug:
+- `isometric_flat`
+- `cinematic_3d`
+- `brutalist_raw`
 
-### Probleem
-De `ScheduleTrigger` component initialiseert `enabled` als `false` via `useState(false)`. Wanneer de pagina laadt, haalt `useAltTextSchedule` de schedule op uit de database. Zodra de data binnenkomt, wordt `isLoading = false` en verschijnt de toggle — maar de `useEffect` die `enabled` synchroniseert draait pas NA die render. Hierdoor toont de toggle kort (of langer bij trage verbinding) "Inactief" terwijl de database `enabled: true` heeft. Bij elke paginavisit of component-remount herhaalt dit zich.
+### UI wijzigingen in `src/components/seo-blog/BlogGenerationForm.tsx`
+1. `image_style` toevoegen aan `formData` state (type union van de 3 slugs of `''`).
+2. Bij ophalen van settings (rond regel 131) en bij reset (rond regel 151) `image_style` meeladen / leegmaken.
+3. In het AI-afbeelding blok (na de gradient-velden, vóór regel 708) een nieuwe sectie "Stijl" renderen met 3 klikbare kaartjes/knoppen in een grid, gestyled in dezelfde glassmorphism look als de bestaande `AI afbeelding`/`Foto Google Drive` toggle. Geselecteerde optie krijgt een lichtere achtergrond + witte border, niet-geselecteerde een subtiele border.
+4. Klikken op een optie zet `formData.image_style` direct én roept `saveSettings({ image_style: <waarde> })` aan (zelfde patroon als de image_type toggle op regel 610-611), zodat het meteen in de database staat.
 
-Daarnaast reset de `useEffect` alle velden naar defaults wanneer `schedule` even `null` is (tijdens laden), wat het probleem versterkt.
+### Webhook payload
+In de submit-handler (rond regel 297) bij `image_type === 'ai_image'` ook `image_style: formData.image_style` meesturen; bij `google_drive` leeg/weglaten (consistent met bestaande conditional-pattern).
 
-### Oplossing
-Verwijder de afhankelijkheid van lokale `enabled` state voor rendering en gebruik in plaats daarvan direct de schedule prop als bron van waarheid.
+### Validatie
+`image_style` is **optioneel** — geen blokkering van de Start-knop. Als de gebruiker niets kiest blijft het leeg.
 
-### Aanpassing in `src/components/seo/ScheduleTrigger.tsx`
-
-1. **Verwijder `useState(false)` voor enabled** — vervang door een lokale override die alleen actief is tijdens een optimistic update (toggle klik → wacht op DB response)
-2. **Bereken `enabled` direct**: `const enabled = localEnabledOverride ?? schedule?.enabled ?? false`
-3. **In `handleEnabledChange`**: zet de override optimistisch, en reset deze na de DB-update (zodat de schedule prop weer leidend is)
-4. **Initialiseer overige lokale state vanuit schedule prop** in de useState zelf waar mogelijk, zodat er geen useEffect-gap is
-
-Concreet:
-```ts
-// Optimistic override – alleen actief tussen toggle-klik en DB-response
-const [enabledOverride, setEnabledOverride] = useState<boolean | null>(null);
-const enabled = enabledOverride ?? schedule?.enabled ?? false;
-
-const handleEnabledChange = async (newEnabled: boolean) => {
-  setEnabledOverride(newEnabled); // instant UI feedback
-  await updateSchedule({ enabled: newEnabled });
-  setEnabledOverride(null); // schedule prop is nu bijgewerkt, volg die weer
-};
-```
-
-De `useEffect` wordt vereenvoudigd: het synchroniseert nog steeds `intervalValue`, `dayOfWeek`, etc. vanuit schedule, maar zet NIET meer `enabled` en reset niet meer naar defaults bij `schedule === null`.
+### Hook / types
+`BlogSettings` interface in `src/hooks/useBlogSettings.ts` uitbreiden met `image_style: string | null`.
 
 ### Bestanden
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/components/seo/ScheduleTrigger.tsx` | Fix enabled state management |
-
+| migratie | Kolom `image_style` toevoegen aan `blog_settings` |
+| `src/hooks/useBlogSettings.ts` | `image_style` toevoegen aan interface |
+| `src/components/seo-blog/BlogGenerationForm.tsx` | State, UI sectie met 3 opties, save bij klik, payload-veld |
