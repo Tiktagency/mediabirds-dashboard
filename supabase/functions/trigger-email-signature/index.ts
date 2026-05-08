@@ -28,7 +28,6 @@ async function tryWebhook(url: string, payload: unknown, authToken?: string): Pr
 }
 
 function shouldFallback(status: number, text: string): boolean {
-  // Fallback if 404 or the specific "not registered for POST" message
   if (status === 404) return true;
   if (text.includes("not registered for POST")) return true;
   return false;
@@ -40,6 +39,29 @@ serve(async (req) => {
   }
 
   try {
+    // Validate JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const signatureData = await req.json();
     
     // Get optional auth token from environment
@@ -50,13 +72,11 @@ serve(async (req) => {
     let usedUrl = PRIMARY_WEBHOOK_URL;
     let result: { ok: boolean; status: number; text: string };
     
-    // First attempt: try the primary webhook-test URL
     console.log(`[trigger-email-signature] Attempting POST to: ${PRIMARY_WEBHOOK_URL}`);
     attemptedUrls.push(PRIMARY_WEBHOOK_URL);
     result = await tryWebhook(PRIMARY_WEBHOOK_URL, signatureData, authToken);
     console.log(`[trigger-email-signature] Response status: ${result.status}`);
     
-    // If it failed with the typical "not registered" error, try production webhook
     if (shouldFallback(result.status, result.text)) {
       const fallbackUrl = PRIMARY_WEBHOOK_URL.replace("/webhook-test/", "/webhook/");
       
@@ -72,11 +92,11 @@ serve(async (req) => {
     // Update automation_status if webhook was successful
     if (result.ok) {
       try {
-        const supabaseClient = createClient(
+        const supabaseAdmin = createClient(
           Deno.env.get('SUPABASE_URL')!,
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
         );
-        await supabaseClient
+        await supabaseAdmin
           .from('automation_status')
           .upsert({
             automation_name: 'email-handtekening',
