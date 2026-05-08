@@ -1,36 +1,35 @@
 
 
-## Fix: Race condition in login logging
+## Fix: Dubbele login log entries
 
 ### Probleem
-De `sessionStorage.setItem('session_logged', 'true')` wordt pas gezet **nadat** de database insert klaar is (async). Ondertussen kan het effect opnieuw draaien (bijv. doordat `isLoading` verandert van `true` naar `false`), waardoor meerdere inserts tegelijk starten voordat de flag is gezet.
+Bij inloggen verschijnen er steeds 2 entries in het login log. Dit komt doordat `useAuth` twee keer de user-state bijwerkt (via zowel `getSession()` als `onAuthStateChange`), wat ertoe leidt dat de useEffect twee keer triggert voordat de sessionStorage flag betrouwbaar wordt gelezen.
 
 ### Oplossing
-Verplaats `sessionStorage.setItem` naar **voor** de async database call. Zo wordt de flag direct gezet en kunnen volgende renders niet opnieuw triggeren.
+Voeg een **module-level variabele** toe als extra synchrone guard naast sessionStorage. Een module-level variabele wordt direct gedeeld tussen alle renders zonder enige vertraging, terwijl sessionStorage soms niet snel genoeg wordt gelezen tussen twee snelle re-renders.
 
 ### Technische aanpassing
 
-**Bestand: `src/pages/Index.tsx`** (regel 122-150)
+**Bestand: `src/pages/Index.tsx`**
 
-Huidige volgorde:
-1. Check sessionStorage
-2. Start async insert
-3. Wacht op insert
-4. Zet sessionStorage flag
+Voeg buiten de component een variabele toe:
 
-Nieuwe volgorde:
-1. Check sessionStorage
-2. **Zet sessionStorage flag direct**
-3. Start async insert
+```typescript
+// Buiten de component (module-level)
+let sessionLogPending = false;
+```
+
+Pas de useEffect aan:
 
 ```typescript
 useEffect(() => {
   if (!user || isLoading) return;
 
   const alreadyLogged = sessionStorage.getItem('session_logged');
-  if (alreadyLogged) return;
+  if (alreadyLogged || sessionLogPending) return;
 
-  // Zet flag DIRECT om race condition te voorkomen
+  // Zet BEIDE flags direct
+  sessionLogPending = true;
   sessionStorage.setItem('session_logged', 'true');
 
   const logVisit = async () => {
@@ -55,5 +54,7 @@ useEffect(() => {
 }, [user, isLoading]);
 ```
 
-Een enkele regelwijziging: `sessionStorage.setItem` verplaatsen van na de await naar voor de async call.
+De module-level `sessionLogPending` variabele is sneller dan sessionStorage en voorkomt dat twee bijna-gelijktijdige effect-runs beide doorlopen. SessionStorage blijft erbij voor persistentie bij page refreshes.
 
+### Samenvatting
+Een bestand, drie regels extra code.
