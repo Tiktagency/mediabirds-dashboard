@@ -29,6 +29,15 @@ const LeadsGenerator = () => {
 
   const isValid = plaatsnaam.trim() && country.trim() && zoektermen.some(z => z.trim());
 
+  const handleFieldBlur = (value: string) => {
+    if (value.trim()) {
+      toast({
+        title: 'Opgeslagen',
+        duration: 1000,
+      });
+    }
+  };
+
   const updatePlaatsnaam = (val: string) => {
     setPlaatsnaam(val);
     localStorage.setItem('leads-generator-plaatsnaam', val);
@@ -172,6 +181,7 @@ const LeadsGenerator = () => {
               <Input
                 value={plaatsnaam}
                 onChange={(e) => updatePlaatsnaam(e.target.value)}
+                onBlur={() => handleFieldBlur(plaatsnaam)}
                 placeholder="Bijv. Amsterdam"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
@@ -182,6 +192,7 @@ const LeadsGenerator = () => {
               <Input
                 value={country}
                 onChange={(e) => updateCountry(e.target.value)}
+                onBlur={() => handleFieldBlur(country)}
                 placeholder="e.g. Netherlands"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
@@ -194,6 +205,7 @@ const LeadsGenerator = () => {
                   <Input
                     value={term}
                     onChange={(e) => updateZoekterm(index, e.target.value)}
+                    onBlur={() => handleFieldBlur(term)}
                     placeholder={`Zoekterm ${index + 1}`}
                     className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
                   />
