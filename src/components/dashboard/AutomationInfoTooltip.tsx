@@ -26,6 +26,7 @@ interface AutomationInfoTooltipProps {
   multipleLastRuns?: MultipleLastRun[];
   impact: ImpactLevel;
   impactColors?: ImpactColors;
+  textColor?: string;
 }
 
 const defaultImpactColors: ImpactColors = {
@@ -79,6 +80,7 @@ export const AutomationInfoTooltip = ({
   multipleLastRuns,
   impact,
   impactColors = defaultImpactColors,
+  textColor = '#002C1F',
 }: AutomationInfoTooltipProps) => {
   const color = impactColors[impact];
   
@@ -93,8 +95,9 @@ export const AutomationInfoTooltip = ({
           <button
             className="absolute top-3 right-3 z-10 p-1.5 rounded-full transition-all duration-200 hover:bg-white/10 group"
             onClick={(e) => e.preventDefault()}
+            style={{ color: textColor }}
           >
-            <Info className="w-4 h-4 text-[#002C1F]/60 group-hover:text-[#002C1F] transition-opacity duration-200" />
+            <Info className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
           </button>
         </TooltipTrigger>
         <TooltipContent

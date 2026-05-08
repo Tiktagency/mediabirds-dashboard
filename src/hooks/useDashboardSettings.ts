@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface TileColors {
+  background: string;
+  text: string;
+}
+
 export interface DashboardSettings {
   id: string;
   user_id: string;
@@ -14,9 +19,15 @@ export interface DashboardSettings {
     medium: string;
     low: string;
   };
+  tile_colors: TileColors;
   created_at: string;
   updated_at: string;
 }
+
+const DEFAULT_TILE_COLORS: TileColors = {
+  background: '#cfddd0',
+  text: '#002C1F',
+};
 
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
   tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot', 'copyright-branding'],
@@ -28,6 +39,7 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
     medium: '#eab308',
     low: '#6b7280',
   },
+  tile_colors: DEFAULT_TILE_COLORS,
 };
 
 export const useDashboardSettings = () => {
@@ -49,12 +61,14 @@ export const useDashboardSettings = () => {
       if (error) throw error;
 
       if (data) {
+        const dashboardColors = data.dashboard_colors as Record<string, unknown> | null;
         setSettings({
           ...data,
           tile_order: Array.isArray(data.tile_order) ? data.tile_order : DEFAULT_SETTINGS.tile_order,
           custom_labels: data.custom_labels || DEFAULT_SETTINGS.custom_labels,
           custom_tooltips: data.custom_tooltips || DEFAULT_SETTINGS.custom_tooltips,
           impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
+          tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
         } as DashboardSettings);
       } else {
         // Create default settings for this user
@@ -122,6 +136,21 @@ export const useDashboardSettings = () => {
     await updateSettings({ impact_colors: newColors } as unknown as Partial<DashboardSettings>);
   };
 
+  const updateTileColors = async (colors: { background?: string; text?: string }) => {
+    const newColors = { ...settings?.tile_colors, ...colors };
+    // Store in dashboard_colors.tile_colors for persistence
+    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    await supabase
+      .from('user_dashboard_settings')
+      .update({ dashboard_colors: { ...currentDashboardColors, tile_colors: newColors } })
+      .eq('id', settings?.id);
+    setSettings(prev => prev ? { ...prev, tile_colors: newColors } : null);
+    toast({
+      title: 'Opgeslagen',
+      description: 'Tile kleuren bijgewerkt',
+    });
+  };
+
   const updateTheme = async (theme: 'dark' | 'light') => {
     await updateSettings({ theme });
   };
@@ -137,6 +166,7 @@ export const useDashboardSettings = () => {
     updateCustomLabel,
     updateCustomTooltip,
     updateImpactColors,
+    updateTileColors,
     updateTheme,
     refetch: fetchSettings,
   };
