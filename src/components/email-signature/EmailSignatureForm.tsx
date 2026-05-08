@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
-import { useEmailSignatureSettings, SocialLink } from '@/hooks/useEmailSignatureSettings';
+import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { Plus, X, Upload, Loader2 } from 'lucide-react';
 import {
   Select,
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 
 const formSchema = z.object({
+  name: z.string().min(1, 'Naam is verplicht'),
   first_name: z.string().min(1, 'Voornaam is verplicht'),
   last_name: z.string().min(1, 'Achternaam is verplicht'),
   email: z.string().email('Ongeldig email adres'),
@@ -39,10 +40,21 @@ const platformOptions = [
   { value: 'other', label: 'Overig' },
 ] as const;
 
-export const EmailSignatureForm = () => {
-  const { settings, isLoading, isSaving, saveSettings, uploadProfilePhoto } = useEmailSignatureSettings();
-  const [socials, setSocials] = useState<SocialLink[]>(settings?.socials || []);
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(settings?.profile_photo_url || null);
+interface EmailSignatureFormProps {
+  selectedSignature: EmailSignatureSettings | null;
+  isSaving: boolean;
+  onSave: (settings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onUploadPhoto: (file: File) => Promise<string | null>;
+}
+
+export const EmailSignatureForm = ({
+  selectedSignature,
+  isSaving,
+  onSave,
+  onUploadPhoto,
+}: EmailSignatureFormProps) => {
+  const [socials, setSocials] = useState<SocialLink[]>([]);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,19 +63,21 @@ export const EmailSignatureForm = () => {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      first_name: settings?.first_name || '',
-      last_name: settings?.last_name || '',
-      email: settings?.email || '',
-      job_title: settings?.job_title || '',
-      website: settings?.website || '',
-      background_type: settings?.background_type || 'solid',
-      background_color: settings?.background_color || '#1a1a2e',
-      gradient_end_color: settings?.gradient_end_color || '#16213e',
-      text_color: settings?.text_color || '#ffffff',
+      name: 'Mijn Handtekening',
+      first_name: '',
+      last_name: '',
+      email: '',
+      job_title: '',
+      website: '',
+      background_type: 'solid',
+      background_color: '#1a1a2e',
+      gradient_end_color: '#16213e',
+      text_color: '#ffffff',
     },
   });
 
@@ -72,22 +86,41 @@ export const EmailSignatureForm = () => {
   const gradientEndColor = watch('gradient_end_color');
   const textColor = watch('text_color');
 
-  // Update form when settings load
-  useState(() => {
-    if (settings) {
-      setValue('first_name', settings.first_name);
-      setValue('last_name', settings.last_name);
-      setValue('email', settings.email);
-      setValue('job_title', settings.job_title);
-      setValue('website', settings.website || '');
-      setValue('background_type', settings.background_type);
-      setValue('background_color', settings.background_color);
-      setValue('gradient_end_color', settings.gradient_end_color || '#16213e');
-      setValue('text_color', settings.text_color);
-      setSocials(settings.socials || []);
-      setProfilePhotoUrl(settings.profile_photo_url);
+  // Update form when selected signature changes
+  useEffect(() => {
+    if (selectedSignature) {
+      reset({
+        name: selectedSignature.name,
+        first_name: selectedSignature.first_name,
+        last_name: selectedSignature.last_name,
+        email: selectedSignature.email,
+        job_title: selectedSignature.job_title,
+        website: selectedSignature.website || '',
+        background_type: selectedSignature.background_type,
+        background_color: selectedSignature.background_color,
+        gradient_end_color: selectedSignature.gradient_end_color || '#16213e',
+        text_color: selectedSignature.text_color,
+      });
+      setSocials(selectedSignature.socials || []);
+      setProfilePhotoUrl(selectedSignature.profile_photo_url);
+    } else {
+      // Reset to defaults for new signature
+      reset({
+        name: 'Mijn Handtekening',
+        first_name: '',
+        last_name: '',
+        email: '',
+        job_title: '',
+        website: '',
+        background_type: 'solid',
+        background_color: '#1a1a2e',
+        gradient_end_color: '#16213e',
+        text_color: '#ffffff',
+      });
+      setSocials([]);
+      setProfilePhotoUrl(null);
     }
-  });
+  }, [selectedSignature, reset]);
 
   const addSocialLink = () => {
     setSocials([...socials, { platform: 'linkedin', url: '' }]);
@@ -108,7 +141,7 @@ export const EmailSignatureForm = () => {
     if (!file) return;
 
     setIsUploading(true);
-    const url = await uploadProfilePhoto(file);
+    const url = await onUploadPhoto(file);
     if (url) {
       setProfilePhotoUrl(url);
     }
@@ -116,7 +149,8 @@ export const EmailSignatureForm = () => {
   };
 
   const onSubmit = async (data: FormData) => {
-    await saveSettings({
+    await onSave({
+      name: data.name,
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -140,16 +174,26 @@ export const EmailSignatureForm = () => {
     return { backgroundColor };
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-2xl space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Signature Name */}
+      <Card className="bg-white/5 border-white/10">
+        <CardContent className="pt-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-white">Handtekening naam *</Label>
+            <Input
+              id="name"
+              {...register('name')}
+              className="bg-white/10 border-white/20 text-white"
+              placeholder="bijv. Werk, Marketing, Persoonlijk"
+            />
+            {errors.name && (
+              <p className="text-sm text-red-400">{errors.name.message}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Personal Info */}
       <Card className="bg-white/5 border-white/10">
         <CardContent className="pt-6 space-y-4">
@@ -301,7 +345,7 @@ export const EmailSignatureForm = () => {
               </div>
             </RadioGroup>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-end gap-4">
               <div className="space-y-2">
                 <Label className="text-white/70 text-sm">
                   {backgroundType === 'gradient' ? 'Start kleur' : 'Kleur'}
@@ -322,10 +366,13 @@ export const EmailSignatureForm = () => {
                   />
                 </div>
               )}
-              <div
-                className="w-24 h-10 rounded-md border border-white/20"
-                style={getBackgroundStyle()}
-              />
+              <div className="space-y-2">
+                <Label className="text-white/70 text-sm">Voorbeeld</Label>
+                <div
+                  className="w-24 h-10 rounded-md border border-white/20"
+                  style={getBackgroundStyle()}
+                />
+              </div>
             </div>
           </div>
 
@@ -398,6 +445,8 @@ export const EmailSignatureForm = () => {
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Opslaan...
           </>
+        ) : selectedSignature ? (
+          'Handtekening Bijwerken'
         ) : (
           'Handtekening Opslaan'
         )}
