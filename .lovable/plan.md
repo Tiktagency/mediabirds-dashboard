@@ -1,24 +1,27 @@
 
 
-## Login-logging uitbreiden: ook bij heropenen dashboard
+## Fix: Race condition in login logging
 
 ### Probleem
-Momenteel wordt een login alleen gelogd wanneer iemand daadwerkelijk inlogt via het loginformulier. Het heropenen van het dashboard (bijv. nieuw tabblad, browser opnieuw openen) wordt niet gelogd. Een gewone pagina-refresh moet **niet** tellen.
+De `sessionStorage.setItem('session_logged', 'true')` wordt pas gezet **nadat** de database insert klaar is (async). Ondertussen kan het effect opnieuw draaien (bijv. doordat `isLoading` verandert van `true` naar `false`), waardoor meerdere inserts tegelijk starten voordat de flag is gezet.
 
-### Oplossing: sessionStorage flag
+### Oplossing
+Verplaats `sessionStorage.setItem` naar **voor** de async database call. Zo wordt de flag direct gezet en kunnen volgende renders niet opnieuw triggeren.
 
-Het verschil tussen "heropenen" en "refresh" is dat `sessionStorage` wordt gewist wanneer een tab/venster wordt gesloten, maar behouden blijft bij een refresh.
+### Technische aanpassing
 
-**Logica:**
-1. Wanneer de gebruiker geauthenticeerd is op het dashboard (Index.tsx), controleer of er een `session_logged` flag in `sessionStorage` staat
-2. Zo nee --> dit is een nieuw bezoek (nieuw tabblad of browser heropend) --> insert in `login_logs` en zet de flag
-3. Zo ja --> dit is een refresh --> doe niets
+**Bestand: `src/pages/Index.tsx`** (regel 122-150)
 
-### Technische aanpassingen
+Huidige volgorde:
+1. Check sessionStorage
+2. Start async insert
+3. Wacht op insert
+4. Zet sessionStorage flag
 
-**Bestand: `src/pages/Index.tsx`**
-
-Een `useEffect` toevoegen die draait zodra de `user` beschikbaar is en `isLoading` false is:
+Nieuwe volgorde:
+1. Check sessionStorage
+2. **Zet sessionStorage flag direct**
+3. Start async insert
 
 ```typescript
 useEffect(() => {
@@ -27,7 +30,9 @@ useEffect(() => {
   const alreadyLogged = sessionStorage.getItem('session_logged');
   if (alreadyLogged) return;
 
-  // Log dit bezoek
+  // Zet flag DIRECT om race condition te voorkomen
+  sessionStorage.setItem('session_logged', 'true');
+
   const logVisit = async () => {
     const { data: profile } = await supabase
       .from('profiles')
@@ -44,26 +49,11 @@ useEffect(() => {
       email: user.email,
       display_name: displayName,
     });
-
-    sessionStorage.setItem('session_logged', 'true');
   };
 
   logVisit();
 }, [user, isLoading]);
 ```
 
-**Bestand: `src/pages/Login.tsx`**
-
-De bestaande `login_logs` insert in de `handleLogin` functie verwijderen -- de logging wordt nu centraal afgehandeld via de `sessionStorage`-check in Index.tsx. De Login.tsx insert is niet meer nodig omdat Index.tsx het altijd oppikt (na login wordt je doorgestuurd naar Index).
-
-Optioneel: in Login.tsx na succesvolle login `sessionStorage.removeItem('session_logged')` aanroepen zodat de redirect naar Index het als nieuw bezoek ziet. Maar dit is niet strikt nodig -- als er nog geen flag staat (eerste keer in die tab), wordt het automatisch gelogd.
-
-### Samenvatting wijzigingen
-
-| Bestand | Wat |
-|---|---|
-| `src/pages/Index.tsx` | `useEffect` toevoegen die bij nieuw tabblad/venster een login_log insert (m.b.v. `sessionStorage`) |
-| `src/pages/Login.tsx` | Bestaande `login_logs` insert verwijderen (wordt nu via Index afgehandeld) |
-
-Twee bestanden, minimale wijzigingen.
+Een enkele regelwijziging: `sessionStorage.setItem` verplaatsen van na de await naar voor de async call.
 
