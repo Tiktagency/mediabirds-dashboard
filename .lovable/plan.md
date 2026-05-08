@@ -1,35 +1,58 @@
 
-## Analyse: Nieuwsbrief vs. EmailSignature
+## Plan: Nieuwsbrief invulvelden — three-step potlood-patroon
 
-### Verschillen (alle punten)
+### Wat het huidige patroon op de Blog pagina doet
 
-| Element | EmailSignature | Nieuwsbrief | Probleem |
-|---|---|---|---|
-| Achtergrond | `hero-gradient` (donkere radiaal verloop) | `bg-background` (plat donker) | Inconsistent |
-| Dashboard knop | `absolute top-6 left-6` — witte outline knop "Dashboard" | Sticky header met "Terug" ArrowLeft tekst-link | Ontbreekt + verkeerde stijl |
-| Paginatitel | `hero-title` grote font, wit, gecentreerd | Geen paginatitel buiten header | Ontbreekt |
-| Subtitel | Kleine beschrijvingstekst wit/50, gecentreerd | Geen | Ontbreekt |
-| Content container | `max-w-7xl` gecentreerd met `pt-8 pb-16 px-6` | Full-bleed split layout, geen centering | Inconsistent |
-| Kaartkleur | `bg-white/5 border-white/10` | `bg-card/50`, `bg-muted/10`, `bg-card/30` | Inconsistent |
-| Header/nav | Geen sticky header | Sticky header bar | Overbodig/verkeerd patroon |
-| Formulier container | Cards (EmailSignatureForm gebruikt `Card`) | Losse velden in scrollable div | Inconsistent |
+De `BlogGenerationForm` heeft een `renderField` helper die drie states bijhoudt per veld:
 
-### Plan
+1. **Collapsed** — smal klikbaar vakje (`h-[40px]`, `bg-white/5 border-white/10`), toont de waarde of *"Niet ingesteld"* in italic. Klik → expanded.
+2. **Expanded** — volle tekstweergave + potlood-knop rechts. Klik potlood → editing.
+3. **Editing** — `Input` of `Textarea` met `autoFocus`. Bij `onBlur` wordt `handleSaveField` aangeroepen, die:
+   - vergelijkt met de originele waarde (niets doen als ongewijzigd)
+   - anders `saveSettings` aanroept
+   - bij succes: "Opgeslagen" toast + `setEditingField(null)`
 
-De Nieuwsbrief pagina refactoren naar het EmailSignature patroon:
+State wordt bijgehouden in twee variabelen: `editingField` en `expandedField`.
 
-1. **Achtergrond**: `bg-background` → `hero-gradient`
-2. **Dashboard knop**: sticky header verwijderen, `absolute top-6 left-6` knop toevoegen met `Link to="/"` en `Button variant="outline"` stijl `bg-white/5 border-white/20 text-white hover:bg-white/10`
-3. **Paginatitel + subtitel**: `hero-title` "Nieuwsbrief" + subtitel toevoegen (gecentreerd, `text-white/50`)
-4. **Content wrapper**: `w-full flex flex-col items-center pt-8 pb-16 px-6` met `max-w-7xl` container
-5. **Layout**: twee kolommen behouden maar als `grid grid-cols-1 md:grid-cols-[400px_1fr]` binnen de gecentreerde container (vergelijkbaar met EmailSignature's grid)
-6. **Kaartkleur linkerkolom**: formuliervelden wrappen in een `Card` met `bg-white/5 border-white/10` (zoals EmailSignatureForm)
-7. **Preview kolom**: Card met `bg-white/5 border-white/10` + `CardHeader` met "HTML Preview" titel en Downloaden knop — zoals de Preview card in EmailSignature
-8. **Labels**: `text-white/50` in plaats van `text-muted-foreground` (consistent met EmailSignature stijl)
-9. **Import**: `useNavigate` → `Link` van react-router-dom
+### Wat er nu op de Nieuwsbrief pagina staat
+
+De velden `bedrijfsnaam`, `bedrijfsinformatie` en `schrijfstijl` zijn gewone `Input`/`Textarea` componenten die bij elke keystroke `saveSettings` triggeren (via debounce in de hook). Er is geen collapsed/expanded staat, geen potlood-icoontje.
+
+### Aanpak
+
+Alle drie tekstvelden (`bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl`) omzetten naar het three-step patroon:
+
+**State toevoegen:**
+```tsx
+const [editingField, setEditingField] = useState<string | null>(null);
+const [expandedField, setExpandedField] = useState<string | null>(null);
+```
+
+**Lokale formData state naast `settings`:**
+De `useNewsletterSettings` hook heeft al debounced saving, maar voor het three-step patroon werkt lokale state beter: de gebruiker kan typen zonder elke keystroke op te slaan, en opslaan gebeurt op `onBlur`.
+
+Lokale state:
+```tsx
+const [localData, setLocalData] = useState({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
+```
+Gesynchroniseerd met `settings` via `useEffect`.
+
+**`handleSaveField` functie:**
+Vergelijkt `localData[field]` met `settings[field]`. Als ongewijzigd: alleen `setEditingField(null)`. Als gewijzigd: `saveSettings({ [field]: localData[field] })` + "Opgeslagen" toast.
+
+**`renderField` helper** (dezelfde drie-stap structuur als Blog):
+- Collapsed: klikbaar `div` met `h-[40px]` + truncated tekst
+- Expanded: volledige tekst + `Pencil` knop
+- Editing: `Input` of `Textarea` met `onBlur={() => handleSaveField(field)}`
+
+**Click outside handler** voor `expandedField` (zelfde als Blog).
+
+**Kleuren** (`achtergrond_kleur`, `primaire_kleur`, `accent_kleur`): deze werken al goed via de kleurpicker + debounce, en zijn niet van het potlood-type. Die blijven ongewijzigd.
+
+**RSS Feeds**: ook ongewijzigd — die hebben al hun eigen add/remove UI.
 
 ### Bestanden
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/Nieuwsbrief.tsx` | Volledig refactoren naar EmailSignature layout-patroon |
+| `src/pages/Nieuwsbrief.tsx` | Three-step field patroon voor `bedrijfsnaam`, `bedrijfsinformatie`, `schrijfstijl` |
