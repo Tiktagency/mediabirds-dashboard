@@ -1,23 +1,21 @@
-import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { CopyrightBrandingForm } from '@/components/copyright-branding/CopyrightBrandingForm';
 
 const CopyrightBranding = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
       {/* Back Button */}
-      <div className="w-full px-6 pt-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="text-white/80 hover:text-white hover:bg-white/10"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Dashboard
-        </Button>
+      <div className="absolute top-6 left-6 z-10">
+        <Link to="/">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+          >
+            Dashboard
+          </Button>
+        </Link>
       </div>
       
       <div className="w-full flex flex-col items-center justify-start pt-8 pb-16 px-6">
