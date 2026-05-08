@@ -208,13 +208,12 @@ export const KeywordResearchForm = ({
       if (error) throw error;
 
       if (data.success) {
-        if (data.hasMessage && data.message) {
-          toast({
-            title: 'SEO Onderzoek voltooid',
-            description: data.message,
-            duration: 7000,
-          });
-        }
+        const message = data.message || "SEO onderzoek succesvol gestart";
+        toast({
+          title: 'SEO Onderzoek voltooid',
+          description: message,
+          duration: 7000,
+        });
       } else {
         throw new Error(data.error || 'Webhook request failed');
       }
