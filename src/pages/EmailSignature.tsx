@@ -84,14 +84,18 @@ const EmailSignature = () => {
                   <CardTitle className="text-white text-lg">Preview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-white rounded-lg p-4 min-h-[200px] overflow-auto">
+                  <div className="bg-white rounded-lg p-4 min-h-[200px] overflow-hidden">
                     {isGenerating ? (
                       <div className="flex items-center gap-2 text-gray-500">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Preview laden...</span>
                       </div>
                     ) : generatedHtml ? (
-                      <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+                      <div 
+                        className="origin-top-left scale-[0.65]"
+                        style={{ width: '154%' }}
+                        dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+                      />
                     ) : (
                       <span className="text-gray-400">
                         Genereer een handtekening om de preview te zien.
