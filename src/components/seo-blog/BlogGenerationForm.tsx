@@ -268,10 +268,14 @@ export const BlogGenerationForm = ({
         schrijfstijl: formData.schrijfstijl,
         aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
         taal: formData.taal,
-        achtergrond_kleur: formData.achtergrond_kleur,
-        hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
-        folder_id: formData.folder_id,
-        used_folder_id: formData.used_folder_id,
+        // AI afbeelding velden - alleen vullen als ai_image geselecteerd
+        achtergrond_kleur: formData.image_type === 'ai_image' ? formData.achtergrond_kleur : '',
+        hoofdaccent_gradient: formData.image_type === 'ai_image' 
+          ? `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}` 
+          : '',
+        // Google Drive velden - alleen vullen als google_drive geselecteerd
+        folder_id: formData.image_type === 'google_drive' ? formData.folder_id : '',
+        used_folder_id: formData.image_type === 'google_drive' ? formData.used_folder_id : '',
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         status: formData.status,
