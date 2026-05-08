@@ -87,7 +87,7 @@ const WordpressAltText = () => {
         message = data?.data || message;
       }
 
-      toast({ title: 'Gestart', description: message, duration: 5000 });
+      toast({ title: 'Gestart', description: message });
     } catch (error) {
       console.error('Error triggering alt text webhook:', error);
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
