@@ -1,0 +1,1 @@
+ALTER TABLE landing_companies ADD COLUMN page_url text;

@@ -511,6 +511,7 @@ export type Database = {
           grid_id: string | null
           id: string
           name: string
+          page_url: string | null
           spreadsheet_id: string | null
         }
         Insert: {
@@ -520,6 +521,7 @@ export type Database = {
           grid_id?: string | null
           id?: string
           name: string
+          page_url?: string | null
           spreadsheet_id?: string | null
         }
         Update: {
@@ -529,6 +531,7 @@ export type Database = {
           grid_id?: string | null
           id?: string
           name?: string
+          page_url?: string | null
           spreadsheet_id?: string | null
         }
         Relationships: []
