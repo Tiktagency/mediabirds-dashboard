@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.trigger-leads-webhook]
 verify_jwt = false
+
+[functions.trigger-landing-webhook]
+verify_jwt = false
