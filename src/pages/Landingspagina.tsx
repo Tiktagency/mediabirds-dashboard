@@ -184,17 +184,19 @@ const Landingspagina = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden relative">
+    <div className="min-h-screen relative">
       <div className="fixed top-0 left-0 right-0 z-30 px-6 py-4 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-white/10">
         <Link to="/">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
             Dashboard
           </Button>
         </Link>
-        <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
+        <div className="mr-2">
+          <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
+        </div>
       </div>
 
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 pb-8 overflow-y-auto">
+      <div className="hero-gradient min-h-screen w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 pb-8">
         <h1 className="hero-title text-2xl sm:text-4xl text-foreground mb-2 fade-in-up">Landingspagina</h1>
         <p className="text-sm sm:text-base text-muted-foreground text-center max-w-xl mb-3">
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
