@@ -137,12 +137,14 @@ const Landingspagina = () => {
           className="bg-white/10 border-white/10 text-white placeholder:text-white/50 min-h-[80px] resize-none"
           onBlur={() => { setEditingField(null); onBlur(); }}
           autoFocus
+          onFocus={(e) => {
+            const len = e.currentTarget.value.length;
+            e.currentTarget.setSelectionRange(len, len);
+          }}
           ref={(el) => {
             if (el) {
               el.style.height = 'auto';
               el.style.height = el.scrollHeight + 'px';
-              const len = el.value.length;
-              el.setSelectionRange(len, len);
             }
           }}
         />
@@ -261,11 +263,9 @@ const Landingspagina = () => {
                         placeholder="abcd efgh ijkl 1234"
                         className="bg-white/10 border-white/10 text-white placeholder:text-white/50"
                         autoFocus
-                        ref={(el) => {
-                          if (el) {
-                            const len = el.value.length;
-                            el.setSelectionRange(len, len);
-                          }
+                        onFocus={(e) => {
+                          const len = e.currentTarget.value.length;
+                          e.currentTarget.setSelectionRange(len, len);
                         }}
                       />
                     ) : expandedField === 'app_password' ? (

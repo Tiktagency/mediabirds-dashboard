@@ -294,11 +294,9 @@ export const KeywordResearchForm = ({
             className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
             onBlur={() => handleSaveField(field)}
             autoFocus
-            ref={(el) => {
-              if (el) {
-                const len = el.value.length;
-                el.setSelectionRange(len, len);
-              }
+            onFocus={(e) => {
+              const len = e.currentTarget.value.length;
+              e.currentTarget.setSelectionRange(len, len);
             }}
           />
         ) : (
@@ -431,12 +429,14 @@ export const KeywordResearchForm = ({
             className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
             onBlur={() => handleSaveField(field)}
             autoFocus
+            onFocus={(e) => {
+              const len = e.currentTarget.value.length;
+              e.currentTarget.setSelectionRange(len, len);
+            }}
             ref={(el) => {
               if (el) {
                 el.style.height = 'auto';
                 el.style.height = el.scrollHeight + 'px';
-                const len = el.value.length;
-                el.setSelectionRange(len, len);
               }
             }}
           />
