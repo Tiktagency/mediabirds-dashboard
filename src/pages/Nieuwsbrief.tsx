@@ -414,7 +414,45 @@ const Nieuwsbrief = () => {
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        // response.error from supabase.functions.invoke is an object, not an Error
+        // Extract context and the underlying data payload for proper error handling
+        const errObj = response.error as any;
+        const context = errObj?.context;
+        let description = 'Er is iets misgegaan. Probeer het opnieuw.';
+
+        // Try to read the JSON body from the context (FunctionsHttpError)
+        if (context && typeof context.text === 'function') {
+          try {
+            const bodyText: string = await context.text();
+            let parsed: any = null;
+            try { parsed = JSON.parse(bodyText); } catch { /* not JSON */ }
+
+            const errorMsg: string = parsed?.error || '';
+            const details: string = parsed?.details || '';
+            const combined = `${errorMsg} ${details}`;
+
+            if (combined.includes('524') || combined.includes('timeout') || combined.includes('Timeout')) {
+              description = 'De nieuwsbrief generator heeft te lang geduurd. Probeer het opnieuw.';
+            } else if (combined.includes('502') || errorMsg.includes('Webhook mislukt') || details.includes('<!DOCTYPE') || details.includes('<html')) {
+              description = 'De nieuwsbrief generator is tijdelijk niet beschikbaar (n8n). Probeer het opnieuw.';
+            } else if (errorMsg && !errorMsg.includes('<!DOCTYPE') && !errorMsg.includes('<html')) {
+              description = errorMsg.substring(0, 200);
+            }
+          } catch { /* ignore body-read errors */ }
+        } else {
+          // Fallback: stringify the error object
+          const raw = JSON.stringify(errObj) || String(errObj);
+          if (raw.includes('524') || raw.includes('timeout')) {
+            description = 'De nieuwsbrief generator heeft te lang geduurd. Probeer het opnieuw.';
+          } else if (raw.includes('502') || raw.includes('Webhook mislukt')) {
+            description = 'De nieuwsbrief generator is tijdelijk niet beschikbaar. Probeer het opnieuw.';
+          }
+        }
+
+        toast({ title: '❌ Genereren mislukt', description, variant: 'destructive' });
+        return;
+      }
 
       const html = response.data?.html;
       if (html) {
@@ -428,21 +466,15 @@ const Nieuwsbrief = () => {
         });
       }
     } catch (err: any) {
-      // Extract a clean error message — avoid rendering raw HTML in the toast
+      // Fallback catch for unexpected JS errors
       let description = 'Er is iets misgegaan. Probeer het opnieuw.';
-      const raw: string = err?.message || err?.error_description || String(err);
-      if (raw && !raw.includes('<!DOCTYPE') && !raw.includes('<html')) {
-        description = raw.substring(0, 200);
-      } else if (raw.includes('524') || raw.includes('timeout')) {
+      const raw: string = err?.message || String(err);
+      if (raw.includes('524') || raw.includes('timeout')) {
         description = 'De nieuwsbrief generator heeft te lang geduurd. Probeer het opnieuw.';
-      } else if (raw.includes('502') || raw.includes('Webhook mislukt')) {
-        description = 'De nieuwsbrief generator is tijdelijk niet beschikbaar. Probeer het opnieuw.';
+      } else if (!raw.includes('<!DOCTYPE') && !raw.includes('<html')) {
+        description = raw.substring(0, 200);
       }
-      toast({
-        title: '❌ Genereren mislukt',
-        description,
-        variant: 'destructive',
-      });
+      toast({ title: '❌ Genereren mislukt', description, variant: 'destructive' });
     } finally {
       setIsGenerating(false);
     }
