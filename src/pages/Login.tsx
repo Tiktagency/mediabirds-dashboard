@@ -168,6 +168,7 @@ const Login = () => {
             type="submit" 
             className="w-full" 
             disabled={isLoading}
+            variant="primaryCustom"
           >
             {isLoading ? 'Inloggen...' : 'Inloggen'}
           </Button>
