@@ -299,7 +299,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
               <Button
                 onClick={handleAddCompany}
                 disabled={isSaving || !newCompanyName.trim()}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
                 {isSaving ? 'Toevoegen...' : 'Toevoegen'}
               </Button>
