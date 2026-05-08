@@ -319,6 +319,7 @@ const Blogs = () => {
     const isEditing = editingField === field;
     const value = formData[field];
     const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
+    const isLargeTextField = type === 'textarea';
 
     return (
       <div className="space-y-2">
@@ -330,13 +331,12 @@ const Blogs = () => {
         </div>
         
         {isEditing && canEdit ? (
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-start">
             {type === 'textarea' ? (
               <Textarea
                 value={value}
                 onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                rows={3}
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-[80px] resize-none"
               />
             ) : type === 'select' ? (
               <Select
@@ -363,7 +363,7 @@ const Blogs = () => {
             <Button
               size="icon"
               variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+              className="text-green-400 hover:text-green-300 hover:bg-green-400/10 shrink-0"
               onClick={() => handleSaveField(field)}
               disabled={settingsLoading}
             >
@@ -372,22 +372,24 @@ const Blogs = () => {
             <Button
               size="icon"
               variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+              className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0"
               onClick={handleCancelEdit}
             >
               <XCircle className="h-4 w-4" />
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+          <div className="flex items-start gap-2">
+            <div className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
+              isLargeTextField ? 'h-[80px] overflow-y-auto whitespace-pre-wrap' : 'min-h-[40px] flex items-center'
+            }`}>
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
+                className="text-white/60 hover:text-white hover:bg-white/10 shrink-0"
                 onClick={() => setEditingField(field)}
               >
                 <Pencil className="h-4 w-4" />
