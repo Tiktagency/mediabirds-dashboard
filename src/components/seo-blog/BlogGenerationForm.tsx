@@ -130,6 +130,7 @@ export const BlogGenerationForm = ({
         taal: settings.taal || '',
         extra_instructie: settings.extra_instructie || '',
         image_type: (settings.image_type as 'ai_image' | 'google_drive') || 'ai_image',
+        image_style: (settings.image_style as '' | 'isometric_flat' | 'cinematic_3d' | 'brutalist_raw') || '',
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
