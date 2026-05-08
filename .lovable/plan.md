@@ -1,190 +1,177 @@
 
-# Plan: Accurate Bespaarde Uren per Bedrijf
+# Plan: Email Handtekening Dashboard Tile en Pagina
 
-## Probleemanalyse
+## Overzicht
 
-Het huidige systeem kan niet bepalen welk bedrijf een SEO Blog of Zoekwoord execution heeft getriggerd omdat:
-1. De n8n API alleen workflow ID retourneert, niet de payload
-2. De `bedrijfsnaam` wordt wel naar n8n gestuurd maar nergens opgeslagen
-3. Daarom worden executions proportioneel verdeeld - dit is een **schatting**, geen echte data
+Dit plan voegt een nieuwe "Email handtekening" functionaliteit toe aan het dashboard, inclusief een complete formulierpagina voor het genereren van professionele email handtekeningen met profielfoto upload.
 
-## Oplossing: Trigger Logging
+## Componenten
 
-### 1. Nieuwe Database Tabel: `workflow_executions`
+### 1. Database Wijzigingen
 
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | uuid | Primary key |
-| company_id | uuid | FK naar companies |
-| workflow_type | text | 'seo_blog' of 'seo_research' |
-| triggered_at | timestamptz | Moment van trigger |
-| triggered_by | uuid | User ID (nullable) |
-| success | boolean | Of de webhook succesvol was |
+**Nieuwe tabel: `email_signature_settings`**
+| Kolom | Type | Verplicht | Beschrijving |
+|-------|------|-----------|--------------|
+| id | uuid | ja | Primary key |
+| user_id | uuid | ja | FK naar auth.users |
+| first_name | text | ja | Voornaam |
+| last_name | text | ja | Achternaam |
+| email | text | ja | Email adres |
+| job_title | text | ja | Functie |
+| website | text | nee | Website URL |
+| socials | jsonb | nee | Array van social links |
+| background_type | text | ja | 'gradient' of 'solid' |
+| background_color | text | ja | Hex kleur of gradient |
+| text_color | text | ja | Hex kleur voor tekst |
+| profile_photo_url | text | ja | URL naar geüploade foto |
+| created_at | timestamptz | ja | Aanmaakdatum |
+| updated_at | timestamptz | ja | Laatste update |
 
-### 2. Edge Functions Aanpassen
+**Storage bucket: `profile-photos`**
+- Publieke bucket voor profielfoto's
+- RLS policies voor upload door geauthenticeerde gebruikers
 
-**`trigger-blog-generation/index.ts`**:
-- Na succesvolle webhook call: insert record met company_id en workflow_type = 'seo_blog'
-- Company ID ophalen via bedrijfsnaam uit de payload
+**Automation settings insert:**
+- Nieuwe record voor 'email-handtekening' met display_name, description, impact_level
 
-**`trigger-seo-webhook/index.ts`**:
-- Na succesvolle webhook call: insert record met company_id en workflow_type = 'seo_research'
-- Company ID ophalen via bedrijfsnaam uit de formData
+### 2. Frontend Bestanden
 
-**`run-scheduled-blogs/index.ts`** en **`run-scheduled-seo/index.ts`**:
-- Dezelfde logging voor scheduled triggers
+**Nieuwe bestanden:**
 
-### 3. Get-Saved-Hours Aanpassen
+| Bestand | Beschrijving |
+|---------|--------------|
+| `src/pages/EmailSignature.tsx` | Pagina component (structuur zoals CopyrightBranding.tsx) |
+| `src/components/email-signature/EmailSignatureForm.tsx` | Formulier met alle velden |
+| `src/hooks/useEmailSignatureSettings.ts` | Hook voor laden/opslaan van instellingen |
 
-De edge function `get-saved-hours` wordt aangepast om:
-1. **Eerst** de `workflow_executions` tabel te raadplegen voor accurate per-bedrijf counts
-2. **Fallback** naar n8n API voor andere workflows (Alt-text, Monday Planning, etc.)
-3. "Overig" automatiseringen toewijzen aan Mediabirds
+### 3. Bestaande Bestanden Aanpassen
 
-## Dataflow Diagram
+**`src/App.tsx`**
+- Nieuwe route toevoegen: `/email-signature`
+
+**`src/pages/Index.tsx`**
+- Nieuwe entry in `tileConfigMap`:
+```typescript
+'email-handtekening': {
+  to: '/email-signature',
+  icon: Mail,
+  variant: 'secondary',
+  statusKey: 'email-handtekening',
+}
+```
+
+## Formulier Specificaties
+
+### Velden
+
+| Veld | Type | Verplicht | Details |
+|------|------|-----------|---------|
+| Naam + Achternaam | 2x Input | Ja | Voornaam en Achternaam apart |
+| Email | Input (email) | Ja | Validatie op email formaat |
+| Functie | Input | Ja | Bijv. "Marketing Manager" |
+| Website | Input (url) | Nee | Optionele website URL |
+| Social(s) | Dynamic list | Nee | Meerdere social links toevoegen |
+| Achtergrond kleur | Radio + ColorPicker | Ja | Keuze: Gradient of Standaard kleur |
+| Tekst kleur | ColorPicker | Ja | Kleur voor alle tekst |
+| Profielfoto | File upload | Ja | Upload naar Supabase Storage |
+
+### UI Flow
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        SEO Blog Pagina                          │
-│                                                                 │
-│   ┌─────────────────┐      ┌─────────────────────────────────┐ │
-│   │ CompanySelector │ ──── │ Geselecteerd: "Smart Charged"   │ │
-│   └─────────────────┘      └─────────────────────────────────┘ │
-│                                       │                         │
-│                                       ▼                         │
-│   ┌───────────────────────────────────────────────────────────┐│
-│   │ BlogGenerationForm.handleSubmit()                         ││
-│   │ payload = { bedrijfsnaam: "Smart Charged", ... }          ││
-│   └───────────────────────────────────────────────────────────┘│
-└───────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌───────────────────────────────────────────────────────────────┐
-│                  Edge Function: trigger-blog-generation        │
-│                                                                │
-│   1. Ontvang payload met bedrijfsnaam                          │
-│   2. Call n8n webhook                                          │
-│   3. Bij succes:                                               │
-│      ┌─────────────────────────────────────────────────────┐  │
-│      │ INSERT INTO workflow_executions                      │  │
-│      │   (company_id, workflow_type, triggered_at, success) │  │
-│      │ VALUES (uuid, 'seo_blog', now(), true)               │  │
-│      └─────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────────┘
-                                       │
-                                       ▼
-┌───────────────────────────────────────────────────────────────┐
-│                  Edge Function: get-saved-hours                │
-│                                                                │
-│   1. Query workflow_executions voor exacte counts per bedrijf  │
-│   2. Query n8n API voor overige workflows (Alt-text, Monday)   │
-│   3. Wijs "Overig" toe aan Mediabirds                          │
-│   4. Return breakdown per bedrijf                              │
-└───────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│ Email Handtekening                                          │
+│ Genereer een professionele email handtekening               │
+├────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐          │
+│  │ Voornaam *          │  │ Achternaam *        │          │
+│  │ [_______________]   │  │ [_______________]   │          │
+│  └─────────────────────┘  └─────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Email *                                       │          │
+│  │ [____________________________________]       │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Functie *                                     │          │
+│  │ [____________________________________]       │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Website (optioneel)                           │          │
+│  │ [____________________________________]       │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Social Links                    [+ Toevoegen] │          │
+│  │ ┌──────────────────────────────────────────┐ │          │
+│  │ │ LinkedIn: https://linkedin.com/in/... [X] │ │          │
+│  │ └──────────────────────────────────────────┘ │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Achtergrond kleur *                           │          │
+│  │ ○ Gradient    ● Standaard kleur               │          │
+│  │ [Color Picker]                                │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Tekst kleur *                                 │          │
+│  │ [Color Picker]                                │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │ Profielfoto *                                 │          │
+│  │ ┌────────────────────────────────┐           │          │
+│  │ │  📷  Sleep of klik om te       │           │          │
+│  │ │       uploaden                 │           │          │
+│  │ └────────────────────────────────┘           │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+│  ┌──────────────────────────────────────────────┐          │
+│  │            [ Handtekening Genereren ]         │          │
+│  └──────────────────────────────────────────────┘          │
+│                                                             │
+└────────────────────────────────────────────────────────────┘
 ```
 
-## Technische Implementatie
+## Technische Details
 
-### Stap 1: Database Migratie
+### File Upload Flow
 
-Nieuwe tabel `workflow_executions` met RLS policies:
-- Admins kunnen alles zien
-- Service role kan inserts doen (edge functions)
+1. Gebruiker selecteert afbeelding
+2. Client-side validatie (max 5MB, alleen jpg/png/webp)
+3. Upload naar `profile-photos` bucket met unieke filename (user_id + timestamp)
+4. Publieke URL opslaan in `email_signature_settings.profile_photo_url`
 
-### Stap 2: Edge Function Updates
-
-**trigger-blog-generation/index.ts**:
-```typescript
-// Na succesvolle webhook response
-const bedrijfsnaam = blogData?.bedrijfsnaam;
-if (bedrijfsnaam) {
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('name', bedrijfsnaam)
-    .single();
-    
-  if (company) {
-    await supabase.from('workflow_executions').insert({
-      company_id: company.id,
-      workflow_type: 'seo_blog',
-      triggered_by: userId,
-      success: true,
-    });
-  }
-}
-```
-
-**trigger-seo-webhook/index.ts**:
-```typescript
-// Na succesvolle webhook response
-const bedrijfsnaam = formData?.bedrijfsnaam;
-if (bedrijfsnaam) {
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('name', bedrijfsnaam)
-    .single();
-    
-  if (company) {
-    await supabase.from('workflow_executions').insert({
-      company_id: company.id,
-      workflow_type: 'seo_research',
-      triggered_by: userId,
-      success: true,
-    });
-  }
-}
-```
-
-### Stap 3: Get-Saved-Hours Herschrijven
+### Social Links Structuur
 
 ```typescript
-// Haal exacte counts uit workflow_executions (voor afgelopen 30 dagen)
-const { data: executions } = await supabase
-  .from('workflow_executions')
-  .select('company_id, workflow_type, success')
-  .gte('triggered_at', periodStart.toISOString())
-  .eq('success', true);
-
-// Tel per bedrijf
-const countsByCompany: Record<string, { seo_blog: number; seo_research: number }> = {};
-for (const exec of executions) {
-  // ... aggregeer per company_id
+interface SocialLink {
+  platform: 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'other';
+  url: string;
 }
-
-// Voeg toe aan breakdownByCompany met juiste uren
+// Opgeslagen als: socials: SocialLink[]
 ```
 
-### Stap 4: "Overig" naar Mediabirds
+### Kleur Opties
 
-```typescript
-// Alle workflows die niet aan een specifiek bedrijf zijn gekoppeld
-// gaan naar Mediabirds
-if (companyName === 'Overig') {
-  companyName = 'Mediabirds';
-}
-```
+**Gradient optie:**
+- Twee kleurenpickers voor gradient start en eind
+- Preview van gradient in real-time
 
-## Bestanden die Aangepast Worden
+**Standaard kleur optie:**
+- Enkele kleurenpicker
+- Solid background color
 
-| Bestand | Wijziging |
-|---------|-----------|
-| `supabase/migrations/xxx_add_workflow_executions.sql` | Nieuwe tabel |
-| `supabase/functions/trigger-blog-generation/index.ts` | Logging toevoegen |
-| `supabase/functions/trigger-seo-webhook/index.ts` | Logging toevoegen |
-| `supabase/functions/run-scheduled-blogs/index.ts` | Logging toevoegen |
-| `supabase/functions/run-scheduled-seo/index.ts` | Logging toevoegen |
-| `supabase/functions/get-saved-hours/index.ts` | Query workflow_executions + "Overig" → Mediabirds |
+## Implementatie Volgorde
 
-## Verwacht Resultaat
-
-Na implementatie:
-- Elke nieuwe SEO Blog of Zoekwoord trigger wordt gelogd met het correcte bedrijf
-- De bespaarde uren breakdown toont **echte data** per bedrijf
-- Historische data (van voor implementatie) valt onder "Overig" → Mediabirds
-- Smart Charged krijgt alleen uren als zij daadwerkelijk triggers uitvoeren
-
-## Belangrijke Opmerking
-
-**Historische data** kan niet met terugwerkende kracht worden gecorrigeerd - de n8n API bevat niet welk bedrijf de execution triggerde. Vanaf het moment van implementatie worden alle nieuwe triggers correct gelogd.
+1. **Database migratie** - Tabel en storage bucket aanmaken
+2. **Storage bucket RLS** - Policies voor veilige uploads
+3. **Automation settings** - Record toevoegen voor tile metadata
+4. **useEmailSignatureSettings hook** - Data management
+5. **EmailSignatureForm component** - Formulier UI
+6. **EmailSignature page** - Pagina wrapper
+7. **App.tsx route** - Route registreren
+8. **Index.tsx tile config** - Dashboard tile toevoegen
