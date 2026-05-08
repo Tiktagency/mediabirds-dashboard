@@ -38,25 +38,49 @@ serve(async (req) => {
     const body = await req.json();
     const {
       bedrijfsnaam,
-      bedrijfsinformatie,
-      schrijfstijl,
+      tagline,
+      bedrijfsomschrijving,
+      doelgroep,
+      toon,
+      cta_tekst,
+      cta_url,
+      website,
       rss_feeds,
-      achtergrond_kleur,
       primaire_kleur,
+      secundaire_kleur,
+      achtergrond_kleur,
+      kaart_achtergrond,
+      tekst_kleur,
+      subtekst_kleur,
       accent_kleur,
+      cta_tekst_kleur,
+      footer_achtergrond,
+      footer_tekst_kleur,
       settingsId,
     } = body;
 
     const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN') ?? Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN');
 
     const payload = {
-      bedrijfsnaam,
-      bedrijfsinformatie,
-      schrijfstijl,
+      bedrijfsnaam: bedrijfsnaam || '',
+      tagline: tagline || '',
+      bedrijfsomschrijving: bedrijfsomschrijving || '',
+      doelgroep: doelgroep || '',
+      toon: toon || '',
+      cta_tekst: cta_tekst || '',
+      cta_url: cta_url || '',
+      website: website || '',
       rss_feeds: rss_feeds || [],
-      achtergrond_kleur: achtergrond_kleur || '#ffffff',
-      primaire_kleur: primaire_kleur || '#000000',
-      accent_kleur: accent_kleur || '#4f46e5',
+      primaire_kleur: primaire_kleur || '#FF6B2C',
+      secundaire_kleur: secundaire_kleur || '#1A2B5E',
+      achtergrond_kleur: achtergrond_kleur || '#F5F3EF',
+      kaart_achtergrond: kaart_achtergrond || '#FFFFFF',
+      tekst_kleur: tekst_kleur || '#1A1A2E',
+      subtekst_kleur: subtekst_kleur || '#6B7280',
+      accent_kleur: accent_kleur || '#FFF0E8',
+      cta_tekst_kleur: cta_tekst_kleur || '#FFFFFF',
+      footer_achtergrond: footer_achtergrond || '#1A2B5E',
+      footer_tekst_kleur: footer_tekst_kleur || '#E8EDF7',
       user_id: user.id,
     };
 
@@ -87,7 +111,6 @@ serve(async (req) => {
       });
     }
 
-    // Parse response: try JSON first, fall back to plain text
     const responseText = await webhookResponse.text();
     let generatedHtml: string | null = null;
     let message: string | null = null;
@@ -98,7 +121,6 @@ serve(async (req) => {
       generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
       message = (responseData?.message || responseData?.Output) as string | null;
     } catch {
-      // Plain text or HTML response
       const trimmed = responseText.trim();
       if (trimmed.startsWith('<')) {
         generatedHtml = trimmed;
@@ -107,7 +129,6 @@ serve(async (req) => {
       }
     }
 
-    // Save generated HTML to database if available
     if (generatedHtml && settingsId) {
       await supabase
         .from('newsletter_settings')
