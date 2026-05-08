@@ -47,6 +47,7 @@ export const BlogGenerationForm = ({
     hoofdaccent_gradient_2: '',
     get_afbeelding_url: '',
     post_blog_url: '',
+    status: 'Draft',
   });
 
   // Click outside handler to collapse expanded field
@@ -105,6 +106,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
+        status: settings.status || 'Draft',
       });
     } else {
       setFormData({
@@ -118,6 +120,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: '',
         get_afbeelding_url: '',
         post_blog_url: '',
+        status: 'Draft',
       });
     }
     setEditingField(null);
@@ -200,6 +203,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
+        status: settings.status || 'Draft',
       });
     }
     setEditingField(null);
@@ -229,6 +233,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
+        status: formData.status,
         timestamp: new Date().toISOString(),
       };
 
@@ -558,6 +563,11 @@ export const BlogGenerationForm = ({
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Status sectie */}
+      <div className="pt-6 border-t border-white/10 space-y-4">
+        {renderField('Status', 'status', 'select', ['Draft', 'Publish'])}
       </div>
       
       {/* Admin-only fields */}
