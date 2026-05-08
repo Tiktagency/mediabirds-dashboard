@@ -50,8 +50,8 @@ export const PermissionMatrix = ({
     };
   };
 
-  // Filter out admins - they have full access
-  const nonAdminUsers = users.filter(u => !u.roles.includes('admin'));
+  // Filter out admins and super admins - they have full access
+  const nonAdminUsers = users.filter(u => !u.roles.includes('admin') && !u.roles.includes('super_admin'));
 
   if (automations.length === 0) {
     return null;
@@ -77,6 +77,9 @@ export const PermissionMatrix = ({
           </Badge>
           <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-400">
             Admin = Volledige toegang
+          </Badge>
+          <Badge variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-400">
+            Super Admin = Volledige toegang + admin beheer
           </Badge>
         </div>
       </CardHeader>
