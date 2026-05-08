@@ -1,50 +1,39 @@
 
 
-# Bedrijf toevoegen: domeinnaam, laadstatus en bevestiging
+# Verbeteringen bij bedrijf toevoegen
 
 ## Wat verandert er
 
-1. Bij het toevoegen van een bedrijf moet ook een website domeinnaam worden ingevuld (bijv. "mediabirds.nl")
-2. Tijdens het aanmaken verschijnt een laadsymbool (spinner) zodat de gebruiker weet dat het bezig is
-3. Na klikken op "Toevoegen" verschijnt eerst een bevestigingsdialoog voordat het bedrijf daadwerkelijk wordt aangemaakt
+1. **Bevestigingsdialoog sluit direct**: Na het bevestigen en voltooien van het aanmaakproces hoeft de gebruiker niet opnieuw op "Toevoegen" te klikken. De bevestigingsdialoog sluit automatisch en het nieuwe bedrijf wordt geselecteerd.
+2. **WordPress URL's automatisch invullen**: Bij het aanmaken worden de `get_afbeelding_url` en `post_blog_url` velden in `blog_settings` automatisch ingevuld op basis van de opgegeven domeinnaam.
 
 ## Aanpak
 
-### 1. Database: kolom `domain` toevoegen aan `companies`
+### 1. Bug fix: dialoog sluit correct na bevestiging
 
-Een nieuwe nullable text-kolom `domain` wordt toegevoegd aan de `companies` tabel om de domeinnaam op te slaan.
+De `onOpenChange` handler van de bevestigings-AlertDialog opent momenteel de invoerdialoog opnieuw wanneer deze sluit (`setIsDialogOpen(true)`). Dit wordt aangepast zodat bij sluiting na een succesvolle aanmaak de invoerdialoog niet opnieuw opent.
 
-```sql
-ALTER TABLE companies ADD COLUMN domain text;
-```
+### 2. WordPress URL's automatisch genereren
 
-### 2. CompanySelector aanpassen
+In de edge function (`trigger-add-company-webhook`) worden bij het upserten van `blog_settings` twee extra velden meegegeven:
 
-**Nieuw invoerveld**: Een extra input voor de domeinnaam onder het bedrijfsnaam-veld, met placeholder "bijv. mediabirds.nl".
+- `get_afbeelding_url`: `https://[domeinnaam]/wp-json/wp/v2/media`
+- `post_blog_url`: `https://[domeinnaam]/wp-json/wp/v2/posts`
 
-**Bevestigingsdialoog**: Wanneer de gebruiker op "Toevoegen" klikt, sluit de invoer-dialoog en opent een AlertDialog met:
-- Titel: "Bedrijf toevoegen?"
-- Beschrijving: "Weet je zeker dat je [bedrijfsnaam] (domeinnaam) wilt toevoegen? De bijbehorende documenten worden automatisch aangemaakt."
-- Knoppen: "Annuleren" en "Bevestigen"
-
-**Laadstatus**: Na bevestiging:
-- De "Bevestigen" knop wordt disabled en toont een spinner + "Bezig met aanmaken..."
-- De dialoog blijft open totdat het hele proces (insert + webhook + opslaan) is afgerond
-- Pas daarna sluit alles en wordt het nieuwe bedrijf geselecteerd
-
-**Domeinnaam meesturen**: De domeinnaam wordt opgeslagen in de `companies` tabel bij het inserten en meegestuurd naar de edge function.
-
-### 3. Edge function aanpassen
-
-De edge function ontvangt nu ook `companyDomain` en stuurt dit mee naar de webhook als `domeinnaam` in de payload.
-
-### 4. Company interface uitbreiden
-
-De `Company` interface krijgt een optioneel `domain` veld.
+Dit gebeurt alleen als er een domeinnaam is opgegeven.
 
 ## Technische details
 
-- Validatie: zowel bedrijfsnaam als domeinnaam moeten ingevuld zijn voordat de "Toevoegen" knop actief wordt
-- De flow wordt: Invoerdialoog -> Bevestigingsdialoog -> Laadstatus -> Toast resultaat
-- Het spinner-icoon gebruikt Lucide's `Loader2` met `animate-spin`
+### CompanySelector.tsx
+
+- De `onOpenChange` van de bevestigings-AlertDialog wordt aangepast: bij sluiting na het aanmaken (`!isCreating` en dialoog sluit) wordt `setIsDialogOpen` niet meer op `true` gezet. Alleen bij "Annuleren" (voordat het aanmaken is gestart) wordt de invoerdialoog heropend.
+
+### trigger-add-company-webhook/index.ts
+
+- Bij de `blog_settings` upsert worden `get_afbeelding_url` en `post_blog_url` toegevoegd, opgebouwd uit de `companyDomain` parameter:
+  ```
+  get_afbeelding_url: `https://${companyDomain}/wp-json/wp/v2/media`
+  post_blog_url: `https://${companyDomain}/wp-json/wp/v2/posts`
+  ```
+- Alleen ingevuld als `companyDomain` niet leeg is.
 
