@@ -1,43 +1,39 @@
 
 
-## Plan: Auto-save voor alle admin panel wijzigingen + globale dashboard-instellingen
+## Plan: Fix automatische trigger die zichzelf uitzet
 
 ### Probleem
-1. **AutomationCard** heeft een handmatige "Opslaan" knop — wijzigingen worden niet automatisch opgeslagen
-2. **Dashboard-instellingen** (tile order, kleuren, labels) worden per gebruiker opgeslagen in `user_dashboard_settings` — wijzigingen van een admin gelden niet voor andere gebruikers
+De `ScheduleTrigger` component initialiseert `enabled` als `false` via `useState(false)`. Wanneer de pagina laadt, haalt `useAltTextSchedule` de schedule op uit de database. Zodra de data binnenkomt, wordt `isLoading = false` en verschijnt de toggle — maar de `useEffect` die `enabled` synchroniseert draait pas NA die render. Hierdoor toont de toggle kort (of langer bij trage verbinding) "Inactief" terwijl de database `enabled: true` heeft. Bij elke paginavisit of component-remount herhaalt dit zich.
+
+Daarnaast reset de `useEffect` alle velden naar defaults wanneer `schedule` even `null` is (tijdens laden), wat het probleem versterkt.
 
 ### Oplossing
+Verwijder de afhankelijkheid van lokale `enabled` state voor rendering en gebruik in plaats daarvan direct de schedule prop als bron van waarheid.
 
-**1. AutomationCard: auto-save met debounce**
-- Verwijder de handmatige "Wijzigingen opslaan" knop
-- Voeg een `useEffect` met debounce (800ms) toe die `onUpdate` aanroept zodra `localSetting` verandert
-- Toon een subtiele "Opgeslagen" indicator in plaats van een knop
+### Aanpassing in `src/components/seo/ScheduleTrigger.tsx`
 
-**2. Dashboard-instellingen globaal maken**
-- Wijzig `useDashboardSettings` zodat admin-wijzigingen worden doorgevoerd naar ALLE gebruikers in `user_dashboard_settings`
-- Bij elke update (tile order, kleuren, labels, etc.) wordt naast de eigen record ook alle andere records bijgewerkt via een edge function
-- Nieuwe edge function `sync-dashboard-settings` die met service role key alle user records update
+1. **Verwijder `useState(false)` voor enabled** — vervang door een lokale override die alleen actief is tijdens een optimistic update (toggle klik → wacht op DB response)
+2. **Bereken `enabled` direct**: `const enabled = localEnabledOverride ?? schedule?.enabled ?? false`
+3. **In `handleEnabledChange`**: zet de override optimistisch, en reset deze na de DB-update (zodat de schedule prop weer leidend is)
+4. **Initialiseer overige lokale state vanuit schedule prop** in de useState zelf waar mogelijk, zodat er geen useEffect-gap is
 
-### Bestanden
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/components/admin/automation/AutomationCard.tsx` | Verwijder save-knop, voeg debounced auto-save toe |
-| `src/hooks/useDashboardSettings.ts` | Voeg `updateAllUsers` functie toe die edge function aanroept |
-| `supabase/functions/sync-dashboard-settings/index.ts` | Nieuw: update alle user_dashboard_settings records met admin wijzigingen |
-
-### Technisch detail
-
-**AutomationCard debounce:**
+Concreet:
 ```ts
-useEffect(() => {
-  if (!hasChanges) return;
-  const timer = setTimeout(() => {
-    onUpdate(setting.id, { display_name, description, impact_level, ... });
-  }, 800);
-  return () => clearTimeout(timer);
-}, [localSetting]);
+// Optimistic override – alleen actief tussen toggle-klik en DB-response
+const [enabledOverride, setEnabledOverride] = useState<boolean | null>(null);
+const enabled = enabledOverride ?? schedule?.enabled ?? false;
+
+const handleEnabledChange = async (newEnabled: boolean) => {
+  setEnabledOverride(newEnabled); // instant UI feedback
+  await updateSchedule({ enabled: newEnabled });
+  setEnabledOverride(null); // schedule prop is nu bijgewerkt, volg die weer
+};
 ```
 
-**Sync edge function:** Ontvangt de gewijzigde velden (tile_order, impact_colors, dashboard_colors, custom_labels) en past deze toe op alle rijen in `user_dashboard_settings` via de service role key. Dit zorgt ervoor dat wijzigingen van één admin automatisch voor iedereen gelden.
+De `useEffect` wordt vereenvoudigd: het synchroniseert nog steeds `intervalValue`, `dayOfWeek`, etc. vanuit schedule, maar zet NIET meer `enabled` en reset niet meer naar defaults bij `schedule === null`.
+
+### Bestanden
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/components/seo/ScheduleTrigger.tsx` | Fix enabled state management |
 
