@@ -12,6 +12,7 @@ export interface BlogSettings {
   achtergrond_kleur: string | null;
   hoofdaccent_gradient: string | null;
   folder_id: string | null;
+  used_folder_id: string | null;
   image_type: string | null;
   get_afbeelding_url: string | null;
   post_blog_url: string | null;

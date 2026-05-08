@@ -228,6 +228,7 @@ export type Database = {
           status: string | null
           taal: string | null
           updated_at: string
+          used_folder_id: string | null
         }
         Insert: {
           aantal_woorden?: string | null
@@ -249,6 +250,7 @@ export type Database = {
           status?: string | null
           taal?: string | null
           updated_at?: string
+          used_folder_id?: string | null
         }
         Update: {
           aantal_woorden?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           status?: string | null
           taal?: string | null
           updated_at?: string
+          used_folder_id?: string | null
         }
         Relationships: [
           {
