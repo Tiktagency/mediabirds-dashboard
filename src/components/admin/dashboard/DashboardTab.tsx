@@ -3,7 +3,7 @@ import { useAutomationSettings } from '@/hooks/useAutomationSettings';
 import { TileOrganizer } from './TileOrganizer';
 import { ColorCustomizer } from './ColorCustomizer';
 import { TileColorCustomizer } from './TileColorCustomizer';
-import { ThemeSwitch } from './ThemeSwitch';
+import { ButtonColorCustomizer } from './ButtonColorCustomizer';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const DashboardTab = () => {
@@ -15,7 +15,7 @@ export const DashboardTab = () => {
     updateImpactColors,
     updateTileColors,
     updateSavedHoursColors,
-    updateTheme 
+    updateButtonColors
   } = useDashboardSettings();
   const { settings: automations } = useAutomationSettings();
 
@@ -63,9 +63,12 @@ export const DashboardTab = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ThemeSwitch 
-          theme={settings.theme} 
-          onUpdate={updateTheme} 
+        <ButtonColorCustomizer 
+          colors={settings.button_colors}
+          onUpdate={updateButtonColors}
+          onReset={async () => {
+            await updateButtonColors({ background: '#cfddd0', text: '#002C1F' });
+          }}
         />
         <ColorCustomizer 
           colors={settings.impact_colors}
