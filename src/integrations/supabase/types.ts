@@ -768,7 +768,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "viewer" | "operator"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "viewer"
+        | "operator"
+        | "super_admin"
       automation_status_type: "active" | "inactive" | "testmode"
       impact_level: "high" | "medium" | "low"
       log_level: "basic" | "verbose" | "errors_only"
@@ -899,7 +905,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "viewer", "operator"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "viewer",
+        "operator",
+        "super_admin",
+      ],
       automation_status_type: ["active", "inactive", "testmode"],
       impact_level: ["high", "medium", "low"],
       log_level: ["basic", "verbose", "errors_only"],
