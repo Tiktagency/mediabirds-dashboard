@@ -56,6 +56,7 @@ export const EmailSignatureForm = ({
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -149,7 +150,24 @@ export const EmailSignatureForm = ({
   };
 
   const onSubmit = async (data: FormData) => {
-    await onSave({
+    // Valideer foto URL indien aanwezig
+    if (profilePhotoUrl) {
+      setPhotoError(null);
+      try {
+        const img = new Image();
+        img.src = profilePhotoUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          setTimeout(() => reject(new Error('timeout')), 5000);
+        });
+      } catch {
+        setPhotoError('De profielfoto link is niet geldig of niet openbaar toegankelijk');
+        return;
+      }
+    }
+
+    const signatureData = {
       name: data.name,
       first_name: data.first_name,
       last_name: data.last_name,
@@ -162,7 +180,31 @@ export const EmailSignatureForm = ({
       text_color: data.text_color,
       socials,
       profile_photo_url: profilePhotoUrl,
-    });
+    };
+
+    // Stuur naar webhook
+    try {
+      const webhookResponse = await fetch(
+        'https://tikt.app.n8n.cloud/webhook-test/0d19dda2-8df2-4952-a93a-5c9c49b4edd8',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(signatureData),
+        }
+      );
+      
+      if (!webhookResponse.ok) {
+        throw new Error('Webhook request failed');
+      }
+      
+      const webhookData = await webhookResponse.text();
+      console.log('Webhook response:', webhookData);
+    } catch (error) {
+      console.error('Error calling webhook:', error);
+    }
+
+    // Sla ook op in database
+    await onSave(signatureData);
   };
 
   const getBackgroundStyle = () => {
@@ -407,30 +449,33 @@ export const EmailSignatureForm = ({
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer hover:border-white/40 transition-colors"
+            className="border-2 border-dashed border-white/20 rounded-lg p-4 text-center cursor-pointer hover:border-white/40 transition-colors"
           >
             {isUploading ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-8 h-8 animate-spin text-white/50" />
-                <p className="text-white/50">Uploaden...</p>
+              <div className="flex flex-col items-center gap-1">
+                <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+                <p className="text-white/50 text-sm">Uploaden...</p>
               </div>
             ) : profilePhotoUrl ? (
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-2">
                 <img
                   src={profilePhotoUrl}
                   alt="Profielfoto"
-                  className="w-24 h-24 rounded-full object-cover"
+                  className="w-16 h-16 rounded-full object-cover"
                 />
-                <p className="text-white/50 text-sm">Klik om te wijzigen</p>
+                <p className="text-white/50 text-xs">Klik om te wijzigen</p>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
-                <Upload className="w-8 h-8 text-white/50" />
-                <p className="text-white/50">Sleep of klik om te uploaden</p>
+              <div className="flex flex-col items-center gap-1">
+                <Upload className="w-6 h-6 text-white/50" />
+                <p className="text-white/50 text-sm">Klik om te uploaden</p>
                 <p className="text-white/30 text-xs">Max 5MB, JPG/PNG/WebP</p>
               </div>
             )}
           </div>
+          {photoError && (
+            <p className="text-sm text-red-400">{photoError}</p>
+          )}
         </CardContent>
       </Card>
 
