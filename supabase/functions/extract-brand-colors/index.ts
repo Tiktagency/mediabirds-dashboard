@@ -1,6 +1,29 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+// SSRF guard: reject private/loopback/link-local hostnames
+const isUnsafeHost = (host: string): boolean => {
+  const h = host.toLowerCase();
+  if (h === 'localhost' || h.endsWith('.localhost') || h === 'metadata.google.internal') return true;
+  // IPv4 literal
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [parseInt(m[1]), parseInt(m[2])];
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 0) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a >= 224) return true;
+  }
+  // IPv6 loopback / link-local / ULA
+  if (h === '::1' || h.startsWith('[::1') || h.startsWith('fe80') || h.startsWith('fc') || h.startsWith('fd')) return true;
+  return false;
 };
 
 // Validate and normalize hex color, return null if invalid
@@ -44,6 +67,25 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !userData?.user) {
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { website } = await req.json();
 
     if (!website) {
@@ -61,10 +103,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    let formattedUrl = website.trim();
+    let formattedUrl = (website as string).trim();
     if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
       formattedUrl = `https://${formattedUrl}`;
     }
+
+    // SSRF guard: enforce https + block private/loopback hosts
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(formattedUrl);
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Ongeldige URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (parsedUrl.protocol !== 'https:' || isUnsafeHost(parsedUrl.hostname)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'URL niet toegestaan' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    formattedUrl = parsedUrl.toString();
 
     console.log('Fetching HTML from:', formattedUrl);
 

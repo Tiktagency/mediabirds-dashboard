@@ -13,8 +13,6 @@ const INITIAL_MESSAGE: ChatMessage = {
   sender: 'bot'
 };
 
-const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd';
-const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
 
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -32,23 +30,21 @@ export const useChatMessages = () => {
 
   const sendMessageToWebhook = async (messageText: string) => {
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          message: messageText,
-          timestamp: new Date().toISOString(),
-          sender: 'user'
-        }),
+      const { data, error } = await supabase.functions.invoke('trigger-monday-planning', {
+        body: { message: messageText },
       });
-
-      const responseText = await response.text();
+      if (error) {
+        console.error('Edge function error:', error);
+        return null;
+      }
+      const responseText = (data as { text?: string })?.text;
       if (!responseText) return null;
-
-      const responseData = JSON.parse(responseText);
+      let responseData: unknown;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        return responseText;
+      }
       return parseWebhookResponse(responseData);
     } catch (error) {
       console.error('Error sending message to webhook:', error);

@@ -14,8 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd';
-const API_KEY = 'JGMhfDirhe73J5DvjeG6dJ8';
 
 const MondayPlanning = () => {
   const { isLoading: authLoading, user } = useAdminAuth();
@@ -63,33 +61,27 @@ const MondayPlanning = () => {
     const messageContent = `Nodige gegeven:\n${bedrijfsnaam}, Pakket ${pakket}, ${format(startDatum!, 'dd-MM-yyyy', { locale: nl })}`;
 
     try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
+      const { data: invokeData, error: invokeError } = await supabase.functions.invoke('trigger-monday-planning', {
+        body: {
           message: messageContent,
-          timestamp: new Date().toISOString(),
-          sender: 'user',
           bedrijfsnaam,
           pakket,
           startDatum: format(startDatum!, 'yyyy-MM-dd'),
-        }),
+        },
       });
 
-      const responseText = await response.text();
-      
-      if (response.ok) {
+      const ok = !invokeError && (invokeData as { success?: boolean })?.success;
+      const responseText = (invokeData as { text?: string })?.text ?? '';
+
+      if (ok) {
         let responseMessage = 'Planning succesvol verzonden!';
-        
+
         if (responseText) {
           try {
             const data = JSON.parse(responseText);
             if (data.message?.content) {
-              responseMessage = typeof data.message.content === 'string' 
-                ? data.message.content 
+              responseMessage = typeof data.message.content === 'string'
+                ? data.message.content
                 : JSON.stringify(data.message.content);
             } else if (data.output) {
               responseMessage = data.output;
@@ -106,13 +98,12 @@ const MondayPlanning = () => {
         });
         await saveNotification(responseMessage, 'success');
         await updateAutomationStatus('active');
-        
-        // Reset form
+
         setBedrijfsnaam('');
         setPakket('');
         setStartDatum(undefined);
       } else {
-        const errorMessage = responseText || 'Er is iets misgegaan bij het verzenden';
+        const errorMessage = responseText || invokeError?.message || 'Er is iets misgegaan bij het verzenden';
         toast({
           title: "Fout",
           description: errorMessage,

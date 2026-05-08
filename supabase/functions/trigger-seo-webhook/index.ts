@@ -104,9 +104,18 @@ serve(async (req) => {
       host: new URL(validatedUrl).host,
     });
     
-    // Get auth token from the specified secret
+    // Get auth token from the specified secret (allowlist enforced)
+    const ALLOWED_SECRET_NAMES = new Set([
+      'BLOG_WEBHOOK_AUTH_TOKEN',
+      'SEO_WEBHOOK_AUTH_TOKEN',
+      'N8N_WEBHOOK_AUTH_TOKEN',
+      'TIKT_WEBHOOK_AUTH_TOKEN',
+    ]);
     let authToken: string | undefined;
     if (authTokenSecretName) {
+      if (!ALLOWED_SECRET_NAMES.has(authTokenSecretName)) {
+        throw new Error('Ongeldige authTokenSecretName');
+      }
       authToken = Deno.env.get(authTokenSecretName);
       if (!authToken) {
         console.error(`Auth token secret ${authTokenSecretName} not found`);
