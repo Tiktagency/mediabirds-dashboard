@@ -1,51 +1,53 @@
 
-# Plan: Labels Hernoemen naar Spreadsheet ID en Grid ID
+# Plan: Info Tooltip Toevoegen aan Pagina URLs
 
 ## Overzicht
 
-Alle labels voor Google Sheet/Slides/File ID velden hernoemen in de drie SEO formulieren:
-- "Google Sheet Document ID" / "Google Sheet ID" → **Spreadsheet ID**
-- "Google Slides ID" / "Google File ID" → **Grid ID**
+Een info-icoon met tooltip toevoegen naast het "Pagina URLs" label om gebruikers te informeren over de vereisten voor dit veld.
 
 ---
 
-## Wijzigingen per Bestand
+## Wijzigingen
 
-### 1. `src/components/seo-blog/KeywordResearchForm.tsx`
+### Bestand: `src/components/seo-blog/PageUrlForm.tsx`
 
-**Hoofd zoekwoorden sectie (regels 533-534):**
-- `'Google Sheet ID'` → `'Spreadsheet ID'`
-- `'Google Slides ID'` → `'Grid ID'`
+**1. Imports toevoegen (regel 5):**
+- `Info` icoon van lucide-react
+- Tooltip componenten van `@/components/ui/tooltip`
 
-**Nieuwe zoekwoorden sectie (regels 545-546):**
-- `'Google Sheet ID'` → `'Spreadsheet ID'`
-- `'Google Slides ID'` → `'Grid ID'`
+**2. Label aanpassen (regel 147):**
 
-### 2. `src/components/seo-blog/BlogGenerationForm.tsx`
+Huidige code:
+```tsx
+<Label className="text-white/70">Pagina URLs</Label>
+```
 
-**Google Documenten sectie (regels 680-681):**
-- `'Google Sheet Document ID'` → `'Spreadsheet ID'`
-- `'Google Slides ID'` → `'Grid ID'`
-
-### 3. `src/components/seo-blog/PageUrlForm.tsx`
-
-**Labels en placeholders (regels 121-141):**
-- Label: `Google Sheet Document ID` → `Spreadsheet ID`
-- Placeholder: `Voer Google Sheet ID in...` → `Voer Spreadsheet ID in...`
-- Label: `Google File ID` → `Grid ID`
-- Placeholder: `Voer Google File ID in...` → `Voer Grid ID in...`
+Nieuwe code:
+```tsx
+<div className="flex items-center gap-2">
+  <Label className="text-white/70">Pagina URLs</Label>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-4 w-4 text-white/50 hover:text-white/70 cursor-help" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs bg-background border border-white/20 text-white p-3">
+        <p className="text-sm">
+          De site moet een xml sitemap hebben om dit veld in te vullen. 
+          Aanwezig: pak de belangrijkste links waar de pagina's onder vallen 
+          waarvan je de info wilt documenteren, zodat de ai agent interne 
+          links kan leggen naar deze pagina's.
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</div>
+```
 
 ---
 
-## Resultaat
+## Visueel Resultaat
 
-Na de wijzigingen worden alle drie de formulieren consistent:
-
-| Formulier | Oud Label | Nieuw Label |
-|-----------|-----------|-------------|
-| Zoekwoord Onderzoek | Google Sheet ID | Spreadsheet ID |
-| Zoekwoord Onderzoek | Google Slides ID | Grid ID |
-| Blog Generatie | Google Sheet Document ID | Spreadsheet ID |
-| Blog Generatie | Google Slides ID | Grid ID |
-| Pagina URL | Google Sheet Document ID | Spreadsheet ID |
-| Pagina URL | Google File ID | Grid ID |
+- Een klein info-icoon (ⓘ) verschijnt naast "Pagina URLs"
+- Bij hover verschijnt een tooltip met de uitleg over XML sitemaps
+- Styling consistent met de rest van het dark theme
