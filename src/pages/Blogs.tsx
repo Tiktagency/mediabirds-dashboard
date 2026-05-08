@@ -323,18 +323,17 @@ const Blogs = () => {
   };
 
   const renderField = (
-    field: 'bedrijfsnaam' | 'bedrijfsomschrijving' | 'schrijfstijl' | 'taal' | 'afbeelding_prompt' | 'get_afbeelding_url' | 'post_blog_url',
     label: string,
+    field: keyof typeof formData,
     type: 'text' | 'textarea' | 'select' = 'text',
-    adminOnly: boolean = false,
-    largeSize: boolean = false
+    options?: string[],
+    adminOnly: boolean = false
   ) => {
     const isEditing = editingField === field;
     const isExpanded = expandedField === field;
-    const value = formData[field];
+    const value = formData[field] as string;
     const canEdit = adminOnly ? isAdmin : isAdmin;
-    const isLargeTextField = type === 'textarea';
-    const fieldHeight = largeSize ? 'h-[120px]' : 'h-[80px]';
+    const isTextField = type === 'text' || type === 'textarea';
 
     // Auto-resize textarea when editing
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -345,15 +344,15 @@ const Blogs = () => {
 
     return (
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-white/90">{label}</Label>
+        <div className="flex items-center gap-2">
+          <Label className="text-white/70 text-sm">{label}</Label>
           {adminOnly && (
-            <span className="text-xs text-yellow-400/80 bg-yellow-400/10 px-2 py-0.5 rounded">Admin only</span>
+            <span className="text-xs text-purple-400">(Admin)</span>
           )}
         </div>
         
         {isEditing && canEdit ? (
-          // STAAT 3: Editing mode
+          // EDITING MODE
           <div className="flex gap-2 items-start">
             {type === 'textarea' ? (
               <Textarea
@@ -373,17 +372,16 @@ const Blogs = () => {
                 onValueChange={(val) => setFormData(prev => ({ ...prev, [field]: val }))}
               >
                 <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Selecteer..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TAAL_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {options?.map((option) => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             ) : (
               <Input
-                type="text"
                 value={value}
                 onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
                 className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
@@ -392,25 +390,24 @@ const Blogs = () => {
             <Button
               size="icon"
               variant="ghost"
-              className="text-green-400 hover:text-green-300 hover:bg-green-400/10 shrink-0"
+              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
               onClick={() => handleSaveField(field)}
-              disabled={settingsLoading}
             >
               <Check className="h-4 w-4" />
             </Button>
             <Button
               size="icon"
               variant="ghost"
-              className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0"
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
               onClick={handleCancelEdit}
             >
               <XCircle className="h-4 w-4" />
             </Button>
           </div>
-        ) : isExpanded && isLargeTextField ? (
-          // STAAT 2: Expanded mode (only for textareas)
+        ) : isExpanded && isTextField ? (
+          // EXPANDED MODE - show all text + pencil inside
           <div className="expanded-field-container relative">
-            <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[80px]">
+            <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
@@ -429,28 +426,27 @@ const Blogs = () => {
             )}
           </div>
         ) : (
-          // STAAT 1: Collapsed mode
+          // COLLAPSED MODE - fixed height, clickable to expand
           <div className="flex items-start gap-2">
-            <div 
-              className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
-                isLargeTextField 
-                  ? `${fieldHeight} overflow-hidden whitespace-pre-wrap cursor-pointer hover:bg-white/10 transition-colors` 
-                  : 'min-h-[40px] flex items-center'
-              }`}
-              onClick={() => {
-                if (isLargeTextField) {
-                  setExpandedField(field);
-                }
-              }}
-            >
-              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
-            </div>
-            {/* Only show pencil for non-textarea fields */}
-            {canEdit && !isLargeTextField && (
+            {isTextField ? (
+              <div 
+                className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => setExpandedField(field)}
+              >
+                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+              </div>
+            ) : (
+              // Select fields - not expandable, show pencil directly
+              <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+                {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+              </div>
+            )}
+            {/* Only show pencil for select fields in collapsed state */}
+            {canEdit && type === 'select' && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10 shrink-0"
+                className="text-white/60 hover:text-white hover:bg-white/10"
                 onClick={() => setEditingField(field)}
               >
                 <Pencil className="h-4 w-4" />
@@ -584,18 +580,18 @@ const Blogs = () => {
         ) : (
           <div className="w-full max-w-2xl space-y-6">
             {/* Regular fields */}
-            {renderField('bedrijfsnaam', 'Bedrijfsnaam')}
-            {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea', false, true)}
-            {renderField('schrijfstijl', 'Schrijfstijl')}
+            {renderField('Bedrijfsnaam', 'bedrijfsnaam')}
+            {renderField('Bedrijfsomschrijving', 'bedrijfsomschrijving', 'textarea')}
+            {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
             {renderRangeField()}
-            {renderField('taal', 'Taal', 'select')}
+            {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
             
             {/* Admin-only fields - visible to all, editable by admins only */}
             <div className="pt-6 border-t border-white/10 space-y-6">
               <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-              {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true, true)}
-              {renderField('get_afbeelding_url', 'POST afbeelding URL', 'text', true)}
-              {renderField('post_blog_url', 'POST blog URL', 'text', true)}
+              {renderField('Afbeelding prompt', 'afbeelding_prompt', 'textarea', undefined, true)}
+              {renderField('GET afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
+              {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
             </div>
 
             {/* Start button */}
