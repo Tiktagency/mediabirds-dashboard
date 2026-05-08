@@ -666,7 +666,7 @@ const SeoBlog = () => {
                 <div className="p-2 rounded-lg bg-green-500/20">
                   <Settings2 className="h-5 w-5 text-green-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Deel 2: Mediabirds Dashboard - Pagina URL's</h3>
+                <h3 className="text-lg font-semibold text-white">Deel 2: Pagina URL's</h3>
               </div>
               <p className="text-sm text-white/60 -mt-2">Doel: De sitemap koppelen voor interne linkbuilding.</p>
               
