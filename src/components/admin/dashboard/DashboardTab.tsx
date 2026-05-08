@@ -55,13 +55,14 @@ export const DashboardTab = () => {
             colors={settings.impact_colors}
             onUpdate={updateImpactColors}
           />
-          <DashboardColorCustomizer 
-            colors={settings.dashboard_colors}
-            onUpdate={updateDashboardColors}
-            onReset={resetDashboardColors}
-          />
         </div>
       </div>
+
+      <DashboardColorCustomizer 
+        colors={settings.dashboard_colors}
+        onUpdate={updateDashboardColors}
+        onReset={resetDashboardColors}
+      />
     </div>
   );
 };
