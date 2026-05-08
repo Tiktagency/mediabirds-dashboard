@@ -34,8 +34,8 @@ const impactLabels: Record<ImpactLevel, string> = {
   low: 'Low',
 };
 
-const formatLastRun = (lastRun?: string | null): string => {
-  if (!lastRun) return 'Nooit';
+const formatLastRun = (lastRun?: string | null): string | null => {
+  if (!lastRun) return null;
   
   const date = new Date(lastRun);
   const now = new Date();
@@ -109,15 +109,17 @@ export const AutomationInfoTooltip = ({
               </p>
             </div>
 
-            {/* Laatste succesvol uitgevoerd */}
-            <div>
-              <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
-                Laatste succesvol uitgevoerd
-              </p>
-              <p className="text-sm text-white/80">
-                {formatLastRun(lastRun)}
-              </p>
-            </div>
+            {/* Laatste succesvol uitgevoerd - alleen tonen als er data is */}
+            {formatLastRun(lastRun) && (
+              <div>
+                <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-1">
+                  Laatste succesvol uitgevoerd
+                </p>
+                <p className="text-sm text-white/80">
+                  {formatLastRun(lastRun)}
+                </p>
+              </div>
+            )}
 
             {/* Impact Badge */}
             <div>
