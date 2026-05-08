@@ -205,7 +205,7 @@ const Landingspagina = () => {
         {selectedCompany ? (
           <>
           {/* Per-company Schedule Trigger */}
-          <div className="w-full max-w-2xl mb-3">
+          <div className="w-full max-w-2xl xl:max-w-4xl 2xl:max-w-5xl mb-3">
             <ScheduleTrigger
               companyId={selectedCompany.id}
               isAdmin={isAdmin}
@@ -216,7 +216,7 @@ const Landingspagina = () => {
               getNextTriggerDisplay={getNextTriggerDisplay}
             />
           </div>
-          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl xl:max-w-4xl 2xl:max-w-5xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
             <div className="flex-1 min-w-0 space-y-4">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3">

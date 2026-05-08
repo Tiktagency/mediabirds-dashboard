@@ -109,7 +109,7 @@ const EmailSignature = () => {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="w-full max-w-7xl space-y-6">
+          <div className="w-full max-w-7xl 2xl:max-w-[1600px] space-y-6">
             {/* Header above columns */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Mijn Handtekeningen</h2>

@@ -40,7 +40,7 @@ const AdminPanel = () => {
     <div className="min-h-screen hero-gradient">
       {/* Header */}
       <header className="w-full py-6 px-6 border-b border-border/20">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/">
               <Button variant="ghost" size="sm" className="text-foreground">
@@ -53,7 +53,7 @@ const AdminPanel = () => {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl 2xl:max-w-7xl mx-auto px-6 py-8">
         <AdminTabs />
       </div>
     </div>
