@@ -72,6 +72,7 @@ export const BlogGenerationForm = ({
     taal: '',
     extra_instructie: '',
     image_type: 'ai_image' as 'ai_image' | 'google_drive',
+    image_style: '' as '' | 'isometric_flat' | 'cinematic_3d' | 'brutalist_raw',
     achtergrond_kleur: '',
     hoofdaccent_gradient_1: '',
     hoofdaccent_gradient_2: '',
