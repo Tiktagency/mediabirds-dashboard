@@ -68,6 +68,7 @@ serve(async (req) => {
       company_id: companyId,
       google_sheet_id: toNull(hoofd['Spreadsheet ID']),
       google_slides_id: toNull(hoofd['Grid ID']),
+      bedrijfsnaam: companyName,
     };
     if (companyDomain && companyDomain.trim() !== '') {
       blogUpsertData.get_afbeelding_url = `https://${companyDomain}/wp-json/wp/v2/media`;
