@@ -370,7 +370,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Bedrijf toevoegen?</AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Weet je zeker dat je <strong className="text-white/80">{newCompanyName}</strong> wilt toevoegen?
+              Weet je zeker dat je <strong className="text-white/80">{newCompanyName}</strong> ({newCompanyDomain}) wilt toevoegen?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
