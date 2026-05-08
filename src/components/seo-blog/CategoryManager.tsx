@@ -40,11 +40,11 @@ export const CategoryManager = ({ companyId, isAdmin, onCategoryChange }: Catego
 
     setIsAdding(true);
     
-    // Create the formatted label and value
-    const formattedLabel = `${newLabel.trim()} (ID ${newId.trim()})`;
-    const formattedValue = `${newLabel.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}_${newId.trim()}`;
+    // Store label and ID separately for correct webhook format
+    const cleanLabel = newLabel.trim();
+    const formattedId = `(ID ${newId.trim()})`;
 
-    const result = await addCategory(formattedLabel, formattedValue);
+    const result = await addCategory(cleanLabel, formattedId);
     
     if (result.success) {
       toast.success('Categorie toegevoegd');
@@ -96,7 +96,9 @@ export const CategoryManager = ({ companyId, isAdmin, onCategoryChange }: Catego
               key={category.id}
               className="flex items-center justify-between gap-2 p-2 bg-white/5 rounded-md"
             >
-              <span className="text-sm text-foreground">{category.label}</span>
+              <span className="text-sm text-foreground">
+                {category.label} <span className="text-muted-foreground">{category.value}</span>
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
