@@ -301,6 +301,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient: formData.image_type === 'ai_image' 
           ? `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}` 
           : '',
+        image_style: formData.image_type === 'ai_image' ? formData.image_style : '',
         // Google Drive velden - alleen vullen als google_drive geselecteerd
         folder_id: formData.image_type === 'google_drive' ? formData.folder_id : '',
         used_folder_id: formData.image_type === 'google_drive' ? formData.used_folder_id : '',
