@@ -11,6 +11,7 @@ export interface BlogSettings {
   taal: string | null;
   achtergrond_kleur: string | null;
   hoofdaccent_gradient: string | null;
+  folder_id: string | null;
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
   status: string | null;
