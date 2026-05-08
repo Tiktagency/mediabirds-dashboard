@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,44 +6,32 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
-import { Bell, X, Pencil, Check, XCircle, Clock } from 'lucide-react';
-import { format } from 'date-fns';
-import { nl } from 'date-fns/locale';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Pencil, Check, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import CompanySelector, { Company } from '@/components/seo/CompanySelector';
+import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
 import { useBlogSchedule } from '@/hooks/useBlogSchedule';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
-interface Notification {
-  id: string;
-  message: string;
-  created_at: string;
-  status: 'success' | 'error';
+
+interface BlogGenerationFormProps {
+  selectedCompany: Company | null;
+  setSelectedCompany: (company: Company | null) => void;
+  isAdmin: boolean;
+  user: { id: string } | null;
+  saveNotification: (message: string, status: 'success' | 'error') => Promise<void>;
 }
 
 const FIXED_WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/491808f1-aaa2-44fb-88bf-50e0c16f17ac';
 
-const TAAL_OPTIONS = [
-  { value: 'Nederlands', label: 'Nederlands' },
-  { value: 'Engels', label: 'Engels' },
-  { value: 'Duits', label: 'Duits' },
-  { value: 'Frans', label: 'Frans' },
-  { value: 'Spaans', label: 'Spaans' },
-];
-
-const Blogs = () => {
-  const { toast, dismiss } = useToast();
-  const { isLoading: authLoading, user, isAdmin } = useAuth();
+export const BlogGenerationForm = ({
+  selectedCompany,
+  setSelectedCompany,
+  isAdmin,
+  user,
+  saveNotification,
+}: BlogGenerationFormProps) => {
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [lastReadTime, setLastReadTime] = useState<string | null>(
-    localStorage.getItem('notifications_last_read')
-  );
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -52,7 +40,7 @@ const Blogs = () => {
     bedrijfsnaam: '',
     bedrijfsomschrijving: '',
     schrijfstijl: '',
-    aantal_woorden: [500, 1500] as [number, number], // Range slider values
+    aantal_woorden: [500, 1500] as [number, number],
     taal: '',
     achtergrond_kleur: '',
     hoofdaccent_gradient_1: '',
@@ -60,6 +48,7 @@ const Blogs = () => {
     get_afbeelding_url: '',
     post_blog_url: '',
   });
+
   // Click outside handler to collapse expanded field
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -134,87 +123,6 @@ const Blogs = () => {
     setEditingField(null);
   }, [settings]);
 
-  // Load notifications from database
-  useEffect(() => {
-    if (!user) return;
-
-    const loadNotifications = async () => {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) {
-        console.error('Error loading notifications:', error);
-        return;
-      }
-
-      if (data) {
-        setNotifications(data as Notification[]);
-      }
-    };
-
-    loadNotifications();
-
-    const channel = supabase
-      .channel('notifications_channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev].slice(0, 20));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const unreadCount = notifications.filter(
-    n => !lastReadTime || new Date(n.created_at) > new Date(lastReadTime)
-  ).length;
-
-  const handlePanelToggle = () => {
-    if (!isPanelOpen) {
-      const now = new Date().toISOString();
-      setLastReadTime(now);
-      localStorage.setItem('notifications_last_read', now);
-      dismiss();
-    }
-    setIsPanelOpen(!isPanelOpen);
-  };
-
-  const saveNotification = async (message: string, status: 'success' | 'error') => {
-    if (!user) return;
-    
-    await supabase.from('notifications').insert({
-      message,
-      status,
-      user_id: user.id,
-    });
-  };
-
   const isFormComplete = () => {
     const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
     const imageFields = ['achtergrond_kleur', 'hoofdaccent_gradient_1', 'hoofdaccent_gradient_2'];
@@ -224,15 +132,12 @@ const Blogs = () => {
       if (!formData[field as keyof typeof formData]) return false;
     }
     
-    // Check range slider has valid values
     if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
     
-    // Image fields must be filled
     for (const field of imageFields) {
       if (!formData[field as keyof typeof formData]) return false;
     }
     
-    // Admin fields must also be filled (they're stored in DB by admin)
     for (const field of adminFields) {
       if (!formData[field as keyof typeof formData]) return false;
     }
@@ -241,22 +146,19 @@ const Blogs = () => {
   };
 
   const handleSaveField = async (field: string) => {
-    const updateData: any = {};
+    const updateData: Record<string, string | null> = {};
     
     if (field === 'aantal_woorden') {
-      // Convert array to string format "min-max"
       updateData[field] = `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`;
     } else if (field === 'hoofdaccent_gradient_1' || field === 'hoofdaccent_gradient_2') {
-      // Combine both gradient fields into single string for storage
       updateData['hoofdaccent_gradient'] = `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`;
     } else {
-      updateData[field] = formData[field as keyof typeof formData] || null;
+      updateData[field] = (formData[field as keyof typeof formData] as string) || null;
     }
 
     const result = await saveSettings(updateData);
     
     if (result.success) {
-      // If bedrijfsnaam was updated, also update the companies table
       if (field === 'bedrijfsnaam' && selectedCompany) {
         const { error: companyError } = await supabase
           .from('companies')
@@ -264,8 +166,7 @@ const Blogs = () => {
           .eq('id', selectedCompany.id);
         
         if (!companyError) {
-          // Update the selectedCompany state to reflect the new name
-          setSelectedCompany(prev => prev ? { ...prev, name: formData.bedrijfsnaam } : null);
+          setSelectedCompany({ ...selectedCompany, name: formData.bedrijfsnaam });
         }
       }
       
@@ -286,7 +187,6 @@ const Blogs = () => {
   };
 
   const handleCancelEdit = () => {
-    // Reset to saved values
     if (settings) {
       const [gradient1, gradient2] = parseGradientString(settings.hoofdaccent_gradient);
       setFormData({
@@ -387,7 +287,6 @@ const Blogs = () => {
     const canEdit = adminOnly ? isAdmin : true;
     const isTextField = type === 'text' || type === 'textarea';
 
-    // Auto-resize textarea when editing
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setFormData(prev => ({ ...prev, [field]: e.target.value }));
       e.target.style.height = 'auto';
@@ -404,7 +303,6 @@ const Blogs = () => {
         </div>
         
         {isEditing && canEdit ? (
-          // EDITING MODE
           <div className="flex gap-2 items-start">
             {type === 'textarea' ? (
               <Textarea
@@ -457,7 +355,6 @@ const Blogs = () => {
             </Button>
           </div>
         ) : isExpanded && isTextField ? (
-          // EXPANDED MODE - show all text + pencil inside
           <div className="expanded-field-container relative">
             <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
@@ -478,7 +375,6 @@ const Blogs = () => {
             )}
           </div>
         ) : (
-          // COLLAPSED MODE - fixed height, clickable to expand
           <div className="flex items-start gap-2">
             {isTextField ? (
               <div 
@@ -492,12 +388,10 @@ const Blogs = () => {
                 {value || <span className="text-white/40 italic">Niet ingesteld</span>}
               </div>
             ) : type === 'select' ? (
-              // Select dropdown - always editable, no expand/collapse
               <Select
                 value={value}
                 onValueChange={(val) => {
                   setFormData(prev => ({ ...prev, [field]: val }));
-                  // Auto-save on change
                   if (selectedCompany) {
                     saveSettings({ [field]: val });
                   }
@@ -516,7 +410,6 @@ const Blogs = () => {
                 </SelectContent>
               </Select>
             ) : (
-              // Text fields - clickable to expand
               <div 
                 className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors"
                 onClick={() => setExpandedField(field)}
@@ -591,207 +484,116 @@ const Blogs = () => {
     );
   };
 
-  return (
-    <div className="min-h-screen hero-gradient flex flex-col">
-      <div className="absolute top-6 left-6 z-10">
-        <Link to="/">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-          >
-            Dashboard
-          </Button>
-        </Link>
+  if (!selectedCompany) {
+    return (
+      <div className="text-white/50 text-center py-8">
+        <p>Selecteer een bedrijf rechtsboven om te beginnen...</p>
       </div>
+    );
+  }
 
-      <div className="absolute top-6 right-6 z-10 flex items-center gap-3">
-        <CompanySelector 
-          selectedCompany={selectedCompany} 
-          onCompanyChange={setSelectedCompany} 
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20 relative"
-          onClick={handlePanelToggle}
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </Button>
+  if (settingsLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-white/60">Instellingen laden...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {renderField('Bedrijfsnaam', 'bedrijfsnaam')}
+      {renderField('Bedrijfsomschrijving', 'bedrijfsomschrijving', 'textarea')}
+      {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
+      {renderRangeField()}
+      {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
+      
+      {/* Afbeelding section */}
+      <div className="pt-6 border-t border-white/10 space-y-4">
+        <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
+          </div>
+          <div 
+            className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+            style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+              </div>
+              <div 
+                className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
+              />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+              </div>
+              <div 
+                className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div className="flex-1 flex flex-col items-center pt-24 pb-12 px-6 overflow-y-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-white">
-          Blogs
-        </h1>
+      {/* Admin-only fields */}
+      <div className="pt-6 border-t border-white/10 space-y-6">
+        <p className="text-sm text-yellow-400/80">Admin instellingen</p>
+        {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
+        {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
+      </div>
 
-        {!selectedCompany ? (
-          <p className="text-white/50 text-center">
-            Selecteer een bedrijf rechtsboven om te beginnen...
+      <ScheduleTrigger
+        companyId={selectedCompany?.id || null}
+        isAdmin={isAdmin}
+        schedule={blogSchedule}
+        isLoading={scheduleLoading}
+        isSaving={scheduleSaving}
+        updateSchedule={updateSchedule}
+        getNextTriggerDisplay={getNextTriggerDisplay}
+      />
+
+      <div className="pt-6">
+        {isSubmitting && (
+          <p className="text-center text-white/80 text-sm mb-4">
+            Dit kan enkele minuten duren, even geduld...
           </p>
-        ) : settingsLoading ? (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-            <p className="mt-4 text-white/60">Instellingen laden...</p>
-          </div>
-        ) : (
-          <div className="w-full max-w-2xl space-y-6">
-            {/* Regular fields */}
-            {renderField('Bedrijfsnaam', 'bedrijfsnaam')}
-            {renderField('Bedrijfsomschrijving', 'bedrijfsomschrijving', 'textarea')}
-            {renderField('Schrijfstijl', 'schrijfstijl', 'textarea')}
-            {renderRangeField()}
-            {renderField('Taal', 'taal', 'select', ['Nederlands', 'Engels', 'Duits', 'Frans'])}
-            
-            {/* Afbeelding section - accessible to all users */}
-            <div className="pt-6 border-t border-white/10 space-y-4">
-              <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
-                </div>
-                <div 
-                  className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                  style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
-                    </div>
-                    <div 
-                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                      style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
-                    />
-                  </div>
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
-                    </div>
-                    <div 
-                      className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                      style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Admin-only fields - visible to all, editable by admins only */}
-            <div className="pt-6 border-t border-white/10 space-y-6">
-              <p className="text-sm text-yellow-400/80">Admin instellingen</p>
-              {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
-              {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
-            </div>
-
-            {/* Automatic Trigger Section */}
-            <ScheduleTrigger
-              companyId={selectedCompany?.id || null}
-              isAdmin={isAdmin}
-              schedule={blogSchedule}
-              isLoading={scheduleLoading}
-              isSaving={scheduleSaving}
-              updateSchedule={updateSchedule}
-              getNextTriggerDisplay={getNextTriggerDisplay}
-            />
-
-            {/* Start button */}
-            <div className="pt-6">
-              {isSubmitting && (
-                <p className="text-center text-white/80 text-sm mb-4">
-                  Dit kan enkele minuten duren, even geduld...
-                </p>
-              )}
-              
-              <Button 
-                size="lg" 
-                className="w-full py-6 text-lg h-auto"
-                onClick={handleStartClick}
-                disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
-              >
-                {isScheduleEnabled ? (
-                  <>
-                    <Clock className="h-5 w-5 mr-2" />
-                    Automatische trigger actief
-                  </>
-                ) : isSubmitting ? 'Bezig...' : (
-                  <>
-                    Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
-                  </>
-                )}
-              </Button>
-              
-              {!isFormComplete() && !isScheduleEnabled && (
-                <p className="text-center text-white/50 text-sm mt-2">
-                  Alle velden moeten ingevuld zijn om te starten
-                </p>
-              )}
-            </div>
-          </div>
+        )}
+        
+        <Button 
+          size="lg" 
+          className="w-full py-6 text-lg h-auto"
+          onClick={handleStartClick}
+          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+        >
+          {isScheduleEnabled ? (
+            <>
+              <Clock className="h-5 w-5 mr-2" />
+              Automatische trigger actief
+            </>
+          ) : isSubmitting ? 'Bezig...' : (
+            <>
+              Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
+            </>
+          )}
+        </Button>
+        
+        {!isFormComplete() && !isScheduleEnabled && (
+          <p className="text-center text-white/50 text-sm mt-2">
+            Alle velden moeten ingevuld zijn om te starten
+          </p>
         )}
       </div>
-
-      {/* Notification Panel */}
-      <div
-        className={`fixed top-0 right-0 h-full w-96 bg-background border-l shadow-lg transform transition-transform duration-300 z-50 ${
-          isPanelOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Meldingen</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsPanelOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-64px)]">
-          <div className="p-4 space-y-3">
-            {notifications.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                Geen meldingen
-              </p>
-            ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-3 rounded-lg border ${
-                    notification.status === 'success'
-                      ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900'
-                      : 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900'
-                  }`}
-                >
-                  <p className="text-sm mb-2 text-gray-900 dark:text-gray-100">{notification.message}</p>
-                  <p className="text-xs text-gray-700 dark:text-gray-300">
-                    {format(new Date(notification.created_at), 'dd-MM-yyyy HH:mm', { locale: nl })}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Overlay when panel is open */}
-      {isPanelOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={() => setIsPanelOpen(false)}
-        />
-      )}
     </div>
   );
 };
-
-export default Blogs;

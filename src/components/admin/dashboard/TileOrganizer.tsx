@@ -50,8 +50,7 @@ const statusColors = {
 const tileConfig: Record<string, { icon: LucideIcon; variant: 'primary' | 'secondary' | 'accent' | 'muted' }> = {
   'saved-hours': { icon: Clock, variant: 'primary' },
   'monday-planning': { icon: CalendarDays, variant: 'primary' },
-  'zoekwoord-onderzoek': { icon: Search, variant: 'secondary' },
-  'blogs': { icon: FileText, variant: 'accent' },
+  'seo-blog': { icon: FileText, variant: 'accent' },
   'wordpress-alt-text': { icon: Image, variant: 'primary' },
   'chatbot': { icon: MessageCircle, variant: 'secondary' },
 };
