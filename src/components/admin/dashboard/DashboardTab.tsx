@@ -2,6 +2,7 @@ import { useDashboardSettings } from '@/hooks/useDashboardSettings';
 import { useAutomationSettings } from '@/hooks/useAutomationSettings';
 import { TileOrganizer } from './TileOrganizer';
 import { ColorCustomizer } from './ColorCustomizer';
+import { DashboardColorCustomizer } from './DashboardColorCustomizer';
 import { ThemeSwitch } from './ThemeSwitch';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -12,7 +13,9 @@ export const DashboardTab = () => {
     updateTileOrder, 
     updateCustomLabel,
     updateImpactColors, 
-    updateTheme 
+    updateTheme,
+    updateDashboardColors,
+    resetDashboardColors
   } = useDashboardSettings();
   const { settings: automations } = useAutomationSettings();
 
@@ -51,6 +54,11 @@ export const DashboardTab = () => {
           <ColorCustomizer 
             colors={settings.impact_colors}
             onUpdate={updateImpactColors}
+          />
+          <DashboardColorCustomizer 
+            colors={settings.dashboard_colors}
+            onUpdate={updateDashboardColors}
+            onReset={resetDashboardColors}
           />
         </div>
       </div>
