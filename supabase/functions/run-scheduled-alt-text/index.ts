@@ -59,6 +59,38 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Claim the schedule immediately (optimistic lock) to prevent parallel cron runs from processing twice
+    const claimedNextTrigger = calculateNextTrigger(
+      schedule.interval_value,
+      schedule.interval_unit,
+      schedule.next_trigger_at
+    );
+
+    const { count: claimCount, error: claimError } = await supabase
+      .from('alt_text_schedules')
+      .update({
+        last_triggered_at: new Date().toISOString(),
+        next_trigger_at: claimedNextTrigger.toISOString(),
+      })
+      .eq('id', schedule.id)
+      .eq('next_trigger_at', schedule.next_trigger_at) // optimistic lock
+      .select('id', { count: 'exact', head: true });
+
+    if (claimError) {
+      console.error('[run-scheduled-alt-text] Error claiming schedule:', claimError);
+      throw claimError;
+    }
+
+    if (claimCount === 0) {
+      console.log('[run-scheduled-alt-text] Schedule already claimed by another instance, stopping');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Already claimed by another instance', processed: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`[run-scheduled-alt-text] Schedule claimed, next trigger: ${claimedNextTrigger.toISOString()}`);
+
     // Fetch ALL alt text companies sorted by created_at ASC for round-robin
     const { data: companies, error: companiesError } = await supabase
       .from('alt_text_companies')
@@ -81,7 +113,7 @@ Deno.serve(async (req) => {
     // Process ALL companies sequentially
     const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN');
     const results: { company: string; success: boolean; error?: string }[] = [];
-    let lastCompanyId = companies[companies.length - 1].id;
+    const lastCompanyId = companies[companies.length - 1].id;
 
     for (const company of companies) {
       console.log(`[run-scheduled-alt-text] Processing ${company.name} (${company.id})`);
@@ -114,27 +146,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update schedule after processing all companies
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
-    console.log(`[run-scheduled-alt-text] Done: ${successCount} succeeded, ${failCount} failed`);
-
-    const nextTrigger = calculateNextTrigger(
-      schedule.interval_value,
-      schedule.interval_unit,
-      schedule.next_trigger_at
-    );
-
+    // Update last_processed_company_id (schedule timestamps were already advanced at claim time)
     await supabase
       .from('alt_text_schedules')
-      .update({
-        last_triggered_at: new Date().toISOString(),
-        next_trigger_at: nextTrigger.toISOString(),
-        last_processed_company_id: lastCompanyId,
-      })
+      .update({ last_processed_company_id: lastCompanyId })
       .eq('id', schedule.id);
 
-    console.log(`[run-scheduled-alt-text] Schedule advanced to ${nextTrigger.toISOString()}`);
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    console.log(`[run-scheduled-alt-text] Done: ${successCount} succeeded, ${failCount} failed. Next trigger: ${claimedNextTrigger.toISOString()}`);
 
     return new Response(
       JSON.stringify({ success: true, processed: results.length, successCount, failCount, results }),
