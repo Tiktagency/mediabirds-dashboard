@@ -1,40 +1,34 @@
 
 
-## Nieuwe dashboard tile: "Landingspagina"
+## Click-to-edit patroon toepassen op Pagina URL formulier
+
+### Huidige situatie
+- **KeywordResearchForm**: Gebruikt al het click-to-edit patroon (tekst weergeven, klik om te bewerken, auto-save bij blur)
+- **BlogGenerationForm**: Gebruikt al het click-to-edit patroon via `renderField()`
+- **PageUrlForm**: Gebruikt gewone `<Input>` velden die altijd bewerkbaar zijn - dit wijkt af van het patroon in de andere formulieren
 
 ### Wat verandert er
-Er wordt een nieuwe tile "Landingspagina" toegevoegd aan het dashboard. Deze tile volgt exact hetzelfde patroon als de bestaande tiles (zoals "Copyright Branding" en "Email Handtekening").
+De velden in **PageUrlForm** worden omgezet naar hetzelfde click-to-edit patroon:
+- Velden tonen standaard als leesbare tekst
+- Klikken op het veld activeert de bewerkingsmodus
+- Wijzigingen worden automatisch opgeslagen bij het verlaten van het veld (blur)
 
-### Wijzigingen per bestand
+### Velden die aangepast worden
 
-**1. Nieuwe pagina: `src/pages/Landingspagina.tsx`**
-- Lege placeholder pagina aanmaken met een titel en terugknop, in dezelfde stijl als de andere pagina's.
+**PageUrlForm:**
+1. **Bedrijfsnaam** - Blijft read-only met gradient border (geen wijziging nodig, dit veld komt uit het geselecteerde bedrijf)
+2. **Pagina URL velden** - Omzetten van altijd-bewerkbare Input naar click-to-edit: tekst weergeven, klikken opent Input, blur slaat op
+3. **Spreadsheet ID** (admin) - Omzetten naar click-to-edit
+4. **Grid ID** (admin) - Omzetten naar click-to-edit
 
-**2. `src/App.tsx`**
-- Nieuwe route `/landingspagina` toevoegen.
+### Technische aanpak
 
-**3. `src/pages/Index.tsx`**
-- Entry toevoegen aan `tileConfigMap`:
-  ```
-  'landingspagina': {
-    to: '/landingspagina',
-    icon: FileText (of ander passend icoon),
-    variant: 'primary',
-    statusKey: 'landingspagina',
-  }
-  ```
+**`src/components/seo-blog/PageUrlForm.tsx`:**
+- `editingField` state toevoegen (zoals in de andere formulieren)
+- Een `renderInputField()` helperfunctie maken die het click-to-edit patroon implementeert:
+  - Niet-bewerkingsmodus: toont waarde als tekst in een `<div>` met hover-effect
+  - Bewerkingsmodus: toont een `<Input>` met autoFocus en onBlur voor auto-save
+- URL-velden aanpassen: elk URL-veld krijgt een unieke key (bijv. `url_0`, `url_1`) voor de editingField state
+- Spreadsheet ID en Grid ID velden omzetten naar het click-to-edit patroon
+- Pencil-icoon niet apart tonen - klik op het veld opent direct de bewerkingsmodus (consistent met BlogGenerationForm)
 
-**4. `src/components/admin/dashboard/TileOrganizer.tsx`**
-- Entry toevoegen aan `tileConfig`:
-  ```
-  'landingspagina': { icon: FileText, variant: 'primary' }
-  ```
-
-**5. `src/hooks/useDashboardSettings.ts`**
-- `'landingspagina'` toevoegen aan de `DEFAULT_SETTINGS.tile_order` array.
-
-**6. Database: `automation_settings` tabel**
-- Nieuw record invoegen met `automation_name: 'landingspagina'` en `display_name: 'Landingspagina'` zodat de tile correct wordt weergegeven op het dashboard en in het admin panel.
-
-### Resultaat
-Na deze wijzigingen verschijnt de "Landingspagina" tile op het dashboard (standaard op de 8e positie), is hij versleepbaar in de Tile Organizer, en navigeert hij naar een eigen pagina.
