@@ -401,7 +401,7 @@ const SeoBlog = () => {
       <Sheet open={isGuideOpen} onOpenChange={setIsGuideOpen}>
         <SheetContent className="w-[500px] sm:max-w-[500px] bg-card border-border overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-white text-xl">SEO & Blog Automatisering</SheetTitle>
+            <SheetTitle className="text-white text-xl">SEO blog handleiding</SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-8 text-white/80 pb-8">
             {/* Intro */}
