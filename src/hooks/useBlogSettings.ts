@@ -1,0 +1,105 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface BlogSettings {
+  id: string;
+  company_id: string;
+  bedrijfsnaam: string | null;
+  bedrijfsomschrijving: string | null;
+  schrijfstijl: string | null;
+  aantal_woorden: number | null;
+  taal: string | null;
+  afbeelding_prompt: string | null;
+  get_afbeelding_url: string | null;
+  post_blog_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useBlogSettings = (companyId: string | null) => {
+  const [settings, setSettings] = useState<BlogSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!companyId) {
+      setSettings(null);
+      return;
+    }
+
+    const fetchSettings = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('blog_settings')
+        .select('*')
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching blog settings:', fetchError);
+        setError(fetchError.message);
+      } else {
+        setSettings(data as BlogSettings | null);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchSettings();
+  }, [companyId]);
+
+  const saveSettings = async (newSettings: Partial<Omit<BlogSettings, 'id' | 'created_at' | 'updated_at'>>) => {
+    if (!companyId) return { success: false, error: 'No company selected' };
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (settings?.id) {
+        // Update existing
+        const { data, error: updateError } = await supabase
+          .from('blog_settings')
+          .update({
+            ...newSettings,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', settings.id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+        setSettings(data as BlogSettings);
+      } else {
+        // Insert new
+        const { data, error: insertError } = await supabase
+          .from('blog_settings')
+          .insert({
+            company_id: companyId,
+            ...newSettings,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setSettings(data as BlogSettings);
+      }
+
+      setIsLoading(false);
+      return { success: true, error: null };
+    } catch (err: any) {
+      console.error('Error saving blog settings:', err);
+      setError(err.message);
+      setIsLoading(false);
+      return { success: false, error: err.message };
+    }
+  };
+
+  return {
+    settings,
+    isLoading,
+    error,
+    saveSettings,
+  };
+};
