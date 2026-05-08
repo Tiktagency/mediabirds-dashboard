@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { CompleteProfileModal } from '@/components/CompleteProfileModal';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -16,6 +17,8 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -111,7 +114,20 @@ const Login = () => {
           title: "Inloggen gelukt",
           description: `Welkom terug! (${roleNames})`,
         });
-        navigate('/');
+
+        // Check if profile is complete
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', data.session.user.id)
+          .single();
+
+        if (!profile?.first_name || !profile?.last_name) {
+          setLoggedInUserId(data.session.user.id);
+          setShowCompleteProfile(true);
+        } else {
+          navigate('/');
+        }
       }
     } catch (error) {
       toast({
@@ -178,6 +194,17 @@ const Login = () => {
           Geen account? Neem contact op met een admin om toegang te krijgen.
         </p>
       </div>
+
+      {loggedInUserId && (
+        <CompleteProfileModal
+          open={showCompleteProfile}
+          userId={loggedInUserId}
+          onCompleted={() => {
+            setShowCompleteProfile(false);
+            navigate('/');
+          }}
+        />
+      )}
     </div>
   );
 };
