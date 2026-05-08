@@ -1,53 +1,32 @@
 
-## Nieuw veld "Pagina url" toevoegen
+## Alle velden verplicht + layout omhoog schuiven
 
-### Wat verandert er
+### Wijzigingen
 
-Er komt een nieuw invulveld "Pagina url" onder het Grid ID veld, met een info-icoon dat bij hover de tekst toont: "De pagina die je wilt gebruiken in de nieuwe context".
+**1. Pagina url ook verplicht maken voor de Start-knop (regel 287)**
 
-### Stappen
+Voeg `!editPageUrl.trim()` toe aan de `disabled` conditie van de Start-knop.
 
-1. **Database**: Een nieuwe kolom `page_url` (text, nullable) toevoegen aan de `landing_companies` tabel.
+**2. Validatie in handleStart bijwerken (regel 82)**
 
-2. **Frontend (`src/pages/Landingspagina.tsx`)**:
-   - Nieuwe state: `const [editPageUrl, setEditPageUrl] = useState('')`
-   - In het `useEffect` bij bedrijfsselectie: `setEditPageUrl(selectedCompany?.page_url || '')`
-   - `handleFieldSave` uitbreiden met `'page_url'` als optie
-   - Nieuw veld toevoegen na Grid ID, met hetzelfde drie-stappen klik-patroon (`renderEditableField`)
-   - Label "Pagina url:" met een `Info` tooltip: "De pagina die je wilt gebruiken in de nieuwe context"
-   - Het veld is **niet** verplicht voor de Start-knop (tenzij gewenst)
+Voeg `editPageUrl` toe aan de check zodat ook een toast verschijnt als het veld leeg is.
 
-3. **Webhook payload**: `page_url` meesturen in de body van `trigger-landing-webhook`
+**3. Layout omhoog schuiven -- geen scroll nodig**
+
+- **Regel 179**: `pt-32` verkleinen naar `pt-20` (minder ruimte boven de titel)
+- **Regel 181**: `mb-6` verkleinen naar `mb-3` (minder ruimte onder de beschrijving)
+- **Regel 186**: `mb-6` verkleinen naar `mb-3` (minder ruimte onder de ScheduleTrigger)
+- **Regel 202**: `p-6` verkleinen naar `p-4` en `space-y-4` naar `space-y-3` (compactere card)
+- **Regel 199**: `gap-6` verkleinen naar `gap-4` (minder ruimte tussen kolommen)
 
 ### Technische details
 
-**Database migratie:**
-```sql
-ALTER TABLE landing_companies ADD COLUMN page_url text;
-```
-
-**Nieuw veld in JSX (na Grid ID):**
-```tsx
-<div className="space-y-2">
-  <div className="flex items-center gap-1.5">
-    <Label className="text-white/70">Pagina url:</Label>
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-3">
-          <p className="text-sm text-white/80">De pagina die je wilt gebruiken in de nieuwe context</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  </div>
-  {renderEditableField('page_url', editPageUrl, setEditPageUrl, 
-    () => handleFieldSave('page_url', editPageUrl), 'Voer pagina url in...')}
-</div>
-```
-
-| Bestand | Wijziging |
-|---|---|
-| Database migratie | Kolom `page_url` toevoegen aan `landing_companies` |
-| `src/pages/Landingspagina.tsx` | State, useEffect, save-handler, veld met tooltip, webhook payload |
+| Bestand | Regel | Wijziging |
+|---|---|---|
+| `src/pages/Landingspagina.tsx` | 82 | `editPageUrl.trim()` toevoegen aan validatie |
+| `src/pages/Landingspagina.tsx` | 287 | `!editPageUrl.trim()` toevoegen aan `disabled` |
+| `src/pages/Landingspagina.tsx` | 179 | `pt-32` → `pt-20` |
+| `src/pages/Landingspagina.tsx` | 181 | `mb-6` → `mb-3` |
+| `src/pages/Landingspagina.tsx` | 186 | `mb-6` → `mb-3` |
+| `src/pages/Landingspagina.tsx` | 199 | `gap-6` → `gap-4` |
+| `src/pages/Landingspagina.tsx` | 202 | `p-6 space-y-4` → `p-4 space-y-3` |
