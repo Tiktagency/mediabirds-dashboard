@@ -175,15 +175,33 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
 
       if (error) throw error;
 
-      // Fire-and-forget webhook call
-      supabase.functions.invoke('trigger-add-company-webhook', {
-        body: { companyName: newCompanyName.trim() },
-      }).catch((err) => console.error('Webhook call failed:', err));
+      // Await webhook call to save Google Doc IDs
+      try {
+        const { data: webhookResult, error: webhookError } = await supabase.functions.invoke('trigger-add-company-webhook', {
+          body: { companyName: newCompanyName.trim(), companyId: data.id },
+        });
 
-      toast({
-        title: 'Bedrijf toegevoegd',
-        description: `${newCompanyName} is succesvol aangemaakt`,
-      });
+        if (webhookError || !webhookResult?.success) {
+          console.error('Webhook call failed:', webhookError || webhookResult?.errors);
+          toast({
+            title: 'Bedrijf toegevoegd',
+            description: `${newCompanyName} is aangemaakt, maar de documenten konden niet automatisch worden ingevuld. Vul ze handmatig in.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Bedrijf toegevoegd',
+            description: `${newCompanyName} is succesvol aangemaakt en de documenten zijn automatisch ingevuld`,
+          });
+        }
+      } catch (webhookErr) {
+        console.error('Webhook call failed:', webhookErr);
+        toast({
+          title: 'Bedrijf toegevoegd',
+          description: `${newCompanyName} is aangemaakt, maar de documenten konden niet automatisch worden ingevuld.`,
+          variant: 'destructive',
+        });
+      }
 
       // Reset form and close dialog
       setNewCompanyName('');
