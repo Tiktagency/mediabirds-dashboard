@@ -43,7 +43,7 @@ const AltTextAnimation = ({ isAnimating, onAnimationComplete }: AltTextAnimation
   }, [isAnimating, filledFields.length]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 w-full">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 w-full h-full">
       <div className="space-y-3">
         {FIELDS.map((field) => {
           const isFilled = filledFields.includes(field.key);

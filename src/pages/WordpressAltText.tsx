@@ -72,7 +72,16 @@ const WordpressAltText = () => {
         body: { bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain },
       });
       if (error) throw error;
-      toast({ title: 'Gestart', description: 'Alt-tekst verwerking is gestart' });
+
+      let message = 'Alt-tekst verwerking is gestart';
+      try {
+        const parsed = JSON.parse(data?.data || '{}');
+        message = parsed.message || parsed.Output || data?.data || message;
+      } catch {
+        message = data?.data || message;
+      }
+
+      toast({ title: 'Gestart', description: message, duration: 5000 });
     } catch (error) {
       console.error('Error triggering alt text webhook:', error);
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
@@ -159,7 +168,7 @@ const WordpressAltText = () => {
         </div>
 
         {selectedCompany ? (
-          <div className="flex flex-col lg:flex-row gap-6 max-w-2xl w-full items-start">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Start button */}
             <div className="flex-1 w-full space-y-4">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
