@@ -285,7 +285,7 @@ export const KeywordResearchForm = ({
               className="text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
               onClick={() => handleSaveField(field)}
             >
-              <Check className="h-4 w-4" />
+              <Check className="h-6 w-6" />
             </Button>
             <Button
               size="icon"
@@ -293,7 +293,7 @@ export const KeywordResearchForm = ({
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
               onClick={handleCancelEdit}
             >
-              <XCircle className="h-4 w-4" />
+              <XCircle className="h-6 w-6" />
             </Button>
           </div>
         ) : (
