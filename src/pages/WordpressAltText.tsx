@@ -93,6 +93,7 @@ const WordpressAltText = () => {
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
     } finally {
       setIsStarting(false);
+      setIsAnimating(false);
     }
   };
 
