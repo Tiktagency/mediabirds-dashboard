@@ -82,69 +82,73 @@ serve(async (req) => {
       footer_achtergrond: footer_achtergrond || '#1A2B5E',
       footer_tekst_kleur: footer_tekst_kleur || '#E8EDF7',
       user_id: user.id,
+      settings_id: settingsId || null,
     };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000);
-
-    let webhookResponse: Response;
-    try {
-      webhookResponse = await fetch(NEWSLETTER_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { 'Authorization': authToken } : {}),
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    if (!webhookResponse.ok) {
-      const errorText = await webhookResponse.text();
-      console.error('Webhook error:', errorText);
-      return new Response(JSON.stringify({ error: `Webhook fout: ${webhookResponse.status}`, details: errorText }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const responseText = await webhookResponse.text();
-    let generatedHtml: string | null = null;
-    let message: string | null = null;
-    let responseData: Record<string, unknown> = {};
-
-    try {
-      responseData = JSON.parse(responseText);
-      generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
-      message = (responseData?.message || responseData?.Output) as string | null;
-    } catch {
-      const trimmed = responseText.trim();
-      if (trimmed.startsWith('<')) {
-        generatedHtml = trimmed;
-      } else {
-        message = trimmed;
-      }
-    }
-
-    if (generatedHtml && settingsId) {
+    // Clear any existing generated_html to signal "processing"
+    if (settingsId) {
       await supabase
-        .from('newsletter_settings')
-        .update({ generated_html: generatedHtml })
-        .eq('id', settingsId)
-        .eq('user_id', user.id);
+        .from('newsletter_companies')
+        .update({ generated_html: null })
+        .eq('id', settingsId);
     }
 
-    return new Response(JSON.stringify({ success: true, html: generatedHtml, message, data: responseData }), {
+    // Fire and forget — do NOT await the webhook response
+    // n8n will call back by saving to the DB via another mechanism,
+    // or we handle the response async via EdgeRuntime.waitUntil
+    const webhookPromise = fetch(NEWSLETTER_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': authToken } : {}),
+      },
+      body: JSON.stringify(payload),
+    }).then(async (webhookResponse) => {
+      if (!webhookResponse.ok) {
+        const errorText = await webhookResponse.text();
+        console.error('Webhook error:', webhookResponse.status, errorText.substring(0, 200));
+        return;
+      }
+
+      const responseText = await webhookResponse.text();
+      let generatedHtml: string | null = null;
+
+      try {
+        const responseData = JSON.parse(responseText);
+        generatedHtml = (responseData?.html || responseData?.generated_html || responseData?.content) as string | null;
+      } catch {
+        const trimmed = responseText.trim();
+        if (trimmed.startsWith('<')) {
+          generatedHtml = trimmed;
+        }
+      }
+
+      if (generatedHtml && settingsId) {
+        await supabase
+          .from('newsletter_companies')
+          .update({ generated_html: generatedHtml })
+          .eq('id', settingsId);
+        console.log('Newsletter HTML saved to DB for settingsId:', settingsId);
+      }
+    }).catch((err) => {
+      console.error('Webhook fetch error:', err?.message || err);
+    });
+
+    // Use waitUntil so the background work continues after we return
+    // @ts-ignore
+    if (typeof EdgeRuntime !== 'undefined') {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(webhookPromise);
+    }
+
+    // Return immediately — client will poll for the result
+    return new Response(JSON.stringify({ success: true, status: 'processing' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error:', error);
-    const isTimeout = error instanceof Error && error.name === 'AbortError';
-    return new Response(JSON.stringify({ error: isTimeout ? 'Timeout: nieuwsbrief genereren duurde te lang' : 'Interne serverfout' }), {
+    return new Response(JSON.stringify({ error: 'Interne serverfout' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
