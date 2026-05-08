@@ -1,0 +1,1 @@
+ALTER TABLE alt_text_schedules ADD COLUMN last_processed_company_id UUID;

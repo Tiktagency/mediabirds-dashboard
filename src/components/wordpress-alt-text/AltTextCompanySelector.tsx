@@ -164,7 +164,9 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
 
       await fetchCompanies();
       if (data) {
-        setSelectedCompany(data as AltTextCompany);
+        const newCompany = data as AltTextCompany;
+        setSelectedCompany(newCompany);
+        onSelect?.(newCompany);
       }
     } catch (error) {
       console.error('Error adding company:', error);
