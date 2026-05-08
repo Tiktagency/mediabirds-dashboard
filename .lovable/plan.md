@@ -1,132 +1,99 @@
 
-# Plan: Dashboard Tile Kleuren Aanpasbaar Maken
+
+# Plan: Reset Knop en Layout Aanpassing Tile Kleuren
 
 ## Overzicht
 
-Twee nieuwe kleuren toevoegen aan de dashboard instellingen die de admin kan aanpassen:
-
-| Kleur | Standaard waarde | Beschrijving |
-|-------|------------------|--------------|
-| Tile Achtergrond | `#cfddd0` | De achtergrondkleur van dashboard tiles (sage groen) |
-| Tile Tekst | `#002C1F` | De tekstkleur binnen de dashboard tiles (donker groen) |
+1. **Reset knop toevoegen** aan de TileColorCustomizer om terug te keren naar standaard kleuren
+2. **Layout herschikken** zodat Tile Kleuren direct rechts van Tile Volgorde staat
+3. **Thema component verplaatsen** naar een andere locatie in de rechterkolom
 
 ---
 
-## Wat wordt aangepast
+## Huidige Layout
 
-### Bestanden die aangepast worden:
+```text
++------------------------+------------------------+
+|                        |  ThemeSwitch           |
+|  TileOrganizer         |  TileColorCustomizer   |
+|  (Tile Volgorde)       |  ColorCustomizer       |
+|                        |  (Impact Kleuren)      |
++------------------------+------------------------+
+```
 
-1. **`src/hooks/useDashboardSettings.ts`** - Nieuwe kleuren toevoegen aan de interface en defaults
-2. **`src/components/admin/dashboard/TileColorCustomizer.tsx`** - Nieuw component voor het aanpassen van tile kleuren
-3. **`src/components/admin/dashboard/DashboardTab.tsx`** - Het nieuwe component toevoegen
-4. **`src/components/dashboard/DashboardButton.tsx`** - Dynamische kleuren ontvangen en toepassen
-5. **`src/components/dashboard/SavedHoursTile.tsx`** - Dynamische kleuren ontvangen en toepassen
-6. **`src/components/dashboard/AutomationInfoTooltip.tsx`** - Dynamische tekstkleur toepassen
-7. **`src/components/admin/dashboard/TileOrganizer.tsx`** - Preview met dynamische kleuren
-8. **`src/pages/Index.tsx`** - Kleuren doorgeven aan dashboard componenten
+## Nieuwe Layout
+
+```text
++------------------------+------------------------+
+|  TileOrganizer         |  TileColorCustomizer   |
+|  (Tile Volgorde)       |  (met Reset knop)      |
++------------------------+------------------------+
+|  ThemeSwitch           |  ColorCustomizer       |
+|                        |  (Impact Kleuren)      |
++------------------------+------------------------+
+```
+
+---
+
+## Bestanden die worden aangepast
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/components/admin/dashboard/TileColorCustomizer.tsx` | Reset knop toevoegen |
+| `src/components/admin/dashboard/DashboardTab.tsx` | Layout herschikken |
 
 ---
 
 ## Technische Details
 
-### 1. Interface en Hook Uitbreiden
+### 1. TileColorCustomizer - Reset Knop
 
-```typescript
-// useDashboardSettings.ts
-export interface DashboardSettings {
-  // ... bestaande velden
-  tile_colors: {
-    background: string;  // Standaard: #cfddd0
-    text: string;        // Standaard: #002C1F
-  };
+Een reset knop toevoegen die de kleuren terugzet naar de standaard waarden:
+- **Achtergrond**: `#cfddd0`
+- **Tekst**: `#002C1F`
+
+De reset knop komt onderaan de card, onder de kleur pickers. Bij klikken worden beide kleuren tegelijk gereset.
+
+```tsx
+// Nieuwe prop voor reset functionaliteit
+interface TileColorCustomizerProps {
+  colors: TileColors;
+  onUpdate: (colors: { background?: string; text?: string }) => Promise<void>;
+  onReset: () => Promise<void>;  // Nieuwe prop
 }
-
-const DEFAULT_SETTINGS = {
-  // ... bestaande defaults
-  tile_colors: {
-    background: '#cfddd0',
-    text: '#002C1F',
-  },
-};
 ```
 
-Nieuwe functie toevoegen:
-```typescript
-const updateTileColors = async (colors: { background?: string; text?: string }) => {
-  const newColors = { ...settings?.tile_colors, ...colors };
-  await updateSettings({ tile_colors: newColors });
-};
-```
+De reset knop krijgt een `RotateCcw` icoon en de tekst "Reset naar standaard".
 
-### 2. Nieuw TileColorCustomizer Component
+### 2. DashboardTab - Layout Herschikking
 
-Vergelijkbaar met de bestaande `ColorCustomizer` maar specifiek voor tile kleuren:
+De grid layout wordt aangepast van een 2-koloms layout naar een meer gestructureerde opzet:
+
+**Eerste rij (2 kolommen):**
+- Links: TileOrganizer (Tile volgorde)
+- Rechts: TileColorCustomizer (Tile kleuren met reset)
+
+**Tweede rij (2 kolommen):**
+- Links: ThemeSwitch (Thema)
+- Rechts: ColorCustomizer (Impact kleuren)
+
+---
+
+## Visueel Ontwerp Reset Knop
 
 ```text
 +----------------------------------------------+
 |  Tile Kleuren                                |
 |  Pas de kleuren aan van je dashboard tiles.  |
 |----------------------------------------------|
-|  Achtergrond                                 |
-|  [🎨] [#cfddd0    ] [████ Preview]           |
+|  Preview: [Mini tile preview]                |
 |                                              |
-|  Tekst                                       |
-|  [🎨] [#002C1F    ] [████ Preview]           |
+|  Achtergrond: [🎨] [#cfddd0] [██]            |
+|  Tekst:       [🎨] [#002C1F] [██]            |
+|                                              |
+|  [↺ Reset naar standaard]                    |
 +----------------------------------------------+
 ```
 
-Preview toont een mini tile met de geselecteerde kleuren zodat de admin direct ziet hoe het eruit komt te zien.
+De reset knop is een subtiele outline button die past bij de rest van het admin panel design.
 
-### 3. Dashboard Componenten Dynamisch Maken
-
-**DashboardButton.tsx:**
-- Nieuwe prop: `tileColors?: { background: string; text: string }`
-- Vervang hardcoded `text-[#002C1F]` met inline style of dynamische class
-- CSS variabelen of inline styles voor achtergrond
-
-**SavedHoursTile.tsx:**
-- Nieuwe props: `tileColors?: { background: string; text: string }`
-- Vervang `bg-white` met dynamische achtergrond
-- Vervang `text-[#002C1F]` met dynamische tekstkleur
-
-**AutomationInfoTooltip.tsx:**
-- Nieuwe prop: `textColor?: string`
-- Pas info icoon kleur dynamisch aan
-
-### 4. Index.tsx Aanpassingen
-
-Haal `tile_colors` op uit `useDashboardSettings` en geef deze door aan alle dashboard componenten:
-
-```tsx
-const { settings } = useDashboardSettings();
-
-<DashboardButton 
-  tileColors={settings.tile_colors}
-  // ... andere props
-/>
-
-<SavedHoursTile 
-  tileColors={settings.tile_colors}
-  workflowNames={...}
-/>
-```
-
-### 5. Admin Panel Preview
-
-De `TileOrganizer` component krijgt ook de `tile_colors` als prop zodat de preview in het admin panel direct de gekozen kleuren toont.
-
----
-
-## Database
-
-De `user_dashboard_settings` tabel heeft al een `dashboard_colors` JSONB kolom die we kunnen gebruiken, of we kunnen de `tile_colors` direct als nieuwe property in de bestaande data opslaan. De hook zorgt voor backwards compatibility met een default waarde.
-
----
-
-## Resultaat
-
-Na implementatie kan de admin in het Dashboard tabblad van het Admin Panel:
-1. De achtergrondkleur van alle tiles aanpassen
-2. De tekstkleur binnen alle tiles aanpassen
-3. Direct een preview zien van de gekozen kleuren
-4. De wijzigingen worden automatisch opgeslagen en toegepast op het hele dashboard
