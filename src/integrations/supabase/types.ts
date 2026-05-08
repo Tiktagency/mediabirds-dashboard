@@ -306,6 +306,7 @@ export type Database = {
           category: string | null
           company_id: string
           created_at: string
+          extra_instructie: string | null
           folder_id: string | null
           get_afbeelding_url: string | null
           google_sheet_id: string | null
@@ -328,6 +329,7 @@ export type Database = {
           category?: string | null
           company_id: string
           created_at?: string
+          extra_instructie?: string | null
           folder_id?: string | null
           get_afbeelding_url?: string | null
           google_sheet_id?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           category?: string | null
           company_id?: string
           created_at?: string
+          extra_instructie?: string | null
           folder_id?: string | null
           get_afbeelding_url?: string | null
           google_sheet_id?: string | null
