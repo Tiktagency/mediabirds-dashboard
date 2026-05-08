@@ -1,0 +1,1 @@
+ALTER TABLE blog_settings ADD COLUMN status text DEFAULT 'Draft';
