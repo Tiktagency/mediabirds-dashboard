@@ -1,23 +1,43 @@
 
 
-## Webhook response berichten altijd opslaan als notificatie
+## Webhook timeout verhogen naar 10 minuten
 
-### Huidige situatie
-De code slaat al notificaties op en toont toasts, maar bij netwerkfouten (catch-blok) wordt een generiek bericht "Fout bij het starten van documentatie" opgeslagen in plaats van de werkelijke foutmelding. Daarnaast worden lege responses opgeslagen als "URL documentatie gestart" zonder verdere context.
+### Probleem
+De `fetch()` aanroep naar de webhook heeft geen expliciete timeout ingesteld, waardoor de browser na zijn standaard timeout (meestal ~30-60 seconden) de verbinding verbreekt met een "Failed to fetch" fout, terwijl de webhook nog bezig is.
 
-### Wijzigingen
+### Oplossing
+Een `AbortController` met een timeout van 10 minuten (600.000 ms) toevoegen aan de `fetch()` aanroep.
+
+### Technische wijzigingen
 
 **Bestand: `src/components/seo-blog/PageUrlForm.tsx`**
 
-1. **Catch-blok verbeteren**: Het werkelijke error-bericht meenemen in de notificatie zodat je kunt zien wat er fout ging:
-   - Van: `'Fout bij het starten van documentatie'`
-   - Naar: `'Fout bij het starten van documentatie: ' + (error instanceof Error ? error.message : String(error))`
+Bij de `fetch()` call (rond regel 170) een `AbortController` toevoegen met een `signal` en een `setTimeout` van 600.000 ms:
 
-2. **Lege response afhandelen**: Wanneer de webhook een lege body terugstuurt, een duidelijker bericht opslaan:
-   - Van: response text als lege string die dan valt op de fallback `'URL documentatie gestart'`
-   - Naar: expliciet `'no response body'` detecteren en het opslaan als `'URL documentatie gestart (geen response body)'`
+```typescript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minuten
 
-3. **Bedrijfsnaam toevoegen aan notificatie**: De bedrijfsnaam (reeds beschikbaar via `companyName` snapshot) toevoegen aan het notificatiebericht zodat je kunt zien voor welk bedrijf het bericht is:
-   - Succes: `[Bedrijfsnaam] URL documentatie: {message}`
-   - Fout: `[Bedrijfsnaam] Fout: {message}`
-   - Catch: `[Bedrijfsnaam] Fout bij documentatie: {error.message}`
+const response = await fetch(WEBHOOK_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(payload),
+  signal: controller.signal,
+});
+
+clearTimeout(timeoutId);
+```
+
+In het `catch`-blok wordt een specifieke foutmelding getoond wanneer de timeout wel wordt bereikt (na 10 minuten):
+
+```typescript
+} catch (error) {
+  const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+  const catchMsg = isTimeout
+    ? `[${companyName}] Timeout: geen antwoord ontvangen na 10 minuten`
+    : `[${companyName}] Fout bij documentatie: ${error instanceof Error ? error.message : String(error)}`;
+  // ...
+}
+```
