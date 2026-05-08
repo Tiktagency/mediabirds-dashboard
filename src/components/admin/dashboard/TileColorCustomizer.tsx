@@ -81,7 +81,7 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 rounded border border-border/30 shrink-0"
                 style={{ backgroundColor: savedHoursColors.background }}
               />
-              <span className="text-[10px] text-muted-foreground">BG</span>
+              <span className="text-[10px] text-muted-foreground">Achtergrond</span>
             </div>
             <div className="flex items-center gap-2">
               <Input
@@ -118,7 +118,7 @@ export const TileColorCustomizer = ({
                 className="w-8 h-8 rounded border border-border/30 shrink-0"
                 style={{ backgroundColor: colors.background }}
               />
-              <span className="text-[10px] text-muted-foreground">BG</span>
+              <span className="text-[10px] text-muted-foreground">Achtergrond</span>
             </div>
             <div className="flex items-center gap-2">
               <Input
