@@ -465,7 +465,7 @@ export const KeywordResearchForm = ({
         <h2 className="text-xl font-semibold text-white">Zoekwoord onderzoek instellingen</h2>
         <p className="text-sm text-white/50 mt-1">Configureer je AI-gestuurd SEO onderzoek</p>
       </div>
-      {renderInputField('Bedrijf', 'bedrijfsnaam', true)}
+      {renderInputField('Bedrijfsnaam', 'bedrijfsnaam', true)}
       
       {renderTextField(
         'Blog Onderwerp',
