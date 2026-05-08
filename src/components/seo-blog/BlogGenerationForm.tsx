@@ -640,53 +640,68 @@ export const BlogGenerationForm = ({
           {/* AI Afbeelding velden */}
           {formData.image_type === 'ai_image' && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-end gap-3">
-                <div className="flex-1">
-                  {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
-                </div>
-                <label className="w-10 h-10 rounded-md border border-white/20 shrink-0 cursor-pointer relative overflow-hidden">
-                  <div className="w-full h-full" style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }} />
+              <div className="space-y-1.5">
+                <Label className="text-white/70 text-sm">Achtergrond kleur</Label>
+                <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={formData.achtergrond_kleur || '#000000'}
                     onChange={(e) => setFormData(prev => ({ ...prev, achtergrond_kleur: e.target.value }))}
                     onBlur={() => handleSaveField('achtergrond_kleur')}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    className="w-8 h-8 p-0.5 rounded-md border border-white/20 cursor-pointer shrink-0 bg-transparent"
                   />
-                </label>
+                  <input
+                    type="text"
+                    value={formData.achtergrond_kleur}
+                    onChange={(e) => setFormData(prev => ({ ...prev, achtergrond_kleur: e.target.value }))}
+                    onBlur={() => handleSaveField('achtergrond_kleur')}
+                    className="flex-1 h-10 rounded-md border border-white/20 bg-white/10 text-white font-mono text-sm px-3"
+                    placeholder="#000000"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
-                    </div>
-                    <label className="w-10 h-10 rounded-md border border-white/20 shrink-0 cursor-pointer relative overflow-hidden">
-                      <div className="w-full h-full" style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }} />
+                  <div className="space-y-1.5">
+                    <Label className="text-white/60 text-xs">Kleur 1</Label>
+                    <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={formData.hoofdaccent_gradient_1 || '#000000'}
                         onChange={(e) => setFormData(prev => ({ ...prev, hoofdaccent_gradient_1: e.target.value }))}
                         onBlur={() => handleSaveField('hoofdaccent_gradient_1')}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        className="w-8 h-8 p-0.5 rounded-md border border-white/20 cursor-pointer shrink-0 bg-transparent"
                       />
-                    </label>
-                  </div>
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                      <input
+                        type="text"
+                        value={formData.hoofdaccent_gradient_1}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hoofdaccent_gradient_1: e.target.value }))}
+                        onBlur={() => handleSaveField('hoofdaccent_gradient_1')}
+                        className="flex-1 h-10 rounded-md border border-white/20 bg-white/10 text-white font-mono text-sm px-3"
+                        placeholder="#000000"
+                      />
                     </div>
-                    <label className="w-10 h-10 rounded-md border border-white/20 shrink-0 cursor-pointer relative overflow-hidden">
-                      <div className="w-full h-full" style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-white/60 text-xs">Kleur 2</Label>
+                    <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={formData.hoofdaccent_gradient_2 || '#000000'}
                         onChange={(e) => setFormData(prev => ({ ...prev, hoofdaccent_gradient_2: e.target.value }))}
                         onBlur={() => handleSaveField('hoofdaccent_gradient_2')}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        className="w-8 h-8 p-0.5 rounded-md border border-white/20 cursor-pointer shrink-0 bg-transparent"
                       />
-                    </label>
+                      <input
+                        type="text"
+                        value={formData.hoofdaccent_gradient_2}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hoofdaccent_gradient_2: e.target.value }))}
+                        onBlur={() => handleSaveField('hoofdaccent_gradient_2')}
+                        className="flex-1 h-10 rounded-md border border-white/20 bg-white/10 text-white font-mono text-sm px-3"
+                        placeholder="#000000"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
