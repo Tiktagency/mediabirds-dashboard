@@ -1,19 +1,21 @@
 
-## Verwijder `secundaire_kleur` & `accent_kleur` uit de POST payload
+## Verleng de wachttijd voor blog generatie
 
-De twee kleuren worden nog op drie plekken meegestuurd:
+**Huidig probleem:**
+- `trigger-blog-generation` edge function: AbortController op **180 seconden** (3 min) — maar een blog kan ook precies 3 min duren, wat een race condition geeft
+- `supabase/config.toml`: `trigger-blog-generation` heeft **geen** `max_duration` instelling (standaard 150s)
 
-1. **`src/pages/Nieuwsbrief.tsx`** — payload die naar de edge function wordt gestuurd (regels 395 en 400)
-2. **`supabase/functions/trigger-newsletter-webhook/index.ts`** — destructuring van body (regels 42-43) én de payload naar n8n (regels 60 en 65)
+**Twee wijzigingen, exact hetzelfde als bij de nieuwsbrief:**
 
-### Wijzigingen
+**1. `supabase/functions/trigger-blog-generation/index.ts`** (regel 152)
+- `180000` → `240000` (4 minuten AbortController timeout)
+- Commentaar bijwerken: "180 second" → "240 second"
 
-**`src/pages/Nieuwsbrief.tsx`** — verwijder uit de POST body (regels 395 en 400):
-- `secundaire_kleur: localColors.secundaire_kleur,`
-- `accent_kleur: localColors.accent_kleur,`
+**2. `supabase/config.toml`** — voeg `max_duration = 300` toe aan de blog function:
+```toml
+[functions.trigger-blog-generation]
+verify_jwt = false
+max_duration = 300
+```
 
-**`supabase/functions/trigger-newsletter-webhook/index.ts`**:
-- Regel 42-43: verwijder `secundaire_kleur` en `accent_kleur` uit de destructuring
-- Regels 60 en 65: verwijder `secundaire_kleur` en `accent_kleur` uit de payload naar n8n
-
-Geen database- of andere wijzigingen nodig.
+Geen andere bestanden hoeven te wijzigen.
