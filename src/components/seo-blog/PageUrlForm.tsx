@@ -182,13 +182,19 @@ export const PageUrlForm = ({
       }
 
       if (response.ok) {
-        await saveNotification(message || 'URL documentatie gestart', 'success');
+        const successMsg = message || 'URL documentatie gestart';
+        await saveNotification(successMsg, 'success');
+        toast({ title: 'Succes', description: successMsg, duration: 5000 });
       } else {
-        await saveNotification(`Fout: ${message}`, 'error');
+        const errorMsg = `Fout: ${message}`;
+        await saveNotification(errorMsg, 'error');
+        toast({ title: 'Fout', description: errorMsg, variant: 'destructive', duration: 5000 });
       }
     } catch (error) {
       console.error('Webhook error:', error);
-      await saveNotification('Fout bij het starten van documentatie', 'error');
+      const catchMsg = 'Fout bij het starten van documentatie';
+      await saveNotification(catchMsg, 'error');
+      toast({ title: 'Fout', description: catchMsg, variant: 'destructive', duration: 5000 });
     } finally {
       setIsSubmitting(false);
     }
