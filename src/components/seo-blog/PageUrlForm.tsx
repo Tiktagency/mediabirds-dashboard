@@ -279,7 +279,7 @@ export const PageUrlForm = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleRemoveUrl(index)}
-                className="text-white/50 hover:text-white hover:bg-white/10"
+                className="text-white/50 hover:text-white"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -292,7 +292,7 @@ export const PageUrlForm = ({
             type="button"
             variant="outline"
             onClick={handleAddUrl}
-            className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
+            className="w-full bg-white/5 border-white/20 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             URL toevoegen
