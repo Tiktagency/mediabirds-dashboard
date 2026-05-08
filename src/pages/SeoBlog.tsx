@@ -206,7 +206,7 @@ const SeoBlog = () => {
               "arrow-tile arrow-tile-first flex-1 py-6 px-8 transition-all duration-300",
               activeView === 'pageurl'
                 ? "bg-secondary shadow-lg shadow-secondary/20"
-                : "bg-white/5 hover:bg-white/10"
+                : "bg-[#212122] hover:bg-[#2a2a2b]"
             )}
           >
             <div className="flex items-center gap-4">
@@ -249,7 +249,7 @@ const SeoBlog = () => {
               "arrow-tile arrow-tile-middle flex-1 py-6 px-8 transition-all duration-300",
               activeView === 'keyword'
                 ? "bg-secondary shadow-lg shadow-secondary/20"
-                : "bg-white/5 hover:bg-white/10"
+                : "bg-[#212122] hover:bg-[#2a2a2b]"
             )}
           >
             <div className="flex items-center gap-4 pl-4">
@@ -292,7 +292,7 @@ const SeoBlog = () => {
               "arrow-tile arrow-tile-last flex-1 py-6 px-8 transition-all duration-300",
               activeView === 'blog'
                 ? "bg-secondary shadow-lg shadow-secondary/20"
-                : "bg-white/5 hover:bg-white/10"
+                : "bg-[#212122] hover:bg-[#2a2a2b]"
             )}
           >
             <div className="flex items-center gap-4 pl-4">
