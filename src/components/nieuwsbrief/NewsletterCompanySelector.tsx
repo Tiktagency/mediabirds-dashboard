@@ -72,6 +72,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   const [companyToDelete, setCompanyToDelete] = useState<NewsletterCompany | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
+  const [newCompanyDomain, setNewCompanyDomain] = useState('');
   const [showConfirmAdd, setShowConfirmAdd] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
