@@ -1,56 +1,64 @@
 
-## Wat moet er veranderen
+## Analyse: Ontbrekende velden in automatische triggers
 
-De huidige preview klopt niet met de werkelijke nieuwsbrief layout. Op basis van de 3 afbeeldingen bouw ik de preview opnieuw na:
+### Blog trigger (`run-scheduled-blogs`) — ontbrekende velden
 
-### Huidige preview (incorrect)
-- Company logo + naam als header
-- Divider op basis van mx-5 (niet vol breed)
-- AI-ontwikkeling als badge "🚀 AI-ONTWIKKELING"
-- AI feitje als accent-blokje
-- CTA als kleine footer-balk
+De handmatige "Start" knop stuurt in `blogData`:
+- `page_url_spreadsheet_id` — uit `page_url_settings.google_sheet_id`
+- `page_url_grid_id` — uit `page_url_settings.google_file_id`
+- `page_urls` — het hele `page_urls` JSON object uit `page_url_settings`
+- `folder_id` (alleen als `image_type === 'google_drive'`)
+- `used_folder_id` (alleen als `image_type === 'google_drive'`)
+- `image_type` — `'ai_image'` of `'google_drive'`
+- `aantal_woorden` als string range `"500-1500"` ✅ (zit er al in)
 
-### Nieuwe preview (exact nagebouwd uit afbeeldingen)
+De scheduler stuurt **niet**:
+- `page_url_spreadsheet_id`, `page_url_grid_id`, `page_urls` — ontbreekt volledig
+- `folder_id`, `used_folder_id` — worden altijd leeg gestuurd
+- `image_type` — wordt niet meegestuurd
 
-**Sectie 1 — Intro (achtergrond_kleur achtergrond)**
-- Genereuze padding (px-8 py-8)
-- Vetgedrukte openingszin gevolgd door normale body tekst (grote tekst, ~15-16px)
-- Tekst in `tekst_kleur`
+### SEO trigger (`run-scheduled-seo`) — is al correct
 
-**Sectie 2 — Oranje divider (primaire_kleur)**
-- Volledige breedte, hoogte 3px, geen marge
+De SEO scheduler stuurt alle velden die ook de handmatige knop stuurt (`blogTopic`, `audienceIntent`, `businessDescription`, etc.). Dit is al correct.
 
-**Sectie 3 — AI-ontwikkelingen (achtergrond_kleur)**
-- Sectietitel met oranje linkerborder `|` + vet "De 5 grootste AI-ontwikkelingen van maart" in `tekst_kleur`
-- Kaart op `kaart_achtergrond` met shadow, rounded corners
-  - Bovenrij: oranje cirkel met "1" + oranje pill-badge "Baanbrekend" (beide `primaire_kleur`)
-  - Vetgedrukte titel in `tekst_kleur`
-  - Body tekst in `subtekst_kleur`
-  - Dunne horizontale lijn (subtekst_kleur/20)
-  - Italic oranje MKB-tip tekst (`primaire_kleur`)
+### Fix: `run-scheduled-blogs/index.ts`
 
-**Sectie 4 — AI feitje (achtergrond_kleur)**
-- Sectietitel met oranje linkerborder "Wist je dat..." 
-- Accent card op `accent_kleur` met oranje linkerborder (`primaire_kleur`)
-  - 💡 emoji + vetgedrukte tekst (`tekst_kleur`)
-  - Italic body tekst (`subtekst_kleur`)
+Na het ophalen van `blogSettings` ook `page_url_settings` ophalen:
 
-**Sectie 5 — CTA (primaire_kleur achtergrond)**
-- Grote witte vetgedrukte kop (cta_tekst)
-- Witte subtekst
-- Witte afgeronde card met primaire_kleur gekleurde CTA tekst
+```typescript
+const { data: pageUrlSettings } = await supabase
+  .from('page_url_settings')
+  .select('*')
+  .eq('company_id', company.id)
+  .maybeSingle();
+```
 
-**Sectie 6 — Footer (achtergrond_kleur)**
-- Bedrijfsnaam vet gecentreerd (`tekst_kleur`)
-- Tagline in `tekst_kleur`
-- Website link in `primaire_kleur`
-- Dunne divider
-- "Afmelden van deze nieuwsbrief" + copyright in `subtekst_kleur`
+Dan de payload uitbreiden:
 
-### Schaalgrootte
-De preview kaart is vrij groot (rechter helft van het scherm). Een `transform: scale(0.85)` of `overflow-y: auto` met vaste hoogte (~580px) zorgt dat alles past zonder scrollen.
+```typescript
+const blogPayload = {
+  bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
+  // ... bestaande velden ...
+  
+  // image type velden
+  image_type: blogSettings.image_type || 'ai_image',
+  folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.folder_id || '') : '',
+  used_folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
+  achtergrond_kleur: blogSettings.image_type !== 'google_drive' ? (blogSettings.achtergrond_kleur || '') : '',
+  hoofdaccent_gradient: blogSettings.image_type !== 'google_drive' ? (blogSettings.hoofdaccent_gradient || '') : '',
+  
+  // page URL velden
+  page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
+  page_url_grid_id: pageUrlSettings?.google_file_id || '',
+  page_urls: pageUrlSettings?.page_urls || {},
+  
+  timestamp: new Date().toISOString(),
+  triggered_from: 'scheduled',
+};
+```
 
 ### Bestand
+
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/Nieuwsbrief.tsx` | Regels 599–673: preview sectie volledig vervangen door bovenstaande structuur |
+| `supabase/functions/run-scheduled-blogs/index.ts` | `page_url_settings` ophalen + ontbrekende velden toevoegen aan payload |
