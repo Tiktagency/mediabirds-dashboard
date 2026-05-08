@@ -315,6 +315,8 @@ const Index = () => {
           src={bannerImage} 
           alt="Mediabirds Banner" 
           className="w-full h-full object-cover"
+          fetchPriority="high"
+          loading="eager"
           draggable="false"
         />
         <h1 
