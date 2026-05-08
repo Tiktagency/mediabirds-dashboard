@@ -530,8 +530,8 @@ export const KeywordResearchForm = ({
               <h4 className="text-sm font-semibold text-white/90">Hoofd zoekwoorden</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>{renderInputField('Google Sheet ID', 'hoofd_google_sheet_id')}</div>
-              <div>{renderInputField('Google Slides ID', 'hoofd_google_slides_id')}</div>
+              <div>{renderInputField('Spreadsheet ID', 'hoofd_google_sheet_id')}</div>
+              <div>{renderInputField('Grid ID', 'hoofd_google_slides_id')}</div>
             </div>
           </div>
           
@@ -542,8 +542,8 @@ export const KeywordResearchForm = ({
               <h4 className="text-sm font-semibold text-white/90">Nieuwe zoekwoorden</h4>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>{renderInputField('Google Sheet ID', 'nieuw_google_sheet_id')}</div>
-              <div>{renderInputField('Google Slides ID', 'nieuw_google_slides_id')}</div>
+              <div>{renderInputField('Spreadsheet ID', 'nieuw_google_sheet_id')}</div>
+              <div>{renderInputField('Grid ID', 'nieuw_google_slides_id')}</div>
             </div>
           </div>
         </div>
