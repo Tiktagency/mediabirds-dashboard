@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
 import { useBlogSchedule } from '@/hooks/useBlogSchedule';
+import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
@@ -200,6 +201,13 @@ export const BlogGenerationForm = ({
         if (!companyError) {
           setSelectedCompany({ ...selectedCompany, name: formData.bedrijfsnaam });
         }
+      }
+
+      // Sync Google Doc IDs to seo_settings
+      if (selectedCompany && field === 'google_sheet_id') {
+        syncGoogleDocIds(selectedCompany.id, 'blog_settings', 'sheet_id', formData.google_sheet_id || null);
+      } else if (selectedCompany && field === 'google_slides_id') {
+        syncGoogleDocIds(selectedCompany.id, 'blog_settings', 'slides_id', formData.google_slides_id || null);
       }
       
       toast({
