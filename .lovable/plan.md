@@ -1,32 +1,43 @@
 
 
-## Plan: Kleuren behouden bij wisselen auto/custom modus
+## Plan: Auto-save voor alle admin panel wijzigingen + globale dashboard-instellingen
 
 ### Probleem
-Bij het wisselen tussen "Automatisch" en "Custom" kleurmodus worden de kleuren niet opgeslagen naar de database. Als je in auto-modus kleuren ophaalt en dan naar custom switcht, gaan de kleuren mogelijk verloren bij een page refresh of bedrijfswisseling.
+1. **AutomationCard** heeft een handmatige "Opslaan" knop — wijzigingen worden niet automatisch opgeslagen
+2. **Dashboard-instellingen** (tile order, kleuren, labels) worden per gebruiker opgeslagen in `user_dashboard_settings` — wijzigingen van een admin gelden niet voor andere gebruikers
 
 ### Oplossing
-Sla de huidige `localColors` op naar de database bij elke mode-switch. Dit zorgt ervoor dat:
-1. Kleuren die in auto-modus zijn opgehaald bewaard blijven als je naar custom switcht
-2. Kleuren die in custom-modus zijn aangepast bewaard blijven als je naar auto switcht
 
-### Aanpassing in `src/pages/Nieuwsbrief.tsx`
+**1. AutomationCard: auto-save met debounce**
+- Verwijder de handmatige "Wijzigingen opslaan" knop
+- Voeg een `useEffect` met debounce (800ms) toe die `onUpdate` aanroept zodra `localSetting` verandert
+- Toon een subtiele "Opgeslagen" indicator in plaats van een knop
 
-1. Maak twee handler functies voor de mode-switch knoppen (regel 626-646):
-   - `handleSwitchToCustom`: slaat alle huidige `localColors` op naar de database via `saveToCompany`, zet daarna `colorMode` naar `'custom'`
-   - `handleSwitchToAuto`: slaat alle huidige `localColors` op naar de database, zet `colorMode` naar `'auto'`
-2. Vervang de directe `setColorMode` calls in de toggle-knoppen door deze handlers
-3. Toon een korte toast "Kleuren opgeslagen" bij het wisselen
+**2. Dashboard-instellingen globaal maken**
+- Wijzig `useDashboardSettings` zodat admin-wijzigingen worden doorgevoerd naar ALLE gebruikers in `user_dashboard_settings`
+- Bij elke update (tile order, kleuren, labels, etc.) wordt naast de eigen record ook alle andere records bijgewerkt via een edge function
+- Nieuwe edge function `sync-dashboard-settings` die met service role key alle user records update
+
+### Bestanden
+
+| Bestand | Wijziging |
+|---------|-----------|
+| `src/components/admin/automation/AutomationCard.tsx` | Verwijder save-knop, voeg debounced auto-save toe |
+| `src/hooks/useDashboardSettings.ts` | Voeg `updateAllUsers` functie toe die edge function aanroept |
+| `supabase/functions/sync-dashboard-settings/index.ts` | Nieuw: update alle user_dashboard_settings records met admin wijzigingen |
 
 ### Technisch detail
+
+**AutomationCard debounce:**
 ```ts
-const handleSwitchColorMode = async (mode: 'custom' | 'auto') => {
-  setColorMode(mode);
-  if (selectedCompany) {
-    await saveToCompany(localColors);
-  }
-};
+useEffect(() => {
+  if (!hasChanges) return;
+  const timer = setTimeout(() => {
+    onUpdate(setting.id, { display_name, description, impact_level, ... });
+  }, 800);
+  return () => clearTimeout(timer);
+}, [localSetting]);
 ```
 
-De twee `onClick` handlers op regel 627 en 637 worden vervangen door `() => handleSwitchColorMode('custom')` en `() => handleSwitchColorMode('auto')`.
+**Sync edge function:** Ontvangt de gewijzigde velden (tile_order, impact_colors, dashboard_colors, custom_labels) en past deze toe op alle rijen in `user_dashboard_settings` via de service role key. Dit zorgt ervoor dat wijzigingen van één admin automatisch voor iedereen gelden.
 
