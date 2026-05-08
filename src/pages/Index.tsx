@@ -31,6 +31,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+// Module-level guard tegen dubbele login logs
+let sessionLogPending = false;
+
 // Tile configuration mapping automation_name to route, icon, and variant
 interface TileConfig {
   to: string;
@@ -124,7 +127,10 @@ const Index = () => {
     if (!user || isLoading) return;
 
     const alreadyLogged = sessionStorage.getItem('session_logged');
-    if (alreadyLogged) return;
+    if (alreadyLogged || sessionLogPending) return;
+
+    // Zet BEIDE flags direct
+    sessionLogPending = true;
 
     // Zet flag DIRECT om race condition te voorkomen
     sessionStorage.setItem('session_logged', 'true');
