@@ -220,7 +220,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:text-white gap-2"
+            className="bg-white/5 border-white/20 text-white gap-2"
           >
             <Building2 className="w-4 h-4" />
             {selectedCompany?.name || 'Selecteer bedrijf'}
@@ -292,7 +292,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white"
               >
                 Annuleren
               </Button>
@@ -319,7 +319,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/20 text-white hover:bg-white/10">
+            <AlertDialogCancel className="border-white/20 text-white">
               Annuleren
             </AlertDialogCancel>
             <AlertDialogAction
