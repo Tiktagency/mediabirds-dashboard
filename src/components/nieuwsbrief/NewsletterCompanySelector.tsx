@@ -202,9 +202,10 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
   const handleConfirmAdd = async () => {
     setIsCreating(true);
     try {
+      const domainClean = newCompanyDomain.trim().replace(/^https?:\/\//, '');
       const { data, error } = await supabase
         .from('newsletter_companies' as any)
-        .insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim() })
+        .insert({ name: newCompanyName.trim(), bedrijfsnaam: newCompanyName.trim(), website: `https://${domainClean}` })
         .select()
         .single();
 
