@@ -1,80 +1,65 @@
 
-## Analyse van het RSS feed probleem
+## Plan: RSS feed velden werken precies als de Pagina URL velden
 
-### Wat er mis gaat
+### Verschil tussen de twee implementaties
 
-In de sessie replay is duidelijk te zien wat er fout gaat:
+**PageUrlForm (Pagina URL):**
+- Elke URL heeft zijn eigen drie-stap cycle: collapsed (klikbaar compact vakje) → expanded (volledige tekst + potlood) → editing (Input + autoFocus, opslaan op blur)
+- Elk veld heeft een unieke `fieldId` (`url_0`, `url_1`, enz.)
+- "URL toevoegen" knop voegt een nieuw leeg veld toe dat direct in editing-state springt
+- Verwijder-knop naast elk veld
 
-1. Gebruiker klikt op collapsed RSS-veld → `expandedField = 'rss_feeds'` → expanded state toont zich
-2. Expanded state heeft een potlood-icoon; gebruiker klikt erop → `editingField = 'rss_feeds'`
-3. In editing state voert de gebruiker een URL in het input veld in
-4. De gebruiker klikt op de Plus-knop → `addFeed()` wordt aangeroepen → `saveSettings({ rss_feeds: [...] })`
-5. **Bug**: Na `addFeed()` wordt `newFeed` geleegd en de feed wordt opgeslagen, maar er is geen expliciete state-transitie. De editing state blijft actief. **Dan klikt de gebruiker buiten het veld** → de `mousedown` listener vuurt af → `setEditingField(null)` + `setExpandedField(null)` → collapsed state.
+**Nieuwsbrief RSS feeds (huidig):**
+- De héle RSS-sectie heeft één gedeelde state (collapsed/expanded/editing voor de hele lijst)
+- Editing state toont een los invoerveld + Plus-knop
+- Niet per feed individueel bewerkbaar
 
-**Het eigenlijke probleem**: De collapsed state toont `feedCount` vanuit `settings.rss_feeds.length`. Na `saveSettings()` wordt de `settings` state in de hook **optimistisch geüpdatete** (via `setSettings(merged)`), maar er is een subtiele bug: de `saveSettings` hook doet een debounce van 800ms. Tijdens die 800ms is de lokale `settings` wel bijgewerkt, maar als de `mousedown` handler net op dat moment afvuurt en `setExpandedField(null)` aanroept VOORDAT de settings zijn bijgewerkt in de component...
+### Aanpak: RSS feeds omzetten naar het PageUrlForm patroon
 
-Wacht, laat me beter kijken. In de `useNewsletterSettings` hook:
+**Per-feed drie-stap state:**
+- `editingField` wordt uitgebreid: in plaats van `'rss_feeds'` als één string, wordt elk feed-veld `'rss_feed_0'`, `'rss_feed_1'`, etc.
+- `expandedField` idem: `'rss_feed_0'`, etc.
+- `AnyField` type bijwerken
 
-```typescript
-const saveSettings = useCallback(async (updated: Partial<NewsletterSettings>) => {
-    const merged = { ...settings, ...updated } as NewsletterSettings;
-    setSettings(merged);  // ← Optimistische update
-    // debounce...
+**`renderRssFeedItem(index, url)` helper:**
+Zelfde structuur als `renderInputField` in PageUrlForm:
+1. **Collapsed**: `h-[40px]` klikbaar div → `setExpandedField('rss_feed_N')`
+2. **Expanded**: volledige URL-tekst + potlood-knop → `setEditingField('rss_feed_N')`
+3. **Editing**: `Input` met autoFocus, `onBlur` → wijziging opslaan in `settings.rss_feeds[index]`
+
+**Save-logica per feed:**
+```tsx
+const handleSaveFeed = (index: number, value: string) => {
+  setEditingField(null);
+  const newFeeds = [...settings.rss_feeds];
+  if (value.trim()) {
+    newFeeds[index] = value.trim();
+  } else {
+    newFeeds.splice(index, 1); // Lege waarde = verwijderen
+  }
+  if (JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
+    saveSettings({ rss_feeds: newFeeds });
+    toast({ title: 'Opgeslagen' });
+  }
+};
 ```
 
-De optimistische update zet `settings` direct. Dus `feedCount` zou direct moeten tonen... TENZIJ er een React re-render timing issue is.
+**"Feed toevoegen" knop:**
+Voegt een leeg item toe aan `settings.rss_feeds` (via lokale lijst) en zet die direct in editing-state (`editingField = 'rss_feed_N'`).
 
-**Het echte probleem**: De `renderRssFeeds` functie leest `feedCount` van `settings.rss_feeds.length`. Maar de `expandedRef` is **gedeeld** tussen alle expanded/editing states van alle velden. Als een tekstfield zoals `bedrijfsnaam` ook expanded is, heeft `expandedRef` die container, niet de RSS feed container. Dan werkt de click-outside handler verkeerd.
+Omdat de feeds uit `settings` komen (geen lokale array meer voor de feed-waarden), werken we met een lokale `localFeeds` state die gesynchroniseerd wordt met `settings.rss_feeds`, precies zoals `localData` werkt voor de tekstvelden.
 
-Maar nog specifieker: Kijkend naar de sessie replay:
-- De gebruiker ziet `"RSS feeds" en "5/0"` na de transitie — dat is `({feedCount}/{MAX_RSS_FEEDS})` dus 5 feeds al aanwezig maar `feedCount` is 0? Nee, de volgorde is `(feedCount/MAX_RSS_FEEDS)`, dus `5` feeds en max is `5`. Maar dat klopt niet met de databankrespons die `rss_feeds: []` toont.
+**Verwijder-knop:**
+Blijft naast elk veld, roept direct `saveSettings({ rss_feeds: ... })` aan (zelfde als nu).
 
-**Werkelijk probleem gevonden**: De sessie replay toont `"RSS feeds" en "5/0"` — dit is OMGEKEERD. De Label toont `({feedCount}/{MAX_RSS_FEEDS})` maar het lijkt `5/0` te tonen. Dit suggereert dat de counter iets anders weergeeft.
+**Click-outside handler:**
+Vereenvoudigd: bij elke `rss_feed_*` field geldt dezelfde logica als de tekstvelden — `setEditingField(null)` + `setExpandedField(null)`.
 
-Eigenlijk: na het toevoegen van een feed klikt de gebruiker weg, en de velden gaan naar collapsed. Maar in collapsed state staat `"Geen feeds toegevoegd"`. Dit suggereert dat na het klikken op Plus:
-1. `addFeed()` roept `saveSettings({ rss_feeds: [...settings.rss_feeds, trimmed] })` aan
-2. `settings` wordt optimistisch bijgewerkt IN de hook
-3. Maar daarna: de `mousedown` event vuurt af EN treft de click-outside handler
-4. `setEditingField(null)` + `setExpandedField(null)` → collapsed
-5. De collapsed state toont `settings.rss_feeds.length` — maar als de optimistische update al is gedaan, zou dit 1 moeten zijn
-
-**De echte bug**: In `addFeed()` wordt `setNewFeed('')` aangeroepen, maar er is geen `setEditingField(null)` of `setExpandedField(null)`. Na het klikken op de Plus-button, blijft `editingField === 'rss_feeds'`. Het veld toont nu de editing state maar met de nieuwe feed erin (want `settings.rss_feeds` bevat die).
-
-Maar de gebruiker klikt WEG na het invoeren — de `mousedown` listener pakt dat op. MAAR: als de gebruiker op de Plus-button klikt, is dat een `mousedown` event OP de Plus-button die IN de `expandedRef` container zit. Dus de click-outside handler zou NIET moeten activeren.
-
-Wacht — kijkend naar de session replay: de gebruiker typt een URL, klikt dan (ergens buiten), en daarna staat er "Geen feeds toegevoegd". De gebruiker heeft NIET op Plus geklikt — ze hebben de URL ingetypt en toen weggeblurd. `onBlur` is niet geconfigureerd op de RSS input. Er is geen `onBlur` op het invoerveld in de editing state van RSS. Dus het veld gaat gewoon weg via de click-outside, ZONDER de feed op te slaan!
-
-**Dat is de bug**: De gebruiker typt een URL in het RSS invoerveld en klikt weg — maar er is geen `onBlur` op het input die `addFeed()` aanroept. De feed wordt dus nooit opgeslagen. De Plus-knop moet expliciet worden aangeklikt.
-
-**Bijkomend probleem**: De click-outside handler gaat van editing-state direct naar collapsed (door zowel `setEditingField(null)` als `setExpandedField(null)` te zetten), waardoor de gebruiker niet eens ziet dat er al feeds zijn (als die er zijn).
-
-### Fix
-
-1. **Voeg `onBlur` toe aan het RSS input veld**: Als de gebruiker wegklikt terwijl er tekst in staat, automatisch `addFeed()` aanroepen.
-
-2. **Betere click-outside transitie**: Van editing → collapsed (niet editing → expanded), maar er is een conflict: als de gebruiker wegklikt na het typen van een URL, wordt eerst `onBlur` getriggerd (→ addFeed), dan `mousedown` (→ setExpandedField null). Dat is eigenlijk OK.
-
-3. **Expliciete "Opslaan" stap voor feeds**: Overweeg of na klikken op Plus, we direct terug naar collapsed state gaan met een toast, net als bij de tekstvelden. Dit maakt de UX consistent.
-
-### Plan
-
-**`src/pages/Nieuwsbrief.tsx`**:
-
-**A. `onBlur` op RSS input veld**: Voeg `onBlur={() => { if (newFeed.trim()) addFeed(); }}` toe aan het input element in de editing state.
-
-**B. Na `addFeed()` blijf in editing state** maar reset `newFeed` correct (dat gebeurt al). Gebruik `onMouseDown` op de Plus-button ipv `onClick` om te voorkomen dat `onBlur` eerst de feed toevoegt en dan de Plus-button ook.
-
-**C. Verbeter de `mousedown` click-outside handler** voor RSS: ga van editing naar collapsed (via expanded tussenstation of direct), zodat de feeds wel zichtbaar zijn na wegklikken.
-
-**D. Voeg `onBlur` toe dat de editing state sluit én naar expanded gaat** zodat gebruiker ziet wat er staat, ipv direct naar collapsed.
-
-Concreet:
-- `onBlur` op RSS input: `addFeed()` als er tekst staat, dan `setEditingField(null)` (maar niet `setExpandedField(null)`)
-- Click-outside handler: als `editingField === 'rss_feeds'`, ga naar `expandedField = 'rss_feeds'` (niet null), zodat de feeds zichtbaar zijn
-- Plus-button: gebruik `onMouseDown` + `preventDefault()` zodat de input `onBlur` niet vuurt bij klik op Plus
+**Label:**
+`RSS feeds` met counter `(N/5)` blijft boven de lijst staan.
 
 ### Bestanden
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/Nieuwsbrief.tsx` | `onBlur` op RSS input, verbeterde click-outside transitie voor RSS feeds |
+| `src/pages/Nieuwsbrief.tsx` | RSS feeds omzetten naar per-feed drie-stap patroon (identiek aan PageUrlForm) |
