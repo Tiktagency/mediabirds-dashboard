@@ -141,10 +141,11 @@ export const PageUrlForm = ({
           }
           return acc;
         }, {} as Record<string, string>),
-        // Object 2: Document IDs
+        // Object 2: Document IDs en bedrijfsnaam
         {
           "Document ID": googleSheetId,
           "Slide ID": googleFileId,
+          "bedrijfsnaam": selectedCompany.name,
         }
       ];
 
