@@ -1,39 +1,42 @@
 
 
-## Velden standaard ingeklapt houden en uitklappen bij klik
+## Spreadsheet ID veld rekt nog steeds uit
 
 ### Probleem
 
-De `truncate` CSS-class op de ingeklapte velden werkt niet correct omdat het parent-element in een flex-layout zit zonder expliciete breedtebeperking. Daardoor groeit het veld mee met de tekst in plaats van de tekst af te kappen.
+`min-w-0` op het veld zelf is niet voldoende. Het probleem zit in de parent-elementen: de `space-y-2` wrapper en de `flex-1` container hebben geen `overflow-hidden`, waardoor lange tekst de hele kolom breder maakt.
 
-### Oplossing in `src/pages/Landingspagina.tsx`
+### Oplossing
 
-**Collapsed state (standaard, niet geselecteerd):**
-- Voeg `min-w-0` toe aan de container zodat `truncate` werkt binnen flex-layouts
-- Behoud `h-[40px]`, `overflow-hidden` en `truncate` op de span
+Voeg `overflow-hidden` toe aan twee parent-elementen zodat de breedte hard begrensd wordt:
 
-**Expanded state (na klik):**
-- Verwijder de vaste hoogte zodat het veld kan groeien
-- Behoud `break-all` zodat lange teksten zoals Spreadsheet IDs netjes wrappen
-- Voeg `min-w-0` toe voor consistentie
+1. **Regel 197** -- De linker kolom `flex-1 w-full space-y-4`: voeg `overflow-hidden` toe
+2. **Regel 199** -- Elke `space-y-2` wrapper rond de velden: voeg `overflow-hidden` toe (of beter: voeg het toe aan de card container op regel 198)
+
+Concreet:
 
 ### Technische details
 
-Wijzigingen in de `renderEditableField` functie:
-
-| Regel | Element | Wijziging |
-|---|---|---|
-| 131 | Expanded container | `min-w-0` toevoegen |
-| 144-146 | Collapsed container | `min-w-0` toevoegen |
-
+**Regel 197 -- Linker kolom container:**
 ```
-// Collapsed (standaard) - tekst afgekapt
-className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors min-w-0"
+// Was:
+<div className="flex-1 w-full space-y-4">
 
-// Expanded (na klik) - hele tekst zichtbaar
-className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden min-w-0"
+// Wordt:
+<div className="flex-1 w-full space-y-4 overflow-hidden">
 ```
+
+**Regel 198 -- Card container:**
+```
+// Was:
+<div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
+
+// Wordt:
+<div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4 overflow-hidden">
+```
+
+Dit zorgt ervoor dat geen enkel child-element breder kan worden dan de beschikbare ruimte, ongeacht hoe lang de tekst is.
 
 | Bestand | Wijziging |
 |---|---|
-| `src/pages/Landingspagina.tsx` | `min-w-0` toevoegen aan collapsed en expanded containers in `renderEditableField` |
+| `src/pages/Landingspagina.tsx` | `overflow-hidden` toevoegen aan regel 197 en 198 |
