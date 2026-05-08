@@ -655,6 +655,84 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_companies: {
+        Row: {
+          accent_kleur: string | null
+          achtergrond_kleur: string | null
+          bedrijfsnaam: string | null
+          bedrijfsomschrijving: string | null
+          created_at: string | null
+          cta_tekst: string | null
+          cta_tekst_kleur: string | null
+          cta_url: string | null
+          doelgroep: string | null
+          footer_achtergrond: string | null
+          footer_tekst_kleur: string | null
+          generated_html: string | null
+          id: string
+          kaart_achtergrond: string | null
+          name: string
+          primaire_kleur: string | null
+          rss_feeds: string[] | null
+          secundaire_kleur: string | null
+          subtekst_kleur: string | null
+          tagline: string | null
+          tekst_kleur: string | null
+          toon: string | null
+          website: string | null
+        }
+        Insert: {
+          accent_kleur?: string | null
+          achtergrond_kleur?: string | null
+          bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
+          created_at?: string | null
+          cta_tekst?: string | null
+          cta_tekst_kleur?: string | null
+          cta_url?: string | null
+          doelgroep?: string | null
+          footer_achtergrond?: string | null
+          footer_tekst_kleur?: string | null
+          generated_html?: string | null
+          id?: string
+          kaart_achtergrond?: string | null
+          name: string
+          primaire_kleur?: string | null
+          rss_feeds?: string[] | null
+          secundaire_kleur?: string | null
+          subtekst_kleur?: string | null
+          tagline?: string | null
+          tekst_kleur?: string | null
+          toon?: string | null
+          website?: string | null
+        }
+        Update: {
+          accent_kleur?: string | null
+          achtergrond_kleur?: string | null
+          bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
+          created_at?: string | null
+          cta_tekst?: string | null
+          cta_tekst_kleur?: string | null
+          cta_url?: string | null
+          doelgroep?: string | null
+          footer_achtergrond?: string | null
+          footer_tekst_kleur?: string | null
+          generated_html?: string | null
+          id?: string
+          kaart_achtergrond?: string | null
+          name?: string
+          primaire_kleur?: string | null
+          rss_feeds?: string[] | null
+          secundaire_kleur?: string | null
+          subtekst_kleur?: string | null
+          tagline?: string | null
+          tekst_kleur?: string | null
+          toon?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       newsletter_settings: {
         Row: {
           accent_kleur: string | null
