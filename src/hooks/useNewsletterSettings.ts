@@ -5,23 +5,51 @@ import { useAuth } from './useAuth';
 export interface NewsletterSettings {
   id: string;
   bedrijfsnaam: string;
-  bedrijfsinformatie: string;
-  schrijfstijl: string;
+  tagline: string;
+  bedrijfsomschrijving: string;
+  bedrijfsinformatie: string; // legacy alias
+  doelgroep: string;
+  toon: string;
+  cta_tekst: string;
+  cta_url: string;
+  website: string;
+  schrijfstijl: string; // kept for backwards compat
   rss_feeds: string[];
-  achtergrond_kleur: string;
   primaire_kleur: string;
+  secundaire_kleur: string;
+  achtergrond_kleur: string;
+  kaart_achtergrond: string;
+  tekst_kleur: string;
+  subtekst_kleur: string;
   accent_kleur: string;
+  cta_tekst_kleur: string;
+  footer_achtergrond: string;
+  footer_tekst_kleur: string;
   generated_html: string | null;
 }
 
 const DEFAULT_SETTINGS: Omit<NewsletterSettings, 'id'> = {
   bedrijfsnaam: '',
+  tagline: '',
+  bedrijfsomschrijving: '',
   bedrijfsinformatie: '',
+  doelgroep: '',
+  toon: '',
+  cta_tekst: '',
+  cta_url: '',
+  website: '',
   schrijfstijl: '',
   rss_feeds: [],
-  achtergrond_kleur: '#ffffff',
-  primaire_kleur: '#000000',
-  accent_kleur: '#4f46e5',
+  primaire_kleur: '#FF6B2C',
+  secundaire_kleur: '#1A2B5E',
+  achtergrond_kleur: '#F5F3EF',
+  kaart_achtergrond: '#FFFFFF',
+  tekst_kleur: '#1A1A2E',
+  subtekst_kleur: '#6B7280',
+  accent_kleur: '#FFF0E8',
+  cta_tekst_kleur: '#FFFFFF',
+  footer_achtergrond: '#1A2B5E',
+  footer_tekst_kleur: '#E8EDF7',
   generated_html: null,
 };
 
@@ -43,18 +71,31 @@ export const useNewsletterSettings = () => {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // No record yet, use defaults
         setSettings({ id: '', ...DEFAULT_SETTINGS });
       } else if (data) {
         setSettings({
           id: data.id,
           bedrijfsnaam: data.bedrijfsnaam || '',
+          tagline: (data as any).tagline || '',
+          bedrijfsomschrijving: (data as any).bedrijfsomschrijving || '',
           bedrijfsinformatie: data.bedrijfsinformatie || '',
+          doelgroep: (data as any).doelgroep || '',
+          toon: (data as any).toon || '',
+          cta_tekst: (data as any).cta_tekst || '',
+          cta_url: (data as any).cta_url || '',
+          website: (data as any).website || '',
           schrijfstijl: data.schrijfstijl || '',
           rss_feeds: Array.isArray(data.rss_feeds) ? (data.rss_feeds as string[]) : [],
-          achtergrond_kleur: data.achtergrond_kleur || '#ffffff',
-          primaire_kleur: data.primaire_kleur || '#000000',
-          accent_kleur: data.accent_kleur || '#4f46e5',
+          primaire_kleur: data.primaire_kleur || '#FF6B2C',
+          secundaire_kleur: (data as any).secundaire_kleur || '#1A2B5E',
+          achtergrond_kleur: data.achtergrond_kleur || '#F5F3EF',
+          kaart_achtergrond: (data as any).kaart_achtergrond || '#FFFFFF',
+          tekst_kleur: (data as any).tekst_kleur || '#1A1A2E',
+          subtekst_kleur: (data as any).subtekst_kleur || '#6B7280',
+          accent_kleur: data.accent_kleur || '#FFF0E8',
+          cta_tekst_kleur: (data as any).cta_tekst_kleur || '#FFFFFF',
+          footer_achtergrond: (data as any).footer_achtergrond || '#1A2B5E',
+          footer_tekst_kleur: (data as any).footer_tekst_kleur || '#E8EDF7',
           generated_html: data.generated_html || null,
         });
       }
@@ -77,15 +118,29 @@ export const useNewsletterSettings = () => {
     debounceRef.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        const payload = {
+        const payload: any = {
           user_id: user.id,
           bedrijfsnaam: merged.bedrijfsnaam,
+          tagline: merged.tagline,
+          bedrijfsomschrijving: merged.bedrijfsomschrijving,
           bedrijfsinformatie: merged.bedrijfsinformatie,
+          doelgroep: merged.doelgroep,
+          toon: merged.toon,
+          cta_tekst: merged.cta_tekst,
+          cta_url: merged.cta_url,
+          website: merged.website,
           schrijfstijl: merged.schrijfstijl,
           rss_feeds: merged.rss_feeds,
-          achtergrond_kleur: merged.achtergrond_kleur,
           primaire_kleur: merged.primaire_kleur,
+          secundaire_kleur: merged.secundaire_kleur,
+          achtergrond_kleur: merged.achtergrond_kleur,
+          kaart_achtergrond: merged.kaart_achtergrond,
+          tekst_kleur: merged.tekst_kleur,
+          subtekst_kleur: merged.subtekst_kleur,
           accent_kleur: merged.accent_kleur,
+          cta_tekst_kleur: merged.cta_tekst_kleur,
+          footer_achtergrond: merged.footer_achtergrond,
+          footer_tekst_kleur: merged.footer_tekst_kleur,
           generated_html: merged.generated_html,
         };
 
