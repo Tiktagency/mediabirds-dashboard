@@ -3,26 +3,41 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const LeadsGenerator = () => {
   const { toast } = useToast();
-  const [bedrijfsnaam, setBedrijfsnaam] = useState('');
-  const [locatie, setLocatie] = useState('');
-  const [beschrijving, setBeschrijving] = useState('');
+  const [plaatsnaam, setPlaatsnaam] = useState('');
+  const [country, setCountry] = useState('');
+  const [zoektermen, setZoektermen] = useState<string[]>(['']);
   const [isStarting, setIsStarting] = useState(false);
 
-  const isValid = bedrijfsnaam.trim() && locatie.trim() && beschrijving.trim();
+  const isValid = plaatsnaam.trim() && country.trim() && zoektermen.some(z => z.trim());
+
+  const updateZoekterm = (index: number, value: string) => {
+    const updated = [...zoektermen];
+    updated[index] = value;
+    setZoektermen(updated);
+  };
+
+  const addZoekterm = () => setZoektermen([...zoektermen, '']);
+
+  const removeZoekterm = (index: number) => {
+    setZoektermen(zoektermen.filter((_, i) => i !== index));
+  };
 
   const handleStart = async () => {
     if (!isValid) return;
     setIsStarting(true);
     try {
-      // Placeholder - webhook can be connected later
-      toast({ title: 'Gestart', description: 'Leads generator is gestart voor ' + bedrijfsnaam });
+      const searchStringsArray = zoektermen.filter(z => z.trim());
+      const { data, error } = await supabase.functions.invoke('trigger-leads-webhook', {
+        body: { Plaatsnaam: plaatsnaam, Country: country, searchStringsArray },
+      });
+      if (error) throw error;
+      toast({ title: 'Gestart', description: 'Leads generator is gestart voor ' + plaatsnaam });
     } catch (error) {
       console.error('Error:', error);
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
@@ -47,39 +62,64 @@ const LeadsGenerator = () => {
           <h1 className="hero-title text-foreground fade-in-up">Leads Generator</h1>
         </div>
         <p className="text-muted-foreground text-center max-w-xl mb-8">
-          Genereer automatisch leads op basis van je bedrijfsinformatie en gewenste locatie. Vul de gegevens in en start de zoektocht.
+          Genereer automatisch leads op basis van locatie en zoektermen. Vul de gegevens in en start de zoektocht.
         </p>
 
         <div className="w-full max-w-lg space-y-4">
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
             <div className="space-y-2">
-              <Label className="text-white/70">Bedrijfsnaam</Label>
+              <Label className="text-white/70">Plaatsnaam</Label>
               <Input
-                value={bedrijfsnaam}
-                onChange={(e) => setBedrijfsnaam(e.target.value)}
-                placeholder="Voer je bedrijfsnaam in..."
+                value={plaatsnaam}
+                onChange={(e) => setPlaatsnaam(e.target.value)}
+                placeholder="Bijv. Amsterdam"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/70">Locatie</Label>
+              <Label className="text-white/70">Country</Label>
               <Input
-                value={locatie}
-                onChange={(e) => setLocatie(e.target.value)}
-                placeholder="Bijv. Amsterdam, Noord-Holland..."
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="e.g. Netherlands"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/70">Bedrijfsbeschrijving</Label>
-              <Textarea
-                value={beschrijving}
-                onChange={(e) => setBeschrijving(e.target.value)}
-                placeholder="Beschrijf je bedrijf en de leads die je zoekt..."
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/30 min-h-[120px]"
-              />
+              <Label className="text-white/70">Zoektermen</Label>
+              {zoektermen.map((term, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={term}
+                    onChange={(e) => updateZoekterm(index, e.target.value)}
+                    placeholder={`Zoekterm ${index + 1}`}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+                  />
+                  {zoektermen.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeZoekterm(index)}
+                      className="text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={addZoekterm}
+                className="text-white/50 hover:text-white hover:bg-white/10 mt-1 h-8 px-2"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Extra zoekterm
+              </Button>
             </div>
           </div>
 
