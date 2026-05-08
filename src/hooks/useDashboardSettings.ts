@@ -68,7 +68,7 @@ export const useDashboardSettings = () => {
           .single();
 
         if (insertError) throw insertError;
-        setSettings(newSettings as DashboardSettings);
+        setSettings(newSettings as unknown as DashboardSettings);
       }
     } catch (error) {
       console.error('Error fetching dashboard settings:', error);
