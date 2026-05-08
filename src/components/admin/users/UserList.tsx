@@ -11,8 +11,23 @@ import type { UserProfile, AppRole } from '@/hooks/useUserManagement';
 
 interface UserListProps {
   users: UserProfile[];
+  currentUserId?: string;
   onUpdateRole: (userId: string, role: AppRole) => Promise<void>;
   onDelete: (userId: string) => Promise<void>;
+}
+
+// Role hierarchy for filtering
+const roleHierarchy: Record<AppRole, number> = {
+  'super_admin': 4,
+  'admin': 3,
+  'operator': 2,
+  'viewer': 1,
+  'moderator': 0,
+  'user': 0,
+};
+
+function getRoleLevel(role: AppRole): number {
+  return roleHierarchy[role] || 0;
 }
 
 const roleConfig: Record<AppRole, { label: string; icon: React.ReactNode; color: string }> = {
@@ -48,8 +63,26 @@ const roleConfig: Record<AppRole, { label: string; icon: React.ReactNode; color:
   },
 };
 
-export const UserList = ({ users, onUpdateRole, onDelete }: UserListProps) => {
+export const UserList = ({ users, currentUserId, onUpdateRole, onDelete }: UserListProps) => {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  
+  // Get available roles for a user (filters out lower roles for current user)
+  const getAvailableRoles = (targetUser: UserProfile) => {
+    const allRoles: { value: AppRole; label: string; icon: React.ReactNode }[] = [
+      { value: 'super_admin', label: 'Super Admin', icon: <Crown className="w-3 h-3 text-purple-400" /> },
+      { value: 'admin', label: 'Admin', icon: <Shield className="w-3 h-3" /> },
+      { value: 'operator', label: 'Operator', icon: <Play className="w-3 h-3" /> },
+      { value: 'viewer', label: 'Viewer', icon: <Eye className="w-3 h-3" /> },
+    ];
+    
+    // If editing self, only show roles >= current level
+    if (targetUser.id === currentUserId) {
+      const currentLevel = Math.max(...targetUser.roles.map(r => getRoleLevel(r)), 0);
+      return allRoles.filter(r => getRoleLevel(r.value) >= currentLevel);
+    }
+    
+    return allRoles;
+  };
 
   const handleRoleChange = async (userId: string, role: AppRole) => {
     setUpdatingUserId(userId);
@@ -94,32 +127,19 @@ export const UserList = ({ users, onUpdateRole, onDelete }: UserListProps) => {
                   <Select
                     value={user.roles[0] || 'viewer'}
                     onValueChange={(value: AppRole) => handleRoleChange(user.id, value)}
-                    disabled={updatingUserId === user.id}
+                    disabled={updatingUserId === user.id || (user.id === currentUserId && getAvailableRoles(user).length <= 1)}
                   >
                     <SelectTrigger className="w-[130px] bg-background/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="super_admin">
-                        <span className="flex items-center gap-2">
-                          <Crown className="w-3 h-3 text-purple-400" /> Super Admin
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="admin">
-                        <span className="flex items-center gap-2">
-                          <Shield className="w-3 h-3" /> Admin
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="operator">
-                        <span className="flex items-center gap-2">
-                          <Play className="w-3 h-3" /> Operator
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="viewer">
-                        <span className="flex items-center gap-2">
-                          <Eye className="w-3 h-3" /> Viewer
-                        </span>
-                      </SelectItem>
+                      {getAvailableRoles(user).map(role => (
+                        <SelectItem key={role.value} value={role.value}>
+                          <span className="flex items-center gap-2">
+                            {role.icon} {role.label}
+                          </span>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
