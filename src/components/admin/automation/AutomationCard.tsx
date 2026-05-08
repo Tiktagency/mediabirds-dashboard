@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Clock, Globe, Save, Workflow } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, Save, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ interface AutomationCardProps {
   impactColors?: ImpactColors;
 }
 
-const CATEGORIES = ['Planning', 'SEO', 'Content', 'Klantenservice', 'Marketing', 'Anders'];
+
 
 const defaultImpactColors: ImpactColors = {
   high: '#ef4444',
@@ -51,10 +51,7 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
       display_name: localSetting.display_name,
       description: localSetting.description,
       impact_level: localSetting.impact_level,
-      category: localSetting.category,
       status: localSetting.status,
-      webhook_url: localSetting.webhook_url,
-      webhook_backup_url: localSetting.webhook_backup_url,
       n8n_workflow_name: localSetting.n8n_workflow_name,
       time_saved_per_execution: localSetting.time_saved_per_execution,
     });
@@ -91,9 +88,6 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
             >
               {setting.impact_level}
             </Badge>
-            <Badge variant="outline" className="text-muted-foreground">
-              {setting.category || 'Geen categorie'}
-            </Badge>
           </div>
           <div className="flex items-center gap-3">
             <StatusToggle 
@@ -111,33 +105,14 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
 
       {isExpanded && (
         <CardContent className="space-y-4 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`name-${setting.id}`}>Weergavenaam</Label>
-              <Input
-                id={`name-${setting.id}`}
-                value={localSetting.display_name}
-                onChange={(e) => setLocalSetting(prev => ({ ...prev, display_name: e.target.value }))}
-                className="bg-background/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`category-${setting.id}`}>Categorie</Label>
-              <Select
-                value={localSetting.category || undefined}
-                onValueChange={(value) => setLocalSetting(prev => ({ ...prev, category: value }))}
-              >
-                <SelectTrigger className="bg-background/50">
-                  <SelectValue placeholder="Kies categorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor={`name-${setting.id}`}>Weergavenaam</Label>
+            <Input
+              id={`name-${setting.id}`}
+              value={localSetting.display_name}
+              onChange={(e) => setLocalSetting(prev => ({ ...prev, display_name: e.target.value }))}
+              className="bg-background/50"
+            />
           </div>
 
           <div className="space-y-2">
@@ -234,34 +209,6 @@ export const AutomationCard = ({ setting, onUpdate, impactColors = defaultImpact
             </div>
           </div>
 
-          <div className="border-t border-border/30 pt-4 mt-4">
-            <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              Webhook URLs
-            </h4>
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor={`webhook-${setting.id}`}>Primaire Webhook URL</Label>
-                <Input
-                  id={`webhook-${setting.id}`}
-                  value={localSetting.webhook_url || ''}
-                  onChange={(e) => setLocalSetting(prev => ({ ...prev, webhook_url: e.target.value }))}
-                  className="bg-background/50 font-mono text-sm"
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`webhook-backup-${setting.id}`}>Backup Webhook URL (optioneel)</Label>
-                <Input
-                  id={`webhook-backup-${setting.id}`}
-                  value={localSetting.webhook_backup_url || ''}
-                  onChange={(e) => setLocalSetting(prev => ({ ...prev, webhook_backup_url: e.target.value }))}
-                  className="bg-background/50 font-mono text-sm"
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-          </div>
 
           {hasChanges && (
             <div className="flex justify-end pt-4 border-t border-border/30">
