@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.run-scheduled-blogs]
 verify_jwt = false
+
+[functions.rewrite-text]
+verify_jwt = false
+
+[functions.get-saved-hours]
+verify_jwt = false
