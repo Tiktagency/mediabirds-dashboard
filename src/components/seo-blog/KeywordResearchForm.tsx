@@ -294,6 +294,12 @@ export const KeywordResearchForm = ({
             className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
             onBlur={() => handleSaveField(field)}
             autoFocus
+            ref={(el) => {
+              if (el) {
+                const len = el.value.length;
+                el.setSelectionRange(len, len);
+              }
+            }}
           />
         ) : (
           <div className="flex items-center gap-2">
@@ -429,6 +435,8 @@ export const KeywordResearchForm = ({
               if (el) {
                 el.style.height = 'auto';
                 el.style.height = el.scrollHeight + 'px';
+                const len = el.value.length;
+                el.setSelectionRange(len, len);
               }
             }}
           />
