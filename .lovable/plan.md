@@ -1,22 +1,64 @@
 
-## Situatie
+## Analyse: Ontbrekende velden in automatische triggers
 
-Het vorige plan is al geaccepteerd en gedeeltelijk uitgevoerd, maar de verkeerde bestanden zijn bewerkt. De `EmailSignatureForm.tsx` is nog niet aangepast.
+### Blog trigger (`run-scheduled-blogs`) — ontbrekende velden
 
-## Wat te doen
+De handmatige "Start" knop stuurt in `blogData`:
+- `page_url_spreadsheet_id` — uit `page_url_settings.google_sheet_id`
+- `page_url_grid_id` — uit `page_url_settings.google_file_id`
+- `page_urls` — het hele `page_urls` JSON object uit `page_url_settings`
+- `folder_id` (alleen als `image_type === 'google_drive'`)
+- `used_folder_id` (alleen als `image_type === 'google_drive'`)
+- `image_type` — `'ai_image'` of `'google_drive'`
+- `aantal_woorden` als string range `"500-1500"` ✅ (zit er al in)
 
-Alleen `src/components/email-signature/EmailSignatureForm.tsx` aanpassen om profielfoto URL en bedrijfslogo URL verplicht te maken.
+De scheduler stuurt **niet**:
+- `page_url_spreadsheet_id`, `page_url_grid_id`, `page_urls` — ontbreekt volledig
+- `folder_id`, `used_folder_id` — worden altijd leeg gestuurd
+- `image_type` — wordt niet meegestuurd
 
-### Aanpak
+### SEO trigger (`run-scheduled-seo`) — is al correct
 
-1. Lees de huidige `EmailSignatureForm.tsx` om de exacte structuur te begrijpen
-2. Voeg `profile_photo_url` en `company_logo_url` toe aan het zod-schema als verplichte string-velden
-3. Koppel de bestaande state-variabelen (`profilePhotoUrl`, `companyLogoUrl`) aan het form via `setValue`/`watch`
-4. Toon foutmeldingen onder de input-velden
-5. Submit-knop wordt automatisch geblokkeerd via `!isValid`
+De SEO scheduler stuurt alle velden die ook de handmatige knop stuurt (`blogTopic`, `audienceIntent`, `businessDescription`, etc.). Dit is al correct.
 
-### Bestanden
+### Fix: `run-scheduled-blogs/index.ts`
+
+Na het ophalen van `blogSettings` ook `page_url_settings` ophalen:
+
+```typescript
+const { data: pageUrlSettings } = await supabase
+  .from('page_url_settings')
+  .select('*')
+  .eq('company_id', company.id)
+  .maybeSingle();
+```
+
+Dan de payload uitbreiden:
+
+```typescript
+const blogPayload = {
+  bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
+  // ... bestaande velden ...
+  
+  // image type velden
+  image_type: blogSettings.image_type || 'ai_image',
+  folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.folder_id || '') : '',
+  used_folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
+  achtergrond_kleur: blogSettings.image_type !== 'google_drive' ? (blogSettings.achtergrond_kleur || '') : '',
+  hoofdaccent_gradient: blogSettings.image_type !== 'google_drive' ? (blogSettings.hoofdaccent_gradient || '') : '',
+  
+  // page URL velden
+  page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
+  page_url_grid_id: pageUrlSettings?.google_file_id || '',
+  page_urls: pageUrlSettings?.page_urls || {},
+  
+  timestamp: new Date().toISOString(),
+  triggered_from: 'scheduled',
+};
+```
+
+### Bestand
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/components/email-signature/EmailSignatureForm.tsx` | URL-velden verplicht maken in zod-schema |
+| `supabase/functions/run-scheduled-blogs/index.ts` | `page_url_settings` ophalen + ontbrekende velden toevoegen aan payload |
