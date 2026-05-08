@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Clock } from 'lucide-react';
+import { Clock, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Company } from '@/components/seo/CompanySelector';
 import { useBlogSettings } from '@/hooks/useBlogSettings';
@@ -436,14 +436,15 @@ export const BlogGenerationForm = ({
           </Select>
         ) : (
           <div 
-            className={`px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
+            className={`flex items-center justify-between px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden cursor-pointer hover:bg-white/10 transition-colors ${
               field === 'bedrijfsnaam' 
                 ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
                 : 'bg-white/5 border border-white/10'
             }`}
             onClick={() => canEdit && setEditingField(field)}
           >
-            {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            <span className="truncate">{value || <span className="text-white/40 italic">Niet ingesteld</span>}</span>
+            <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
           </div>
         )}
       </div>
