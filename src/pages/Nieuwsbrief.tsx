@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2, Loader2, Newspaper, Palette, Download, Pencil, Wand2, Settings2, AlertCircle, Building2, Clock } from 'lucide-react';
+import { Plus, Trash2, Loader2, Newspaper, Palette, Pencil, Wand2, Settings2, AlertCircle, Building2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -480,16 +480,6 @@ const Nieuwsbrief = () => {
     }
   };
 
-  const handleDownload = () => {
-    if (!generatedHtml) return;
-    const blob = new Blob([generatedHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'nieuwsbrief.html';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="min-h-screen relative hero-gradient flex flex-col">
@@ -821,49 +811,6 @@ const Nieuwsbrief = () => {
             </Card>
           </div>
 
-          {/* Preview full width */}
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white text-lg">HTML Preview</CardTitle>
-              {generatedHtml && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/5 border-white/20 text-white hover:bg-white/10"
-                  onClick={handleDownload}
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Downloaden
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent className="p-0 pb-6 px-6">
-              {generatedHtml ? (
-                <div className="rounded-lg overflow-hidden border border-white/10" style={{ height: '700px' }}>
-                  <iframe
-                    srcDoc={generatedHtml}
-                    sandbox="allow-same-origin"
-                    title="Nieuwsbrief preview"
-                    className="w-full h-full border-0"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-4 text-center px-8 py-20">
-                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-                    <Newspaper className="w-7 h-7 text-white/20" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-medium text-white/50">Nog geen preview beschikbaar</p>
-                    <p className="text-xs text-white/30 max-w-xs">
-                      Vul de gegevens in en klik op{' '}
-                      <span className="font-medium text-white/40">Genereer nieuwsbrief</span>{' '}
-                      om een preview te zien.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
         </div>
         )}
