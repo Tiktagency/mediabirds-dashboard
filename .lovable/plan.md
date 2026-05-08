@@ -1,31 +1,39 @@
 
-# Vergroten van Check en XCircle iconen in bewerkingsmodi
+# Auto-save bij bewerken: vinkje en kruisje verwijderen
 
-## Wat wordt er gedaan
-De Check (✓) en XCircle (✗) iconen die verschijnen tijdens het bewerken van velden worden groter gemaakt zodat ze beter zichtbaar zijn.
+## Wat verandert er
 
-## Huidige situatie
-In `src/pages/SeoBlog.tsx` in het notities-veld (regels 368-409):
-- Check icoon: `h-4 w-4` (klein, 16px)
-- XCircle icoon: `h-4 w-4` (klein, 16px)
+Alle bewerkingsvelden slaan automatisch op wanneer je ergens anders klikt (onBlur). De Check- en XCircle-iconen worden verwijderd. Dit geldt voor drie plekken:
 
-Deze zijn ook klein in `src/components/seo-blog/KeywordResearchForm.tsx`:
-- Check icoon: `h-4 w-4` (regel 288)
-- XCircle icoon: `h-4 w-4` (regel 296)
+1. **Notities vak** (`SeoBlog.tsx`) -- textarea slaat automatisch op bij onBlur
+2. **Input velden** (`KeywordResearchForm.tsx` -- `renderInputField`) -- input slaat op bij onBlur
+3. **Tekstvelden** (`KeywordResearchForm.tsx` -- `renderTextField`) -- textarea slaat op bij onBlur
 
-## Wijzigingen
+## Hoe het werkt
 
-### 1. SeoBlog.tsx (notities-vak)
-- Regel 383: XCircle icoon vergroten van `h-4 w-4` naar `h-6 w-6`
-- Regel 405: Check icoon vergroten van `h-4 w-4` naar `h-6 w-6`
+- Wanneer je op een veld klikt om te bewerken, verschijnt het invoerveld (zoals nu)
+- Er zijn **geen** vinkje/kruisje knoppen meer
+- Zodra je buiten het veld klikt (onBlur), wordt de waarde automatisch opgeslagen
+- Ook lege velden worden opgeslagen (waarde wordt `null` in de database)
+- Na opslaan keert het veld terug naar de weergavemodus
 
-### 2. KeywordResearchForm.tsx (formuliervelden)
-- Regel 288: Check icoon vergroten van `h-4 w-4` naar `h-6 w-6`
-- Regel 296: XCircle icoon vergroten van `h-4 w-4` naar `h-6 w-6`
+## Technische wijzigingen
 
-## Visueel effect
-De iconen worden ongeveer 50% groter (van 16px naar 24px), waardoor ze beter opvallen en gemakkelijker te klikken zijn.
+### 1. `src/pages/SeoBlog.tsx` (Notities)
+- Verwijder de Check en XCircle knoppen uit het editing-blok (regels 377-406)
+- Voeg `onBlur` toe aan de Textarea die `handleSaveNotes` aanroept en terugschakelt naar 'expanded'
+- Vereenvoudig de editing-state: geen knoppen meer, alleen de textarea
 
-## Betreffende bestanden
-- `src/pages/SeoBlog.tsx` - 2 wijzigingen
-- `src/components/seo-blog/KeywordResearchForm.tsx` - 2 wijzigingen
+### 2. `src/components/seo-blog/KeywordResearchForm.tsx` (renderInputField)
+- Verwijder Check en XCircle knoppen (regels 282-297)
+- Voeg `onBlur` toe aan de Input die `handleSaveField(field)` aanroept
+- Het veld gaat terug naar weergavemodus na opslaan
+
+### 3. `src/components/seo-blog/KeywordResearchForm.tsx` (renderTextField)
+- Verwijder Check en XCircle knoppen (regels 415-430)
+- Voeg `onBlur` toe aan de Textarea die `handleSaveField(field)` aanroept
+- Het veld gaat terug naar weergavemodus na opslaan
+
+### 4. Opruimen
+- `handleCancelEdit` functie kan verwijderd worden (niet meer nodig)
+- Check en XCircle imports verwijderen als ze nergens anders meer gebruikt worden in KeywordResearchForm
