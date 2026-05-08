@@ -181,6 +181,7 @@ export type Database = {
           achtergrond_kleur: string | null
           bedrijfsnaam: string | null
           bedrijfsomschrijving: string | null
+          category: string | null
           company_id: string
           created_at: string
           get_afbeelding_url: string | null
@@ -199,6 +200,7 @@ export type Database = {
           achtergrond_kleur?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null
+          category?: string | null
           company_id: string
           created_at?: string
           get_afbeelding_url?: string | null
@@ -217,6 +219,7 @@ export type Database = {
           achtergrond_kleur?: string | null
           bedrijfsnaam?: string | null
           bedrijfsomschrijving?: string | null
+          category?: string | null
           company_id?: string
           created_at?: string
           get_afbeelding_url?: string | null
