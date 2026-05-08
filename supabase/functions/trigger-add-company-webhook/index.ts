@@ -64,13 +64,18 @@ serve(async (req) => {
     if (seoError) console.error('Error upserting seo_settings:', seoError);
 
     // Upsert blog_settings
+    const blogUpsertData: Record<string, unknown> = {
+      company_id: companyId,
+      google_sheet_id: toNull(hoofd['Spreadsheet ID']),
+      google_slides_id: toNull(hoofd['Grid ID']),
+    };
+    if (companyDomain && companyDomain.trim() !== '') {
+      blogUpsertData.get_afbeelding_url = `https://${companyDomain}/wp-json/wp/v2/media`;
+      blogUpsertData.post_blog_url = `https://${companyDomain}/wp-json/wp/v2/posts`;
+    }
     const { error: blogError } = await supabase
       .from('blog_settings')
-      .upsert({
-        company_id: companyId,
-        google_sheet_id: toNull(hoofd['Spreadsheet ID']),
-        google_slides_id: toNull(hoofd['Grid ID']),
-      }, { onConflict: 'company_id' });
+      .upsert(blogUpsertData, { onConflict: 'company_id' });
 
     if (blogError) console.error('Error upserting blog_settings:', blogError);
 
