@@ -95,7 +95,10 @@ export const useEmailSignatureSettings = () => {
     setSelectedSignature(null);
   };
 
-  const saveSettings = async (newSettings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const saveSettings = async (
+    newSettings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    options?: { silent?: boolean }
+  ) => {
     if (!user) return;
 
     setIsSaving(true);
@@ -153,10 +156,13 @@ export const useEmailSignatureSettings = () => {
         }
       }
 
-      toast({
-        title: 'Opgeslagen',
-        description: 'Je email handtekening is opgeslagen',
-      });
+      // Alleen toast tonen als niet silent
+      if (!options?.silent) {
+        toast({
+          title: 'Opgeslagen',
+          description: 'Je email handtekening is opgeslagen',
+        });
+      }
 
       await fetchAllSignatures();
     } catch (error) {
