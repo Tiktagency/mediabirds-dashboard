@@ -1,40 +1,36 @@
 
 
-## "Opgeslagen" melding alleen tonen bij daadwerkelijke wijzigingen
+## Potlood-icoon toevoegen aan alle click-to-edit velden
 
 ### Probleem
-Wanneer je op een veld klikt om te bekijken wat erin staat en vervolgens wegklikt zonder iets te wijzigen, verschijnt er onterecht een "Opgeslagen" melding. Dit gebeurt in alle drie de formulieren: Pagina URL, Blog Generatie en Zoekwoord Onderzoek.
+In de formulieren **Blog Generatie** en **Zoekwoord Onderzoek** ontbreekt het potlood-icoon bij velden in de niet-bewerkingsmodus. Het icoon is wel aanwezig in het **Pagina URL** formulier (via `renderInputField`). Hierdoor is het voor gebruikers niet duidelijk dat ze op een veld kunnen klikken om het te bewerken.
 
-### Oplossing
-Bij het verlaten van een veld (blur) wordt eerst gecontroleerd of de waarde daadwerkelijk is gewijzigd ten opzichte van de oorspronkelijk geladen waarde. Alleen als er een verschil is, wordt opgeslagen en de melding getoond. Als er niets is gewijzigd, wordt het veld gewoon gesloten zonder actie.
+### Aanpassingen
 
-### Aanpassingen per bestand
+**1. `src/components/seo-blog/BlogGenerationForm.tsx`**
+- `Pencil` toevoegen aan de lucide-react import (ontbreekt momenteel volledig)
+- In de `renderField` functie (regel 438-447): het potlood-icoon toevoegen aan de statische `<div>` weergave, rechts uitgelijnd met `flex items-center justify-between`
+- Dit geldt voor alle tekst- en textarea-velden (niet voor select-velden, die hebben al een dropdown-indicator)
 
-**1. `src/components/seo-blog/PageUrlForm.tsx`**
-- De `autoSave` functie wordt alleen aangeroepen als er een echte wijziging is. De bestaande checks in `handleSpreadsheetIdBlur` en `handleGridIdBlur` werken al correct. Geen wijziging nodig daar.
-- Controleer of `handleUrlBlur` niet onnodig triggert (JSON vergelijking is al aanwezig).
-
-**2. `src/components/seo-blog/BlogGenerationForm.tsx`**
-- In `handleSaveField`: voor het opslaan, vergelijk de huidige `formData[field]` waarde met de oorspronkelijk geladen waarde uit `settings`. Als ze gelijk zijn, alleen `setEditingField(null)` aanroepen en direct returnen zonder op te slaan of een toast te tonen.
-
-**3. `src/components/seo-blog/KeywordResearchForm.tsx`**
-- Zelfde aanpak als BlogGenerationForm: in `handleSaveField` de huidige waarde vergelijken met de oorspronkelijk geladen waarde uit `settings`. Bij geen verschil, alleen het bewerkingsveld sluiten.
+**2. `src/components/seo-blog/KeywordResearchForm.tsx`**
+- In de `renderField` functie (regels 304-309 en 316-321): het potlood-icoon toevoegen aan de statische weergave van reguliere velden (niet-Google ID velden)
+- Voor Google ID velden met waarde hebben al aparte iconen (kopieer/bewerk/verwijder), daar hoeft niets te veranderen
+- Voor reguliere velden en lege Google ID velden: potlood-icoon toevoegen
 
 ### Technische details
 
-Per formulier wordt een vergelijking toegevoegd aan het begin van `handleSaveField`:
+De wijziging is steeds hetzelfde patroon - de statische `<div>` krijgt `flex items-center justify-between` en een `<Pencil>` icoon:
 
 ```text
-BlogGenerationForm / KeywordResearchForm:
-  handleSaveField(field):
-    huidige_waarde = formData[field]
-    originele_waarde = settings?.[field] || ''
-    
-    als huidige_waarde === originele_waarde:
-      setEditingField(null)
-      return  // geen save, geen toast
-    
-    // ... bestaande save-logica
+BlogGenerationForm - renderField (niet-select velden):
+  <div className="... flex items-center justify-between ...">
+    <span className="truncate">{value || placeholder}</span>
+    <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0 ml-2" />
+  </div>
+
+KeywordResearchForm - renderField (reguliere velden):
+  Zelfde aanpak voor de div op regel 316-321
+  Google ID velden met waarde (regel 304-309) behouden hun bestaande iconen
 ```
 
-Voor PageUrlForm is de logica al grotendeels correct via de bestaande vergelijkingen in de blur handlers. Alleen het `renderInputField` `onBlur` moet correct doorvallen naar de specifieke handler die de check uitvoert, en `setEditingField(null)` moet altijd worden aangeroepen (ook zonder save).
+De styling van het potlood-icoon (`h-3.5 w-3.5 text-white/40 shrink-0 ml-2`) is consistent met het `PageUrlForm` patroon.
