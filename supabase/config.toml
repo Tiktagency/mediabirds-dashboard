@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.run-scheduled-landing]
 verify_jwt = false
+
+[functions.extract-brand-colors]
+verify_jwt = false
