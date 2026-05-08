@@ -213,6 +213,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
 
       toast({ title: 'Bedrijf toegevoegd', description: `${newCompanyName} is aangemaakt` });
       setNewCompanyName('');
+      setNewCompanyDomain('');
       setShowConfirmAdd(false);
 
       await fetchCompanies();
