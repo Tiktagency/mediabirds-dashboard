@@ -128,7 +128,7 @@ const Landingspagina = () => {
     }
     if (expandedField === fieldId) {
       return (
-        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden">
+        <div className="expanded-field-container relative px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/20 text-white min-h-[40px] overflow-hidden min-w-0">
           <span className={`break-all ${!value ? 'text-white/30' : ''}`}>{value || placeholder}</span>
           <Button
             size="icon" variant="ghost"
@@ -143,7 +143,7 @@ const Landingspagina = () => {
     return (
       <div
         onClick={() => setExpandedField(fieldId)}
-        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
+        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors min-w-0"
       >
         <span className={`truncate ${!value ? 'text-white/30' : ''}`}>{value || placeholder}</span>
       </div>
