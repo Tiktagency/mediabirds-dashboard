@@ -66,15 +66,15 @@ const WordpressAltText = () => {
 
   const handleStart = async () => {
     if (!selectedCompany) return;
-    if (!editName.trim() || !editDomain.trim() || !editPassword.trim()) {
-      toast({ title: 'Vul alle velden in', description: 'Bedrijfsnaam, domeinnaam en applicatie wachtwoord zijn verplicht', variant: 'destructive' });
+    if (!editName.trim() || !editDomain.trim()) {
+      toast({ title: 'Vul alle velden in', description: 'Bedrijfsnaam en domeinnaam zijn verplicht', variant: 'destructive' });
       return;
     }
     setIsStarting(true);
     setIsAnimating(true);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
-        body: { bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain, app_password: selectedCompany.app_password },
+        body: { company_id: selectedCompany.id, bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain },
       });
       if (error) throw error;
 
