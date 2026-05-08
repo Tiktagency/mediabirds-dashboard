@@ -150,7 +150,7 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLogs.slice(0, 100).map(log => (
+                  filteredLogs.map(log => (
                     <TableRow key={log.id} className="hover:bg-background/20">
                       <TableCell className="text-sm text-muted-foreground">
                         {format(new Date(log.created_at), 'dd MMM HH:mm:ss', { locale: nl })}
@@ -180,11 +180,9 @@ export const LogViewer = ({ logs, allAutomationNames, isRefreshing, onFilter, on
           </div>
         </div>
 
-        {filteredLogs.length > 100 && (
-          <p className="text-xs text-muted-foreground text-center">
-            Toont 100 van {filteredLogs.length} logs
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground text-center">
+          Toont {filteredLogs.length} logs van de afgelopen 30 dagen
+        </p>
       </CardContent>
     </Card>
   );

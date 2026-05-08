@@ -195,32 +195,74 @@ serve(async (req) => {
       console.log(`Configured workflows found: ${targetWorkflowIds.length} matching ${configuredWorkflowNames.length} configured names`);
     }
 
-    // Fetch more executions than needed to ensure we have enough after filtering
-    // n8n API has a max limit of 250, so we fetch max to ensure we get 100 after filtering
-    const apiLimit = 250;
-    let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=${apiLimit}`;
+    // Fetch ALL executions from the last 30 days using cursor-based pagination
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
     
-    console.log(`Fetching executions from: ${executionsUrl}`);
+    console.log(`Fetching all executions from the last 30 days (since ${cutoffDate.toISOString()})`);
     
-    const executionsResponse = await fetch(executionsUrl, {
-      method: 'GET',
-      headers: {
-        'X-N8N-API-KEY': n8nApiKey,
-        'Content-Type': 'application/json',
-      },
-    });
+    let allExecutions: N8nExecution[] = [];
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+    let pageCount = 0;
+    const maxPages = 50; // Safety limit to prevent infinite loops
+    
+    while (hasMore && pageCount < maxPages) {
+      pageCount++;
+      let executionsUrl = `https://tikt.app.n8n.cloud/api/v1/executions?limit=250`;
+      if (cursor) {
+        executionsUrl += `&cursor=${cursor}`;
+      }
+      
+      console.log(`Fetching page ${pageCount}: ${executionsUrl}`);
+      
+      const executionsResponse = await fetch(executionsUrl, {
+        method: 'GET',
+        headers: {
+          'X-N8N-API-KEY': n8nApiKey,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!executionsResponse.ok) {
-      const errorText = await executionsResponse.text();
-      console.error(`Failed to fetch executions: ${executionsResponse.status} - ${errorText}`);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch executions', logs: [] }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      if (!executionsResponse.ok) {
+        const errorText = await executionsResponse.text();
+        console.error(`Failed to fetch executions: ${executionsResponse.status} - ${errorText}`);
+        break;
+      }
+
+      const executionsData = await executionsResponse.json();
+      const pageExecutions: N8nExecution[] = executionsData.data || [];
+      
+      if (pageExecutions.length === 0) {
+        hasMore = false;
+        break;
+      }
+      
+      // Filter executions within the 30-day window
+      const recentExecutions = pageExecutions.filter(e => 
+        new Date(e.startedAt) >= cutoffDate
       );
+      
+      allExecutions.push(...recentExecutions);
+      
+      // Check if the oldest execution in this page is older than 30 days
+      const oldestInPage = pageExecutions[pageExecutions.length - 1];
+      if (new Date(oldestInPage.startedAt) < cutoffDate) {
+        console.log(`Reached executions older than 30 days, stopping pagination`);
+        hasMore = false;
+        break;
+      }
+      
+      // Get next cursor
+      cursor = executionsData.nextCursor;
+      if (!cursor) {
+        hasMore = false;
+      }
     }
-
-    const executionsData = await executionsResponse.json();
-    let executions: N8nExecution[] = executionsData.data || [];
+    
+    console.log(`Fetched ${allExecutions.length} executions from ${pageCount} pages`);
+    
+    let executions: N8nExecution[] = allExecutions;
 
     console.log(`Found ${executions.length} executions`);
 
@@ -299,13 +341,10 @@ serve(async (req) => {
     // Sort by created_at descending
     logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    // Always return exactly 100 logs (or less if there aren't enough)
-    const finalLogs = logs.slice(0, 100);
-
-    console.log(`Returning ${finalLogs.length} log entries`);
+    console.log(`Returning ${logs.length} log entries from the last 30 days`);
 
     return new Response(
-      JSON.stringify({ logs: finalLogs }),
+      JSON.stringify({ logs }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
