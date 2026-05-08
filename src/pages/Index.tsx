@@ -184,11 +184,11 @@ const Index = () => {
     const config = tileConfigMap[automationName];
     if (!config) return null;
     
-    if (config.n8nWorkflow) {
+      if (config.n8nWorkflow) {
       let n8nResult: string | null = null;
-      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') n8nResult = chatbotLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') n8nResult = mondayLastRun;
-      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') n8nResult = altTextLastRun;
+      if (config.n8nWorkflow === 'MEDIABIRDS klantenservice chatbot') n8nResult = n8nLastRuns['MEDIABIRDS klantenservice chatbot'] ?? null;
+      if (config.n8nWorkflow === 'MEDIABIRDS monday planning') n8nResult = n8nLastRuns['MEDIABIRDS monday planning'] ?? null;
+      if (config.n8nWorkflow === 'MEDIABIRDS Alt-text Wordpress') n8nResult = n8nLastRuns['MEDIABIRDS Alt-text Wordpress'] ?? null;
       
       // Als n8n resultaat beschikbaar is, gebruik dat
       if (n8nResult) return n8nResult;
