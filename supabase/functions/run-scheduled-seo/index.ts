@@ -110,6 +110,10 @@ Deno.serve(async (req) => {
               audienceIntent: seoSettings?.doelgroep_intentie || '',
               businessDescription: seoSettings?.bedrijfsomschrijving || '',
               extraInstructions: seoSettings?.extra_instructies || '',
+              hoofdGoogleSheetId: seoSettings?.hoofd_google_sheet_id || '',
+              hoofdGoogleSlidesId: seoSettings?.hoofd_google_slides_id || '',
+              nieuwGoogleSheetId: seoSettings?.nieuw_google_sheet_id || '',
+              nieuwGoogleSlidesId: seoSettings?.nieuw_google_slides_id || '',
             },
           }),
         });

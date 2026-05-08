@@ -217,12 +217,10 @@ export type Database = {
           company_id: string
           created_at: string
           get_afbeelding_url: string | null
-          hoofd_google_sheet_id: string | null
-          hoofd_google_slides_id: string | null
+          google_sheet_id: string | null
+          google_slides_id: string | null
           hoofdaccent_gradient: string | null
           id: string
-          nieuw_google_sheet_id: string | null
-          nieuw_google_slides_id: string | null
           post_blog_url: string | null
           schrijfstijl: string | null
           status: string | null
@@ -238,12 +236,10 @@ export type Database = {
           company_id: string
           created_at?: string
           get_afbeelding_url?: string | null
-          hoofd_google_sheet_id?: string | null
-          hoofd_google_slides_id?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
-          nieuw_google_sheet_id?: string | null
-          nieuw_google_slides_id?: string | null
           post_blog_url?: string | null
           schrijfstijl?: string | null
           status?: string | null
@@ -259,12 +255,10 @@ export type Database = {
           company_id?: string
           created_at?: string
           get_afbeelding_url?: string | null
-          hoofd_google_sheet_id?: string | null
-          hoofd_google_slides_id?: string | null
+          google_sheet_id?: string | null
+          google_slides_id?: string | null
           hoofdaccent_gradient?: string | null
           id?: string
-          nieuw_google_sheet_id?: string | null
-          nieuw_google_slides_id?: string | null
           post_blog_url?: string | null
           schrijfstijl?: string | null
           status?: string | null
@@ -465,9 +459,11 @@ export type Database = {
           created_at: string
           doelgroep_intentie: string | null
           extra_instructies: string | null
-          google_sheet_id: string | null
-          google_slides_id: string | null
+          hoofd_google_sheet_id: string | null
+          hoofd_google_slides_id: string | null
           id: string
+          nieuw_google_sheet_id: string | null
+          nieuw_google_slides_id: string | null
           updated_at: string
         }
         Insert: {
@@ -477,9 +473,11 @@ export type Database = {
           created_at?: string
           doelgroep_intentie?: string | null
           extra_instructies?: string | null
-          google_sheet_id?: string | null
-          google_slides_id?: string | null
+          hoofd_google_sheet_id?: string | null
+          hoofd_google_slides_id?: string | null
           id?: string
+          nieuw_google_sheet_id?: string | null
+          nieuw_google_slides_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -489,9 +487,11 @@ export type Database = {
           created_at?: string
           doelgroep_intentie?: string | null
           extra_instructies?: string | null
-          google_sheet_id?: string | null
-          google_slides_id?: string | null
+          hoofd_google_sheet_id?: string | null
+          hoofd_google_slides_id?: string | null
           id?: string
+          nieuw_google_sheet_id?: string | null
+          nieuw_google_slides_id?: string | null
           updated_at?: string
         }
         Relationships: [
