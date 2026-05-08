@@ -110,14 +110,12 @@ export const PageUrlForm = ({
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-white mb-6">Pagina URL Instellingen</h2>
       
-      {/* Bedrijfsnaam - Read only */}
+      {/* Bedrijfsnaam - Read only with gradient border */}
       <div className="space-y-2">
         <Label className="text-white/70">Bedrijfsnaam</Label>
-        <Input
-          value={selectedCompany.name}
-          disabled
-          className="bg-white/5 border-white/10 text-white/50"
-        />
+        <div className="px-3 py-2 rounded-md bg-white/5 border-2 border-transparent text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]">
+          {selectedCompany.name}
+        </div>
       </div>
 
       {/* Google Sheet Document ID */}
