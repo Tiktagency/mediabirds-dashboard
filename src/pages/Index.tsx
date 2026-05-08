@@ -231,7 +231,10 @@ const Index = () => {
           className="w-full h-full object-cover"
           draggable="false"
         />
-        <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-5xl md:text-6xl font-bold">
+        <h1 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-5xl md:text-6xl"
+          style={{ fontFamily: "'Denton', serif", fontStyle: 'italic' }}
+        >
           Mediabirds
         </h1>
         <div className="absolute top-6 right-6 flex items-center gap-4">
