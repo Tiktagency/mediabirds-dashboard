@@ -125,8 +125,36 @@ const EmailSignature = () => {
             <div className="order-3 flex flex-col gap-4">
               {/* HTML Preview */}
               <Card className="bg-white/5 border-white/10">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-white text-lg">Preview</CardTitle>
+                  {generatedHtml && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(generatedHtml);
+                        setIsCopied(true);
+                        toast({
+                          title: 'Gekopieerd',
+                          description: 'HTML code is naar het klembord gekopieerd',
+                        });
+                        setTimeout(() => setIsCopied(false), 2000);
+                      }}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          Gekopieerd
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 mr-1" />
+                          Kopieer
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="bg-white rounded-lg p-4 min-h-[200px] overflow-hidden">
