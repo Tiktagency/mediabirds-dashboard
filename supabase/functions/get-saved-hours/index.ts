@@ -20,10 +20,10 @@ interface WorkflowInfo {
   timeSaved: number;
   companyName: string;
   workflowType: string;
-  isShared?: boolean; // Indicates workflow should be split across companies
 }
 
 interface Company {
+  id: string;
   name: string;
   seo_research_n8n_name: string | null;
   subkeywords_n8n_name: string | null;
@@ -50,19 +50,7 @@ function determineWorkflowType(workflowName: string): string {
   if (nameLower.includes('klantenservice') || nameLower.includes('customer service')) return 'Klantenservice';
   if (nameLower.includes('database') || nameLower.includes('db sync')) return 'Database Sync';
   if (nameLower.includes('chatbot') || nameLower.includes('chat')) return 'Chatbot';
-  if (nameLower.includes('blog') && !nameLower.includes('zoekwoord')) return 'SEO Blog';
-  if (nameLower.includes('zoekwoord') || (nameLower.includes('seo') && !nameLower.includes('blog'))) return 'SEO Zoekwoorden';
-  if (nameLower.includes('subkeyword')) return 'Subkeywords';
   return 'Overig';
-}
-
-// Check if workflow is a shared/generic SEO workflow
-function isSharedSeoWorkflow(workflowName: string): 'blogs' | 'research' | null {
-  const nameLower = workflowName.toLowerCase();
-  // These are the generic workflow names that are shared across companies
-  if (nameLower === 'seo blog' || nameLower === 'seo blogs') return 'blogs';
-  if (nameLower === 'seo zoekwoorden' || nameLower === 'seo zoekwoord' || nameLower === 'seo keywords') return 'research';
-  return null;
 }
 
 serve(async (req) => {
@@ -83,6 +71,12 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Calculate date range for past 30 days
+    const periodEnd = new Date();
+    const periodStart = new Date();
+    periodStart.setDate(periodStart.getDate() - 30);
+    console.log(`Fetching data from the last 30 days (since ${periodStart.toISOString()})`);
 
     // Fetch automation_settings for time saved values
     const { data: automationSettings, error: settingsError } = await supabase
@@ -124,7 +118,7 @@ serve(async (req) => {
     // Fetch companies with their workflow names
     const { data: companies, error: companiesError } = await supabase
       .from('companies')
-      .select('name, seo_research_n8n_name, subkeywords_n8n_name, blogs_n8n_name');
+      .select('id, name, seo_research_n8n_name, subkeywords_n8n_name, blogs_n8n_name');
 
     if (companiesError) {
       console.error('Error fetching companies:', companiesError);
@@ -132,26 +126,55 @@ serve(async (req) => {
 
     const allCompanies: Company[] = companies || [];
     const companyNames: string[] = allCompanies.map(c => c.name);
-    
-    // Determine which companies have SEO features enabled for proportional distribution
-    const companiesWithBlogs = allCompanies.filter(c => c.blogs_n8n_name);
-    const companiesWithResearch = allCompanies.filter(c => c.seo_research_n8n_name);
+    const companyIdToName: Record<string, string> = {};
+    for (const company of allCompanies) {
+      companyIdToName[company.id] = company.name;
+    }
     
     console.log('All companies:', companyNames);
-    console.log('Companies with blogs:', companiesWithBlogs.map(c => c.name));
-    console.log('Companies with SEO research:', companiesWithResearch.map(c => c.name));
 
-    // Build exact match map from companies table (highest priority)
+    // ========================================
+    // STEP 1: Get accurate SEO data from workflow_executions table
+    // ========================================
+    const { data: workflowExecutions, error: execError } = await supabase
+      .from('workflow_executions')
+      .select('company_id, workflow_type')
+      .gte('triggered_at', periodStart.toISOString())
+      .eq('success', true);
+
+    if (execError) {
+      console.error('Error fetching workflow_executions:', execError);
+    }
+
+    // Count executions per company from our accurate tracking table
+    const accurateCounts: Record<string, { seo_blog: number; seo_research: number }> = {};
+    
+    if (workflowExecutions) {
+      for (const exec of workflowExecutions) {
+        const companyName = companyIdToName[exec.company_id];
+        if (!companyName) continue;
+        
+        if (!accurateCounts[companyName]) {
+          accurateCounts[companyName] = { seo_blog: 0, seo_research: 0 };
+        }
+        
+        if (exec.workflow_type === 'seo_blog') {
+          accurateCounts[companyName].seo_blog++;
+        } else if (exec.workflow_type === 'seo_research') {
+          accurateCounts[companyName].seo_research++;
+        }
+      }
+    }
+    
+    console.log('Accurate SEO counts from workflow_executions:', JSON.stringify(accurateCounts));
+
+    // ========================================
+    // STEP 2: Build workflow mapping for n8n (excluding SEO Blog and SEO Zoekwoorden)
+    // ========================================
     const exactMatchMap: Record<string, WorkflowInfo> = {};
 
+    // Only map company-specific workflows that are NOT the shared SEO workflows
     for (const company of allCompanies) {
-      if (company.seo_research_n8n_name) {
-        exactMatchMap[company.seo_research_n8n_name.toLowerCase()] = {
-          timeSaved: defaultZoekwoordTimeSaved,
-          companyName: company.name,
-          workflowType: 'SEO Zoekwoorden',
-        };
-      }
       if (company.subkeywords_n8n_name) {
         exactMatchMap[company.subkeywords_n8n_name.toLowerCase()] = {
           timeSaved: defaultZoekwoordTimeSaved,
@@ -159,16 +182,7 @@ serve(async (req) => {
           workflowType: 'Subkeywords',
         };
       }
-      if (company.blogs_n8n_name) {
-        exactMatchMap[company.blogs_n8n_name.toLowerCase()] = {
-          timeSaved: defaultBlogsTimeSaved,
-          companyName: company.name,
-          workflowType: 'SEO Blog',
-        };
-      }
     }
-
-    console.log('Exact match map:', JSON.stringify(exactMatchMap));
 
     // Fetch all workflows from n8n
     const workflowsResponse = await fetch('https://tikt.app.n8n.cloud/api/v1/workflows', {
@@ -192,18 +206,36 @@ serve(async (req) => {
     const workflows = workflowsData.data || [];
     console.log(`Found ${workflows.length} workflows in n8n`);
 
-    // Create a map of workflow IDs to names and info using priority-based matching
+    // Create a map of workflow IDs to names and info
+    // EXCLUDE SEO Blog and SEO Zoekwoorden - those come from workflow_executions
     const workflowIdToName = new Map<string, string>();
     const workflowIdToInfo = new Map<string, WorkflowInfo>();
-    
-    // Track which workflows are shared and need proportional distribution
-    const sharedWorkflows: { workflowId: string; type: 'blogs' | 'research'; timeSaved: number }[] = [];
     
     workflows.forEach((w: any) => {
       workflowIdToName.set(w.id, w.name);
       const workflowNameLower = w.name.toLowerCase();
       
-      // Priority 1: Exact match in companies table
+      // Skip generic SEO workflows - we track those in workflow_executions
+      if (workflowNameLower === 'seo blog' || workflowNameLower === 'seo blogs' ||
+          workflowNameLower === 'seo zoekwoorden' || workflowNameLower === 'seo zoekwoord' ||
+          workflowNameLower === 'seo keywords') {
+        console.log(`Skipping "${w.name}" - tracked via workflow_executions`);
+        return;
+      }
+      
+      // Also skip company-specific SEO workflows (e.g., "MEDIABIRDS zoekwoorden")
+      // These should also be tracked via workflow_executions going forward
+      const workflowType = determineWorkflowType(w.name);
+      if (workflowNameLower.includes('zoekwoord') || workflowNameLower.includes('blog')) {
+        // Check if this is a company-prefixed SEO workflow
+        const companyFromPrefix = extractCompanyFromWorkflowName(w.name, companyNames);
+        if (companyFromPrefix) {
+          console.log(`Skipping "${w.name}" - company SEO workflow, should use workflow_executions`);
+          return;
+        }
+      }
+      
+      // Priority 1: Exact match in companies table (for subkeywords etc.)
       if (exactMatchMap[workflowNameLower]) {
         workflowIdToInfo.set(w.id, exactMatchMap[workflowNameLower]);
         console.log(`Matched "${w.name}" via exact match -> ${exactMatchMap[workflowNameLower].companyName}`);
@@ -213,15 +245,12 @@ serve(async (req) => {
       // Priority 2: Company prefix match (e.g., "MEDIABIRDS Alt-text" -> Mediabirds)
       const companyFromPrefix = extractCompanyFromWorkflowName(w.name, companyNames);
       if (companyFromPrefix) {
-        const workflowType = determineWorkflowType(w.name);
         let timeSaved = timeSavedMap[workflowNameLower];
         
         // If no exact time saved, use default based on workflow type
         if (!timeSaved) {
           if (workflowType === 'Alt-text') timeSaved = defaultAltTextTimeSaved;
           else if (workflowType === 'Monday Planning') timeSaved = defaultMondayTimeSaved;
-          else if (workflowType === 'SEO Blog') timeSaved = defaultBlogsTimeSaved;
-          else if (workflowType === 'SEO Zoekwoorden' || workflowType === 'Subkeywords') timeSaved = defaultZoekwoordTimeSaved;
           else timeSaved = 10; // fallback default
         }
         
@@ -234,44 +263,26 @@ serve(async (req) => {
         return;
       }
       
-      // Priority 3: Check if this is a shared SEO workflow (needs proportional distribution)
-      const sharedType = isSharedSeoWorkflow(w.name);
-      if (sharedType) {
-        const timeSaved = sharedType === 'blogs' ? defaultBlogsTimeSaved : defaultZoekwoordTimeSaved;
-        sharedWorkflows.push({ workflowId: w.id, type: sharedType, timeSaved });
-        // Mark as shared for later processing
-        workflowIdToInfo.set(w.id, {
-          timeSaved,
-          companyName: '__SHARED__',
-          workflowType: sharedType === 'blogs' ? 'SEO Blog' : 'SEO Zoekwoorden',
-          isShared: true,
-        });
-        console.log(`Identified "${w.name}" as shared ${sharedType} workflow`);
-        return;
-      }
-      
-      // Priority 4: Check automation_settings with time_saved (generic workflows -> track but don't count yet)
+      // Priority 3: Generic workflows go to Mediabirds (was "Overig")
       if (timeSavedMap[workflowNameLower] && timeSavedMap[workflowNameLower] > 0) {
-        const workflowType = determineWorkflowType(w.name);
         workflowIdToInfo.set(w.id, {
           timeSaved: timeSavedMap[workflowNameLower],
-          companyName: 'Overig',
+          companyName: 'Mediabirds', // "Overig" now goes to Mediabirds
           workflowType,
         });
-        console.log(`Matched "${w.name}" via automation_settings -> Overig (${workflowType})`);
+        console.log(`Matched "${w.name}" via automation_settings -> Mediabirds (${workflowType})`);
         return;
       }
       
-      // Priority 5: Contains match for automation_settings entries
+      // Priority 4: Contains match for automation_settings entries
       for (const [key, timeSaved] of Object.entries(timeSavedMap)) {
         if (timeSaved > 0 && (workflowNameLower.includes(key) || key.includes(workflowNameLower))) {
-          const workflowType = determineWorkflowType(w.name);
           workflowIdToInfo.set(w.id, {
             timeSaved,
-            companyName: 'Overig',
+            companyName: 'Mediabirds', // "Overig" now goes to Mediabirds
             workflowType,
           });
-          console.log(`Matched "${w.name}" via contains match -> Overig (${workflowType})`);
+          console.log(`Matched "${w.name}" via contains match -> Mediabirds (${workflowType})`);
           return;
         }
       }
@@ -279,17 +290,11 @@ serve(async (req) => {
 
     // Find workflow IDs that have configured info
     const targetWorkflowIds: string[] = Array.from(workflowIdToInfo.keys());
+    console.log(`Found ${targetWorkflowIds.length} matching n8n workflows (excluding SEO)`);
 
-    console.log(`Found ${targetWorkflowIds.length} matching workflows`);
-    console.log(`Found ${sharedWorkflows.length} shared workflows for proportional distribution`);
-
-    // Calculate date range for past 30 days
-    const periodEnd = new Date();
-    const periodStart = new Date();
-    periodStart.setDate(periodStart.getDate() - 30);
-    console.log(`Fetching executions from the last 30 days (since ${periodStart.toISOString()})`);
-
-    // Fetch ALL executions using cursor-based pagination
+    // ========================================
+    // STEP 3: Fetch n8n executions (for non-SEO workflows)
+    // ========================================
     let allExecutions: N8nExecution[] = [];
     let cursor: string | undefined = undefined;
     let hasMore = true;
@@ -303,8 +308,6 @@ serve(async (req) => {
         executionsUrl += `&cursor=${cursor}`;
       }
 
-      console.log(`Fetching page ${pageCount}: ${executionsUrl}`);
-
       const executionsResponse = await fetch(executionsUrl, {
         method: 'GET',
         headers: {
@@ -314,8 +317,7 @@ serve(async (req) => {
       });
 
       if (!executionsResponse.ok) {
-        const errorText = await executionsResponse.text();
-        console.error(`Failed to fetch executions: ${executionsResponse.status} - ${errorText}`);
+        console.error(`Failed to fetch executions: ${executionsResponse.status}`);
         break;
       }
 
@@ -337,7 +339,6 @@ serve(async (req) => {
       // Check if the oldest execution in this page is older than 30 days
       const oldestInPage = pageExecutions[pageExecutions.length - 1];
       if (new Date(oldestInPage.startedAt) < periodStart) {
-        console.log('Reached executions older than 30 days, stopping pagination');
         hasMore = false;
         break;
       }
@@ -350,20 +351,22 @@ serve(async (req) => {
 
     console.log(`Fetched ${allExecutions.length} successful executions from ${pageCount} pages`);
 
-    // Filter to only target workflows
+    // Filter to only target workflows (non-SEO)
     const filteredExecutions = allExecutions.filter(e => 
       targetWorkflowIds.includes(e.workflowId)
     );
-    console.log(`Filtered to ${filteredExecutions.length} executions for configured workflows`);
+    console.log(`Filtered to ${filteredExecutions.length} executions for non-SEO workflows`);
 
-    // Initialize breakdown for ALL companies (including those without executions)
+    // ========================================
+    // STEP 4: Calculate breakdown per company
+    // ========================================
     const breakdownByCompany: Record<string, { 
       totalMinutes: number; 
       totalHours: number; 
       workflows: Record<string, { executions: number; minutesSaved: number }> 
     }> = {};
     
-    // Initialize all companies in breakdown (ensures Smart Charged appears even with 0 hours)
+    // Initialize all companies in breakdown
     for (const company of allCompanies) {
       breakdownByCompany[company.name] = {
         totalMinutes: 0,
@@ -371,42 +374,48 @@ serve(async (req) => {
         workflows: {},
       };
     }
-    // Also add "Overig" for unmatched workflows
-    breakdownByCompany['Overig'] = {
-      totalMinutes: 0,
-      totalHours: 0,
-      workflows: {},
-    };
 
-    // Count shared workflow executions for proportional distribution
-    const sharedExecutionCounts: { blogs: number; research: number } = { blogs: 0, research: 0 };
-    const sharedWorkflowIds = sharedWorkflows.map(sw => sw.workflowId);
-    
-    for (const exec of filteredExecutions) {
-      const info = workflowIdToInfo.get(exec.workflowId);
-      if (info?.isShared) {
-        const shared = sharedWorkflows.find(sw => sw.workflowId === exec.workflowId);
-        if (shared) {
-          sharedExecutionCounts[shared.type]++;
-        }
+    // Add SEO data from workflow_executions (accurate per-company)
+    for (const [companyName, counts] of Object.entries(accurateCounts)) {
+      if (!breakdownByCompany[companyName]) {
+        breakdownByCompany[companyName] = {
+          totalMinutes: 0,
+          totalHours: 0,
+          workflows: {},
+        };
+      }
+      
+      if (counts.seo_blog > 0) {
+        const minutesSaved = counts.seo_blog * defaultBlogsTimeSaved;
+        breakdownByCompany[companyName].workflows['SEO Blog'] = {
+          executions: counts.seo_blog,
+          minutesSaved,
+        };
+        breakdownByCompany[companyName].totalMinutes += minutesSaved;
+        console.log(`Added ${counts.seo_blog} SEO Blog executions for ${companyName} (${minutesSaved} min)`);
+      }
+      
+      if (counts.seo_research > 0) {
+        const minutesSaved = counts.seo_research * defaultZoekwoordTimeSaved;
+        breakdownByCompany[companyName].workflows['SEO Zoekwoorden'] = {
+          executions: counts.seo_research,
+          minutesSaved,
+        };
+        breakdownByCompany[companyName].totalMinutes += minutesSaved;
+        console.log(`Added ${counts.seo_research} SEO Zoekwoorden executions for ${companyName} (${minutesSaved} min)`);
       }
     }
-    
-    console.log(`Shared execution counts: blogs=${sharedExecutionCounts.blogs}, research=${sharedExecutionCounts.research}`);
 
-    // Calculate time saved per workflow and per company
+    // Add n8n data for other workflows
     let totalSavedMinutes = 0;
     let totalExecutions = 0;
     const breakdownByWorkflow: Record<string, { executions: number; minutesSaved: number; minutesPerExecution: number }> = {};
 
-    // Process non-shared executions
     for (const exec of filteredExecutions) {
       const workflowName = workflowIdToName.get(exec.workflowId) || `Workflow ${exec.workflowId}`;
       const info = workflowIdToInfo.get(exec.workflowId);
 
-      if (!info || info.isShared) {
-        continue; // Skip shared workflows for now, handled separately
-      }
+      if (!info) continue;
 
       const minutesPerExecution = info.timeSaved;
       const companyName = info.companyName;
@@ -445,61 +454,23 @@ serve(async (req) => {
       totalSavedMinutes += minutesPerExecution;
     }
 
-    // Distribute shared workflow executions proportionally across eligible companies
-    // SEO Blog -> distribute among companies with blogs_n8n_name configured
-    if (sharedExecutionCounts.blogs > 0 && companiesWithBlogs.length > 0) {
-      const executionsPerCompany = sharedExecutionCounts.blogs / companiesWithBlogs.length;
-      const minutesPerCompany = executionsPerCompany * defaultBlogsTimeSaved;
-      
-      for (const company of companiesWithBlogs) {
-        if (!breakdownByCompany[company.name].workflows['SEO Blog']) {
-          breakdownByCompany[company.name].workflows['SEO Blog'] = {
-            executions: 0,
-            minutesSaved: 0,
-          };
-        }
-        breakdownByCompany[company.name].workflows['SEO Blog'].executions += Math.round(executionsPerCompany);
-        breakdownByCompany[company.name].workflows['SEO Blog'].minutesSaved += minutesPerCompany;
-        breakdownByCompany[company.name].totalMinutes += minutesPerCompany;
-      }
-      
-      totalExecutions += sharedExecutionCounts.blogs;
-      totalSavedMinutes += sharedExecutionCounts.blogs * defaultBlogsTimeSaved;
-      
-      console.log(`Distributed ${sharedExecutionCounts.blogs} SEO Blog executions across ${companiesWithBlogs.length} companies`);
+    // Add SEO executions to totals
+    for (const [companyName, counts] of Object.entries(accurateCounts)) {
+      totalExecutions += counts.seo_blog + counts.seo_research;
+      totalSavedMinutes += counts.seo_blog * defaultBlogsTimeSaved;
+      totalSavedMinutes += counts.seo_research * defaultZoekwoordTimeSaved;
     }
 
-    // SEO Zoekwoorden -> distribute among companies with seo_research_n8n_name configured
-    if (sharedExecutionCounts.research > 0 && companiesWithResearch.length > 0) {
-      const executionsPerCompany = sharedExecutionCounts.research / companiesWithResearch.length;
-      const minutesPerCompany = executionsPerCompany * defaultZoekwoordTimeSaved;
-      
-      for (const company of companiesWithResearch) {
-        if (!breakdownByCompany[company.name].workflows['SEO Zoekwoorden']) {
-          breakdownByCompany[company.name].workflows['SEO Zoekwoorden'] = {
-            executions: 0,
-            minutesSaved: 0,
-          };
-        }
-        breakdownByCompany[company.name].workflows['SEO Zoekwoorden'].executions += Math.round(executionsPerCompany);
-        breakdownByCompany[company.name].workflows['SEO Zoekwoorden'].minutesSaved += minutesPerCompany;
-        breakdownByCompany[company.name].totalMinutes += minutesPerCompany;
-      }
-      
-      totalExecutions += sharedExecutionCounts.research;
-      totalSavedMinutes += sharedExecutionCounts.research * defaultZoekwoordTimeSaved;
-      
-      console.log(`Distributed ${sharedExecutionCounts.research} SEO Zoekwoorden executions across ${companiesWithResearch.length} companies`);
-    }
-
-    // Calculate total hours per company and remove companies with 0 hours (except main ones)
+    // Calculate total hours per company
     for (const company of Object.keys(breakdownByCompany)) {
       breakdownByCompany[company].totalHours = Math.round((breakdownByCompany[company].totalMinutes / 60) * 10) / 10;
     }
 
-    // Remove "Overig" if it has no executions
-    if (breakdownByCompany['Overig'].totalMinutes === 0) {
-      delete breakdownByCompany['Overig'];
+    // Remove companies with 0 hours (except Mediabirds which is our main company)
+    for (const company of Object.keys(breakdownByCompany)) {
+      if (breakdownByCompany[company].totalMinutes === 0 && company !== 'Mediabirds') {
+        delete breakdownByCompany[company];
+      }
     }
 
     const totalHours = Math.round((totalSavedMinutes / 60) * 10) / 10;
