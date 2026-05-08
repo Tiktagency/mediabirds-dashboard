@@ -1,62 +1,106 @@
 
-# Plan: Super Admin Check in Invite-User Edge Function
+# Plan: Rol Badge met Iconen Links van Email
 
 ## Probleem
-De `invite-user` edge function controleert op regel 86 alleen op de `admin` rol. Dit betekent dat `super_admin` gebruikers geen nieuwe gebruikers kunnen uitnodigen.
+De rol badge in de banner rechtsboven:
+1. Staat rechts van de email (moet links)
+2. Heeft geen iconen (admin panel heeft wel iconen)
 
 ## Oplossing
-Update de admin check in de `invite-user` edge function om ook `super_admin` te accepteren.
 
-## Code Wijziging
+### Bestand: `src/pages/Index.tsx`
 
-**Bestand:** `supabase/functions/invite-user/index.ts`
+**1. Extra iconen importeren (regel 5)**
 
-**Huidige code (regels 81-87):**
-```typescript
-// Check if user is admin
-const { data: adminCheck } = await supabaseAdmin
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', user.id)
-  .eq('role', 'admin')
-  .single();
+Toevoegen aan de bestaande import:
+- `Crown` (voor super_admin)
+- `Shield` (voor admin) 
+- `Play` (voor operator)
+- `Eye` (voor viewer)
+
+**2. getRoleBadge functie uitbreiden (regels 145-160)**
+
+Icoon toevoegen per rol:
+
+| Rol | Icoon | Kleur |
+|-----|-------|-------|
+| super_admin | Crown | Paars |
+| admin | Shield | Rood |
+| operator | Play | Blauw |
+| viewer | Eye | Groen |
+
+**3. Badge positie wijzigen (regels 241-248)**
+
+Huidige volgorde:
+```
+email → badge
 ```
 
-**Nieuwe code:**
-```typescript
-// Check if user is admin or super_admin
-const { data: adminCheck } = await supabaseAdmin
-  .from('user_roles')
-  .select('role')
-  .eq('user_id', user.id)
-  .in('role', ['admin', 'super_admin']);
+Nieuwe volgorde:
+```
+badge → email
 ```
 
-## Wijzigingen
+## Code Wijzigingen
 
-| Locatie | Was | Wordt |
-|---------|-----|-------|
-| Regel 81 | `// Check if user is admin` | `// Check if user is admin or super_admin` |
-| Regel 86 | `.eq('role', 'admin')` | `.in('role', ['admin', 'super_admin'])` |
-| Regel 87 | `.single();` | (verwijderd - niet nodig bij `.in()`) |
-
-## Aanvullende check (regel 89)
-De huidige check `if (!adminCheck)` werkt nog steeds correct omdat `.in()` een array teruggeeft die `truthy` is als er resultaten zijn.
-
-Update naar:
+**Import (regel 5):**
 ```typescript
-if (!adminCheck || adminCheck.length === 0) {
+import { ..., Crown, Shield, Play, Eye } from 'lucide-react';
 ```
 
-## Overzicht na implementatie
+**getRoleBadge functie:**
+```typescript
+const getRoleBadge = () => {
+  if (roles.includes('super_admin')) {
+    return { 
+      label: 'Super Admin', 
+      icon: Crown,
+      className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+    };
+  }
+  if (roles.includes('admin')) {
+    return { 
+      label: 'Admin', 
+      icon: Shield,
+      className: 'bg-red-500/20 text-red-400 border-red-500/30' 
+    };
+  }
+  if (roles.includes('operator')) {
+    return { 
+      label: 'Operator', 
+      icon: Play,
+      className: 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+    };
+  }
+  if (roles.includes('viewer')) {
+    return { 
+      label: 'Viewer', 
+      icon: Eye,
+      className: 'bg-green-500/20 text-green-400 border-green-500/30' 
+    };
+  }
+  return null;
+};
+```
 
-| Component | Status |
-|-----------|--------|
-| useAuth hook | OK - beide rollen |
-| useAdminAuth hook | OK - beide rollen |
-| AdminPanel pagina | OK - gebruikt useAdminAuth |
-| CompanySelector | OK - net bijgewerkt |
-| manage-user-roles edge function | OK - beide rollen |
-| invite-user edge function | Wordt bijgewerkt |
+**Badge rendering (nieuwe volgorde):**
+```tsx
+<div className="flex items-center gap-2">
+  {roleBadge && (
+    <Badge variant="outline" className={roleBadge.className}>
+      <roleBadge.icon className="w-3 h-3" />
+      <span className="ml-1">{roleBadge.label}</span>
+    </Badge>
+  )}
+  <span className="text-sm" style={{ color: '#232323' }}>{user?.email}</span>
+</div>
+```
 
-Na deze wijziging kunnen `super_admin` gebruikers alle functies uitvoeren die `admin` gebruikers kunnen doen.
+## Resultaat
+
+De banner rechtsboven toont nu:
+```
+[Crown] Super Admin    gebruiker@email.com    [logout] [settings]
+```
+
+Met exact dezelfde styling als in het admin panel (icoon + label + kleuren).
