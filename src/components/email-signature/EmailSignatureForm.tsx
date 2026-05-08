@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { Plus, X, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -17,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 const formSchema = z.object({
   name: z.string().min(1, 'Naam is verplicht'),
   first_name: z.string().min(1, 'Voornaam is verplicht'),
@@ -57,6 +57,7 @@ export const EmailSignatureForm = ({
   onSave,
   onUploadPhoto,
 }: EmailSignatureFormProps) => {
+  const { toast } = useToast();
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -248,12 +249,37 @@ export const EmailSignatureForm = ({
       });
 
       if (response.error) {
-        throw new Error(response.error.message);
+        toast({
+          title: 'Fout',
+          description: response.error.message,
+          variant: 'destructive',
+        });
+        return;
       }
 
-      console.log('Webhook response:', response.data);
+      const data = response.data;
+      console.log('Webhook response:', data);
+
+      if (!data?.success) {
+        toast({
+          title: `Webhook fout (${data?.status || 'onbekend'})`,
+          description: data?.rawText || 'Geen response ontvangen',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Handtekening gegenereerd',
+        description: 'De webhook is succesvol aangeroepen',
+      });
     } catch (error) {
       console.error('Error calling webhook:', error);
+      toast({
+        title: 'Fout',
+        description: error instanceof Error ? error.message : 'Onbekende fout',
+        variant: 'destructive',
+      });
     } finally {
       setIsSending(false);
     }
