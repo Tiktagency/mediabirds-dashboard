@@ -1,25 +1,44 @@
 
 
-## Fix: Dropdown menu's gebruiken huisstijl kleuren in plaats van blauwe/grijze tinten
+## WordPress Alt-Tekst pagina: afbeelding verwijderen en bedrijfsselector toevoegen
 
-### Probleem
-Op de Monday Planning pagina en in het BlogGenerationForm worden dropdown menu's gestyled met `bg-slate-800` en `bg-gray-800`, wat een blauwachtige tint geeft die niet past bij de huisstijl (donkergrijs/sage green).
+### Wat er verandert
+1. De workflow-afbeelding wordt verwijderd van de pagina
+2. Er komt een bedrijfsselector dropdown (vergelijkbaar met de SEO-pagina) maar met een **aparte** database-tabel
+3. De hardcoded bedrijvenlijst wordt dynamisch op basis van de geselecteerde bedrijven in de nieuwe tabel
+4. Admins kunnen bedrijven toevoegen (bedrijfsnaam + domeinnaam)
+5. Super admins kunnen bedrijven verwijderen
 
-### Oplossing
-Vervang alle hardcoded slate/gray kleuren in dropdown- en popover-achtergronden door de design system variabelen die al gedefinieerd zijn:
-- `bg-popover` (= `hsl(0 0% 11%)` = `#1c1c1c`) voor dropdown/popover achtergronden
-- `border-border` voor randen
-- `hover:bg-accent/20` of `focus:bg-accent/20` voor hover/focus states
+### Database
 
-### Aanpassingen
+**Nieuwe tabel: `alt_text_companies`**
+- `id` (uuid, primary key)
+- `name` (text, not null) - bedrijfsnaam
+- `domain` (text) - domeinnaam
+- `created_at` (timestamptz, default now())
 
-**1. `src/pages/MondayPlanning.tsx`**
-- Regel 192: `bg-slate-800 border-white/20` wordt `bg-popover border-border`
-- Regel 217: `bg-slate-800 border-white/20` wordt `bg-popover border-border`
-- Regel 223: `bg-slate-800` op Calendar wordt `bg-popover`
+RLS-policies:
+- SELECT: admin + super_admin
+- INSERT: admin + super_admin
+- UPDATE: admin + super_admin
+- DELETE: admin + super_admin
 
-**2. `src/components/seo-blog/BlogGenerationForm.tsx`**
-- Regel 441: `bg-gray-800 border-gray-700` wordt `bg-popover border-border`
-- Regel 443: `hover:bg-gray-700 focus:bg-gray-700` wordt `hover:bg-accent/20 focus:bg-accent/20`
+### Nieuwe component: `src/components/wordpress-alt-text/AltTextCompanySelector.tsx`
 
-Dit zorgt ervoor dat alle dropdowns dezelfde neutrale donkergrijze achtergrond (`#1c1c1c`) gebruiken die aansluit bij de rest van het dashboard, en geen blauwige of grijze afwijkende tinten meer tonen.
+Een vereenvoudigde versie van de bestaande `CompanySelector`, maar die leest/schrijft naar `alt_text_companies` in plaats van `companies`. Bevat:
+- Dropdown met bedrijvenlijst
+- "Bedrijf toevoegen" optie (voor admins) met dialog: bedrijfsnaam + domeinnaam
+- Verwijder-icoon (alleen voor super_admins)
+- Bevestigingsdialogen voor toevoegen en verwijderen
+
+### Aanpassing: `src/pages/WordpressAltText.tsx`
+
+- Import van `workflowImage` en de `<img>` tag verwijderen
+- `AltTextCompanySelector` importeren en boven de Card plaatsen
+- De hardcoded bedrijvenlijst in de Card vervangen door een dynamische lijst op basis van alle bedrijven uit `alt_text_companies`
+- State toevoegen voor het geselecteerde bedrijf (puur voor de selector UI)
+
+### Styling
+- Dropdown gebruikt `bg-popover border-border` (huisstijl, geen blauwe tinten)
+- Dezelfde look-and-feel als de bestaande CompanySelector op de SEO-pagina
+
