@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { bedrijfsnaam, domain, spreadsheet_id, grid_id } = await req.json();
+    const { bedrijfsnaam, domain, spreadsheet_id, grid_id, page_url } = await req.json();
 
     // Fetch app_password from landing_companies
     const supabaseAdmin = createClient(
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
         Authorization: `${authToken}`,
       },
-      body: JSON.stringify({ bedrijfsnaam, domain, app_password, spreadsheet_id, grid_id }),
+      body: JSON.stringify({ bedrijfsnaam, domain, app_password, spreadsheet_id, grid_id, page_url }),
     });
 
     const responseData = await webhookResponse.text();
