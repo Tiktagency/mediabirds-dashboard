@@ -167,7 +167,7 @@ const Landingspagina = () => {
 
   return (
     <div className="h-screen overflow-hidden relative">
-      <div className="absolute top-6 left-6 right-6 z-10 flex items-center justify-between">
+      <div className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 z-10 flex items-center justify-between">
         <Link to="/">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
             Dashboard
@@ -176,9 +176,9 @@ const Landingspagina = () => {
         <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
 
-      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-20 px-6 overflow-y-auto">
-        <h1 className="hero-title text-foreground mb-2 fade-in-up">Landingspagina</h1>
-        <p className="text-muted-foreground text-center max-w-xl mb-3">
+      <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 overflow-y-auto">
+        <h1 className="hero-title text-2xl sm:text-4xl text-foreground mb-2 fade-in-up">Landingspagina</h1>
+        <p className="text-sm sm:text-base text-muted-foreground text-center max-w-xl mb-3">
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
         </p>
 
@@ -196,7 +196,7 @@ const Landingspagina = () => {
         </div>
 
         {selectedCompany ? (
-          <div className="flex flex-col lg:flex-row gap-4 max-w-2xl w-full items-stretch">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
             <div className="flex-1 w-full space-y-4 overflow-hidden">
               <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3 overflow-hidden">
@@ -216,7 +216,7 @@ const Landingspagina = () => {
                         <TooltipTrigger asChild>
                           <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-4">
+                        <TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-4">
                           <p className="font-semibold mb-2 text-sm">Hoe kom je aan een applicatie wachtwoord?</p>
                           <ol className="list-decimal list-inside space-y-1 text-xs text-white/80">
                             <li>Ga naar de achterkant van je <strong className="text-white">WordPress</strong> website</li>
@@ -273,7 +273,7 @@ const Landingspagina = () => {
                         <TooltipTrigger asChild>
                           <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-3">
+                        <TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-3">
                           <p className="text-sm text-white/80">De pagina die je wilt gebruiken in de nieuwe context</p>
                         </TooltipContent>
                       </Tooltip>
@@ -285,7 +285,7 @@ const Landingspagina = () => {
               <Button
                 onClick={handleStart}
                 disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-2 sm:py-3"
               >
                 {schedule?.enabled === true ? (
                   <><Clock className="w-4 h-4 mr-2" />Automatische trigger actief</>
@@ -298,7 +298,7 @@ const Landingspagina = () => {
             </div>
 
             {/* Right: Animation panel */}
-            <div className="w-full lg:w-72 flex-shrink-0 flex flex-col">
+            <div className="hidden lg:flex lg:w-72 flex-shrink-0 flex-col">
               <AltTextAnimation isAnimating={isAnimating} onAnimationComplete={handleAnimationComplete} />
             </div>
           </div>
