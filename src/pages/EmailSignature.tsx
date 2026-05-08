@@ -22,6 +22,7 @@ const EmailSignature = () => {
     isCreatingNew,
     selectSignature,
     createNewSignature,
+    cancelNewSignature,
     saveSettings,
     deleteSignature,
   } = useEmailSignatureSettings();
@@ -88,6 +89,7 @@ const EmailSignature = () => {
                   onSelect={selectSignature}
                   onDelete={deleteSignature}
                   isCreatingNew={isCreatingNew}
+                  onCancelNew={cancelNewSignature}
                 />
               </div>
 
