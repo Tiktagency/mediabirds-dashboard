@@ -255,7 +255,7 @@ const ZoekwoordOnderzoek = () => {
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
         body: {
           webhookUrl: FIXED_SEO_WEBHOOK_URL,
-          authTokenSecretName: selectedCompany.auth_token_secret_name,
+          authTokenSecretName: 'SEO_WEBHOOK_AUTH_TOKEN',
           action: 'research',
           formData: {
             bedrijfsnaam: formData.bedrijfsnaam,
@@ -303,7 +303,7 @@ const ZoekwoordOnderzoek = () => {
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
         body: {
           webhookUrl: FIXED_SUBKEYWORDS_WEBHOOK_URL,
-          authTokenSecretName: selectedCompany.auth_token_secret_name,
+          authTokenSecretName: 'SEO_WEBHOOK_AUTH_TOKEN',
           action: 'subkeywords',
           formData: {
             bedrijfsnaam: selectedCompany.name,
