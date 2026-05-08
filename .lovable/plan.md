@@ -1,30 +1,37 @@
 
-# Plan: HTML Opschonen bij Kopiëren
+# Fix: HTML Opschonen - Code Fences Verwijderen
 
 ## Probleem
-De gegenereerde HTML bevat:
-1. Extra tekst bovenaan ("Met vriendelijke groet, Kind Regards")
-2. Overtollige witruimte en lege elementen
-3. Extra spatie tussen e-mail en locatie
+De `cleanHtmlForCopy` functie doet momenteel het verkeerde:
+1. Verwijdert "Met vriendelijke groet, Kind Regards" - maar dit moet BEHOUDEN blijven
+2. Verwijdert NIET de markdown code fences - maar deze moeten WEL weg
 
 ## Oplossing
-Schoon de HTML op voordat deze naar het klembord wordt gekopieerd door:
-1. De greeting tekst te verwijderen
-2. Overtollige witruimte/lege tags op te ruimen
-3. De dubbele spatie tussen e-mail en locatie te corrigeren
-
-## Wijzigingen
+Pas de `cleanHtmlForCopy` functie aan:
 
 **Bestand:** `src/pages/EmailSignature.tsx`
 
-### 1. Voeg een helper functie toe om HTML op te schonen
-
+### Huidige code (fout):
 ```tsx
 const cleanHtmlForCopy = (html: string): string => {
   let cleaned = html;
   
   // Verwijder "Met vriendelijke groet, Kind Regards" en variaties
   cleaned = cleaned.replace(/Met vriendelijke groet,?\s*Kind Regards\s*/gi, '');
+  
+  // ... rest
+};
+```
+
+### Nieuwe code (correct):
+```tsx
+const cleanHtmlForCopy = (html: string): string => {
+  let cleaned = html;
+  
+  // Verwijder markdown code fences aan begin en einde
+  cleaned = cleaned.replace(/^```html\s*/i, '');
+  cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
+  cleaned = cleaned.replace(/```\s*$/g, '');
   
   // Verwijder lege paragrafen en divs met alleen whitespace
   cleaned = cleaned.replace(/<p[^>]*>\s*(&nbsp;|\s)*\s*<\/p>/gi, '');
@@ -40,40 +47,12 @@ const cleanHtmlForCopy = (html: string): string => {
 };
 ```
 
-### 2. Gebruik de helper bij het kopiëren (regels 135-157)
-
-De onClick handler aanpassen om `cleanHtmlForCopy` te gebruiken:
-
-```tsx
-onClick={async () => {
-  try {
-    const cleanedHtml = cleanHtmlForCopy(generatedHtml!);
-    const blob = new Blob([cleanedHtml], { type: 'text/html' });
-    const clipboardItem = new ClipboardItem({ 'text/html': blob });
-    await navigator.clipboard.write([clipboardItem]);
-    
-    toast({
-      title: 'Gekopieerd',
-      description: 'Handtekening is gekopieerd met opmaak - plak direct in je e-mail',
-    });
-  } catch (err) {
-    const cleanedHtml = cleanHtmlForCopy(generatedHtml!);
-    await navigator.clipboard.writeText(cleanedHtml);
-    toast({
-      title: 'Gekopieerd',
-      description: 'HTML code gekopieerd (plak in bronweergave van je e-mail)',
-    });
-  }
-}}
-```
-
 ## Samenvatting
 
-| Wijziging | Beschrijving |
-|-----------|--------------|
-| `cleanHtmlForCopy` functie | Verwijdert greeting tekst en overtollige witruimte |
-| onClick handler | Roept cleaning functie aan voordat HTML wordt gekopieerd |
-| Preview ongewijzigd | De preview toont nog steeds de volledige HTML |
+| Was | Wordt |
+|-----|-------|
+| Verwijdert greeting tekst | Behoudt greeting tekst |
+| Behoudt code fences | Verwijdert code fences (`\`\`\`html`, `\`\`\``) |
 
 ## Resultaat
-De kopieer functie levert een schone handtekening zonder de "Met vriendelijke groet" tekst en zonder overtollige spaties.
+De handtekening wordt gekopieerd met "Met vriendelijke groet, Kind Regards" intact, zonder de markdown code fences.
