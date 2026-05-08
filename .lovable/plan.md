@@ -1,71 +1,120 @@
 
-# Plan: Conditionele Afbeelding Velden in Payload
+# Plan: HTML Preview Toevoegen boven HTML Code
 
 ## Overzicht
 
-Wanneer een gebruiker een afbeeldingsoptie selecteert ("AI afbeelding" of "Foto Google Drive"), mogen alleen de velden voor de gekozen optie worden meegestuurd in de POST request. De velden voor de niet-gekozen optie moeten leeg worden meegestuurd.
+De rechterkolom op de Email Handtekening pagina wordt aangepast met twee secties:
+1. **HTML Preview (nieuw)** - Een live preview die de gegenereerde HTML rendert
+2. **HTML Code (bestaand)** - De ruwe HTML code om te kopiëren
 
 ---
 
 ## Huidige Situatie
 
-Momenteel worden alle afbeelding-gerelateerde velden altijd meegestuurd:
+De rechterkolom toont momenteel alleen een Card met de HTML code:
 
-```typescript
-const payload = {
-  // ... andere velden ...
-  achtergrond_kleur: formData.achtergrond_kleur,
-  hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
-  folder_id: formData.folder_id,
-  used_folder_id: formData.used_folder_id,
-  // ...
-};
+```
++------------------------------------------+
+| HTML Code                                |
+| Kopieer deze code naar je email programma|
+|------------------------------------------|
+| <pre>...HTML code...</pre>               |
++------------------------------------------+
 ```
 
 ---
 
 ## Gewenste Situatie
 
-De payload moet conditioneel worden opgebouwd op basis van `image_type`:
+```
++------------------------------------------+
+| Preview                                  |
+|------------------------------------------|
+| [Live rendered HTML signature]           |
+|                                          |
++------------------------------------------+
 
-| Geselecteerde optie | Velden met waarde | Velden die leeg moeten zijn |
-|---------------------|-------------------|---------------------------|
-| AI afbeelding | `achtergrond_kleur`, `hoofdaccent_gradient` | `folder_id`, `used_folder_id` |
-| Foto Google Drive | `folder_id`, `used_folder_id` | `achtergrond_kleur`, `hoofdaccent_gradient` |
++------------------------------------------+
+| HTML Code                    [Kopieer]   |
+| Kopieer deze code naar je email programma|
+|------------------------------------------|
+| <pre>...HTML code...</pre>               |
++------------------------------------------+
+```
 
 ---
 
 ## Code Wijzigingen
 
-**Bestand: `src/components/seo-blog/BlogGenerationForm.tsx`**
+**Bestand: `src/pages/EmailSignature.tsx`**
 
-### Payload aanpassen (rond regel 265-285)
+### 1. HTML Preview Card toevoegen
 
-De payload constructie wordt aangepast zodat velden conditioneel worden gevuld:
+Boven de bestaande HTML Code card komt een nieuwe Card met een `dangerouslySetInnerHTML` div die de gegenereerde HTML rendert:
 
-```typescript
-const payload = {
-  bedrijfsnaam: formData.bedrijfsnaam,
-  bedrijfsomschrijving: formData.bedrijfsomschrijving,
-  schrijfstijl: formData.schrijfstijl,
-  aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
-  taal: formData.taal,
-  // AI afbeelding velden - alleen vullen als ai_image geselecteerd
-  achtergrond_kleur: formData.image_type === 'ai_image' ? formData.achtergrond_kleur : '',
-  hoofdaccent_gradient: formData.image_type === 'ai_image' 
-    ? `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}` 
-    : '',
-  // Google Drive velden - alleen vullen als google_drive geselecteerd
-  folder_id: formData.image_type === 'google_drive' ? formData.folder_id : '',
-  used_folder_id: formData.image_type === 'google_drive' ? formData.used_folder_id : '',
-  // ... rest van de velden ...
-};
+```tsx
+{/* HTML Preview */}
+<Card className="bg-white/5 border-white/10">
+  <CardHeader>
+    <CardTitle className="text-white text-lg">Preview</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="bg-white rounded-lg p-4 min-h-[200px]">
+      {isGenerating ? (
+        <div className="flex items-center gap-2 text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Preview laden...</span>
+        </div>
+      ) : generatedHtml ? (
+        <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+      ) : (
+        <span className="text-gray-400">
+          Genereer een handtekening om de preview te zien.
+        </span>
+      )}
+    </div>
+  </CardContent>
+</Card>
 ```
+
+### 2. HTML Code Card aanpassen
+
+De bestaande HTML Code card blijft grotendeels hetzelfde, maar met aangepaste hoogte:
+
+- `min-h-[300px]` wordt `min-h-[200px]`
+- `max-h-[500px]` wordt `max-h-[300px]`
+
+---
+
+## Layout Structuur
+
+De rechterkolom krijgt een flex layout met twee cards:
+
+```tsx
+<div className="order-3 flex flex-col gap-4">
+  {/* Preview Card - bovenaan */}
+  <Card>...</Card>
+  
+  {/* HTML Code Card - onderaan */}
+  <Card>...</Card>
+</div>
+```
+
+---
+
+## Technische Details
+
+| Aspect | Implementatie |
+|--------|---------------|
+| HTML Rendering | `dangerouslySetInnerHTML` met de `generatedHtml` state |
+| Achtergrond preview | Witte achtergrond (`bg-white`) voor realistische weergave |
+| Loading state | Dezelfde `isGenerating` state wordt hergebruikt |
+| Styling | Preview krijgt `overflow-auto` voor grote handtekeningen |
 
 ---
 
 ## Resultaat
 
-- Bij **AI afbeelding**: `achtergrond_kleur` en `hoofdaccent_gradient` bevatten waarden, `folder_id` en `used_folder_id` zijn leeg
-- Bij **Foto Google Drive**: `folder_id` en `used_folder_id` bevatten waarden, `achtergrond_kleur` en `hoofdaccent_gradient` zijn leeg
-- De webhook ontvangt een schone payload met alleen de relevante afbeeldingsdata
+- Gebruikers zien direct een visuele preview van hun email handtekening
+- De HTML code blijft beschikbaar om te kopiëren
+- Beide secties tonen een loading state tijdens het genereren
