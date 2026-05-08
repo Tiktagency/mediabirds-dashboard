@@ -8,6 +8,8 @@ export interface SeoSettings {
   doelgroep_intentie: string | null;
   bedrijfsomschrijving: string | null;
   extra_instructies: string | null;
+  google_sheet_id: string | null;
+  google_slides_id: string | null;
   created_at: string;
   updated_at: string;
 }
