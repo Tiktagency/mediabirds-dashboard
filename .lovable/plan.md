@@ -1,65 +1,18 @@
 
-## Plan: RSS feed velden werken precies als de Pagina URL velden
+## Twee wijzigingen
 
-### Verschil tussen de twee implementaties
+### 1. Hoofdletter "Nieuwsbrief" in display_name
+De tile toont nu "nieuwsbrief" omdat er geen `automation_settings` rij bestaat — het valt terug op de raw `automation_name` key. Een nieuwe rij toevoegen met `display_name: 'Nieuwsbrief'`.
 
-**PageUrlForm (Pagina URL):**
-- Elke URL heeft zijn eigen drie-stap cycle: collapsed (klikbaar compact vakje) → expanded (volledige tekst + potlood) → editing (Input + autoFocus, opslaan op blur)
-- Elk veld heeft een unieke `fieldId` (`url_0`, `url_1`, enz.)
-- "URL toevoegen" knop voegt een nieuw leeg veld toe dat direct in editing-state springt
-- Verwijder-knop naast elk veld
+### 2. Info-symbool
+Het info-symbool werkt al voor alle tiles via `AutomationInfoTooltip` in `DashboardButton`. Het tooltip heeft geen data omdat de `automation_settings` rij ontbreekt → `description` is leeg en `impact` is 'medium' als fallback. Met een correcte rij in de database verschijnen description en impact in het tooltip.
 
-**Nieuwsbrief RSS feeds (huidig):**
-- De héle RSS-sectie heeft één gedeelde state (collapsed/expanded/editing voor de hele lijst)
-- Editing state toont een los invoerveld + Plus-knop
-- Niet per feed individueel bewerkbaar
-
-### Aanpak: RSS feeds omzetten naar het PageUrlForm patroon
-
-**Per-feed drie-stap state:**
-- `editingField` wordt uitgebreid: in plaats van `'rss_feeds'` als één string, wordt elk feed-veld `'rss_feed_0'`, `'rss_feed_1'`, etc.
-- `expandedField` idem: `'rss_feed_0'`, etc.
-- `AnyField` type bijwerken
-
-**`renderRssFeedItem(index, url)` helper:**
-Zelfde structuur als `renderInputField` in PageUrlForm:
-1. **Collapsed**: `h-[40px]` klikbaar div → `setExpandedField('rss_feed_N')`
-2. **Expanded**: volledige URL-tekst + potlood-knop → `setEditingField('rss_feed_N')`
-3. **Editing**: `Input` met autoFocus, `onBlur` → wijziging opslaan in `settings.rss_feeds[index]`
-
-**Save-logica per feed:**
-```tsx
-const handleSaveFeed = (index: number, value: string) => {
-  setEditingField(null);
-  const newFeeds = [...settings.rss_feeds];
-  if (value.trim()) {
-    newFeeds[index] = value.trim();
-  } else {
-    newFeeds.splice(index, 1); // Lege waarde = verwijderen
-  }
-  if (JSON.stringify(newFeeds) !== JSON.stringify(settings.rss_feeds)) {
-    saveSettings({ rss_feeds: newFeeds });
-    toast({ title: 'Opgeslagen' });
-  }
-};
+### Database
+Insert een rij in `automation_settings`:
+```sql
+INSERT INTO automation_settings (automation_name, display_name, description, impact_level, status)
+VALUES ('nieuwsbrief', 'Nieuwsbrief', 'Genereer automatisch een nieuwsbrief op basis van RSS feeds en bedrijfsinformatie', 'medium', 'active')
+ON CONFLICT (automation_name) DO UPDATE SET display_name = EXCLUDED.display_name, description = EXCLUDED.description;
 ```
 
-**"Feed toevoegen" knop:**
-Voegt een leeg item toe aan `settings.rss_feeds` (via lokale lijst) en zet die direct in editing-state (`editingField = 'rss_feed_N'`).
-
-Omdat de feeds uit `settings` komen (geen lokale array meer voor de feed-waarden), werken we met een lokale `localFeeds` state die gesynchroniseerd wordt met `settings.rss_feeds`, precies zoals `localData` werkt voor de tekstvelden.
-
-**Verwijder-knop:**
-Blijft naast elk veld, roept direct `saveSettings({ rss_feeds: ... })` aan (zelfde als nu).
-
-**Click-outside handler:**
-Vereenvoudigd: bij elke `rss_feed_*` field geldt dezelfde logica als de tekstvelden — `setEditingField(null)` + `setExpandedField(null)`.
-
-**Label:**
-`RSS feeds` met counter `(N/5)` blijft boven de lijst staan.
-
-### Bestanden
-
-| Bestand | Aanpassing |
-|---|---|
-| `src/pages/Nieuwsbrief.tsx` | RSS feeds omzetten naar per-feed drie-stap patroon (identiek aan PageUrlForm) |
+Geen code-wijzigingen nodig — de tile pikt de nieuwe settings automatisch op via `useAutomationSettings`.
