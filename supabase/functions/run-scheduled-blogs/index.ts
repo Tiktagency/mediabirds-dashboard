@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
           schrijfstijl: blogSettings.schrijfstijl || '',
           aantal_woorden: blogSettings.aantal_woorden || '500-1500',
           taal: blogSettings.taal || '',
+          extra_instructie: blogSettings.extra_instructie || '',
           achtergrond_kleur: blogSettings.achtergrond_kleur || '',
           hoofdaccent_gradient: blogSettings.hoofdaccent_gradient || '',
           get_afbeelding_url: blogSettings.get_afbeelding_url || '',
