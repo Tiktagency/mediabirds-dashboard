@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import AltTextCompanySelector from '@/components/wordpress-alt-text/AltTextCompanySelector';
-import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextCompanySelector';
+import LandingCompanySelector from '@/components/landing/LandingCompanySelector';
+import type { LandingCompany } from '@/components/landing/LandingCompanySelector';
 import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useAltTextSchedule } from '@/hooks/useAltTextSchedule';
@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 const Landingspagina = () => {
   const { isLoading, isAdmin } = useAdminAuth();
   const { toast } = useToast();
-  const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<LandingCompany | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -38,8 +38,8 @@ const Landingspagina = () => {
     setEditName(selectedCompany?.name || '');
     setEditDomain(selectedCompany?.domain || '');
     setEditPassword(selectedCompany?.app_password || '');
-    setEditSheetId('');
-    setEditGridId('');
+    setEditSheetId(selectedCompany?.spreadsheet_id || '');
+    setEditGridId(selectedCompany?.grid_id || '');
   }, [selectedCompany]);
 
   useEffect(() => {
@@ -52,13 +52,17 @@ const Landingspagina = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [expandedField]);
 
-  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password', value: string) => {
+  const handleFieldSave = async (field: 'name' | 'domain' | 'app_password' | 'spreadsheet_id' | 'grid_id', value: string) => {
     if (!selectedCompany) return;
-    const currentValue = field === 'name' ? selectedCompany.name : field === 'domain' ? (selectedCompany.domain || '') : (selectedCompany.app_password || '');
+    const currentValue = field === 'name' ? selectedCompany.name 
+      : field === 'domain' ? (selectedCompany.domain || '') 
+      : field === 'app_password' ? (selectedCompany.app_password || '')
+      : field === 'spreadsheet_id' ? (selectedCompany.spreadsheet_id || '')
+      : (selectedCompany.grid_id || '');
     if (value === currentValue) return;
 
     const { error } = await supabase
-      .from('alt_text_companies')
+      .from('landing_companies')
       .update({ [field]: value || null })
       .eq('id', selectedCompany.id);
 
@@ -166,7 +170,7 @@ const Landingspagina = () => {
             Dashboard
           </Button>
         </Link>
-        <AltTextCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
+        <LandingCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
 
       <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6 overflow-y-auto">
@@ -252,11 +256,11 @@ const Landingspagina = () => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-white/70">Spreadsheet ID:</Label>
-                  {renderEditableField('sheet_id', editSheetId, setEditSheetId, () => {}, 'Voer spreadsheet ID in...')}
+                  {renderEditableField('sheet_id', editSheetId, setEditSheetId, () => handleFieldSave('spreadsheet_id', editSheetId), 'Voer spreadsheet ID in...')}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-white/70">Grid ID:</Label>
-                  {renderEditableField('grid_id', editGridId, setEditGridId, () => {}, 'Voer grid ID in...')}
+                  {renderEditableField('grid_id', editGridId, setEditGridId, () => handleFieldSave('grid_id', editGridId), 'Voer grid ID in...')}
                 </div>
               </div>
               <Button
