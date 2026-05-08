@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import { SavedHoursTile } from '@/components/dashboard/SavedHoursTile';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon, Crown, Shield, Play, Eye } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon, Crown, Shield, Play, Eye, Newspaper } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -96,6 +96,12 @@ const tileConfigMap: Record<string, TileConfig> = {
     icon: Users,
     variant: 'secondary',
     statusKey: 'leads-generator',
+  },
+  'nieuwsbrief': {
+    to: '/nieuwsbrief',
+    icon: Newspaper,
+    variant: 'accent',
+    statusKey: 'nieuwsbrief',
   },
 };
 
@@ -243,7 +249,7 @@ const Index = () => {
   }
 
   // Grid size constant - same as TileOrganizer
-  const GRID_SIZE = 9;
+  const GRID_SIZE = 10;
   
   // Get ordered items from dashboard settings (keep all 9 positions including empty slots)
   const getOrderedItems = () => {
