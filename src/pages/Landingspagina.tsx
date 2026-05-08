@@ -198,8 +198,8 @@ const Landingspagina = () => {
         {selectedCompany ? (
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
-            <div className="flex-1 w-full space-y-4 overflow-hidden">
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3 overflow-hidden">
+            <div className="flex-1 w-full space-y-4">
+              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 space-y-3">
                 <div className="space-y-2">
                   <Label className="text-white/70">Bedrijfsnaam:</Label>
                   {renderEditableField('name', editName, setEditName, () => handleFieldSave('name', editName), 'Voer bedrijfsnaam in...')}
