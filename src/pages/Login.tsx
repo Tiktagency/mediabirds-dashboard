@@ -125,10 +125,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#CFDDCF' }}>
       <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-xl shadow-lg border border-border">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Mediabirds</h1>
+          <h1 
+            className="text-3xl text-foreground"
+            style={{ fontFamily: "'Denton', serif", fontStyle: 'italic' }}
+          >
+            Mediabirds
+          </h1>
           <p className="mt-2 text-muted-foreground">Dashboard Toegang</p>
         </div>
         
