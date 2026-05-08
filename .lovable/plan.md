@@ -1,18 +1,26 @@
 
 
-## Afbeelding verwijderen uit Alt-Text animatie
+## Webhook URLs en Categorie verwijderen uit AutomationCard
 
 ### Wat wordt er aangepast
 
-De team-afbeelding (Unsplash foto) wordt verwijderd uit het `AltTextAnimation` component. Alleen de vier metadata-velden (Alt-tekst, Titel, Bijschrift, Beschrijving) blijven over.
+In het admin paneel onder "Automatisering-instellingen" worden twee secties verwijderd uit elke automation card:
+
+1. **Webhook URLs sectie** (Primaire Webhook URL + Backup Webhook URL) — deze staan al in de backend
+2. **Categorie dropdown** — zowel in het bewerkformulier als de badge in de header
 
 ### Bestand
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/components/wordpress-alt-text/AltTextAnimation.tsx` | De `div` met `aspect-square` en de `img` tag verwijderen (regels 88-94) |
+| `src/components/admin/automation/AutomationCard.tsx` | Webhook URLs sectie verwijderen (regels 207-232), Categorie select verwijderen (regels 115-131), Categorie badge uit header verwijderen (regel 96-98), categorie uit save payload verwijderen |
 
-### Resultaat
+### Wat blijft behouden
 
-Het animatiepaneel toont alleen nog de vier invulvelden zonder afbeelding erboven, waardoor het component compacter wordt en visueel losstaat van de Landingspagina.
+- Weergavenaam
+- Beschrijving
+- Impact Level (met badge in header)
+- Status toggle
+- Tijdsbesparing per execution
+- N8N Workflow Naam
 
