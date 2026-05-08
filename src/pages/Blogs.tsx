@@ -407,14 +407,14 @@ const Blogs = () => {
         ) : isExpanded && isTextField ? (
           // EXPANDED MODE - show all text + pencil inside
           <div className="expanded-field-container relative">
-            <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
+            <div className="px-3 py-2 pr-12 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[40px]">
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
               <Button
                 size="icon"
                 variant="ghost"
-                className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10"
+                className="absolute top-1 right-1 h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   setExpandedField(null);
@@ -435,22 +435,38 @@ const Blogs = () => {
               >
                 {value || <span className="text-white/40 italic">Niet ingesteld</span>}
               </div>
+            ) : type === 'select' ? (
+              // Select dropdown - always editable, no expand/collapse
+              <Select
+                value={value}
+                onValueChange={(val) => {
+                  setFormData(prev => ({ ...prev, [field]: val }));
+                  // Auto-save on change
+                  if (selectedCompany) {
+                    saveSettings({ [field]: val });
+                  }
+                }}
+                disabled={!canEdit}
+              >
+                <SelectTrigger className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10">
+                  <SelectValue placeholder="Selecteer..." />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-700">
+                  {options?.map((option) => (
+                    <SelectItem key={option} value={option} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
-              // Select fields - not expandable, show pencil directly
-              <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
+              // Text fields - clickable to expand
+              <div 
+                className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => setExpandedField(field)}
+              >
                 {value || <span className="text-white/40 italic">Niet ingesteld</span>}
               </div>
-            )}
-            {/* Only show pencil for select fields in collapsed state */}
-            {canEdit && type === 'select' && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
-                onClick={() => setEditingField(field)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
             )}
           </div>
         )}
