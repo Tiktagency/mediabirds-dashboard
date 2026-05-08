@@ -82,7 +82,7 @@ const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
     try {
       const { data, error } = await supabase
         .from('alt_text_companies')
-        .select('*')
+        .select('id, name, domain, created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
