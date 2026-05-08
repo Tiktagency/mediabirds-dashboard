@@ -1,98 +1,71 @@
 
-# Plan: Twee Folder ID Velden voor Google Drive Foto's
+# Plan: Conditionele Afbeelding Velden in Payload
 
 ## Overzicht
 
-Bij de optie "Foto Google Drive" in de Blog Generatie pagina worden twee invulvelden toegevoegd:
-1. **Foto map : Folder ID** - Hernoemd van het bestaande "Folder ID" veld
-2. **Gebruikte foto map : Folder ID** - Nieuw veld voor de map met reeds gebruikte foto's
+Wanneer een gebruiker een afbeeldingsoptie selecteert ("AI afbeelding" of "Foto Google Drive"), mogen alleen de velden voor de gekozen optie worden meegestuurd in de POST request. De velden voor de niet-gekozen optie moeten leeg worden meegestuurd.
 
 ---
 
-## Database Wijzigingen
+## Huidige Situatie
 
-### Nieuwe kolom toevoegen
-
-Er wordt een nieuwe kolom `used_folder_id` toegevoegd aan de `blog_settings` tabel:
-
-```sql
-ALTER TABLE blog_settings 
-ADD COLUMN used_folder_id TEXT;
-```
-
----
-
-## Hook Wijzigingen
-
-**Bestand: `src/hooks/useBlogSettings.ts`**
-
-De `BlogSettings` interface wordt uitgebreid met het nieuwe veld:
+Momenteel worden alle afbeelding-gerelateerde velden altijd meegestuurd:
 
 ```typescript
-export interface BlogSettings {
-  // ... bestaande velden ...
-  folder_id: string | null;
-  used_folder_id: string | null;  // Nieuw veld
+const payload = {
+  // ... andere velden ...
+  achtergrond_kleur: formData.achtergrond_kleur,
+  hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
+  folder_id: formData.folder_id,
+  used_folder_id: formData.used_folder_id,
   // ...
-}
+};
 ```
 
 ---
 
-## Formulier Wijzigingen
+## Gewenste Situatie
+
+De payload moet conditioneel worden opgebouwd op basis van `image_type`:
+
+| Geselecteerde optie | Velden met waarde | Velden die leeg moeten zijn |
+|---------------------|-------------------|---------------------------|
+| AI afbeelding | `achtergrond_kleur`, `hoofdaccent_gradient` | `folder_id`, `used_folder_id` |
+| Foto Google Drive | `folder_id`, `used_folder_id` | `achtergrond_kleur`, `hoofdaccent_gradient` |
+
+---
+
+## Code Wijzigingen
 
 **Bestand: `src/components/seo-blog/BlogGenerationForm.tsx`**
 
-### Form State uitbreiden
+### Payload aanpassen (rond regel 265-285)
 
-Nieuw veld toevoegen aan `formData`:
+De payload constructie wordt aangepast zodat velden conditioneel worden gevuld:
 
 ```typescript
-const [formData, setFormData] = useState({
-  // ... bestaande velden ...
-  folder_id: '',
-  used_folder_id: '',  // Nieuw
-  // ...
-});
+const payload = {
+  bedrijfsnaam: formData.bedrijfsnaam,
+  bedrijfsomschrijving: formData.bedrijfsomschrijving,
+  schrijfstijl: formData.schrijfstijl,
+  aantal_woorden: `${formData.aantal_woorden[0]}-${formData.aantal_woorden[1]}`,
+  taal: formData.taal,
+  // AI afbeelding velden - alleen vullen als ai_image geselecteerd
+  achtergrond_kleur: formData.image_type === 'ai_image' ? formData.achtergrond_kleur : '',
+  hoofdaccent_gradient: formData.image_type === 'ai_image' 
+    ? `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}` 
+    : '',
+  // Google Drive velden - alleen vullen als google_drive geselecteerd
+  folder_id: formData.image_type === 'google_drive' ? formData.folder_id : '',
+  used_folder_id: formData.image_type === 'google_drive' ? formData.used_folder_id : '',
+  // ... rest van de velden ...
+};
 ```
 
-### UI Aanpassingen
-
-In de sectie waar "Foto Google Drive" actief is (rond regel 652-657), worden twee velden getoond in plaats van een:
-
-```text
-+------------------------------------------+
-| Foto map : Folder ID                     |
-| [abc123xyz...                      ]     |
-+------------------------------------------+
-| Gebruikte foto map : Folder ID           |
-| [def456uvw...                      ]     |
-+------------------------------------------+
-```
-
-### Validatie
-
-Het `used_folder_id` veld is optioneel, dus de bestaande validatie in `isFormComplete()` blijft ongewijzigd - alleen `folder_id` is verplicht voor de Google Drive optie.
-
 ---
-
-## Edge Function Wijzigingen
-
-De webhook payload in `supabase/functions/trigger-blog-generation/index.ts` zal automatisch het nieuwe veld meesturen omdat het formulier de data doorstuurt.
-
----
-
-## Samenvatting
-
-| Component | Wijziging |
-|-----------|-----------|
-| Database | Nieuwe kolom `used_folder_id` in `blog_settings` |
-| Hook | `used_folder_id` toevoegen aan interface |
-| Formulier | Veldnaam wijzigen + tweede veld toevoegen |
 
 ## Resultaat
 
-- Het bestaande "Folder ID" veld wordt hernoemd naar "Foto map : Folder ID"
-- Een nieuw optioneel veld "Gebruikte foto map : Folder ID" wordt toegevoegd
-- Beide velden worden per bedrijf opgeslagen
-- De data wordt meegestuurd naar de webhook
+- Bij **AI afbeelding**: `achtergrond_kleur` en `hoofdaccent_gradient` bevatten waarden, `folder_id` en `used_folder_id` zijn leeg
+- Bij **Foto Google Drive**: `folder_id` en `used_folder_id` bevatten waarden, `achtergrond_kleur` en `hoofdaccent_gradient` zijn leeg
+- De webhook ontvangt een schone payload met alleen de relevante afbeeldingsdata
