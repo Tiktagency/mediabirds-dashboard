@@ -14,6 +14,7 @@ export const DashboardTab = () => {
     updateCustomLabel,
     updateImpactColors,
     updateTileColors,
+    updateSavedHoursColors,
     updateTheme 
   } = useDashboardSettings();
   const { settings: automations } = useAutomationSettings();
@@ -42,15 +43,21 @@ export const DashboardTab = () => {
           automations={automations}
           customLabels={settings.custom_labels}
           tileColors={settings.tile_colors}
+          savedHoursColors={settings.saved_hours_colors}
           onReorder={updateTileOrder}
           onUpdateLabel={updateCustomLabel}
         />
         
         <TileColorCustomizer 
           colors={settings.tile_colors}
+          savedHoursColors={settings.saved_hours_colors}
           onUpdate={updateTileColors}
+          onUpdateSavedHours={updateSavedHoursColors}
           onReset={async () => {
             await updateTileColors({ background: '#cfddd0', text: '#002C1F' });
+          }}
+          onResetSavedHours={async () => {
+            await updateSavedHoursColors({ background: '#f2eadc', text: '#412700' });
           }}
         />
       </div>

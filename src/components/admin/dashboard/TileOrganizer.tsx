@@ -28,6 +28,7 @@ interface TileOrganizerProps {
   automations: AutomationSetting[];
   customLabels: Record<string, string>;
   tileColors: TileColors;
+  savedHoursColors: TileColors;
   onReorder: (newOrder: string[]) => Promise<void>;
   onUpdateLabel: (automationName: string, label: string) => Promise<void>;
 }
@@ -40,6 +41,7 @@ interface GridTileProps {
   status?: 'active' | 'inactive' | 'testmode';
   isEmpty: boolean;
   tileColors: TileColors;
+  savedHoursColors: TileColors;
   onUpdateLabel: (label: string) => void;
 }
 
@@ -69,7 +71,7 @@ const getVariantStyle = (variant: 'primary' | 'secondary' | 'accent' | 'muted', 
   };
 };
 
-const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, onUpdateLabel }: GridTileProps) => {
+const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, savedHoursColors, onUpdateLabel }: GridTileProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
@@ -104,7 +106,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, o
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
 
-  // Saved Hours tile - with dynamic colors
+  // Saved Hours tile - with its own colors
   if (isSavedHours) {
     return (
       <>
@@ -112,8 +114,8 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, o
           ref={setNodeRef}
           style={{
             ...style,
-            backgroundColor: tileColors.background,
-            borderColor: `${tileColors.background}40`,
+            backgroundColor: savedHoursColors.background,
+            borderColor: `${savedHoursColors.background}40`,
           }}
           className="h-20 rounded-lg border flex items-center justify-center relative group cursor-grab active:cursor-grabbing"
           {...attributes}
@@ -132,7 +134,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, o
             }}
             onPointerDown={(e) => e.stopPropagation()}
             className="absolute top-1.5 right-1.5 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded transition-opacity z-10"
-            style={{ color: tileColors.text }}
+            style={{ color: savedHoursColors.text }}
           >
             <Pencil className="w-2.5 h-2.5" />
           </button>
@@ -140,15 +142,15 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, o
           {/* Drag handle */}
           <div 
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-30 transition-opacity pointer-events-none"
-            style={{ color: tileColors.text }}
+            style={{ color: savedHoursColors.text }}
           >
             <GripVertical className="w-4 h-4" />
           </div>
 
           {/* Centered content */}
           <div className="flex flex-col items-center justify-center gap-1">
-            <Clock className="w-4 h-4" style={{ color: tileColors.text }} />
-            <span className="text-[10px] font-medium leading-tight text-center px-1" style={{ color: tileColors.text }}>
+            <Clock className="w-4 h-4" style={{ color: savedHoursColors.text }} />
+            <span className="text-[10px] font-medium leading-tight text-center px-1" style={{ color: savedHoursColors.text }}>
               {customLabel || name}
             </span>
           </div>
@@ -226,7 +228,7 @@ const GridTile = ({ id, index, name, customLabel, status, isEmpty, tileColors, o
   );
 };
 
-const DragOverlayTile = ({ id, name, status, tileColors }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode'; tileColors: TileColors }) => {
+const DragOverlayTile = ({ id, name, status, tileColors, savedHoursColors }: { id: string; name: string; status?: 'active' | 'inactive' | 'testmode'; tileColors: TileColors; savedHoursColors: TileColors }) => {
   const isSavedHours = id === 'saved-hours';
   const config = tileConfig[id] || { icon: BarChart3, variant: 'muted' as const };
   const Icon = config.icon;
@@ -235,14 +237,14 @@ const DragOverlayTile = ({ id, name, status, tileColors }: { id: string; name: s
     return (
       <div 
         className="h-20 rounded-lg border flex items-center justify-center shadow-lg relative"
-        style={{ backgroundColor: tileColors.background, borderColor: `${tileColors.background}40` }}
+        style={{ backgroundColor: savedHoursColors.background, borderColor: `${savedHoursColors.background}40` }}
       >
         {status && (
           <div className={`absolute top-1.5 left-1.5 w-2 h-2 rounded-full z-10 ${statusColors[status]} shadow-sm`} />
         )}
         <div className="flex flex-col items-center justify-center gap-1">
-          <Clock className="w-4 h-4" style={{ color: tileColors.text }} />
-          <span className="text-[10px] font-medium leading-tight" style={{ color: tileColors.text }}>{name}</span>
+          <Clock className="w-4 h-4" style={{ color: savedHoursColors.text }} />
+          <span className="text-[10px] font-medium leading-tight" style={{ color: savedHoursColors.text }}>{name}</span>
         </div>
       </div>
     );
@@ -271,6 +273,7 @@ export const TileOrganizer = ({
   automations, 
   customLabels,
   tileColors,
+  savedHoursColors,
   onReorder, 
   onUpdateLabel 
 }: TileOrganizerProps) => {
@@ -354,19 +357,20 @@ export const TileOrganizer = ({
                 const isEmpty = id.startsWith('__empty_');
                 const automation = getAutomation(id);
                 
-                return (
-                  <GridTile
-                    key={id}
-                    id={id}
-                    index={index}
-                    name={getAutomationName(id)}
-                    customLabel={customLabels[id] || ''}
-                    status={automation?.status}
-                    isEmpty={isEmpty}
-                    tileColors={tileColors}
-                    onUpdateLabel={(label) => onUpdateLabel(id, label)}
-                  />
-                );
+                  return (
+                    <GridTile
+                      key={id}
+                      id={id}
+                      index={index}
+                      name={getAutomationName(id)}
+                      customLabel={customLabels[id] || ''}
+                      status={automation?.status}
+                      isEmpty={isEmpty}
+                      tileColors={tileColors}
+                      savedHoursColors={savedHoursColors}
+                      onUpdateLabel={(label) => onUpdateLabel(id, label)}
+                    />
+                  );
               })}
             </div>
           </SortableContext>
@@ -374,11 +378,12 @@ export const TileOrganizer = ({
           <DragOverlay>
             {activeId && !activeId.startsWith('__empty_') ? (
               <div className="w-[120px]">
-                <DragOverlayTile 
+              <DragOverlayTile 
                   id={activeId}
                   name={customLabels[activeId] || getAutomationName(activeId)} 
                   status={activeTile?.status}
                   tileColors={tileColors}
+                  savedHoursColors={savedHoursColors}
                 />
               </div>
             ) : null}
