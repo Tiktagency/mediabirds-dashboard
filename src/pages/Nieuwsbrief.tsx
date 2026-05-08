@@ -86,6 +86,7 @@ const Nieuwsbrief = () => {
     getNextTriggerDisplay,
   } = useNewsletterSchedule(selectedCompany?.id ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingCompanyInfo, setIsFetchingCompanyInfo] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
   const [localData, setLocalData] = useState<LocalData>({
