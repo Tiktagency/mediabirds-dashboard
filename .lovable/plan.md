@@ -1,31 +1,25 @@
 
 
-## Fix: Pagina niet klikbaar na sluiten profielmodal
+## Fix: Dropdown menu's gebruiken huisstijl kleuren in plaats van blauwe/grijze tinten
 
 ### Probleem
-Wanneer je het profielscherm opent via het instellingen-menu en het weer sluit, wordt `pointer-events: none` op de `<body>` gezet en niet opgeruimd. Dit is een bekend conflict tussen Radix UI's DropdownMenu en Dialog componenten -- beide proberen `pointer-events` op de body te beheren, en bij het sluiten wordt de cleanup niet correct uitgevoerd.
+Op de Monday Planning pagina en in het BlogGenerationForm worden dropdown menu's gestyled met `bg-slate-800` en `bg-gray-800`, wat een blauwachtige tint geeft die niet past bij de huisstijl (donkergrijs/sage green).
 
 ### Oplossing
-Voeg een `onCloseAutoFocus` handler toe aan de `DialogContent` in `ProfileModal.tsx` die ervoor zorgt dat `pointer-events` op de body wordt hersteld bij het sluiten van de modal.
+Vervang alle hardcoded slate/gray kleuren in dropdown- en popover-achtergronden door de design system variabelen die al gedefinieerd zijn:
+- `bg-popover` (= `hsl(0 0% 11%)` = `#1c1c1c`) voor dropdown/popover achtergronden
+- `border-border` voor randen
+- `hover:bg-accent/20` of `focus:bg-accent/20` voor hover/focus states
 
-### Aanpassing
+### Aanpassingen
 
-**`src/components/ProfileModal.tsx`** (regel 91)
+**1. `src/pages/MondayPlanning.tsx`**
+- Regel 192: `bg-slate-800 border-white/20` wordt `bg-popover border-border`
+- Regel 217: `bg-slate-800 border-white/20` wordt `bg-popover border-border`
+- Regel 223: `bg-slate-800` op Calendar wordt `bg-popover`
 
-Huidige code:
-```
-<DialogContent className="sm:max-w-md bg-card border-border">
-```
+**2. `src/components/seo-blog/BlogGenerationForm.tsx`**
+- Regel 441: `bg-gray-800 border-gray-700` wordt `bg-popover border-border`
+- Regel 443: `hover:bg-gray-700 focus:bg-gray-700` wordt `hover:bg-accent/20 focus:bg-accent/20`
 
-Nieuwe code:
-```
-<DialogContent 
-  className="sm:max-w-md bg-card border-border"
-  onCloseAutoFocus={(e) => {
-    e.preventDefault();
-    document.body.style.pointerEvents = '';
-  }}
->
-```
-
-Dit is een eenregelige fix die het conflict tussen DropdownMenu en Dialog oplost door expliciet `pointer-events` te resetten wanneer de dialog sluit.
+Dit zorgt ervoor dat alle dropdowns dezelfde neutrale donkergrijze achtergrond (`#1c1c1c`) gebruiken die aansluit bij de rest van het dashboard, en geen blauwige of grijze afwijkende tinten meer tonen.
