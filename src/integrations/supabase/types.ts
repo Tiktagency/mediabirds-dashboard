@@ -122,6 +122,59 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_settings: {
+        Row: {
+          aantal_woorden: number | null
+          afbeelding_prompt: string | null
+          bedrijfsnaam: string | null
+          bedrijfsomschrijving: string | null
+          company_id: string
+          created_at: string
+          get_afbeelding_url: string | null
+          id: string
+          post_blog_url: string | null
+          schrijfstijl: string | null
+          taal: string | null
+          updated_at: string
+        }
+        Insert: {
+          aantal_woorden?: number | null
+          afbeelding_prompt?: string | null
+          bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
+          company_id: string
+          created_at?: string
+          get_afbeelding_url?: string | null
+          id?: string
+          post_blog_url?: string | null
+          schrijfstijl?: string | null
+          taal?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aantal_woorden?: number | null
+          afbeelding_prompt?: string | null
+          bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
+          company_id?: string
+          created_at?: string
+          get_afbeelding_url?: string | null
+          id?: string
+          post_blog_url?: string | null
+          schrijfstijl?: string | null
+          taal?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           auth_token_secret_name: string | null
