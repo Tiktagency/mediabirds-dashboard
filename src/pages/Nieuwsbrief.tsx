@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, X, Loader2, Newspaper, Palette, Download } from 'lucide-react';
+import { Plus, X, Loader2, Newspaper, Palette, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const MAX_RSS_FEEDS = 5;
+
+type LocalData = { bedrijfsnaam: string; bedrijfsinformatie: string; schrijfstijl: string };
 
 const ColorField = ({
   label,
@@ -45,6 +47,115 @@ const Nieuwsbrief = () => {
   const { settings, isLoading, saveSettings, setGeneratedHtml } = useNewsletterSettings();
   const [isGenerating, setIsGenerating] = useState(false);
   const [newFeed, setNewFeed] = useState('');
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
+  const [localData, setLocalData] = useState<LocalData>({ bedrijfsnaam: '', bedrijfsinformatie: '', schrijfstijl: '' });
+  const expandedRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (settings) {
+      setLocalData({
+        bedrijfsnaam: settings.bedrijfsnaam || '',
+        bedrijfsinformatie: settings.bedrijfsinformatie || '',
+        schrijfstijl: settings.schrijfstijl || '',
+      });
+    }
+  }, [settings]);
+
+  // Click outside to collapse expanded field
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (expandedField && expandedRef.current && !expandedRef.current.contains(e.target as Node)) {
+        setExpandedField(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [expandedField]);
+
+  const handleSaveField = (field: keyof LocalData) => {
+    setEditingField(null);
+    if (!settings) return;
+    const current = localData[field];
+    const original = settings[field] || '';
+    if (current === original) return;
+    saveSettings({ [field]: current });
+    toast({ title: 'Opgeslagen', description: `${field} is bijgewerkt.` });
+  };
+
+  const renderField = (
+    field: keyof LocalData,
+    label: string,
+    type: 'input' | 'textarea',
+    placeholder: string
+  ) => {
+    const value = localData[field];
+    const isEditing = editingField === field;
+    const isExpanded = expandedField === field;
+
+    if (isEditing) {
+      return (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+          {type === 'input' ? (
+            <Input
+              autoFocus
+              value={value}
+              onChange={(e) => setLocalData(prev => ({ ...prev, [field]: e.target.value }))}
+              onBlur={() => handleSaveField(field)}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+              placeholder={placeholder}
+            />
+          ) : (
+            <Textarea
+              autoFocus
+              value={value}
+              onChange={(e) => setLocalData(prev => ({ ...prev, [field]: e.target.value }))}
+              onBlur={() => handleSaveField(field)}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[100px] resize-none"
+              placeholder={placeholder}
+            />
+          )}
+        </div>
+      );
+    }
+
+    if (isExpanded) {
+      return (
+        <div className="space-y-1.5" ref={expandedRef}>
+          <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+          <div className="relative bg-white/5 border border-white/10 rounded-md px-3 py-2 group">
+            <p className="text-sm text-white/80 whitespace-pre-wrap pr-8">
+              {value || <span className="italic text-white/30">{placeholder}</span>}
+            </p>
+            <button
+              onClick={() => { setEditingField(field); setExpandedField(null); }}
+              className="absolute top-2 right-2 text-white/30 hover:text-white transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Collapsed
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">{label}</Label>
+        <div
+          onClick={() => setExpandedField(field)}
+          className="h-[40px] flex items-center bg-white/5 border border-white/10 rounded-md px-3 cursor-pointer hover:bg-white/10 transition-colors"
+        >
+          {value ? (
+            <span className="text-sm text-white/70 truncate">{value}</span>
+          ) : (
+            <span className="text-sm text-white/30 italic">{placeholder}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (isLoading || !settings) {
     return (
@@ -148,44 +259,9 @@ const Nieuwsbrief = () => {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6 space-y-5">
 
-                {/* Bedrijfsnaam */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">
-                    Bedrijfsnaam
-                  </Label>
-                  <Input
-                    placeholder="bijv. Mediabirds"
-                    value={settings.bedrijfsnaam}
-                    onChange={(e) => saveSettings({ bedrijfsnaam: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                  />
-                </div>
-
-                {/* Bedrijfsinformatie */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">
-                    Bedrijfsinformatie
-                  </Label>
-                  <Textarea
-                    placeholder="Beschrijf je bedrijf, producten of diensten…"
-                    value={settings.bedrijfsinformatie}
-                    onChange={(e) => saveSettings({ bedrijfsinformatie: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[100px] resize-none"
-                  />
-                </div>
-
-                {/* Schrijfstijl */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-white/50 uppercase tracking-wide">
-                    Schrijfstijl
-                  </Label>
-                  <Textarea
-                    placeholder="bijv. Professioneel en informatief, of juist speels en toegankelijk…"
-                    value={settings.schrijfstijl}
-                    onChange={(e) => saveSettings({ schrijfstijl: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px] resize-none"
-                  />
-                </div>
+                {renderField('bedrijfsnaam', 'Bedrijfsnaam', 'input', 'bijv. Mediabirds')}
+                {renderField('bedrijfsinformatie', 'Bedrijfsinformatie', 'textarea', 'Beschrijf je bedrijf, producten of diensten…')}
+                {renderField('schrijfstijl', 'Schrijfstijl', 'textarea', 'bijv. Professioneel en informatief, of juist speels en toegankelijk…')}
 
                 {/* RSS Feeds */}
                 <div className="space-y-2">
