@@ -229,7 +229,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
         </DropdownMenuTrigger>
         <DropdownMenuContent 
           align="end" 
-          className="bg-slate-900 border-white/20 min-w-[200px] z-50"
+          className="bg-card border-white/20 min-w-[200px] z-50"
         >
           {companies.map((company) => (
             <DropdownMenuItem
@@ -270,7 +270,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
       </DropdownMenu>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-slate-900 border-white/20 text-white max-w-sm">
+        <DialogContent className="bg-card border-white/20 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white">Nieuw bedrijf toevoegen</DialogTitle>
           </DialogHeader>
@@ -309,7 +309,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
       </Dialog>
 
       <AlertDialog open={!!companyToDelete} onOpenChange={(open) => !open && setCompanyToDelete(null)}>
-        <AlertDialogContent className="bg-slate-900 border-white/20">
+        <AlertDialogContent className="bg-card border-white/20">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">
               Weet je zeker dat je {companyToDelete?.name} wilt verwijderen?
