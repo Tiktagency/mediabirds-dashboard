@@ -46,6 +46,7 @@ const Blogs = () => {
 
   // Form state
   const [editingField, setEditingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     bedrijfsnaam: '',
     bedrijfsomschrijving: '',
@@ -56,6 +57,17 @@ const Blogs = () => {
     get_afbeelding_url: '',
     post_blog_url: '',
   });
+
+  // Click outside handler to collapse expanded field
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
+        setExpandedField(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [expandedField]);
 
   const { settings, isLoading: settingsLoading, saveSettings } = useBlogSettings(selectedCompany?.id || null);
 
@@ -318,10 +330,18 @@ const Blogs = () => {
     largeSize: boolean = false
   ) => {
     const isEditing = editingField === field;
+    const isExpanded = expandedField === field;
     const value = formData[field];
-    const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
+    const canEdit = adminOnly ? isAdmin : isAdmin;
     const isLargeTextField = type === 'textarea';
     const fieldHeight = largeSize ? 'h-[120px]' : 'h-[80px]';
+
+    // Auto-resize textarea when editing
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setFormData(prev => ({ ...prev, [field]: e.target.value }));
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    };
 
     return (
       <div className="space-y-2">
@@ -333,12 +353,19 @@ const Blogs = () => {
         </div>
         
         {isEditing && canEdit ? (
+          // STAAT 3: Editing mode
           <div className="flex gap-2 items-start">
             {type === 'textarea' ? (
               <Textarea
                 value={value}
-                onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className={`flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 ${fieldHeight} resize-none`}
+                onChange={handleTextareaChange}
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[80px] resize-none"
+                ref={(el) => {
+                  if (el) {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                  }
+                }}
               />
             ) : type === 'select' ? (
               <Select
@@ -380,14 +407,46 @@ const Blogs = () => {
               <XCircle className="h-4 w-4" />
             </Button>
           </div>
-        ) : (
-          <div className="flex items-start gap-2">
-            <div className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
-              isLargeTextField ? `${fieldHeight} overflow-y-auto whitespace-pre-wrap` : 'min-h-[40px] flex items-center'
-            }`}>
+        ) : isExpanded && isLargeTextField ? (
+          // STAAT 2: Expanded mode (only for textareas)
+          <div className="expanded-field-container relative">
+            <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 whitespace-pre-wrap min-h-[80px]">
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
             {canEdit && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute top-2 right-2 text-white/60 hover:text-white hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedField(null);
+                  setEditingField(field);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ) : (
+          // STAAT 1: Collapsed mode
+          <div className="flex items-start gap-2">
+            <div 
+              className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
+                isLargeTextField 
+                  ? `${fieldHeight} overflow-hidden whitespace-pre-wrap cursor-pointer hover:bg-white/10 transition-colors` 
+                  : 'min-h-[40px] flex items-center'
+              }`}
+              onClick={() => {
+                if (isLargeTextField) {
+                  setExpandedField(field);
+                }
+              }}
+            >
+              {value || <span className="text-white/40 italic">Niet ingesteld</span>}
+            </div>
+            {/* Only show pencil for non-textarea fields */}
+            {canEdit && !isLargeTextField && (
               <Button
                 size="icon"
                 variant="ghost"
