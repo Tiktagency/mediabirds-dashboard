@@ -1,63 +1,62 @@
 
-# Plan: Super Admin Check in CompanySelector
+# Plan: Super Admin Check in Invite-User Edge Function
 
 ## Probleem
-De "Bedrijf toevoegen" optie en delete-iconen zijn onzichtbaar voor `super_admin` gebruikers omdat de admin-check alleen op de `admin` rol filtert.
+De `invite-user` edge function controleert op regel 86 alleen op de `admin` rol. Dit betekent dat `super_admin` gebruikers geen nieuwe gebruikers kunnen uitnodigen.
 
 ## Oplossing
-Update de `checkAdminStatus` functie om ook `super_admin` te herkennen met een `in` filter.
+Update de admin check in de `invite-user` edge function om ook `super_admin` te accepteren.
 
 ## Code Wijziging
 
-**Bestand:** `src/components/seo/CompanySelector.tsx`
+**Bestand:** `supabase/functions/invite-user/index.ts`
 
-**Huidige code (regels 59-74):**
-```javascript
-useEffect(() => {
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-      setIsAdmin(!!data);
-    }
-  };
-
-  checkAdminStatus();
-}, []);
+**Huidige code (regels 81-87):**
+```typescript
+// Check if user is admin
+const { data: adminCheck } = await supabaseAdmin
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('role', 'admin')
+  .single();
 ```
 
 **Nieuwe code:**
-```javascript
-useEffect(() => {
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .in('role', ['admin', 'super_admin'])
-        .maybeSingle();
-      setIsAdmin(!!data);
-    }
-  };
-
-  checkAdminStatus();
-}, []);
+```typescript
+// Check if user is admin or super_admin
+const { data: adminCheck } = await supabaseAdmin
+  .from('user_roles')
+  .select('role')
+  .eq('user_id', user.id)
+  .in('role', ['admin', 'super_admin']);
 ```
 
 ## Wijzigingen
-| Regel | Was | Wordt |
-|-------|-----|-------|
-| 67 | `.eq('role', 'admin')` | `.in('role', ['admin', 'super_admin'])` |
-| 68 | `.single()` | `.maybeSingle()` |
 
-## Resultaat
-Na deze wijziging zien zowel `admin` als `super_admin` gebruikers:
-- De "Bedrijf toevoegen" optie in de dropdown
-- Het verwijder-icoon bij elk bedrijf
+| Locatie | Was | Wordt |
+|---------|-----|-------|
+| Regel 81 | `// Check if user is admin` | `// Check if user is admin or super_admin` |
+| Regel 86 | `.eq('role', 'admin')` | `.in('role', ['admin', 'super_admin'])` |
+| Regel 87 | `.single();` | (verwijderd - niet nodig bij `.in()`) |
+
+## Aanvullende check (regel 89)
+De huidige check `if (!adminCheck)` werkt nog steeds correct omdat `.in()` een array teruggeeft die `truthy` is als er resultaten zijn.
+
+Update naar:
+```typescript
+if (!adminCheck || adminCheck.length === 0) {
+```
+
+## Overzicht na implementatie
+
+| Component | Status |
+|-----------|--------|
+| useAuth hook | OK - beide rollen |
+| useAdminAuth hook | OK - beide rollen |
+| AdminPanel pagina | OK - gebruikt useAdminAuth |
+| CompanySelector | OK - net bijgewerkt |
+| manage-user-roles edge function | OK - beide rollen |
+| invite-user edge function | Wordt bijgewerkt |
+
+Na deze wijziging kunnen `super_admin` gebruikers alle functies uitvoeren die `admin` gebruikers kunnen doen.
