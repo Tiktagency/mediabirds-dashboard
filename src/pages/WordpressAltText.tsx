@@ -194,54 +194,6 @@ const WordpressAltText = () => {
                   <Label className="text-white/70">Domeinnaam:</Label>
                   {renderEditableField('domain', editDomain, setEditDomain, () => handleFieldSave('domain', editDomain), 'Voer domeinnaam in...')}
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5">
-                    <Label className="text-white/70">Applicatie wachtwoord:</Label>
-                    <TooltipProvider delayDuration={200}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-4">
-                          <p className="font-semibold mb-2 text-sm">Hoe kom je aan een applicatie wachtwoord?</p>
-                          <ol className="list-decimal list-inside space-y-1 text-xs text-white/80">
-                            <li>Ga naar de achterkant van je <strong className="text-white">WordPress</strong> website</li>
-                            <li>Navigeer naar <strong className="text-white">Gebruikers</strong> → <strong className="text-white">Mediabirds</strong></li>
-                            <li>Scroll naar <strong className="text-white">Applicatie wachtwoorden</strong></li>
-                            <li>Gebruik als naam: <strong className="text-white">n8n alt tekst</strong></li>
-                            <li>Klik op <strong className="text-white">"Applicatie wachtwoord toevoegen"</strong></li>
-                          </ol>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="relative">
-                    {editingField === 'app_password' ? (
-                      <Input
-                        type="password"
-                        value={editPassword}
-                        onChange={(e) => setEditPassword(e.target.value)}
-                        onBlur={() => { setEditingField(null); handleFieldSave('app_password', editPassword); }}
-                        placeholder="abcd efgh ijkl 1234"
-                        className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
-                        autoFocus
-                        onFocus={(e) => {
-                          const len = e.currentTarget.value.length;
-                          e.currentTarget.setSelectionRange(len, len);
-                        }}
-                      />
-                    ) : (
-                      <div
-                        onClick={() => setEditingField('app_password')}
-                        className="px-3 py-2 rounded-md bg-white/5 border border-white/20 text-white h-[40px] flex items-center overflow-hidden cursor-pointer hover:bg-white/10 transition-colors"
-                      >
-                        <span className={`truncate ${!editPassword ? 'text-white/30' : ''}`}>
-                          {editPassword ? '•'.repeat(editPassword.length) : 'abcd efgh ijkl 1234'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
               <Button
                 onClick={handleStart}
