@@ -36,6 +36,8 @@ const formSchema = z.object({
   background_color: z.string().min(1, 'Achtergrondkleur is verplicht'),
   gradient_end_color: z.string().optional(),
   text_color: z.string().min(1, 'Tekstkleur is verplicht'),
+  profile_photo_url: z.string().url('Ongeldige URL').min(1, 'Profielfoto URL is verplicht'),
+  company_logo_url: z.string().url('Ongeldige URL').min(1, 'Bedrijfslogo URL is verplicht'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -105,6 +107,8 @@ export const EmailSignatureForm = ({
       background_color: '#1a1a2e',
       gradient_end_color: '#16213e',
       text_color: '#ffffff',
+      profile_photo_url: '',
+      company_logo_url: '',
     },
   });
 
@@ -221,6 +225,8 @@ export const EmailSignatureForm = ({
         background_color: selectedSignature.background_color,
         gradient_end_color: selectedSignature.gradient_end_color || '#16213e',
         text_color: selectedSignature.text_color,
+        profile_photo_url: selectedSignature.profile_photo_url || '',
+        company_logo_url: selectedSignature.company_logo_url || '',
       });
       setSocials(selectedSignature.socials || []);
       setProfilePhotoUrl(selectedSignature.profile_photo_url);
@@ -245,6 +251,8 @@ export const EmailSignatureForm = ({
         background_color: '#1a1a2e',
         gradient_end_color: '#16213e',
         text_color: '#ffffff',
+        profile_photo_url: '',
+        company_logo_url: '',
       });
       setSocials([]);
       setProfilePhotoUrl(null);
@@ -683,16 +691,23 @@ export const EmailSignatureForm = ({
         <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="profile_photo_url" className="text-white">
-              Profielfoto URL (PNG)
+              Profielfoto URL (PNG) *
             </Label>
             <Input
               id="profile_photo_url"
               type="url"
               value={profilePhotoUrl || ''}
-              onChange={(e) => setProfilePhotoUrl(e.target.value || null)}
+              onChange={(e) => {
+                const val = e.target.value || null;
+                setProfilePhotoUrl(val);
+                setValue('profile_photo_url', e.target.value, { shouldValidate: true });
+              }}
               className="bg-white/10 border-white/20 text-white"
-              placeholder="https://example.com/profielfoto.jpg"
+              placeholder="https://example.com/profielfoto.png"
             />
+            {errors.profile_photo_url && (
+              <p className="text-sm text-red-400">{errors.profile_photo_url.message}</p>
+            )}
             {profilePhotoUrl && (
               <img 
                 src={profilePhotoUrl} 
@@ -705,16 +720,23 @@ export const EmailSignatureForm = ({
 
           <div className="space-y-2">
             <Label htmlFor="company_logo_url" className="text-white">
-              Bedrijfslogo URL (PNG)
+              Bedrijfslogo URL (PNG) *
             </Label>
             <Input
               id="company_logo_url"
               type="url"
               value={companyLogoUrl || ''}
-              onChange={(e) => setCompanyLogoUrl(e.target.value || null)}
+              onChange={(e) => {
+                const val = e.target.value || null;
+                setCompanyLogoUrl(val);
+                setValue('company_logo_url', e.target.value, { shouldValidate: true });
+              }}
               className="bg-white/10 border-white/20 text-white"
               placeholder="https://example.com/logo.png"
             />
+            {errors.company_logo_url && (
+              <p className="text-sm text-red-400">{errors.company_logo_url.message}</p>
+            )}
             {companyLogoUrl && (
               <img 
                 src={companyLogoUrl} 
