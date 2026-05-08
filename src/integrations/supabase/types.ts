@@ -327,14 +327,17 @@ export type Database = {
           company_logo_url: string | null
           created_at: string
           email: string
+          emails: Json | null
           first_name: string
           gradient_end_color: string | null
           id: string
           job_title: string
           last_name: string
           location: string | null
+          locations: Json | null
           name: string
           phone_number: string | null
+          phone_numbers: Json | null
           profile_photo_url: string | null
           socials: Json | null
           text_color: string
@@ -348,14 +351,17 @@ export type Database = {
           company_logo_url?: string | null
           created_at?: string
           email: string
+          emails?: Json | null
           first_name: string
           gradient_end_color?: string | null
           id?: string
           job_title: string
           last_name: string
           location?: string | null
+          locations?: Json | null
           name?: string
           phone_number?: string | null
+          phone_numbers?: Json | null
           profile_photo_url?: string | null
           socials?: Json | null
           text_color?: string
@@ -369,14 +375,17 @@ export type Database = {
           company_logo_url?: string | null
           created_at?: string
           email?: string
+          emails?: Json | null
           first_name?: string
           gradient_end_color?: string | null
           id?: string
           job_title?: string
           last_name?: string
           location?: string | null
+          locations?: Json | null
           name?: string
           phone_number?: string | null
+          phone_numbers?: Json | null
           profile_photo_url?: string | null
           socials?: Json | null
           text_color?: string

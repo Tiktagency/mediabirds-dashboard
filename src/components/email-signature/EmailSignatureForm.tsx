@@ -11,6 +11,7 @@ import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSet
 import { Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { DynamicFieldGroup } from './DynamicFieldGroup';
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 const formSchema = z.object({
   name: z.string().min(1, 'Naam is verplicht'),
   first_name: z.string().min(1, 'Voornaam is verplicht'),
@@ -71,6 +73,11 @@ export const EmailSignatureForm = ({
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Extra velden state (max 1 extra per type = 2 totaal)
+  const [extraEmails, setExtraEmails] = useState<string[]>([]);
+  const [extraPhoneNumbers, setExtraPhoneNumbers] = useState<string[]>([]);
+  const [extraLocations, setExtraLocations] = useState<string[]>([]);
 
   const {
     register,
@@ -114,15 +121,23 @@ export const EmailSignatureForm = ({
       const data = watchedFields;
       // Alleen opslaan als verplichte velden zijn ingevuld
       if (data.name && data.first_name && data.last_name && data.email && data.job_title) {
+        // Combineer primaire velden met extra velden
+        const allEmails = [data.email, ...extraEmails.filter(e => e.trim() !== '')];
+        const allPhoneNumbers = [data.phone_number, ...extraPhoneNumbers.filter(p => p.trim() !== '')].filter(Boolean) as string[];
+        const allLocations = [data.location, ...extraLocations.filter(l => l.trim() !== '')].filter(Boolean) as string[];
+        
         await onSave({
           name: data.name,
           first_name: data.first_name,
           last_name: data.last_name,
           email: data.email,
+          emails: allEmails,
           job_title: data.job_title,
           phone_number: data.phone_number || null,
+          phone_numbers: allPhoneNumbers,
           website: data.website || null,
           location: data.location || null,
+          locations: allLocations,
           background_type: data.background_type,
           background_color: data.background_color,
           gradient_end_color: data.background_type === 'gradient' ? data.gradient_end_color || null : null,
@@ -149,6 +164,11 @@ export const EmailSignatureForm = ({
   useEffect(() => {
     triggerAutoSave();
   }, [socials]);
+
+  // Auto-save bij extra velden wijziging
+  useEffect(() => {
+    triggerAutoSave();
+  }, [extraEmails, extraPhoneNumbers, extraLocations]);
 
   // Auto-save bij profielfoto of logo wijziging
   useEffect(() => {
@@ -183,6 +203,11 @@ export const EmailSignatureForm = ({
       setSocials(selectedSignature.socials || []);
       setProfilePhotoUrl(selectedSignature.profile_photo_url);
       setCompanyLogoUrl(selectedSignature.company_logo_url);
+      
+      // Extra velden uit arrays (skip eerste omdat dat het primaire veld is)
+      setExtraEmails(selectedSignature.emails.slice(1));
+      setExtraPhoneNumbers(selectedSignature.phone_numbers.slice(1));
+      setExtraLocations(selectedSignature.locations.slice(1));
     } else {
       // Reset to defaults for new signature
       reset({
@@ -202,6 +227,9 @@ export const EmailSignatureForm = ({
       setSocials([]);
       setProfilePhotoUrl(null);
       setCompanyLogoUrl(null);
+      setExtraEmails([]);
+      setExtraPhoneNumbers([]);
+      setExtraLocations([]);
     }
   }, [selectedSignature, reset]);
 
@@ -242,15 +270,23 @@ export const EmailSignatureForm = ({
       }
     }
 
+    // Combineer primaire velden met extra velden voor webhook
+    const allEmails = [data.email, ...extraEmails.filter(e => e.trim() !== '')];
+    const allPhoneNumbers = [data.phone_number, ...extraPhoneNumbers.filter(p => p.trim() !== '')].filter(Boolean) as string[];
+    const allLocations = [data.location, ...extraLocations.filter(l => l.trim() !== '')].filter(Boolean) as string[];
+    
     const signatureData = {
       name: data.name,
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
+      emails: allEmails,
       job_title: data.job_title,
       phone_number: data.phone_number || null,
+      phone_numbers: allPhoneNumbers,
       website: data.website || null,
       location: data.location || null,
+      locations: allLocations,
       background_type: data.background_type,
       background_color: data.background_color,
       gradient_end_color: data.background_type === 'gradient' ? data.gradient_end_color || null : null,
@@ -391,19 +427,18 @@ export const EmailSignatureForm = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register('email')}
-              className="bg-white/10 border-white/20 text-white"
-              placeholder="jan@bedrijf.nl"
-            />
-            {errors.email && (
-              <p className="text-sm text-red-400">{errors.email.message}</p>
-            )}
-          </div>
+          {/* Email met extra veld mogelijkheid */}
+          <DynamicFieldGroup
+            label="Email"
+            required
+            primaryValue={watchedFields.email || ''}
+            primaryPlaceholder="jan@bedrijf.nl"
+            extraValues={extraEmails}
+            onPrimaryChange={(value) => setValue('email', value)}
+            onExtraChange={setExtraEmails}
+            inputType="email"
+            error={errors.email?.message}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="job_title" className="text-white">Functie *</Label>
@@ -418,19 +453,17 @@ export const EmailSignatureForm = ({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone_number" className="text-white">Telefoonnummer (optioneel)</Label>
-            <Input
-              id="phone_number"
-              type="tel"
-              {...register('phone_number')}
-              className="bg-white/10 border-white/20 text-white"
-              placeholder="+31 6 12345678"
-            />
-            {errors.phone_number && (
-              <p className="text-sm text-red-400">{errors.phone_number.message}</p>
-            )}
-          </div>
+          {/* Telefoonnummer met extra veld mogelijkheid */}
+          <DynamicFieldGroup
+            label="Telefoonnummer (optioneel)"
+            primaryValue={watchedFields.phone_number || ''}
+            primaryPlaceholder="+31 6 12345678"
+            extraValues={extraPhoneNumbers}
+            onPrimaryChange={(value) => setValue('phone_number', value)}
+            onExtraChange={setExtraPhoneNumbers}
+            inputType="tel"
+            error={errors.phone_number?.message}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="website" className="text-white">Website (optioneel)</Label>
@@ -446,15 +479,15 @@ export const EmailSignatureForm = ({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location" className="text-white">Plaatsnaam (optioneel)</Label>
-            <Input
-              id="location"
-              {...register('location')}
-              className="bg-white/10 border-white/20 text-white"
-              placeholder="Amsterdam"
-            />
-          </div>
+          {/* Plaatsnaam met extra veld mogelijkheid */}
+          <DynamicFieldGroup
+            label="Plaatsnaam (optioneel)"
+            primaryValue={watchedFields.location || ''}
+            primaryPlaceholder="Amsterdam"
+            extraValues={extraLocations}
+            onPrimaryChange={(value) => setValue('location', value)}
+            onExtraChange={setExtraLocations}
+          />
         </CardContent>
       </Card>
 
