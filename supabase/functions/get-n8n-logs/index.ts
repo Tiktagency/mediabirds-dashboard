@@ -59,8 +59,10 @@ serve(async (req) => {
     
     console.log(`Fetching ALL n8n logs, limit: ${limit}, automationFilter: ${automationFilter}, statusFilter: ${statusFilter}`);
     
-    // Fetch time_saved_per_execution from automation_settings
+    // Fetch time_saved_per_execution and n8n_workflow_name from automation_settings
     let timeSavedMap: Record<string, number> = {};
+    let configuredWorkflowNames: string[] = [];
+    
     if (supabaseUrl && supabaseServiceKey) {
       try {
         const response = await fetch(`${supabaseUrl}/rest/v1/automation_settings?select=n8n_workflow_name,time_saved_per_execution`, {
@@ -72,10 +74,15 @@ serve(async (req) => {
         if (response.ok) {
           const settings = await response.json();
           settings.forEach((s: any) => {
-            if (s.n8n_workflow_name && s.time_saved_per_execution) {
-              timeSavedMap[s.n8n_workflow_name.toLowerCase()] = s.time_saved_per_execution;
+            if (s.n8n_workflow_name) {
+              const nameLower = s.n8n_workflow_name.toLowerCase();
+              configuredWorkflowNames.push(nameLower);
+              if (s.time_saved_per_execution) {
+                timeSavedMap[nameLower] = s.time_saved_per_execution;
+              }
             }
           });
+          console.log('Configured workflow names:', configuredWorkflowNames);
           console.log('Time saved map:', timeSavedMap);
         }
       } catch (e) {
@@ -111,9 +118,11 @@ serve(async (req) => {
       workflowMap.set(w.id, w.name);
     });
 
-    // Only filter by specific workflow if automationFilter is specified
+    // Determine which workflow IDs to show
     let targetWorkflowIds: string[] = [];
+    
     if (automationFilter) {
+      // Specific filter: find exact workflow match
       const matchingWorkflow = workflows.find((w: any) => w.name === automationFilter);
       if (matchingWorkflow) {
         targetWorkflowIds = [matchingWorkflow.id];
@@ -125,8 +134,19 @@ serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else {
+      // No filter: only show workflows that are configured in automation_settings
+      targetWorkflowIds = workflows
+        .filter((w: any) => {
+          const workflowNameLower = w.name.toLowerCase();
+          return configuredWorkflowNames.some(configName => 
+            workflowNameLower.includes(configName) || configName.includes(workflowNameLower)
+          );
+        })
+        .map((w: any) => w.id);
+      
+      console.log(`Configured workflows found: ${targetWorkflowIds.length} matching ${configuredWorkflowNames.length} configured names`);
     }
-    // If no automationFilter, show ALL workflows (no filtering)
 
     // Fetch more executions than needed to ensure we have enough after filtering
     // n8n API has a max limit of 250, so we fetch max to ensure we get 100 after filtering
@@ -157,10 +177,17 @@ serve(async (req) => {
 
     console.log(`Found ${executions.length} executions`);
 
-    // Filter by workflow IDs if specified
+    // Filter by workflow IDs (always applied now - either specific filter or configured workflows)
     if (targetWorkflowIds.length > 0) {
       executions = executions.filter(e => targetWorkflowIds.includes(e.workflowId));
       console.log(`Filtered to ${executions.length} executions for target workflows`);
+    } else if (!automationFilter) {
+      // No configured workflows found, return empty
+      console.log('No configured workflows found in automation_settings');
+      return new Response(
+        JSON.stringify({ logs: [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Transform executions to log entries
