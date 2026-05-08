@@ -37,7 +37,7 @@ export const DashboardTab = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         <TileOrganizer 
           tileOrder={settings.tile_order}
           automations={automations}
