@@ -469,10 +469,12 @@ const Nieuwsbrief = () => {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6 space-y-4">
 
-                {/* Tekstvelden */}
-                {TEXT_FIELDS.map(({ key, label, type, placeholder }) =>
-                  renderTextField(key, label, type, placeholder)
-                )}
+                {/* Tekstvelden in twee kolommen */}
+                <div className="grid grid-cols-2 gap-4">
+                  {TEXT_FIELDS.map(({ key, label, type, placeholder }) =>
+                    renderTextField(key, label, type, placeholder)
+                  )}
+                </div>
 
                 {renderRssFeeds()}
 
