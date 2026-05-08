@@ -652,14 +652,14 @@ const Nieuwsbrief = () => {
             </div>{/* einde linkerkolom */}
 
             {/* Live kleur preview */}
-            <Card className="bg-white/5 border-white/10 h-full">
-              <CardContent className="p-4">
+            <Card className="bg-white/5 border-white/10 h-full flex flex-col">
+              <CardContent className="p-4 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-3">
                   <Newspaper className="w-3.5 h-3.5 text-white/50" />
                   <Label className="text-xs font-medium text-white/50">Kleur preview</Label>
                 </div>
                 {/* Scrollable preview container */}
-                <div className="rounded-lg overflow-hidden border border-white/10" style={{ maxHeight: '560px', overflowY: 'auto' }}>
+                <div className="rounded-lg overflow-hidden border border-white/10 flex-1" style={{ overflowY: 'auto' }}>
                   <div style={{ backgroundColor: localColors.achtergrond_kleur, fontFamily: 'Arial, sans-serif' }}>
 
                     {/* Sectie 1 — Intro */}

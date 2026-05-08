@@ -1,28 +1,19 @@
 
-## Kleur preview uitrekken bij open trigger
+## Verwijder `secundaire_kleur` & `accent_kleur` uit de POST payload
 
-**Probleem:** De preview card heeft `h-full` op de `<Card>`, maar de scrollbare container binnenin heeft `style={{ maxHeight: '560px', overflowY: 'auto' }}` (regel 662). Die vaste hoogte blokkeert het uitrekken wanneer de trigger-card openklapt.
+De twee kleuren worden nog op drie plekken meegestuurd:
 
-**Oplossing:** De scrollbare container de volledige beschikbare hoogte laten innemen via flex. De card en zijn content moeten een doorgaande flex-keten vormen zodat de preview-div kan groeien.
+1. **`src/pages/Nieuwsbrief.tsx`** — payload die naar de edge function wordt gestuurd (regels 395 en 400)
+2. **`supabase/functions/trigger-newsletter-webhook/index.ts`** — destructuring van body (regels 42-43) én de payload naar n8n (regels 60 en 65)
 
-**Wijziging in `src/pages/Nieuwsbrief.tsx`:**
+### Wijzigingen
 
-1. **Regel 655** — Card: `h-full` → `h-full flex flex-col`  
-2. **Regel 656** — CardContent: voeg `flex-1 flex flex-col` toe  
-3. **Regel 662** — Scrollcontainer: verwijder `maxHeight: '560px'` en voeg `flex-1` toe als className + `overflowY: 'auto'` blijft staan
+**`src/pages/Nieuwsbrief.tsx`** — verwijder uit de POST body (regels 395 en 400):
+- `secundaire_kleur: localColors.secundaire_kleur,`
+- `accent_kleur: localColors.accent_kleur,`
 
-```tsx
-// Regel 655
-<Card className="bg-white/5 border-white/10 h-full flex flex-col">
-  // Regel 656
-  <CardContent className="p-4 flex-1 flex flex-col">
-    <div className="flex items-center gap-2 mb-3">...</div>
-    // Regel 662 — geen maxHeight meer, flex-1 zodat hij vult
-    <div className="rounded-lg overflow-hidden border border-white/10 flex-1" style={{ overflowY: 'auto' }}>
-      ...preview content...
-    </div>
-  </CardContent>
-</Card>
-```
+**`supabase/functions/trigger-newsletter-webhook/index.ts`**:
+- Regel 42-43: verwijder `secundaire_kleur` en `accent_kleur` uit de destructuring
+- Regels 60 en 65: verwijder `secundaire_kleur` en `accent_kleur` uit de payload naar n8n
 
-Enkel bestand: `src/pages/Nieuwsbrief.tsx` (regels 655–662).
+Geen database- of andere wijzigingen nodig.
