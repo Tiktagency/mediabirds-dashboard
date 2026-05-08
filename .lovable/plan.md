@@ -1,101 +1,78 @@
 
-# Plan: Visueel "Nieuw" Slot Tonen
+# Plan: Prullenbak op Nieuw Handtekening Slot
 
 ## Probleem
 
-Wanneer je op "+ Nieuw" klikt, wordt de huidige selectie gewist, maar er is geen visuele feedback in de lijst links dat er een nieuwe handtekening wordt aangemaakt.
+Het nieuwe "Nieuwe handtekening" placeholder slot heeft geen prullenbak-icoon, waardoor gebruikers niet intuïtief kunnen annuleren als ze toch geen nieuwe handtekening willen maken.
 
 ---
 
 ## Oplossing
 
-Voeg een visueel leeg slot toe aan de SignatureList wanneer de gebruiker op "+ Nieuw" klikt. Dit slot:
-- Verschijnt bovenaan de lijst
-- Is geselecteerd (met ring styling)
-- Toont placeholder tekst zoals "Nieuwe handtekening"
+Voeg een prullenbak-knop toe aan het nieuwe handtekening slot, identiek aan de bestaande handtekeningen. Bij klikken wordt de "nieuw" modus geannuleerd.
 
 ---
 
 ## Technische Wijzigingen
 
-### 1. Hook aanpassen (`src/hooks/useEmailSignatureSettings.ts`)
+### 1. SignatureList aanpassen
 
-Voeg een `isCreatingNew` state toe:
-```typescript
-const [isCreatingNew, setIsCreatingNew] = useState(false);
-
-const createNewSignature = () => {
-  setSelectedSignature(null);
-  setIsCreatingNew(true);  // Activeer "nieuw" modus
-};
-
-const selectSignature = (id: string | null) => {
-  // ... bestaande logica
-  setIsCreatingNew(false);  // Deactiveer bij selectie
-};
-```
-
-Return `isCreatingNew` in de hook.
-
-### 2. SignatureList uitbreiden (`src/components/email-signature/SignatureList.tsx`)
-
-Voeg een `isCreatingNew` prop toe en toon een placeholder card:
-
+**Nieuwe prop toevoegen:**
 ```typescript
 interface SignatureListProps {
   // ... bestaande props
-  isCreatingNew: boolean;
+  onCancelNew: () => void;  // NIEUW
 }
+```
 
-// In de render:
+**Prullenbak toevoegen aan placeholder card:**
+```typescript
 {isCreatingNew && (
-  <Card className="bg-white/5 border-white/10 p-4 ring-2 ring-primary border-primary">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-        <Plus className="w-5 h-5 text-white/50" />
+  <Card className="...">
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/* Bestaande inhoud */}
       </div>
-      <div>
-        <p className="font-medium text-white">Nieuwe handtekening</p>
-        <p className="text-sm text-white/50">Vul het formulier in</p>
-      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-white/40 hover:text-red-400 hover:bg-red-400/10 flex-shrink-0"
+        onClick={onCancelNew}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   </Card>
 )}
 ```
 
-### 3. EmailSignature pagina updaten (`src/pages/EmailSignature.tsx`)
+### 2. Hook aanpassen (`useEmailSignatureSettings.ts`)
 
-Pass de nieuwe prop door naar SignatureList:
-
+**Nieuwe functie toevoegen:**
 ```typescript
-const { isCreatingNew, ... } = useEmailSignatureSettings();
+const cancelNewSignature = () => {
+  setIsCreatingNew(false);
+  // Selecteer eerste bestaande handtekening als die er is
+  if (signatures.length > 0) {
+    setSelectedSignature(signatures[0]);
+  }
+};
+```
 
+### 3. EmailSignature pagina updaten
+
+**Nieuwe prop doorgeven:**
+```typescript
 <SignatureList
-  signatures={signatures}
-  selectedId={selectedSignature?.id || null}
-  onSelect={selectSignature}
-  onDelete={deleteSignature}
-  isCreatingNew={isCreatingNew}
+  // ... bestaande props
+  onCancelNew={cancelNewSignature}
 />
 ```
 
 ---
 
-## Visueel Resultaat
+## Resultaat
 
-**Voor:**
-- Klik op "+ Nieuw" → selectie verdwijnt, geen visuele feedback
-
-**Na:**
-- Klik op "+ Nieuw" → nieuw leeg slot verschijnt bovenaan met geselecteerde styling
-- Klik op bestaande handtekening → nieuw slot verdwijnt, bestaande wordt geselecteerd
-
----
-
-## Bestanden die worden aangepast
-
-| Bestand | Wijziging |
-|---------|-----------|
-| `src/hooks/useEmailSignatureSettings.ts` | `isCreatingNew` state toevoegen |
-| `src/components/email-signature/SignatureList.tsx` | Placeholder card renderen |
-| `src/pages/EmailSignature.tsx` | Nieuwe prop doorgeven |
+- Prullenbak-icoon verschijnt rechts op het nieuwe handtekening slot
+- Klikken op prullenbak annuleert het aanmaken en selecteert de eerste bestaande handtekening (indien aanwezig)
+- Consistent gedrag met bestaande handtekening cards
