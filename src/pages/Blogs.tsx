@@ -475,9 +475,18 @@ const Blogs = () => {
   };
 
   const renderRangeField = () => {
-    const isEditing = editingField === 'aantal_woorden';
     const [min, max] = formData.aantal_woorden;
     const canEdit = isAdmin;
+
+    const handleSliderChange = (value: number[]) => {
+      setFormData(prev => ({ ...prev, aantal_woorden: value as [number, number] }));
+    };
+
+    const handleSliderCommit = (value: number[]) => {
+      if (selectedCompany && canEdit) {
+        saveSettings({ aantal_woorden: `${value[0]}-${value[1]}` });
+      }
+    };
 
     return (
       <div className="space-y-2">
@@ -485,62 +494,27 @@ const Blogs = () => {
           <Label className="text-white/90">Aantal woorden</Label>
         </div>
         
-        {isEditing && canEdit ? (
-          <div className="space-y-4">
-            <div className="px-2">
-              <Slider
-                value={formData.aantal_woorden}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, aantal_woorden: value as [number, number] }))}
-                min={0}
-                max={3000}
-                step={50}
-                className="w-full"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-white/50">
-              <span>0</span>
-              <span>3000</span>
-            </div>
-            <div className="text-center text-white/80 font-medium">
-              {min} - {max} woorden
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                onClick={() => handleSaveField('aantal_woorden')}
-                disabled={settingsLoading}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                onClick={handleCancelEdit}
-              >
-                <XCircle className="h-4 w-4" />
-              </Button>
-            </div>
+        <div className="space-y-4 p-4 rounded-md bg-white/5 border border-white/10">
+          <div className="px-2">
+            <Slider
+              value={formData.aantal_woorden}
+              onValueChange={handleSliderChange}
+              onValueCommit={handleSliderCommit}
+              min={0}
+              max={3000}
+              step={50}
+              className="w-full"
+              disabled={!canEdit}
+            />
           </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 min-h-[40px] flex items-center">
-              {min} - {max} woorden
-            </div>
-            {canEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-white/60 hover:text-white hover:bg-white/10"
-                onClick={() => setEditingField('aantal_woorden')}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="flex justify-between text-xs text-white/50">
+            <span>0</span>
+            <span>3000</span>
           </div>
-        )}
+          <div className="text-center text-white/80 font-medium">
+            {min} - {max} woorden
+          </div>
+        </div>
       </div>
     );
   };
