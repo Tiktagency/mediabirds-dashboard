@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
-export type UserRole = 'admin' | 'operator' | 'viewer';
+export type UserRole = 'super_admin' | 'admin' | 'operator' | 'viewer';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,7 +12,8 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const isAdmin = roles.includes('admin');
+  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+  const isSuperAdmin = roles.includes('super_admin');
   const isOperator = roles.includes('operator');
   const isViewer = roles.includes('viewer');
 
@@ -88,7 +89,8 @@ export const useAuth = () => {
     user, 
     session, 
     roles, 
-    isAdmin, 
+    isAdmin,
+    isSuperAdmin,
     isOperator, 
     isViewer, 
     isLoading, 
