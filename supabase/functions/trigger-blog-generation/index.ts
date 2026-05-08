@@ -49,8 +49,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting blog generation trigger");
-    
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -83,7 +81,6 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
     
     if (userError || !user) {
-      console.error('Failed to get user:', userError);
       throw new Error('Ongeldige gebruiker');
     }
     
@@ -91,26 +88,22 @@ serve(async (req) => {
     
     // Parse request body to get dynamic webhook URL, auth token secret name, and blog data
     let webhookUrl: string | null = null;
-    let webhookSource = 'request_body';
     let authTokenSecretName: string | null = null;
-    let blogData: Record<string, any> | null = null;
+    let blogData: Record<string, unknown> | null = null;
     
     try {
       const body = await req.json();
       if (body.webhookUrl) {
         webhookUrl = validateUrl(body.webhookUrl);
-        console.log('Webhook URL provided in request body');
       }
       if (body.authTokenSecretName) {
         authTokenSecretName = body.authTokenSecretName;
-        console.log('Auth token secret name provided:', authTokenSecretName);
       }
       if (body.blogData) {
         blogData = body.blogData;
-        console.log('Blog data provided in request body');
       }
     } catch {
-      console.log('No body or failed to parse body');
+      // No body or failed to parse body - continue with defaults
     }
     
     // Fallback to environment variables if no webhook URL in request
@@ -118,17 +111,14 @@ serve(async (req) => {
       const picked = pickWebhookEnv();
       if (picked) {
         webhookUrl = picked.url;
-        webhookSource = picked.source;
       }
     }
 
     // Get auth token - prefer the one specified in request, fallback to env vars
     let authToken: string | undefined;
-    let authSource = 'none';
     
     if (authTokenSecretName) {
       authToken = Deno.env.get(authTokenSecretName);
-      authSource = authTokenSecretName;
     }
     
     // Fallback to default env vars if no specific secret name provided
@@ -136,23 +126,13 @@ serve(async (req) => {
       authToken = Deno.env.get('authorization') ??
         Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ??
         Deno.env.get('N8N_AUTH_TOKEN');
-      
-      authSource = Deno.env.get('authorization') ? 'authorization'
-        : Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN') ? 'N8N_WEBHOOK_AUTH_TOKEN'
-        : Deno.env.get('N8N_AUTH_TOKEN') ? 'N8N_AUTH_TOKEN'
-        : 'none';
     }
 
-    console.log('Using webhook source:', webhookSource);
-    console.log('Using auth secret:', authSource);
-
     if (!webhookUrl) {
-      console.error('Webhook URL is missing or invalid');
       throw new Error('Webhook URL configuratie ontbreekt of is ongeldig');
     }
 
     if (!authToken) {
-      console.error('authorization secret is missing');
       throw new Error('authorization configuratie ontbreekt');
     }
 
@@ -163,22 +143,13 @@ serve(async (req) => {
       if (!['http:', 'https:'].includes(parsed.protocol)) {
         throw new Error('invalid protocol');
       }
-      // Minimal, non-sensitive debug info
-      console.log('Webhook URL validated', {
-        protocol: parsed.protocol,
-        host: parsed.host,
-        len: sUrl.length,
-      });
     } catch {
-      console.error('Webhook URL is not a valid URL');
       throw new Error('Webhook URL configuratie is ongeldig');
     }
 
     // Create AbortController with 180 second timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 180000);
-
-    console.log("Calling n8n webhook");
 
     // Prepare payload - use blogData if provided, otherwise use basic payload
     const webhookPayload = blogData ? {
@@ -194,7 +165,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authToken!, // Send token as-is without Bearer prefix
+        'Authorization': authToken!,
       },
       body: JSON.stringify(webhookPayload),
       signal: controller.signal,
@@ -202,14 +173,11 @@ serve(async (req) => {
 
     clearTimeout(timeoutId);
 
-    console.log(`Webhook response status: ${response.status}`);
-
     let message = 'Geen bericht beschikbaar';
     let status = response.ok ? 'success' : 'error';
     
     try {
       const data = await response.json();
-      console.log("Webhook response data:", data);
       
       // Try to extract message from various possible keys
       if (data.message) {
@@ -228,8 +196,7 @@ serve(async (req) => {
         // If we can't find a message, stringify the whole response
         message = JSON.stringify(data);
       }
-    } catch (parseError) {
-      console.error("Failed to parse webhook response:", parseError);
+    } catch {
       const textResponse = await response.text().catch(() => 'no response body');
       message = textResponse || `Webhook response: ${response.status} ${response.statusText}`;
     }
@@ -244,11 +211,8 @@ serve(async (req) => {
       });
 
     if (dbError) {
-      console.error("Error saving notification:", dbError);
       throw dbError;
     }
-
-    console.log("Notification saved successfully");
     
     // Set status to 'active' on success
     await supabase
@@ -275,8 +239,8 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    // NEVER log the full error as it might contain secrets
-    console.error('Error in trigger-blog-generation function');
+    // Log minimal info without exposing secrets
+    console.error('Blog generation error');
     
     let errorMessage = 'Er is een fout opgetreden';
     let errorStatus = 'error';
@@ -290,8 +254,6 @@ serve(async (req) => {
         if (error.message && !error.message.includes('Invalid URL')) {
           errorMessage = error.message;
         }
-        // Log error type for debugging but not the full message
-        console.error('Error type:', error.name);
       }
     }
 
@@ -326,7 +288,7 @@ serve(async (req) => {
           const { data: { user } } = await adminClient.auth.getUser(token);
           errorUserId = user?.id ?? null;
         } catch {
-          console.log('Could not get user ID for error notification');
+          // Could not get user ID for error notification
         }
       }
       
@@ -337,8 +299,8 @@ serve(async (req) => {
           status: errorStatus,
           user_id: errorUserId,
         });
-    } catch (dbError) {
-      console.error("Error saving error notification:", dbError);
+    } catch {
+      // Error saving error notification - continue
     }
 
     return new Response(
