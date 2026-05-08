@@ -1,44 +1,25 @@
 
-# Webhook aanroep bij verwijderen bedrijf
 
-## Wat verandert er
+# Fix authenticatie delete-company webhook
 
-Bij het verwijderen van een bedrijf wordt na bevestiging een POST-request gestuurd naar de n8n webhook met de bedrijfsnaam. Dit gebeurt via een nieuwe backend function, zodat de auth token veilig blijft.
+## Probleem
 
-## Huidige situatie
+De `trigger-delete-company-webhook` gebruikt `Authorization: Bearer ${authToken}`, maar de `trigger-blog-generation` function (de "Start" knop) gebruikt `Authorization: ${authToken}` -- zonder `Bearer` prefix. Hierdoor herkent n8n het verzoek niet.
 
-- De bevestigingsdialoog bestaat al: "Weet je zeker dat je [naam] wilt verwijderen?"
-- Na bevestiging worden `blog_settings` en het bedrijf uit de database verwijderd
-- Er wordt nog geen webhook aangeroepen
+## Oplossing
 
-## Aanpassingen
+In `supabase/functions/trigger-delete-company-webhook/index.ts` op regel 29 wordt de Authorization header aangepast van:
 
-### 1. Nieuwe edge function: `trigger-delete-company-webhook`
+```typescript
+'Authorization': `Bearer ${authToken}`,
+```
 
-Een nieuwe backend function die:
-- De `bedrijfsnaam` ontvangt als parameter
-- Een POST-request stuurt naar `https://tikt.app.n8n.cloud/webhook/dca2fe6c-13f7-43ab-8f19-33ed0d97fd18`
-- De `BLOG_WEBHOOK_AUTH_TOKEN` secret gebruikt voor authenticatie (al geconfigureerd)
-- De bedrijfsnaam meestuurt in de body als `{ bedrijfsnaam: "..." }`
+Naar:
 
-### 2. CompanySelector.tsx: `handleDeleteCompany` uitbreiden
+```typescript
+'Authorization': authToken,
+```
 
-- Na bevestiging en voordat het bedrijf uit de database wordt verwijderd, wordt de webhook aangeroepen via de nieuwe edge function
-- De `AlertDialogAction` krijgt `e.preventDefault()` om de dialoog open te houden tijdens het verwijderen
-- Er verschijnt een laadsymbool met "Bezig met verwijderen..." tijdens de verwerking
-- Als de webhook faalt, wordt het bedrijf alsnog verwijderd uit de database (met een waarschuwing)
+Dit is exact hetzelfde formaat als in de `trigger-blog-generation` function, waar de token direct als header waarde wordt meegegeven zonder `Bearer` prefix.
 
-## Technische details
-
-### Edge function (`supabase/functions/trigger-delete-company-webhook/index.ts`)
-
-- Standaard CORS headers
-- Ontvangt `{ bedrijfsnaam: string }` in de request body
-- POST naar de opgegeven webhook URL met `Authorization` header uit `BLOG_WEBHOOK_AUTH_TOKEN`
-- Retourneert `{ success: true/false }`
-
-### CompanySelector.tsx wijzigingen
-
-- `handleDeleteCompany`: roept eerst `supabase.functions.invoke('trigger-delete-company-webhook', { body: { bedrijfsnaam: companyToDelete.name } })` aan
-- `AlertDialogAction` onClick krijgt `e.preventDefault()` + aanroep naar `handleDeleteCompany()`
-- Loading state toont `Loader2` spinner + "Bezig met verwijderen..."
+Eén regelwijziging, geen andere bestanden betrokken.
