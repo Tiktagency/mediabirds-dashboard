@@ -38,11 +38,17 @@ export interface AltTextCompany {
 
 interface AltTextCompanySelectorProps {
   onSelect?: (company: AltTextCompany | null) => void;
+  selectedCompany?: AltTextCompany | null;
 }
 
-const AltTextCompanySelector = ({ onSelect }: AltTextCompanySelectorProps) => {
+const AltTextCompanySelector = ({ onSelect, selectedCompany: externalSelectedCompany }: AltTextCompanySelectorProps) => {
   const [companies, setCompanies] = useState<AltTextCompany[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<AltTextCompany | null>(null);
+  const [internalSelectedCompany, setInternalSelectedCompany] = useState<AltTextCompany | null>(null);
+
+  const selectedCompany = externalSelectedCompany !== undefined ? externalSelectedCompany : internalSelectedCompany;
+  const setSelectedCompany = (company: AltTextCompany | null) => {
+    setInternalSelectedCompany(company);
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
