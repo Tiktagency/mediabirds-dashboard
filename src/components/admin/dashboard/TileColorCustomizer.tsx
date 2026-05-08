@@ -69,25 +69,37 @@ export const TileColorCustomizer = ({
             <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Bespaard deze maand
             </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="color"
-                value={savedHoursColors.background}
-                onChange={(e) => onUpdateSavedHours({ background: e.target.value })}
-                className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
-                title="Achtergrond"
-              />
+            <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground">Achtergrond</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={savedHoursColors.background}
+                  onChange={(e) => onUpdateSavedHours({ background: e.target.value })}
+                  className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+                />
+                <Input
+                  value={savedHoursColors.background}
+                  onChange={(e) => onUpdateSavedHours({ background: e.target.value })}
+                  className="flex-1 bg-background/50 font-mono text-xs"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="color"
-                value={savedHoursColors.text}
-                onChange={(e) => onUpdateSavedHours({ text: e.target.value })}
-                className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
-                title="Tekst"
-              />
+            <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground">Tekst</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={savedHoursColors.text}
+                  onChange={(e) => onUpdateSavedHours({ text: e.target.value })}
+                  className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+                />
+                <Input
+                  value={savedHoursColors.text}
+                  onChange={(e) => onUpdateSavedHours({ text: e.target.value })}
+                  className="flex-1 bg-background/50 font-mono text-xs"
+                />
+              </div>
             </div>
           </div>
 
@@ -96,25 +108,37 @@ export const TileColorCustomizer = ({
             <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">
               Overige tiles
             </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="color"
-                value={colors.background}
-                onChange={(e) => onUpdate({ background: e.target.value })}
-                className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
-                title="Achtergrond"
-              />
+            <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground">Achtergrond</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={colors.background}
+                  onChange={(e) => onUpdate({ background: e.target.value })}
+                  className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+                />
+                <Input
+                  value={colors.background}
+                  onChange={(e) => onUpdate({ background: e.target.value })}
+                  className="flex-1 bg-background/50 font-mono text-xs"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="color"
-                value={colors.text}
-                onChange={(e) => onUpdate({ text: e.target.value })}
-                className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
-                title="Tekst"
-              />
+            <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground">Tekst</span>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={colors.text}
+                  onChange={(e) => onUpdate({ text: e.target.value })}
+                  className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
+                />
+                <Input
+                  value={colors.text}
+                  onChange={(e) => onUpdate({ text: e.target.value })}
+                  className="flex-1 bg-background/50 font-mono text-xs"
+                />
+              </div>
             </div>
           </div>
         </div>
