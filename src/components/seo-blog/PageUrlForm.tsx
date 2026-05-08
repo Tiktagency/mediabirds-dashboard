@@ -118,25 +118,25 @@ export const PageUrlForm = ({
         </div>
       </div>
 
-      {/* Google Sheet Document ID */}
+      {/* Spreadsheet ID */}
       <div className="space-y-2">
-        <Label className="text-white/70">Google Sheet Document ID</Label>
+        <Label className="text-white/70">Spreadsheet ID</Label>
         <Input
           value={googleSheetId}
           onChange={(e) => setGoogleSheetId(e.target.value)}
-          placeholder="Voer Google Sheet ID in..."
+          placeholder="Voer Spreadsheet ID in..."
           className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
           disabled={!isAdmin}
         />
       </div>
 
-      {/* Google File ID */}
+      {/* Grid ID */}
       <div className="space-y-2">
-        <Label className="text-white/70">Google File ID</Label>
+        <Label className="text-white/70">Grid ID</Label>
         <Input
           value={googleFileId}
           onChange={(e) => setGoogleFileId(e.target.value)}
-          placeholder="Voer Google File ID in..."
+          placeholder="Voer Grid ID in..."
           className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
           disabled={!isAdmin}
         />
