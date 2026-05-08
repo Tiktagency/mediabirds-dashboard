@@ -256,6 +256,9 @@ export const BlogGenerationForm = ({
         status: formData.status,
         google_sheet_id: formData.google_sheet_id,
         google_slides_id: formData.google_slides_id,
+        page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
+        page_url_grid_id: pageUrlSettings?.google_file_id || '',
+        page_urls: pageUrlSettings?.page_urls || {},
         Category: blogCategories.reduce((acc, cat) => {
           acc[cat.label] = cat.value;
           return acc;
