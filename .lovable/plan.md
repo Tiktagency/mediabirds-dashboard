@@ -1,56 +1,46 @@
 
 
-## Landingspagina opbouwen met WordPress Alt-tekst structuur + Google Sheets velden
+## Nieuwe "Leads Generator" dashboard tile en pagina
 
 ### Wat wordt er gedaan
 
-De huidige lege Landingspagina wordt vervangen door een volledige pagina met dezelfde opzet als `/wordpress-alt-text`:
+1. Een nieuwe dashboard tile "Leads Generator" die navigeert naar `/leads-generator`
+2. Een nieuwe pagina met een formulier voor: **Locatie**, **Bedrijfsnaam** en **Bedrijfsbeschrijving**
+3. De pagina volgt dezelfde opzet als de andere pagina's (dashboard-knop terug, formulier links, titel + beschrijving)
 
-1. **Dashboard knop + bedrijfsselector** bovenaan (hergebruik van `AltTextCompanySelector`)
-2. **Titel en beschrijving** (aangepast voor Landingspagina context)
-3. **Schedule Trigger** voor automatische planning
-4. **Bewerkbare velden** voor Bedrijfsnaam, Domeinnaam en Applicatie wachtwoord (inclusief tooltip)
-5. **Twee extra Google Sheets velden**: Spreadsheet ID en Grid ID
-6. **Start knop** met dezelfde validatie (alle velden verplicht incl. de twee nieuwe)
-7. **Animatiepaneel** rechts (hergebruik van `AltTextAnimation`)
+### Technische aanpassingen
 
-### Technische details
+**`src/pages/Index.tsx`**
+- Nieuwe entry in `tileConfigMap`: `'leads-generator'` met route `/leads-generator`, icon `Users` (al geimporteerd), variant `'secondary'`, en statusKey `'leads-generator'`
 
-**`src/pages/Landingspagina.tsx`** -- volledig herschreven
+**`src/App.tsx`**
+- Import van nieuwe `LeadsGenerator` pagina
+- Nieuwe `<Route path="/leads-generator" element={<LeadsGenerator />} />`
 
-De pagina wordt een kopie van `WordpressAltText.tsx` met de volgende aanpassingen:
+**`src/components/admin/dashboard/TileOrganizer.tsx`**
+- Nieuwe entry in `tileConfig`: `'leads-generator'` met icon `Users` en variant `'secondary'`
 
-- Titel wordt "Landingspagina" in plaats van "Alt-tekst wordpress"
-- Beschrijving wordt aangepast
-- Twee extra state variabelen: `editSheetId` en `editGridId`
-- Twee extra bewerkbare velden in het formulier:
-  - **Spreadsheet ID** (label: "Spreadsheet ID", placeholder: "Voer spreadsheet ID in...")
-  - **Grid ID** (label: "Grid ID", placeholder: "Voer grid ID in...")
-- Deze velden worden lokaal opgeslagen (niet naar `alt_text_companies` tabel, omdat die tabel die kolommen niet heeft)
-- De velden gebruiken dezelfde `renderEditableField` functie als de andere velden
-- Start knop is disabled als een van de 5 velden leeg is (naam, domein, wachtwoord, spreadsheet ID, grid ID)
-- De webhook call (`trigger-alt-text-webhook`) stuurt de extra velden mee in de body: `spreadsheet_id` en `grid_id`
+**Nieuw bestand: `src/pages/LeadsGenerator.tsx`**
+- Pagina met dezelfde structuur als andere tool-pagina's
+- Dashboard-knop linksboven om terug te navigeren
+- Titel "Leads Generator" met beschrijving
+- Formulier met drie velden:
+  - **Bedrijfsnaam** (tekstveld)
+  - **Locatie** (tekstveld, bijv. stad of regio)
+  - **Bedrijfsbeschrijving** (textarea voor langere tekst)
+- Start-knop die disabled is als niet alle velden zijn ingevuld
+- De knop roept een webhook aan via een edge function (placeholder voor nu)
 
-**Geen database wijzigingen nodig** -- de Google Sheets velden worden alleen als input naar de webhook gestuurd en niet persistent opgeslagen (tenzij je dat later wilt toevoegen).
+**Database: automation_settings**
+- Een nieuw record toevoegen voor `leads-generator` met display_name "Leads Generator" zodat de tile correct wordt weergegeven op het dashboard en in het admin panel
 
-**Hergebruikte componenten:**
-- `AltTextCompanySelector` (bedrijfsselector)
-- `AltTextAnimation` (animatiepaneel)
-- `ScheduleTrigger` (planning)
-- `useAltTextSchedule` (schedule hook)
-- `useAdminAuth` (authenticatie check)
-
-### Layout
-
-De layout is identiek aan de WordPress Alt-tekst pagina:
-- Boven: Dashboard knop links, bedrijfsselector rechts
-- Midden: titel + beschrijving
-- Onder: twee kolommen (links: formulier + start knop, rechts: animatie)
-- De Google Sheets velden komen onder het Applicatie wachtwoord veld, gescheiden door een subtiele label "Google Sheets"
-
-### Bestanden die worden aangepast
+### Bestanden die worden aangepast/aangemaakt
 
 | Bestand | Actie |
 |---|---|
-| `src/pages/Landingspagina.tsx` | Volledig herschreven met alt-tekst structuur + Google Sheets velden |
+| `src/pages/LeadsGenerator.tsx` | Nieuw -- formulierpagina |
+| `src/pages/Index.tsx` | Tile config toevoegen |
+| `src/App.tsx` | Route toevoegen |
+| `src/components/admin/dashboard/TileOrganizer.tsx` | Tile config toevoegen |
+| Database migratie | Nieuw automation_settings record |
 
