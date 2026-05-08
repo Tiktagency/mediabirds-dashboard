@@ -39,6 +39,7 @@ export const useEmailSignatureSettings = () => {
   const [selectedSignature, setSelectedSignature] = useState<EmailSignatureSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -107,6 +108,7 @@ export const useEmailSignatureSettings = () => {
   };
 
   const selectSignature = (id: string | null) => {
+    setIsCreatingNew(false);
     if (id === null) {
       setSelectedSignature(null);
     } else {
@@ -117,6 +119,7 @@ export const useEmailSignatureSettings = () => {
 
   const createNewSignature = () => {
     setSelectedSignature(null);
+    setIsCreatingNew(true);
   };
 
   const saveSettings = async (
@@ -257,6 +260,7 @@ export const useEmailSignatureSettings = () => {
     selectedSignature,
     isLoading,
     isSaving,
+    isCreatingNew,
     selectSignature,
     createNewSignature,
     saveSettings,
