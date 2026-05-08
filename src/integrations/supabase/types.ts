@@ -122,6 +122,38 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_categories: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          label: string
+          value: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          label: string
+          value: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_schedules: {
         Row: {
           company_id: string
