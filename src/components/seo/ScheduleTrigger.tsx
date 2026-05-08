@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -15,6 +16,8 @@ interface SeoSchedule {
   company_id: string;
   enabled: boolean;
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  interval_value: number;
+  interval_unit: 'days' | 'weeks' | 'months';
   day_of_week: number;
   time_of_day: string;
   last_triggered_at: string | null;
@@ -26,6 +29,8 @@ interface SeoSchedule {
 interface UpdateScheduleData {
   enabled?: boolean;
   frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  interval_value?: number;
+  interval_unit?: 'days' | 'weeks' | 'months';
   day_of_week?: number;
   time_of_day?: string;
   next_trigger_at?: string;
@@ -51,11 +56,10 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'Zondag' },
 ];
 
-const FREQUENCIES = [
-  { value: 'daily', label: 'Dagelijks' },
-  { value: 'weekly', label: 'Wekelijks' },
-  { value: 'biweekly', label: 'Om de 2 weken' },
-  { value: 'monthly', label: 'Maandelijks' },
+const INTERVAL_UNITS = [
+  { value: 'days', label: 'dagen' },
+  { value: 'weeks', label: 'weken' },
+  { value: 'months', label: 'maanden' },
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => 
@@ -65,6 +69,17 @@ const HOURS = Array.from({ length: 24 }, (_, i) =>
 const MINUTES = Array.from({ length: 60 }, (_, i) => 
   i.toString().padStart(2, '0')
 );
+
+// Helper to get Dutch label for unit (singular/plural)
+const getUnitLabel = (value: number, unit: 'days' | 'weeks' | 'months'): string => {
+  if (unit === 'days') {
+    return value === 1 ? 'dag' : 'dagen';
+  } else if (unit === 'weeks') {
+    return value === 1 ? 'week' : 'weken';
+  } else {
+    return value === 1 ? 'maand' : 'maanden';
+  }
+};
 
 export const ScheduleTrigger = ({
   companyId, 
@@ -77,7 +92,8 @@ export const ScheduleTrigger = ({
 }: ScheduleTriggerProps) => {
   // Local state for form controls
   const [enabled, setEnabled] = useState(false);
-  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const [intervalValue, setIntervalValue] = useState(1);
+  const [intervalUnit, setIntervalUnit] = useState<'days' | 'weeks' | 'months'>('weeks');
   const [dayOfWeek, setDayOfWeek] = useState(1);
   const [hours, setHours] = useState('10');
   const [minutes, setMinutes] = useState('00');
@@ -86,14 +102,16 @@ export const ScheduleTrigger = ({
   useEffect(() => {
     if (schedule) {
       setEnabled(schedule.enabled);
-      setFrequency(schedule.frequency);
+      setIntervalValue(schedule.interval_value || 1);
+      setIntervalUnit(schedule.interval_unit || 'weeks');
       setDayOfWeek(schedule.day_of_week);
       const timeParts = schedule.time_of_day.slice(0, 5).split(':');
       setHours(timeParts[0]);
       setMinutes(timeParts[1]);
     } else {
       setEnabled(false);
-      setFrequency('weekly');
+      setIntervalValue(1);
+      setIntervalUnit('weeks');
       setDayOfWeek(1);
       setHours('10');
       setMinutes('00');
@@ -105,9 +123,16 @@ export const ScheduleTrigger = ({
     await updateSchedule({ enabled: newEnabled });
   };
 
-  const handleFrequencyChange = async (newFrequency: 'daily' | 'weekly' | 'biweekly' | 'monthly') => {
-    setFrequency(newFrequency);
-    await updateSchedule({ frequency: newFrequency });
+  const handleIntervalValueChange = async (newValue: number) => {
+    // Clamp between 1 and 31
+    const clampedValue = Math.max(1, Math.min(31, newValue));
+    setIntervalValue(clampedValue);
+    await updateSchedule({ interval_value: clampedValue });
+  };
+
+  const handleIntervalUnitChange = async (newUnit: 'days' | 'weeks' | 'months') => {
+    setIntervalUnit(newUnit);
+    await updateSchedule({ interval_unit: newUnit });
   };
 
   const handleDayChange = async (newDay: number) => {
@@ -136,8 +161,14 @@ export const ScheduleTrigger = ({
     );
   }
 
-  const showDaySelector = frequency === 'weekly' || frequency === 'biweekly';
+  // Show day selector for weeks (day of week) or months (day of month)
+  const showDaySelector = intervalUnit === 'weeks' || intervalUnit === 'months';
   const nextTrigger = getNextTriggerDisplay();
+
+  // Dynamic preview text
+  const previewText = intervalValue === 1 
+    ? `Elke ${getUnitLabel(1, intervalUnit)}`
+    : `Elke ${intervalValue} ${getUnitLabel(intervalValue, intervalUnit)}`;
 
   return (
     <div className="space-y-2">
@@ -164,54 +195,78 @@ export const ScheduleTrigger = ({
           <>
             <div className="h-px bg-white/10" />
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Frequency */}
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Interval Value + Unit */}
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
                 <Label className="text-white/50 text-xs flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   Frequentie
                 </Label>
-                <Select
-                  value={frequency}
-                  onValueChange={(v) => handleFrequencyChange(v as any)}
-                  disabled={!isAdmin || isSaving}
-                >
-                  <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FREQUENCIES.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Day of Week - only for weekly/biweekly */}
-              {showDaySelector && (
-                <div className="space-y-1.5">
-                  <Label className="text-white/50 text-xs flex items-center gap-1">
-                    <CalendarDays className="h-3 w-3" />
-                    Dag
-                  </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={intervalValue}
+                    onChange={(e) => handleIntervalValueChange(parseInt(e.target.value) || 1)}
+                    disabled={!isAdmin || isSaving}
+                    className="bg-white/5 border-white/20 text-white text-sm h-9 w-16"
+                  />
                   <Select
-                    value={dayOfWeek.toString()}
-                    onValueChange={(v) => handleDayChange(parseInt(v))}
+                    value={intervalUnit}
+                    onValueChange={(v) => handleIntervalUnitChange(v as 'days' | 'weeks' | 'months')}
                     disabled={!isAdmin || isSaving}
                   >
-                    <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9">
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9 flex-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {DAYS_OF_WEEK.map((d) => (
-                        <SelectItem key={d.value} value={d.value.toString()}>
-                          {d.label}
+                      {INTERVAL_UNITS.map((u) => (
+                        <SelectItem key={u.value} value={u.value}>
+                          {u.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <p className="text-white/40 text-xs">{previewText}</p>
+              </div>
+
+              {/* Day selector - for weeks: day of week, for months: day number */}
+              {showDaySelector && (
+                <div className="space-y-1.5">
+                  <Label className="text-white/50 text-xs flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    {intervalUnit === 'weeks' ? 'Dag' : 'Dag van maand'}
+                  </Label>
+                  {intervalUnit === 'weeks' ? (
+                    <Select
+                      value={dayOfWeek.toString()}
+                      onValueChange={(v) => handleDayChange(parseInt(v))}
+                      disabled={!isAdmin || isSaving}
+                    >
+                      <SelectTrigger className="bg-white/5 border-white/20 text-white text-sm h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DAYS_OF_WEEK.map((d) => (
+                          <SelectItem key={d.value} value={d.value.toString()}>
+                            {d.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={dayOfWeek}
+                      onChange={(e) => handleDayChange(Math.max(1, Math.min(31, parseInt(e.target.value) || 1)))}
+                      disabled={!isAdmin || isSaving}
+                      className="bg-white/5 border-white/20 text-white text-sm h-9"
+                    />
+                  )}
                 </div>
               )}
 
