@@ -320,6 +320,60 @@ export type Database = {
         }
         Relationships: []
       }
+      email_signature_settings: {
+        Row: {
+          background_color: string
+          background_type: string
+          created_at: string
+          email: string
+          first_name: string
+          gradient_end_color: string | null
+          id: string
+          job_title: string
+          last_name: string
+          profile_photo_url: string | null
+          socials: Json | null
+          text_color: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          background_color?: string
+          background_type?: string
+          created_at?: string
+          email: string
+          first_name: string
+          gradient_end_color?: string | null
+          id?: string
+          job_title: string
+          last_name: string
+          profile_photo_url?: string | null
+          socials?: Json | null
+          text_color?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          background_color?: string
+          background_type?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          gradient_end_color?: string | null
+          id?: string
+          job_title?: string
+          last_name?: string
+          profile_photo_url?: string | null
+          socials?: Json | null
+          text_color?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       log_settings: {
         Row: {
           alert_email: string | null
