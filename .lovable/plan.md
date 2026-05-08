@@ -1,28 +1,50 @@
 
-# Plan: Company Selector Dropdown Kleur Aanpassen
+# Plan: Super Admin Rol Herkennen als Admin
 
 ## Probleem
-De dropdown menu achtergrond gebruikt `bg-slate-900` (blauw-grijs), wat niet past bij de huisstijl.
+Je account `hello@tikt.ai` heeft de rol `super_admin` in de database, maar de `useAuth` hook controleert alleen op exact `'admin'`. Hierdoor wordt `isAdmin` op `false` gezet en zie je de Admin panel optie niet.
 
 ## Oplossing
-Verander de achtergrondkleur naar de kaartkleur uit de huisstijl: `bg-card` of `#1c1c1c`.
+De `useAuth` hook aanpassen zodat `super_admin` ook als admin wordt herkend.
 
 ---
 
-## Technische wijziging
+## Technische Wijzigingen
 
-### Bestand: `src/components/seo/CompanySelector.tsx`
+### Bestand: `src/hooks/useAuth.ts`
 
-**Regel 232 - DropdownMenuContent:**
-```tsx
+**1. UserRole type uitbreiden (regel 6):**
+```typescript
 // Van:
-className="bg-slate-900 border-white/20 min-w-[200px] z-50"
+export type UserRole = 'admin' | 'operator' | 'viewer';
 
 // Naar:
-className="bg-card border-white/20 min-w-[200px] z-50"
+export type UserRole = 'super_admin' | 'admin' | 'operator' | 'viewer';
 ```
 
-Dit zorgt ervoor dat de dropdown dezelfde donkere achtergrond gebruikt als de rest van de interface, consistent met de sage green huisstijl.
+**2. isAdmin check aanpassen (regel 15):**
+```typescript
+// Van:
+const isAdmin = roles.includes('admin');
+
+// Naar:
+const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+```
+
+**3. Optioneel: isSuperAdmin toevoegen voor toekomstig gebruik:**
+```typescript
+const isSuperAdmin = roles.includes('super_admin');
+```
+
+---
+
+## Impact
+
+| Component | Effect |
+|-----------|--------|
+| Dashboard (Index.tsx) | Admin panel dropdown item wordt zichtbaar |
+| AdminPanel.tsx | Toegang werkt correct |
+| useUserPermissions.ts | Super admins krijgen volledige rechten |
 
 ---
 
@@ -30,4 +52,5 @@ Dit zorgt ervoor dat de dropdown dezelfde donkere achtergrond gebruikt als de re
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/components/seo/CompanySelector.tsx` | `bg-slate-900` → `bg-card` op regel 232 |
+| `src/hooks/useAuth.ts` | `super_admin` toevoegen aan UserRole type en isAdmin check |
+
