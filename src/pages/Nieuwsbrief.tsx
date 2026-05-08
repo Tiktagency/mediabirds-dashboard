@@ -623,7 +623,13 @@ const Nieuwsbrief = () => {
                     {/* Mode toggle */}
                     <div className="flex items-center gap-1 bg-white/5 rounded-md p-0.5 border border-white/10">
                       <button
-                        onClick={() => setColorMode('custom')}
+                        onClick={async () => {
+                          setColorMode('custom');
+                          if (selectedCompany) {
+                            await saveToCompany(localColors);
+                            toast({ title: 'Kleuren opgeslagen' });
+                          }
+                        }}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                           colorMode === 'custom'
                             ? 'bg-white/15 text-white'
@@ -634,7 +640,13 @@ const Nieuwsbrief = () => {
                         Custom
                       </button>
                       <button
-                        onClick={() => setColorMode('auto')}
+                        onClick={async () => {
+                          setColorMode('auto');
+                          if (selectedCompany) {
+                            await saveToCompany(localColors);
+                            toast({ title: 'Kleuren opgeslagen' });
+                          }
+                        }}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                           colorMode === 'auto'
                             ? 'bg-white/15 text-white'
