@@ -1,8 +1,23 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EmailSignatureForm } from '@/components/email-signature/EmailSignatureForm';
+import { SignatureList } from '@/components/email-signature/SignatureList';
+import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
+import { Loader2 } from 'lucide-react';
 
 const EmailSignature = () => {
+  const {
+    signatures,
+    selectedSignature,
+    isLoading,
+    isSaving,
+    selectSignature,
+    createNewSignature,
+    saveSettings,
+    deleteSignature,
+    uploadProfilePhoto,
+  } = useEmailSignatureSettings();
+
   return (
     <div className="min-h-screen hero-gradient flex flex-col">
       {/* Back Button */}
@@ -26,7 +41,34 @@ const EmailSignature = () => {
           Genereer een professionele email handtekening met profielfoto
         </p>
 
-        <EmailSignatureForm />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+            {/* Left: Signature List */}
+            <div className="order-2 lg:order-1">
+              <SignatureList
+                signatures={signatures}
+                selectedId={selectedSignature?.id || null}
+                onSelect={selectSignature}
+                onDelete={deleteSignature}
+                onCreateNew={createNewSignature}
+              />
+            </div>
+
+            {/* Right: Form */}
+            <div className="order-1 lg:order-2">
+              <EmailSignatureForm
+                selectedSignature={selectedSignature}
+                isSaving={isSaving}
+                onSave={saveSettings}
+                onUploadPhoto={uploadProfilePhoto}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

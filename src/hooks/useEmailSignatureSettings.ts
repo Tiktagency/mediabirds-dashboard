@@ -11,6 +11,7 @@ export interface SocialLink {
 export interface EmailSignatureSettings {
   id: string;
   user_id: string;
+  name: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -27,13 +28,27 @@ export interface EmailSignatureSettings {
 }
 
 export const useEmailSignatureSettings = () => {
-  const [settings, setSettings] = useState<EmailSignatureSettings | null>(null);
+  const [signatures, setSignatures] = useState<EmailSignatureSettings[]>([]);
+  const [selectedSignature, setSelectedSignature] = useState<EmailSignatureSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const fetchSettings = async () => {
+  const parseSignature = (data: any): EmailSignatureSettings => {
+    let parsedSocials: SocialLink[] = [];
+    if (Array.isArray(data.socials)) {
+      parsedSocials = data.socials as unknown as SocialLink[];
+    }
+    
+    return {
+      ...data,
+      socials: parsedSocials,
+      background_type: data.background_type as 'gradient' | 'solid',
+    };
+  };
+
+  const fetchAllSignatures = async () => {
     if (!user) {
       setIsLoading(false);
       return;
@@ -44,28 +59,22 @@ export const useEmailSignatureSettings = () => {
         .from('email_signature_settings')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      if (data) {
-        // Safely parse socials as SocialLink[]
-        let parsedSocials: SocialLink[] = [];
-        if (Array.isArray(data.socials)) {
-          parsedSocials = data.socials as unknown as SocialLink[];
-        }
-        
-        setSettings({
-          ...data,
-          socials: parsedSocials,
-          background_type: data.background_type as 'gradient' | 'solid',
-        });
+      const parsed = (data || []).map(parseSignature);
+      setSignatures(parsed);
+      
+      // Auto-select first signature if none selected
+      if (parsed.length > 0 && !selectedSignature) {
+        setSelectedSignature(parsed[0]);
       }
     } catch (error) {
       console.error('Error fetching email signature settings:', error);
       toast({
         title: 'Fout',
-        description: 'Kon instellingen niet laden',
+        description: 'Kon handtekeningen niet laden',
         variant: 'destructive',
       });
     } finally {
@@ -73,19 +82,32 @@ export const useEmailSignatureSettings = () => {
     }
   };
 
+  const selectSignature = (id: string | null) => {
+    if (id === null) {
+      setSelectedSignature(null);
+    } else {
+      const signature = signatures.find(s => s.id === id);
+      setSelectedSignature(signature || null);
+    }
+  };
+
+  const createNewSignature = () => {
+    setSelectedSignature(null);
+  };
+
   const saveSettings = async (newSettings: Omit<EmailSignatureSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) return;
 
     setIsSaving(true);
     try {
-      // Convert socials to JSON-compatible format
       const socialsJson = JSON.parse(JSON.stringify(newSettings.socials));
       
-      if (settings?.id) {
+      if (selectedSignature?.id) {
         // Update existing
         const { error } = await supabase
           .from('email_signature_settings')
           .update({
+            name: newSettings.name,
             first_name: newSettings.first_name,
             last_name: newSettings.last_name,
             email: newSettings.email,
@@ -98,15 +120,16 @@ export const useEmailSignatureSettings = () => {
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
           })
-          .eq('id', settings.id);
+          .eq('id', selectedSignature.id);
 
         if (error) throw error;
       } else {
         // Insert new
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('email_signature_settings')
           .insert({
             user_id: user.id,
+            name: newSettings.name,
             first_name: newSettings.first_name,
             last_name: newSettings.last_name,
             email: newSettings.email,
@@ -118,17 +141,24 @@ export const useEmailSignatureSettings = () => {
             gradient_end_color: newSettings.gradient_end_color,
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        
+        // Select the newly created signature
+        if (data) {
+          setSelectedSignature(parseSignature(data));
+        }
       }
 
       toast({
         title: 'Opgeslagen',
-        description: 'Je email handtekening instellingen zijn opgeslagen',
+        description: 'Je email handtekening is opgeslagen',
       });
 
-      await fetchSettings();
+      await fetchAllSignatures();
     } catch (error) {
       console.error('Error saving email signature settings:', error);
       toast({
@@ -141,11 +171,43 @@ export const useEmailSignatureSettings = () => {
     }
   };
 
+  const deleteSignature = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('email_signature_settings')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Verwijderd',
+        description: 'Handtekening is verwijderd',
+      });
+
+      // Clear selection if deleted signature was selected
+      if (selectedSignature?.id === id) {
+        setSelectedSignature(null);
+      }
+
+      await fetchAllSignatures();
+    } catch (error) {
+      console.error('Error deleting signature:', error);
+      toast({
+        title: 'Fout',
+        description: 'Kon handtekening niet verwijderen',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const uploadProfilePhoto = async (file: File): Promise<string | null> => {
     if (!user) return null;
 
-    // Validate file
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (file.size > maxSize) {
@@ -193,15 +255,19 @@ export const useEmailSignatureSettings = () => {
   };
 
   useEffect(() => {
-    fetchSettings();
+    fetchAllSignatures();
   }, [user]);
 
   return {
-    settings,
+    signatures,
+    selectedSignature,
     isLoading,
     isSaving,
+    selectSignature,
+    createNewSignature,
     saveSettings,
+    deleteSignature,
     uploadProfilePhoto,
-    refetch: fetchSettings,
+    refetch: fetchAllSignatures,
   };
 };
