@@ -661,42 +661,84 @@ export type Database = {
           achtergrond_kleur: string | null
           bedrijfsinformatie: string | null
           bedrijfsnaam: string | null
+          bedrijfsomschrijving: string | null
           created_at: string | null
+          cta_tekst: string | null
+          cta_tekst_kleur: string | null
+          cta_url: string | null
+          doelgroep: string | null
+          footer_achtergrond: string | null
+          footer_tekst_kleur: string | null
           generated_html: string | null
           id: string
+          kaart_achtergrond: string | null
           primaire_kleur: string | null
           rss_feeds: Json | null
           schrijfstijl: string | null
+          secundaire_kleur: string | null
+          subtekst_kleur: string | null
+          tagline: string | null
+          tekst_kleur: string | null
+          toon: string | null
           updated_at: string | null
           user_id: string
+          website: string | null
         }
         Insert: {
           accent_kleur?: string | null
           achtergrond_kleur?: string | null
           bedrijfsinformatie?: string | null
           bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
           created_at?: string | null
+          cta_tekst?: string | null
+          cta_tekst_kleur?: string | null
+          cta_url?: string | null
+          doelgroep?: string | null
+          footer_achtergrond?: string | null
+          footer_tekst_kleur?: string | null
           generated_html?: string | null
           id?: string
+          kaart_achtergrond?: string | null
           primaire_kleur?: string | null
           rss_feeds?: Json | null
           schrijfstijl?: string | null
+          secundaire_kleur?: string | null
+          subtekst_kleur?: string | null
+          tagline?: string | null
+          tekst_kleur?: string | null
+          toon?: string | null
           updated_at?: string | null
           user_id: string
+          website?: string | null
         }
         Update: {
           accent_kleur?: string | null
           achtergrond_kleur?: string | null
           bedrijfsinformatie?: string | null
           bedrijfsnaam?: string | null
+          bedrijfsomschrijving?: string | null
           created_at?: string | null
+          cta_tekst?: string | null
+          cta_tekst_kleur?: string | null
+          cta_url?: string | null
+          doelgroep?: string | null
+          footer_achtergrond?: string | null
+          footer_tekst_kleur?: string | null
           generated_html?: string | null
           id?: string
+          kaart_achtergrond?: string | null
           primaire_kleur?: string | null
           rss_feeds?: Json | null
           schrijfstijl?: string | null
+          secundaire_kleur?: string | null
+          subtekst_kleur?: string | null
+          tagline?: string | null
+          tekst_kleur?: string | null
+          toon?: string | null
           updated_at?: string | null
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }
