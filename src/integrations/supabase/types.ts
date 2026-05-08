@@ -324,6 +324,7 @@ export type Database = {
         Row: {
           background_color: string
           background_type: string
+          company_logo_url: string | null
           created_at: string
           email: string
           first_name: string
@@ -342,6 +343,7 @@ export type Database = {
         Insert: {
           background_color?: string
           background_type?: string
+          company_logo_url?: string | null
           created_at?: string
           email: string
           first_name: string
@@ -360,6 +362,7 @@ export type Database = {
         Update: {
           background_color?: string
           background_type?: string
+          company_logo_url?: string | null
           created_at?: string
           email?: string
           first_name?: string

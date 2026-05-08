@@ -23,6 +23,7 @@ export interface EmailSignatureSettings {
   gradient_end_color: string | null;
   text_color: string;
   profile_photo_url: string | null;
+  company_logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -122,6 +123,7 @@ export const useEmailSignatureSettings = () => {
             gradient_end_color: newSettings.gradient_end_color,
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
+            company_logo_url: newSettings.company_logo_url,
           })
           .eq('id', selectedSignature.id);
 
@@ -144,6 +146,7 @@ export const useEmailSignatureSettings = () => {
             gradient_end_color: newSettings.gradient_end_color,
             text_color: newSettings.text_color,
             profile_photo_url: newSettings.profile_photo_url,
+            company_logo_url: newSettings.company_logo_url,
           })
           .select()
           .single();
@@ -210,56 +213,6 @@ export const useEmailSignatureSettings = () => {
     }
   };
 
-  const uploadProfilePhoto = async (file: File): Promise<string | null> => {
-    if (!user) return null;
-
-    const maxSize = 5 * 1024 * 1024;
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
-    if (file.size > maxSize) {
-      toast({
-        title: 'Bestand te groot',
-        description: 'Maximale bestandsgrootte is 5MB',
-        variant: 'destructive',
-      });
-      return null;
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: 'Ongeldig bestandstype',
-        description: 'Alleen JPG, PNG en WebP zijn toegestaan',
-        variant: 'destructive',
-      });
-      return null;
-    }
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      console.error('Error uploading profile photo:', error);
-      toast({
-        title: 'Upload mislukt',
-        description: 'Kon profielfoto niet uploaden',
-        variant: 'destructive',
-      });
-      return null;
-    }
-  };
-
   useEffect(() => {
     fetchAllSignatures();
   }, [user]);
@@ -273,7 +226,6 @@ export const useEmailSignatureSettings = () => {
     createNewSignature,
     saveSettings,
     deleteSignature,
-    uploadProfilePhoto,
     refetch: fetchAllSignatures,
   };
 };
