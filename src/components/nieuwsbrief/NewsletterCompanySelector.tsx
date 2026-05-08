@@ -332,7 +332,7 @@ const NewsletterCompanySelector = ({ onSelect, selectedCompany: externalSelected
               </Button>
               <Button
                 onClick={handleRequestAdd}
-                disabled={!newCompanyName.trim()}
+                disabled={!newCompanyName.trim() || !newCompanyDomain.trim()}
                 className="bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900"
               >
                 Toevoegen
