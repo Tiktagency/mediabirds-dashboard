@@ -18,6 +18,7 @@ export interface EmailSignatureSettings {
   job_title: string;
   phone_number: string | null;
   website: string | null;
+  location: string | null;
   socials: SocialLink[];
   background_type: 'gradient' | 'solid';
   background_color: string;
@@ -119,6 +120,7 @@ export const useEmailSignatureSettings = () => {
             job_title: newSettings.job_title,
             phone_number: newSettings.phone_number,
             website: newSettings.website,
+            location: newSettings.location,
             socials: socialsJson,
             background_type: newSettings.background_type,
             background_color: newSettings.background_color,
@@ -143,6 +145,7 @@ export const useEmailSignatureSettings = () => {
             job_title: newSettings.job_title,
             phone_number: newSettings.phone_number,
             website: newSettings.website,
+            location: newSettings.location,
             socials: socialsJson,
             background_type: newSettings.background_type,
             background_color: newSettings.background_color,
