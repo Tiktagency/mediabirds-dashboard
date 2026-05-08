@@ -17,6 +17,8 @@ export const ProfileModal = ({ open, onOpenChange, user }: ProfileModalProps) =>
   const { toast } = useToast();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [originalFirstName, setOriginalFirstName] = useState('');
+  const [originalLastName, setOriginalLastName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -30,8 +32,12 @@ export const ProfileModal = ({ open, onOpenChange, user }: ProfileModalProps) =>
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
-          setFirstName(data?.first_name || '');
-          setLastName(data?.last_name || '');
+          const firstName = data?.first_name || '';
+          const lastName = data?.last_name || '';
+          setFirstName(firstName);
+          setLastName(lastName);
+          setOriginalFirstName(firstName);
+          setOriginalLastName(lastName);
         });
     }
   }, [open, user]);
@@ -111,8 +117,8 @@ export const ProfileModal = ({ open, onOpenChange, user }: ProfileModalProps) =>
                 />
               </div>
             </div>
-            <Button onClick={handleSaveName} disabled={isSavingName || !firstName.trim() || !lastName.trim()} className="w-full">
-              {isSavingName ? 'Opslaan...' : 'Naam opslaan'}
+            <Button onClick={handleSaveName} disabled={isSavingName || !firstName.trim() || !lastName.trim() || (firstName === originalFirstName && lastName === originalLastName)} className="w-full">
+              {isSavingName ? 'Opslaan...' : 'Opslaan'}
             </Button>
           </div>
 
