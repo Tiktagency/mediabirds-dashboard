@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AltTextCompanySelector from '@/components/wordpress-alt-text/AltTextCompanySelector';
 import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextCompanySelector';
-import { Building2, Globe, Pencil } from 'lucide-react';
+import { Pencil, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,14 +18,13 @@ const WordpressAltText = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editDomain, setEditDomain] = useState('');
+  const [isStarting, setIsStarting] = useState(false);
 
-  // Sync local edit state when company changes
   useEffect(() => {
     setEditName(selectedCompany?.name || '');
     setEditDomain(selectedCompany?.domain || '');
   }, [selectedCompany]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (expandedField && !(e.target as Element).closest('.expanded-field-container')) {
@@ -51,6 +50,28 @@ const WordpressAltText = () => {
       toast({ title: 'Opgeslagen', description: 'Wijzigingen zijn opgeslagen' });
     } else {
       toast({ title: 'Fout', description: 'Kon niet opslaan', variant: 'destructive' });
+    }
+  };
+
+  const handleStart = async () => {
+    if (!selectedCompany) return;
+    setIsStarting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
+        body: {
+          bedrijfsnaam: selectedCompany.name,
+          domain: selectedCompany.domain,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ title: 'Gestart', description: 'Alt-tekst verwerking is gestart' });
+    } catch (error) {
+      console.error('Error triggering alt text webhook:', error);
+      toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -130,7 +151,7 @@ const WordpressAltText = () => {
             Dashboard
           </Button>
         </Link>
-        <AltTextCompanySelector onSelect={setSelectedCompany} />
+        <AltTextCompanySelector onSelect={setSelectedCompany} selectedCompany={selectedCompany} />
       </div>
       
       <div className="hero-gradient h-full w-full flex flex-col items-center justify-start pt-32 px-6">
@@ -139,27 +160,41 @@ const WordpressAltText = () => {
         </h1>
 
         {selectedCompany ? (
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 max-w-md w-full space-y-4">
-            <div className="space-y-2">
-              <Label className="text-white/70">Bedrijfsnaam:</Label>
-              {renderEditableField(
-                'name',
-                editName,
-                setEditName,
-                () => handleFieldSave('name', editName),
-                'Voer bedrijfsnaam in...'
-              )}
+          <div className="space-y-6 max-w-md w-full">
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-white/70">Bedrijfsnaam:</Label>
+                {renderEditableField(
+                  'name',
+                  editName,
+                  setEditName,
+                  () => handleFieldSave('name', editName),
+                  'Voer bedrijfsnaam in...'
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white/70">Domeinnaam:</Label>
+                {renderEditableField(
+                  'domain',
+                  editDomain,
+                  setEditDomain,
+                  () => handleFieldSave('domain', editDomain),
+                  'Voer domeinnaam in...'
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-white/70">Domeinnaam:</Label>
-              {renderEditableField(
-                'domain',
-                editDomain,
-                setEditDomain,
-                () => handleFieldSave('domain', editDomain),
-                'Voer domeinnaam in...'
+
+            <Button
+              onClick={handleStart}
+              disabled={isStarting}
+              className="w-full bg-[#cfddd0] hover:bg-[#bccfbd] text-gray-900 font-semibold py-3"
+            >
+              {isStarting ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
+              ) : (
+                'Start'
               )}
-            </div>
+            </Button>
           </div>
         ) : (
           <p className="text-white/40 text-sm">Selecteer een bedrijf om de gegevens te zien</p>

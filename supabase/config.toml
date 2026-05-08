@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.trigger-delete-company-webhook]
 verify_jwt = false
+
+[functions.trigger-alt-text-webhook]
+verify_jwt = false
