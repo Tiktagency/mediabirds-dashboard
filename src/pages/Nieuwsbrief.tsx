@@ -421,9 +421,19 @@ const Nieuwsbrief = () => {
         });
       }
     } catch (err: any) {
+      // Extract a clean error message — avoid rendering raw HTML in the toast
+      let description = 'Er is iets misgegaan. Probeer het opnieuw.';
+      const raw: string = err?.message || err?.error_description || String(err);
+      if (raw && !raw.includes('<!DOCTYPE') && !raw.includes('<html')) {
+        description = raw.substring(0, 200);
+      } else if (raw.includes('524') || raw.includes('timeout')) {
+        description = 'De nieuwsbrief generator heeft te lang geduurd. Probeer het opnieuw.';
+      } else if (raw.includes('502') || raw.includes('Webhook mislukt')) {
+        description = 'De nieuwsbrief generator is tijdelijk niet beschikbaar. Probeer het opnieuw.';
+      }
       toast({
-        title: 'Fout',
-        description: err?.message || 'Er is iets misgegaan.',
+        title: '❌ Genereren mislukt',
+        description,
         variant: 'destructive',
       });
     } finally {
