@@ -78,6 +78,9 @@ export const EmailSignatureForm = ({
   const [extraEmails, setExtraEmails] = useState<string[]>([]);
   const [extraPhoneNumbers, setExtraPhoneNumbers] = useState<string[]>([]);
   const [extraLocations, setExtraLocations] = useState<string[]>([]);
+  
+  // Track wijzigingen in niet-form velden
+  const [hasNonFormChanges, setHasNonFormChanges] = useState(false);
 
   const {
     register,
@@ -85,7 +88,7 @@ export const EmailSignatureForm = ({
     watch,
     setValue,
     reset,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isDirty },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -183,6 +186,24 @@ export const EmailSignatureForm = ({
       triggerAutoSave();
     }
   }, [companyLogoUrl]);
+
+  // Track wijzigingen in niet-form velden voor save-melding
+  useEffect(() => {
+    if (!selectedSignature) {
+      setHasNonFormChanges(true); // Nieuwe handtekening = altijd wijzigingen
+      return;
+    }
+    
+    const socialsChanged = JSON.stringify(socials) !== JSON.stringify(selectedSignature.socials);
+    const photoChanged = profilePhotoUrl !== selectedSignature.profile_photo_url;
+    const logoChanged = companyLogoUrl !== selectedSignature.company_logo_url;
+    const extrasChanged = 
+      JSON.stringify(extraEmails) !== JSON.stringify(selectedSignature.emails?.slice(1) || []) ||
+      JSON.stringify(extraPhoneNumbers) !== JSON.stringify(selectedSignature.phone_numbers?.slice(1) || []) ||
+      JSON.stringify(extraLocations) !== JSON.stringify(selectedSignature.locations?.slice(1) || []);
+    
+    setHasNonFormChanges(socialsChanged || photoChanged || logoChanged || extrasChanged);
+  }, [socials, profilePhotoUrl, companyLogoUrl, extraEmails, extraPhoneNumbers, extraLocations, selectedSignature]);
 
   // Update form when selected signature changes
   useEffect(() => {
@@ -354,7 +375,20 @@ export const EmailSignatureForm = ({
         
         // Auto-save alle gegevens inclusief HTML
         signatureData.generated_html = htmlCode;
-        await onSave(signatureData, { silent: true });
+        
+        const hasChanges = isDirty || hasNonFormChanges || !selectedSignature;
+        
+        if (hasChanges) {
+          // Wijzigingen gedetecteerd - opslaan MET melding
+          await onSave(signatureData, { silent: false });
+        } else {
+          // Geen wijzigingen - stil opslaan (alleen HTML update)
+          await onSave(signatureData, { silent: true });
+        }
+        
+        // Reset dirty state na opslaan
+        reset(data, { keepValues: true });
+        setHasNonFormChanges(false);
       }
 
       toast({
