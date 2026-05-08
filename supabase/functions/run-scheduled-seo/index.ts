@@ -157,6 +157,15 @@ Deno.serve(async (req) => {
             console.error(`Error updating schedule for ${company.name}:`, updateError);
           }
 
+          // Log workflow execution for accurate per-company tracking
+          await supabase.from('workflow_executions').insert({
+            company_id: company.id,
+            workflow_type: 'seo_research',
+            triggered_by: null, // Scheduled trigger has no user
+            success: true,
+          });
+          console.log(`[run-scheduled-seo] Logged workflow execution for company: ${company.name}`);
+
           results.push({
             company: company.name,
             success: true,
