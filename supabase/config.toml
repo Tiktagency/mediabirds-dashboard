@@ -71,3 +71,6 @@ max_duration = 300
 
 [functions.extract-company-info]
 verify_jwt = false
+
+[functions.sync-dashboard-settings]
+verify_jwt = false
