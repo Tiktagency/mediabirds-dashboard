@@ -40,6 +40,7 @@ export interface Company {
   subkeywords_n8n_name: string | null;
   blogs_n8n_name: string | null;
   domain: string | null;
+  folder_id: string | null;
 }
 
 interface CompanySelectorProps {
@@ -123,7 +124,7 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
       // First call the webhook to notify n8n
       try {
         const { data: webhookResult, error: webhookError } = await supabase.functions.invoke('trigger-delete-company-webhook', {
-          body: { bedrijfsnaam: companyToDelete.name },
+          body: { bedrijfsnaam: companyToDelete.name, folderId: companyToDelete.folder_id },
         });
 
         if (webhookError || !webhookResult?.success) {
