@@ -38,6 +38,22 @@ Deno.serve(async (req) => {
 
     const { bedrijfsnaam, domain } = await req.json();
 
+    // Fetch the company's app_password from database
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    
+    let app_password = null;
+    if (domain) {
+      const { data: company } = await supabaseAdmin
+        .from('alt_text_companies')
+        .select('app_password')
+        .eq('domain', domain)
+        .maybeSingle();
+      app_password = company?.app_password || null;
+    }
+
     const webhookUrl =
       "https://tikt.app.n8n.cloud/webhook/b6d054ac-4c1b-4091-8369-f3f7e1bbca72";
     const authToken = Deno.env.get("BLOG_WEBHOOK_AUTH_TOKEN");
@@ -48,7 +64,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
         Authorization: `${authToken}`,
       },
-      body: JSON.stringify({ bedrijfsnaam, domain }),
+      body: JSON.stringify({ bedrijfsnaam, domain, app_password }),
     });
 
     const responseData = await webhookResponse.text();
