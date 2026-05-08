@@ -1,44 +1,64 @@
 
-## Plan: Kleuren + Live Preview Naast Elkaar
+## Analyse: Ontbrekende velden in automatische triggers
 
-### Huidige structuur
-- Kolom 1: Bedrijfsinfo (velden 1-4) + RSS feeds
-- Kolom 2: Toon/CTA velden (5-8) + Kleuren (onderaan)
-- Genereer knop
-- HTML Preview (full width onderaan)
+### Blog trigger (`run-scheduled-blogs`) — ontbrekende velden
 
-### Nieuwe structuur
+De handmatige "Start" knop stuurt in `blogData`:
+- `page_url_spreadsheet_id` — uit `page_url_settings.google_sheet_id`
+- `page_url_grid_id` — uit `page_url_settings.google_file_id`
+- `page_urls` — het hele `page_urls` JSON object uit `page_url_settings`
+- `folder_id` (alleen als `image_type === 'google_drive'`)
+- `used_folder_id` (alleen als `image_type === 'google_drive'`)
+- `image_type` — `'ai_image'` of `'google_drive'`
+- `aantal_woorden` als string range `"500-1500"` ✅ (zit er al in)
 
+De scheduler stuurt **niet**:
+- `page_url_spreadsheet_id`, `page_url_grid_id`, `page_urls` — ontbreekt volledig
+- `folder_id`, `used_folder_id` — worden altijd leeg gestuurd
+- `image_type` — wordt niet meegestuurd
+
+### SEO trigger (`run-scheduled-seo`) — is al correct
+
+De SEO scheduler stuurt alle velden die ook de handmatige knop stuurt (`blogTopic`, `audienceIntent`, `businessDescription`, etc.). Dit is al correct.
+
+### Fix: `run-scheduled-blogs/index.ts`
+
+Na het ophalen van `blogSettings` ook `page_url_settings` ophalen:
+
+```typescript
+const { data: pageUrlSettings } = await supabase
+  .from('page_url_settings')
+  .select('*')
+  .eq('company_id', company.id)
+  .maybeSingle();
 ```
-[ Kolom 1: Bedrijfsinfo + RSS feeds ]  [ Kolom 2: Toon/CTA velden ]
 
-[ Kolom A: Kleuren + mode toggle ]     [ Kolom B: Live kleur preview ]
+Dan de payload uitbreiden:
 
-[ Genereer knop ]
-
-[ HTML Preview ]
+```typescript
+const blogPayload = {
+  bedrijfsnaam: blogSettings.bedrijfsnaam || company.name,
+  // ... bestaande velden ...
+  
+  // image type velden
+  image_type: blogSettings.image_type || 'ai_image',
+  folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.folder_id || '') : '',
+  used_folder_id: blogSettings.image_type === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
+  achtergrond_kleur: blogSettings.image_type !== 'google_drive' ? (blogSettings.achtergrond_kleur || '') : '',
+  hoofdaccent_gradient: blogSettings.image_type !== 'google_drive' ? (blogSettings.hoofdaccent_gradient || '') : '',
+  
+  // page URL velden
+  page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
+  page_url_grid_id: pageUrlSettings?.google_file_id || '',
+  page_urls: pageUrlSettings?.page_urls || {},
+  
+  timestamp: new Date().toISOString(),
+  triggered_from: 'scheduled',
+};
 ```
 
-De kleuren worden uit kolom 2 gehaald en in een nieuw 2-koloms rij geplaatst:
-- **Links**: apart vlak met de `Huisstijl kleuren` card (incl. custom/auto toggle)
-- **Rechts**: live HTML preview van de nieuwsbrief layout gebouwd nadat de kleuren
-
-### Live kleurpreview (rechterkolom)
-
-Gebouwd als statische React component die de huidige `localColors` gebruikt. Structuur exact nagebouwd van de afbeelding:
-
-1. **Intro tekst** — op `achtergrond_kleur` achtergrond, `tekst_kleur` tekst, cursieve subtekst `subtekst_kleur`
-2. **Divider** — lijn in `primaire_kleur`
-3. **1 AI-ontwikkeling** — kaart op `kaart_achtergrond`, badge in `primaire_kleur`, titel `tekst_kleur`, body `tekst_kleur`, italic MKB-tip in `primaire_kleur`
-4. **1 AI-feitje** — sectie op `achtergrond_kleur` met emoji, vet `tekst_kleur`, italic feit `subtekst_kleur`
-5. **CTA sectie** — achtergrond `secundaire_kleur`, tekst `footer_tekst_kleur`, knop in `primaire_kleur` met `cta_tekst_kleur`
-
-Alles schaled mee als `localColors` verandert (geen debounce nodig, direct state).
-
-### Bestanden
+### Bestand
 
 | Bestand | Aanpassing |
 |---|---|
-| `src/pages/Nieuwsbrief.tsx` | Kleuren uit kolom 2 halen, 3e rij toevoegen met kleuren-card links + preview-card rechts |
-
-Geen nieuwe files nodig — de preview is een inline component in Nieuwsbrief.tsx.
+| `supabase/functions/run-scheduled-blogs/index.ts` | `page_url_settings` ophalen + ontbrekende velden toevoegen aan payload |
