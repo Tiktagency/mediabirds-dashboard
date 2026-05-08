@@ -1,32 +1,29 @@
 
-
-# SEO Blog Handleiding: Zin toevoegen aan Stap 7
+# SEO Blog Handleiding: Stap 17 aanpassen
 
 ## Wat verandert er
 
-In de SEO blog handleiding wordt aan het einde van Stap 7 ("Sitemaps toevoegen") een extra zin toegevoegd: **"Druk tot slot op de knop URL's documenteren"**
+Stap 17 in Deel 4 (Blog Generatie) van de handleiding wordt aangepast. De huidige instructie wordt uitgebreid met een waarschuwing om nog **niet** op de knop "Start" te drukken voordat Luc bevestigt dat de koppeling is gelegd.
 
 ## Wijzigingen
 
 **Bestand:** `src/pages/SeoBlog.tsx`
 
-### Locatie
-- Stap 7 bevindt zich in Deel 2 van de handleiding (Mediabirds Dashboard - Pagina URL's)
-- De stap start op regel 706 met `<div className="flex items-start gap-3">`
-- De beschrijving van stap 7 eindigt op regel 710 met het sluitende `</p>`-tag
-
-### Wijziging
-Op regel 710, na de huidige alinea van stap 7:
+### Huidige tekst (regel 842)
 ```
-<p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden.</p>
+<p>Vraag Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
 ```
 
-Zal vervangen worden door:
+### Nieuwe tekst
 ```
-<p>Ga naar de website van de klant en surf naar [domeinnaam]/sitemap.xml. Identificeer de relevante sitemaps (bijv. de page-sitemap of post-sitemap). Kopieer de relevante URL's en plak deze in het dashboard onder Pagina URLs. Gebruik de knop "URL toevoegen" voor extra velden. Druk tot slot op de knop URL's documenteren</p>
+<p className="font-medium text-pink-300">Finalisering</p>
+<p>Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd.</p>
 ```
+
+### Details
+- Regel 841-843 zullen worden aangepast
+- Een titel "Finalisering" wordt toegevoegd (met styling `className="font-medium text-pink-300"` voor consistentie met andere stappen)
+- De paragraaf wordt uitgebreid met de waarschuwing: "Druk nog niet op de knop "Start", vraag eerst aan Luc of de koppeling met de bedrijfswebsite is gelegd."
 
 ## Resultaat
-- Stap 7 bevat nu een volledig stappenplan inclusief het drukken op de knop "URL's documenteren"
-- Dit helpt gebruikers om de stap volledig af te ronden
-
+Stap 17 bevat nu een duidelijke titel en een gestructureerde instructie die gebruikers waarschuwt om de "Start" knop niet in te drukken zonder bevestiging van Luc.
