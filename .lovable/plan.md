@@ -1,112 +1,155 @@
 
-# Plan: Dashboard Tab Layout Uitlijning
+# Plan: Email Handtekening Verbeteringen
 
 ## Overzicht
 
-Dit plan zorgt voor een strak uitgelijnd grid in de Dashboard tab van het Admin Panel, waarbij de linker en rechter kolommen visueel synchroon blijven ongeacht de content.
+Dit plan bevat twee onderdelen:
+1. **Kleur preview uitlijning** - Het voorbeeldvlak van de achtergrondkleur wordt uitgelijnd en krijgt dezelfde hoogte als de kleurinput
+2. **Meerdere handtekeningen beheren** - Gebruikers kunnen meerdere handtekeningen opslaan, bekijken en nieuwe toevoegen
 
-## Huidige Situatie
+## Deel 1: Kleur Preview Uitlijning
 
-De huidige layout heeft de volgende problemen:
-- **TileOrganizer** (links) heeft variabele hoogte door de 3x3 tile grid + tekst
-- **TileColorCustomizer** (rechts) groeit/krimpt met de inhoud
-- Reset knoppen zijn niet uitgelijnd met de actieknoppen links
-- Geen vaste hoogte synchronisatie tussen kolommen
+### Huidige Situatie
+Het voorbeeldvlak (preview) voor de achtergrondkleur staat niet goed uitgelijnd met de kleurinput velden. De hoogte is anders en de verticale positie klopt niet.
 
-## Oplossing
+### Oplossing
+De layout wordt aangepast zodat:
+- Het voorbeeldvlak exact dezelfde hoogte krijgt als de color input (`h-10` = 40px)
+- Beide elementen verticaal gecentreerd worden via `items-end` op de container
+- Het label "Voorbeeld" wordt toegevoegd boven de preview voor consistentie
 
-### Grid Structuur Aanpak
+### Wijzigingen in `EmailSignatureForm.tsx`
 
-De eerste rij (TileOrganizer + TileColorCustomizer) krijgt:
-1. **Gelijke kolomhoogtes** via CSS Grid `items-stretch`
-2. **Flexbox vertical distribution** binnen TileColorCustomizer zodat de reset knoppen altijd onderaan staan
-3. **Vaste minimum hoogte** voor de rechter kolom
+Huidige code (regels 304-329):
+```tsx
+<div className="flex items-center gap-4">
+  <div className="space-y-2">
+    <Label>...</Label>
+    <Input type="color" className="w-16 h-10 ..." />
+  </div>
+  {backgroundType === 'gradient' && (...)}
+  <div
+    className="w-24 h-10 rounded-md border border-white/20"
+    style={getBackgroundStyle()}
+  />
+</div>
+```
+
+Nieuwe code:
+```tsx
+<div className="flex items-end gap-4">
+  <div className="space-y-2">
+    <Label>Start kleur / Kleur</Label>
+    <Input type="color" className="w-16 h-10 ..." />
+  </div>
+  {backgroundType === 'gradient' && (
+    <div className="space-y-2">
+      <Label>Eind kleur</Label>
+      <Input type="color" className="w-16 h-10 ..." />
+    </div>
+  )}
+  <div className="space-y-2">
+    <Label>Voorbeeld</Label>
+    <div
+      className="w-24 h-10 rounded-md border border-white/20"
+      style={getBackgroundStyle()}
+    />
+  </div>
+</div>
+```
+
+## Deel 2: Meerdere Handtekeningen Beheren
+
+### Database Aanpassing
+De huidige tabel `email_signature_settings` ondersteunt al meerdere handtekeningen per gebruiker (geen unieke constraint op `user_id`). Er wordt een `name` kolom toegevoegd zodat gebruikers handtekeningen een herkenbare naam kunnen geven.
+
+```sql
+ALTER TABLE email_signature_settings 
+ADD COLUMN name TEXT NOT NULL DEFAULT 'Mijn Handtekening';
+```
+
+### Nieuwe Componenten
+
+#### 1. SignatureList Component
+Een nieuw component dat alle opgeslagen handtekeningen van de gebruiker toont:
+- Lijst met handtekening-kaarten (naam, email, preview)
+- Klik om te bewerken
+- Delete knop per handtekening
+- "Nieuwe Handtekening" knop
+
+#### 2. Aangepaste Hook
+De `useEmailSignatureSettings` hook wordt uitgebreid:
+- `fetchAllSignatures()` - Haalt alle handtekeningen op
+- `signatures` - Array van alle handtekeningen
+- `selectedSignature` - Huidige geselecteerde handtekening
+- `selectSignature(id)` - Selecteer handtekening voor bewerking
+- `deleteSignature(id)` - Verwijder een handtekening
+- `createNewSignature()` - Start nieuwe handtekening
+
+### Pagina Layout Wijziging
+De `EmailSignature.tsx` pagina krijgt een twee-koloms layout:
+- **Links**: Lijst met opgeslagen handtekeningen + "Nieuwe" knop
+- **Rechts**: Het huidige formulier (voor bewerken of nieuwe aanmaken)
 
 ```text
-┌─────────────────────────────────┬─────────────────────────────────┐
-│  TileOrganizer                  │  TileColorCustomizer            │
-│  ┌─────┬─────┬─────┐            │  ┌─────────────────────────────┐│
-│  │Tile │Tile │Tile │            │  │  Preview tiles (h-14)       ││
-│  ├─────┼─────┼─────┤            │  └─────────────────────────────┘│
-│  │Tile │Tile │Tile │            │  ┌─────────────────────────────┐│
-│  ├─────┼─────┼─────┤            │  │  Color inputs               ││
-│  │Tile │Tile │Tile │            │  │  (flex-1 to fill space)     ││
-│  └─────┴─────┴─────┘            │  │                             ││
-│  "Klik op potlood..."           │  └─────────────────────────────┘│
-│  ← baseline align →             │  [Reset]  [Reset] ← same line  │
-└─────────────────────────────────┴─────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  Email Handtekening                                      │
+├───────────────────────┬─────────────────────────────────┤
+│  Mijn Handtekeningen  │  [Formulier]                    │
+│  ┌─────────────────┐  │  Voornaam: Jan                  │
+│  │ Jan Jansen      │◄─│  Achternaam: Jansen             │
+│  │ jan@bedrijf.nl  │  │  Email: jan@bedrijf.nl          │
+│  └─────────────────┘  │  ...                            │
+│  ┌─────────────────┐  │                                 │
+│  │ Marketing Team  │  │                                 │
+│  │ marketing@...   │  │                                 │
+│  └─────────────────┘  │                                 │
+│  [+ Nieuwe]           │  [Opslaan]                      │
+└───────────────────────┴─────────────────────────────────┘
 ```
 
-## Te Wijzigen Bestanden
+## Te Wijzigen/Maken Bestanden
 
-### 1. `src/components/admin/dashboard/DashboardTab.tsx`
-
-**Wijzigingen:**
-- Voeg `items-stretch` toe aan de grid container voor gelijke rijhoogtes
-- Beide kolommen krijgen `h-full` voor volledige hoogte-fill
-
-```typescript
-// Huidige code (regel 40):
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-// Nieuwe code:
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-```
-
-### 2. `src/components/admin/dashboard/TileColorCustomizer.tsx`
-
-**Wijzigingen:**
-- Card krijgt `h-full` en `flex flex-col` voor volledige hoogte
-- CardContent krijgt `flex-1 flex flex-col` voor flexibele inhoud
-- Reset buttons wrapper krijgt `mt-auto` om ze naar beneden te duwen
-- Verwijder `pt-1` van reset buttons (nu automatisch gespaced)
-
-```typescript
-// Card component (regel 26):
-<Card className="bg-card/50 border-border/30 h-full flex flex-col">
-
-// CardContent (regel 36):
-<CardContent className="flex-1 flex flex-col">
-
-// Reset buttons container (regel 123):
-<div className="grid grid-cols-2 gap-3 mt-auto">
-```
-
-### 3. `src/components/admin/dashboard/TileOrganizer.tsx`
-
-**Wijzigingen:**
-- Card krijgt `h-full` voor consistente hoogte
-- Geen structurele wijzigingen nodig, alleen hoogte synchronisatie
-
-```typescript
-// Card component (regel 337):
-<Card className="bg-card/50 border-border/30 h-full">
-```
-
-## Technische Details
-
-### CSS Grid Alignment
-- `items-stretch` zorgt dat beide grid-items dezelfde hoogte krijgen (gebaseerd op de hoogste)
-- `h-full` zorgt dat de Card componenten de volledige beschikbare hoogte gebruiken
-
-### Flexbox Distribution
-- `flex flex-col` op de Card maakt verticale layout
-- `flex-1` op CardContent zorgt dat het de beschikbare ruimte vult
-- `mt-auto` op de reset buttons duwt ze naar de onderkant
-
-### Visuele Baseline
-De reset knoppen in TileColorCustomizer zullen nu uitgelijnd zijn met de "Klik op het potlood..." tekst in TileOrganizer, waardoor een visuele baseline ontstaat.
+| Bestand | Actie | Beschrijving |
+|---------|-------|--------------|
+| `supabase/migrations/...` | Nieuw | Voeg `name` kolom toe |
+| `src/hooks/useEmailSignatureSettings.ts` | Wijzigen | Uitbreiden voor meerdere handtekeningen |
+| `src/components/email-signature/SignatureList.tsx` | Nieuw | Lijst component voor opgeslagen handtekeningen |
+| `src/components/email-signature/EmailSignatureForm.tsx` | Wijzigen | Kleur preview uitlijning + name veld |
+| `src/pages/EmailSignature.tsx` | Wijzigen | Twee-koloms layout met lijst en formulier |
 
 ## Implementatie Volgorde
 
-1. Update DashboardTab.tsx - grid items-stretch
-2. Update TileOrganizer.tsx - h-full op Card
-3. Update TileColorCustomizer.tsx - flexbox structuur voor verticale verdeling
+1. Database migratie voor `name` kolom
+2. Update hook met meerdere handtekeningen logica
+3. Fix kleur preview uitlijning in formulier
+4. Voeg `name` veld toe aan formulier
+5. Maak SignatureList component
+6. Update EmailSignature pagina met twee-koloms layout
 
-## Resultaat
+## Technische Details
 
-Na implementatie:
-- Linker en rechter panelen hebben exact dezelfde hoogte
-- Reset knoppen staan op dezelfde visuele lijn als de footer-tekst links
-- Consistent grid gevoel zonder variabele hoogtes
-- Professionele, uitgelijnd dashboard settings interface
+### Hook Interface (nieuw)
+```typescript
+interface UseEmailSignatureSettings {
+  signatures: EmailSignatureSettings[];
+  selectedSignature: EmailSignatureSettings | null;
+  isLoading: boolean;
+  isSaving: boolean;
+  selectSignature: (id: string | null) => void;
+  saveSettings: (settings: ...) => Promise<void>;
+  deleteSignature: (id: string) => Promise<void>;
+  uploadProfilePhoto: (file: File) => Promise<string | null>;
+}
+```
+
+### SignatureList Props
+```typescript
+interface SignatureListProps {
+  signatures: EmailSignatureSettings[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  onDelete: (id: string) => void;
+  onCreateNew: () => void;
+}
+```
