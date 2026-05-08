@@ -1,79 +1,69 @@
 
 
-## Login-logging voor Super Admins
+## Login-logging uitbreiden: ook bij heropenen dashboard
 
-### Wat wordt er gebouwd
-Een klein log-icoontje linksboven op het dashboard (alleen zichtbaar voor super_admin gebruikers). Bij klik klapt een paneel uit met alle logins van de afgelopen 7 dagen, inclusief naam en tijdstip.
+### Probleem
+Momenteel wordt een login alleen gelogd wanneer iemand daadwerkelijk inlogt via het loginformulier. Het heropenen van het dashboard (bijv. nieuw tabblad, browser opnieuw openen) wordt niet gelogd. Een gewone pagina-refresh moet **niet** tellen.
 
-### Aanpassingen
+### Oplossing: sessionStorage flag
 
-**1. Nieuwe database tabel: `login_logs`**
-- Kolommen: `id`, `user_id`, `email`, `display_name`, `logged_in_at`
-- RLS: alleen super_admins kunnen lezen, inserts via authenticated users (eigen user_id)
-- Geen UPDATE/DELETE nodig
+Het verschil tussen "heropenen" en "refresh" is dat `sessionStorage` wordt gewist wanneer een tab/venster wordt gesloten, maar behouden blijft bij een refresh.
 
-**2. `src/pages/Login.tsx`**
-- Na een succesvolle login (na de role check), een record inserteren in `login_logs` met de user_id, email en display_name (uit profiles tabel)
+**Logica:**
+1. Wanneer de gebruiker geauthenticeerd is op het dashboard (Index.tsx), controleer of er een `session_logged` flag in `sessionStorage` staat
+2. Zo nee --> dit is een nieuw bezoek (nieuw tabblad of browser heropend) --> insert in `login_logs` en zet de flag
+3. Zo ja --> dit is een refresh --> doe niets
 
-**3. `src/pages/Index.tsx`**
-- Voor super_admin gebruikers: een `ScrollText` (of `ClipboardList`) icoon linksboven in de banner tonen
-- Bij klik opent een Collapsible/Sheet paneel met de login logs
+### Technische aanpassingen
 
-**4. Nieuw component: `src/components/dashboard/LoginLogsPanel.tsx`**
-- Haalt login_logs op van de afgelopen 7 dagen, gesorteerd op datum (nieuwste eerst)
-- Toont per entry: naam, e-mail, datum + tijd
-- Wordt weergegeven in een Sheet (zijpaneel) dat van links inschuift
-- Sluit bij klik buiten het paneel
+**Bestand: `src/pages/Index.tsx`**
 
-### Technische details
+Een `useEffect` toevoegen die draait zodra de `user` beschikbaar is en `isLoading` false is:
 
-**Database migratie:**
-```sql
-CREATE TABLE public.login_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  email text,
-  display_name text,
-  logged_in_at timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.login_logs ENABLE ROW LEVEL SECURITY;
-
--- Super admins kunnen alle logs lezen
-CREATE POLICY "Super admins can view login logs"
-  ON public.login_logs FOR SELECT
-  USING (has_role(auth.uid(), 'super_admin'));
-
--- Authenticated users kunnen hun eigen login loggen
-CREATE POLICY "Users can insert own login log"
-  ON public.login_logs FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-```
-
-**Login.tsx insert (na succesvolle login):**
 ```typescript
-// Na role check, log de login
-const displayName = profile?.first_name
-  ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-  : data.session.user.email;
+useEffect(() => {
+  if (!user || isLoading) return;
 
-await supabase.from('login_logs').insert({
-  user_id: data.session.user.id,
-  email: data.session.user.email,
-  display_name: displayName,
-});
+  const alreadyLogged = sessionStorage.getItem('session_logged');
+  if (alreadyLogged) return;
+
+  // Log dit bezoek
+  const logVisit = async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single();
+
+    const displayName = profile?.first_name
+      ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+      : user.email;
+
+    await supabase.from('login_logs').insert({
+      user_id: user.id,
+      email: user.email,
+      display_name: displayName,
+    });
+
+    sessionStorage.setItem('session_logged', 'true');
+  };
+
+  logVisit();
+}, [user, isLoading]);
 ```
 
-**Index.tsx -- icoon linksboven in banner:**
-```typescript
-// Alleen voor super_admin
-{isSuperAdmin && (
-  <LoginLogsPanel />
-)}
-```
+**Bestand: `src/pages/Login.tsx`**
 
-**LoginLogsPanel component:**
-- Gebruikt een Sheet component (van links)
-- Fetcht `login_logs` van afgelopen 7 dagen met `logged_in_at >= now() - interval '7 days'`
-- Toont lijst met naam, e-mail en geformatteerd tijdstip (dd-MM-yyyy HH:mm)
-- Laadstatus en lege staat afgehandeld
+De bestaande `login_logs` insert in de `handleLogin` functie verwijderen -- de logging wordt nu centraal afgehandeld via de `sessionStorage`-check in Index.tsx. De Login.tsx insert is niet meer nodig omdat Index.tsx het altijd oppikt (na login wordt je doorgestuurd naar Index).
+
+Optioneel: in Login.tsx na succesvolle login `sessionStorage.removeItem('session_logged')` aanroepen zodat de redirect naar Index het als nieuw bezoek ziet. Maar dit is niet strikt nodig -- als er nog geen flag staat (eerste keer in die tab), wordt het automatisch gelogd.
+
+### Samenvatting wijzigingen
+
+| Bestand | Wat |
+|---|---|
+| `src/pages/Index.tsx` | `useEffect` toevoegen die bij nieuw tabblad/venster een login_log insert (m.b.v. `sessionStorage`) |
+| `src/pages/Login.tsx` | Bestaande `login_logs` insert verwijderen (wordt nu via Index afgehandeld) |
+
+Twee bestanden, minimale wijzigingen.
+
