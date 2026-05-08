@@ -8,6 +8,25 @@ import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Copy, Check, Plus } from 'lucide-react';
 
+const cleanHtmlForCopy = (html: string): string => {
+  let cleaned = html;
+  
+  // Verwijder "Met vriendelijke groet, Kind Regards" en variaties
+  cleaned = cleaned.replace(/Met vriendelijke groet,?\s*Kind Regards\s*/gi, '');
+  
+  // Verwijder lege paragrafen en divs met alleen whitespace
+  cleaned = cleaned.replace(/<p[^>]*>\s*(&nbsp;|\s)*\s*<\/p>/gi, '');
+  cleaned = cleaned.replace(/<div[^>]*>\s*(&nbsp;|\s)*\s*<\/div>/gi, '');
+  
+  // Verwijder dubbele &nbsp; en overtollige witruimte
+  cleaned = cleaned.replace(/(&nbsp;\s*){3,}/gi, '&nbsp;');
+  
+  // Trim leading/trailing whitespace
+  cleaned = cleaned.trim();
+  
+  return cleaned;
+};
+
 const EmailSignature = () => {
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -134,7 +153,8 @@ const EmailSignature = () => {
                       className="bg-white/5 border-white/20 text-white hover:bg-white/10"
                       onClick={async () => {
                         try {
-                          const blob = new Blob([generatedHtml!], { type: 'text/html' });
+                          const cleanedHtml = cleanHtmlForCopy(generatedHtml!);
+                          const blob = new Blob([cleanedHtml], { type: 'text/html' });
                           const clipboardItem = new ClipboardItem({ 'text/html': blob });
                           await navigator.clipboard.write([clipboardItem]);
                           
@@ -143,7 +163,8 @@ const EmailSignature = () => {
                             description: 'Handtekening is gekopieerd met opmaak - plak direct in je e-mail',
                           });
                         } catch (err) {
-                          await navigator.clipboard.writeText(generatedHtml!);
+                          const cleanedHtml = cleanHtmlForCopy(generatedHtml!);
+                          await navigator.clipboard.writeText(cleanedHtml);
                           toast({
                             title: 'Gekopieerd',
                             description: 'HTML code gekopieerd (plak in bronweergave van je e-mail)',
