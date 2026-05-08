@@ -9,7 +9,8 @@ export interface BlogSettings {
   schrijfstijl: string | null;
   aantal_woorden: string | null; // Now stored as range "min-max" e.g. "500-1000"
   taal: string | null;
-  afbeelding_prompt: string | null;
+  achtergrond_kleur: string | null;
+  hoofdaccent_gradient: string | null;
   get_afbeelding_url: string | null;
   post_blog_url: string | null;
   created_at: string;
