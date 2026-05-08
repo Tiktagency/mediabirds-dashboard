@@ -52,7 +52,7 @@ export const BlogGenerationForm = ({
     hoofdaccent_gradient_2: '',
     get_afbeelding_url: '',
     post_blog_url: '',
-    status: 'Draft',
+    status: 'draft',
     google_sheet_id: '',
     google_slides_id: '',
   });
@@ -114,7 +114,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
-        status: settings.status || 'Draft',
+        status: settings.status || 'draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
       });
@@ -212,7 +212,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_2: gradient2,
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
-        status: settings.status || 'Draft',
+        status: settings.status || 'draft',
         google_sheet_id: settings.google_sheet_id || '',
         google_slides_id: settings.google_slides_id || '',
       });
@@ -584,7 +584,7 @@ export const BlogGenerationForm = ({
       
       {/* Status sectie */}
       <div className="pt-6 border-t border-white/10 space-y-4">
-        {renderField('Status', 'status', 'select', ['Draft', 'Publish'])}
+        {renderField('Status', 'status', 'select', ['draft', 'publish'])}
       </div>
       
       {/* Admin-only fields - Collapsible */}
