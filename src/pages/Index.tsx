@@ -144,6 +144,9 @@ const Index = () => {
 
   // Get role badge config
   const getRoleBadge = () => {
+    if (roles.includes('super_admin')) {
+      return { label: 'Super Admin', className: 'bg-purple-500/20 text-purple-400 border-purple-500/30' };
+    }
     if (roles.includes('admin')) {
       return { label: 'Admin', className: 'bg-red-500/20 text-red-400 border-red-500/30' };
     }
