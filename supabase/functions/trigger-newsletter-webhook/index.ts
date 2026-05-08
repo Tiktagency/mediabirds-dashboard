@@ -47,7 +47,7 @@ serve(async (req) => {
       settingsId,
     } = body;
 
-    const authToken = Deno.env.get('TIKT_WEBHOOK_AUTH_TOKEN');
+    const authToken = Deno.env.get('BLOG_WEBHOOK_AUTH_TOKEN') ?? Deno.env.get('N8N_WEBHOOK_AUTH_TOKEN');
 
     const payload = {
       bedrijfsnaam,
@@ -69,7 +69,7 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+          ...(authToken ? { 'Authorization': authToken } : {}),
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
