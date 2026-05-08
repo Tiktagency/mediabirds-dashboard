@@ -468,7 +468,7 @@ export const KeywordResearchForm = ({
       {renderInputField('Bedrijfsnaam', 'bedrijfsnaam', true)}
       
       {renderTextField(
-        'Blog Onderwerp',
+        'Doel/kern',
         'blog_onderwerp',
         'Bijv. duurzame energie, digitale marketing, gezonde voeding...'
       )}
