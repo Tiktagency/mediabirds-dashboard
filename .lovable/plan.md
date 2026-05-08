@@ -1,55 +1,56 @@
 
 
-## Fix: Achtergrondkleur direct toepassen na opslaan
+## Landingspagina opbouwen met WordPress Alt-tekst structuur + Google Sheets velden
 
-### Probleem
+### Wat wordt er gedaan
 
-De `useApplyButtonColors` hook draait in `AppContent` en heeft een **eigen instantie** van `useDashboardSettings` met eigen lokale state. Wanneer je in het admin panel op "Opslaan" klikt, wordt de database bijgewerkt en de state in de admin panel instantie geüpdatet -- maar de instantie in `AppContent` weet hier niets van. Die leest pas de nieuwe waarde bij een page refresh.
+De huidige lege Landingspagina wordt vervangen door een volledige pagina met dezelfde opzet als `/wordpress-alt-text`:
 
-### Oplossing
-
-Pas de CSS variabele **direct** toe in de `updateBackgroundColor` functie in `useDashboardSettings.ts`. Zo wordt de `--background` variabele onmiddellijk aangepast op het moment van opslaan, zonder afhankelijk te zijn van een andere hook-instantie.
-
-Dezelfde fix wordt ook toegepast op `updateButtonColors` voor consistentie.
+1. **Dashboard knop + bedrijfsselector** bovenaan (hergebruik van `AltTextCompanySelector`)
+2. **Titel en beschrijving** (aangepast voor Landingspagina context)
+3. **Schedule Trigger** voor automatische planning
+4. **Bewerkbare velden** voor Bedrijfsnaam, Domeinnaam en Applicatie wachtwoord (inclusief tooltip)
+5. **Twee extra Google Sheets velden**: Spreadsheet ID en Grid ID
+6. **Start knop** met dezelfde validatie (alle velden verplicht incl. de twee nieuwe)
+7. **Animatiepaneel** rechts (hergebruik van `AltTextAnimation`)
 
 ### Technische details
 
-**`src/hooks/useDashboardSettings.ts`**
+**`src/pages/Landingspagina.tsx`** -- volledig herschreven
 
-In `updateBackgroundColor`: na het opslaan naar de database, direct de CSS variabele zetten:
+De pagina wordt een kopie van `WordpressAltText.tsx` met de volgende aanpassingen:
 
-```typescript
-const updateBackgroundColor = async (color: string) => {
-  // ... bestaande DB opslag ...
+- Titel wordt "Landingspagina" in plaats van "Alt-tekst wordpress"
+- Beschrijving wordt aangepast
+- Twee extra state variabelen: `editSheetId` en `editGridId`
+- Twee extra bewerkbare velden in het formulier:
+  - **Spreadsheet ID** (label: "Spreadsheet ID", placeholder: "Voer spreadsheet ID in...")
+  - **Grid ID** (label: "Grid ID", placeholder: "Voer grid ID in...")
+- Deze velden worden lokaal opgeslagen (niet naar `alt_text_companies` tabel, omdat die tabel die kolommen niet heeft)
+- De velden gebruiken dezelfde `renderEditableField` functie als de andere velden
+- Start knop is disabled als een van de 5 velden leeg is (naam, domein, wachtwoord, spreadsheet ID, grid ID)
+- De webhook call (`trigger-alt-text-webhook`) stuurt de extra velden mee in de body: `spreadsheet_id` en `grid_id`
 
-  // Direct toepassen op CSS
-  if (/^#[0-9a-fA-F]{6}$/.test(color)) {
-    document.documentElement.style.setProperty('--background', hexToHsl(color));
-  }
-};
-```
+**Geen database wijzigingen nodig** -- de Google Sheets velden worden alleen als input naar de webhook gestuurd en niet persistent opgeslagen (tenzij je dat later wilt toevoegen).
 
-In `updateButtonColors`: na het opslaan, direct de button CSS variabelen zetten:
+**Hergebruikte componenten:**
+- `AltTextCompanySelector` (bedrijfsselector)
+- `AltTextAnimation` (animatiepaneel)
+- `ScheduleTrigger` (planning)
+- `useAltTextSchedule` (schedule hook)
+- `useAdminAuth` (authenticatie check)
 
-```typescript
-const updateButtonColors = async (colors: { background?: string; text?: string }) => {
-  // ... bestaande DB opslag ...
+### Layout
 
-  // Direct toepassen op CSS
-  if (newColors.background) {
-    document.documentElement.style.setProperty('--button-primary-bg', newColors.background);
-  }
-  if (newColors.text) {
-    document.documentElement.style.setProperty('--button-primary-text', newColors.text);
-  }
-};
-```
-
-De `hexToHsl` hulpfunctie wordt verplaatst van `useApplyButtonColors.ts` naar een gedeelde plek (of gedupliceerd in `useDashboardSettings.ts`) zodat beide bestanden er gebruik van kunnen maken.
+De layout is identiek aan de WordPress Alt-tekst pagina:
+- Boven: Dashboard knop links, bedrijfsselector rechts
+- Midden: titel + beschrijving
+- Onder: twee kolommen (links: formulier + start knop, rechts: animatie)
+- De Google Sheets velden komen onder het Applicatie wachtwoord veld, gescheiden door een subtiele label "Google Sheets"
 
 ### Bestanden die worden aangepast
 
 | Bestand | Actie |
 |---|---|
-| `src/hooks/useDashboardSettings.ts` | `hexToHsl` toevoegen + direct CSS toepassen in `updateBackgroundColor` en `updateButtonColors` |
+| `src/pages/Landingspagina.tsx` | Volledig herschreven met alt-tekst structuur + Google Sheets velden |
 
