@@ -179,6 +179,7 @@ const WordpressAltText = () => {
             isSaving={isSaving}
             updateSchedule={updateSchedule as any}
             getNextTriggerDisplay={getNextTriggerDisplay}
+            description="Deze trigger geldt voor alle bedrijven"
           />
         </div>
 
