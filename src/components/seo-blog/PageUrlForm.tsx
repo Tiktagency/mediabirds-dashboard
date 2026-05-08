@@ -132,13 +132,21 @@ export const PageUrlForm = ({
         page_urls: pageUrls,
       });
 
-      // Send POST request to webhook
-      const payload = {
-        bedrijfsnaam: selectedCompany.name,
-        spreadsheet_id: googleSheetId,
-        grid_id: googleFileId,
-        page_urls: urls.filter(url => url.trim()).map(url => url.trim()),
-      };
+      // Send POST request to webhook - array format with URLs object and Document IDs object
+      const payload = [
+        // Object 1: Genummerde URL's
+        urls.reduce((acc, url, index) => {
+          if (url.trim()) {
+            acc[(index + 1).toString()] = url.trim();
+          }
+          return acc;
+        }, {} as Record<string, string>),
+        // Object 2: Document IDs
+        {
+          "Document ID": googleSheetId,
+          "Slide ID": googleFileId,
+        }
+      ];
 
       const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
