@@ -1,53 +1,86 @@
 
-# Plan: Info Tooltip Toevoegen aan Pagina URLs
+# Plan: Auto-Save en Webhook Trigger voor Pagina URL Formulier
 
 ## Overzicht
 
-Een info-icoon met tooltip toevoegen naast het "Pagina URLs" label om gebruikers te informeren over de vereisten voor dit veld.
+Twee hoofdwijzigingen:
+1. Automatisch opslaan van velden wanneer ze worden gewijzigd (zoals de andere formulieren)
+2. De "Opslaan" knop omzetten naar een webhook trigger knop genaamd "URL's documenteren"
 
 ---
 
-## Wijzigingen
+## Wijzigingen in `src/components/seo-blog/PageUrlForm.tsx`
 
-### Bestand: `src/components/seo-blog/PageUrlForm.tsx`
+### 1. Nieuwe state en imports toevoegen
 
-**1. Imports toevoegen (regel 5):**
-- `Info` icoon van lucide-react
-- Tooltip componenten van `@/components/ui/tooltip`
+- `isSubmitting` state voor webhook loading
+- `useToast` hook voor feedback
+- Supabase client import voor webhook aanroep
 
-**2. Label aanpassen (regel 147):**
+### 2. Auto-save functionaliteit
 
-Huidige code:
-```tsx
-<Label className="text-white/70">Pagina URLs</Label>
+**Spreadsheet ID veld:**
+- `onBlur` handler toevoegen die automatisch opslaat naar database
+
+**Grid ID veld:**
+- `onBlur` handler toevoegen die automatisch opslaat naar database
+
+**URL velden:**
+- Na elke wijziging + blur automatisch opslaan
+
+### 3. Webhook trigger functie
+
+Nieuwe `handleTriggerWebhook` functie:
+```typescript
+const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
+
+const handleTriggerWebhook = async () => {
+  // Eerst data opslaan
+  // Dan POST request naar webhook met alle form data
+  // Toast notification tonen met response
+};
 ```
 
-Nieuwe code:
+**Payload structuur:**
+```json
+{
+  "bedrijfsnaam": "Company Name",
+  "spreadsheet_id": "...",
+  "grid_id": "...",
+  "page_urls": { "1": "url1", "2": "url2" }
+}
+```
+
+### 4. Button aanpassen
+
+**Van:**
 ```tsx
-<div className="flex items-center gap-2">
-  <Label className="text-white/70">Pagina URLs</Label>
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Info className="h-4 w-4 text-white/50 hover:text-white/70 cursor-help" />
-      </TooltipTrigger>
-      <TooltipContent className="max-w-xs bg-background border border-white/20 text-white p-3">
-        <p className="text-sm">
-          De site moet een xml sitemap hebben om dit veld in te vullen. 
-          Aanwezig: pak de belangrijkste links waar de pagina's onder vallen 
-          waarvan je de info wilt documenteren, zodat de ai agent interne 
-          links kan leggen naar deze pagina's.
-        </p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-</div>
+<Button onClick={handleSave}>Opslaan</Button>
+```
+
+**Naar:**
+```tsx
+<Button onClick={handleTriggerWebhook} disabled={!hasValidUrl || isSubmitting}>
+  {isSubmitting ? <Loader2 /> : "URL's documenteren"}
+</Button>
 ```
 
 ---
 
-## Visueel Resultaat
+## Technische Details
 
-- Een klein info-icoon (ⓘ) verschijnt naast "Pagina URLs"
-- Bij hover verschijnt een tooltip met de uitleg over XML sitemaps
-- Styling consistent met de rest van het dark theme
+| Aspect | Implementatie |
+|--------|---------------|
+| Auto-save trigger | `onBlur` event op input velden |
+| Webhook methode | Direct fetch naar n8n URL |
+| Error handling | Toast notifications voor succes/fout |
+| Notification opslaan | Via `saveNotification` prop (zoals andere forms) |
+
+---
+
+## Resultaat
+
+- Velden worden automatisch opgeslagen bij verlaten
+- Knop heet "URL's documenteren"
+- Bij klikken wordt alle data naar de webhook gestuurd
+- Gebruiker krijgt feedback via toast notifications
