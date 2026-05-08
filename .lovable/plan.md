@@ -1,65 +1,36 @@
 
 
-## Auto-selectie nieuw bedrijf + round-robin trigger
+## Cron job toevoegen voor Alt-tekst automatische trigger
 
-### 1. Nieuw bedrijf automatisch selecteren
+### Probleem
 
-**Probleem**: Na het toevoegen van een bedrijf in `AltTextCompanySelector` wordt `setSelectedCompany` intern aangeroepen, maar de `onSelect` callback naar de parent (`WordpressAltText.tsx`) wordt niet getriggerd. Hierdoor ziet de parent het nieuwe bedrijf niet als geselecteerd.
+De edge function `run-scheduled-alt-text` bestaat en werkt correct, maar er is geen cron job die hem aanroept. Bij SEO en Blogs draait er elke 5 minuten een cron job via `pg_cron` + `pg_net` -- voor alt-tekst ontbreekt dit volledig. Daarom gebeurt er niets op het geplande tijdstip.
 
-**Oplossing**: In `handleConfirmAdd` in `AltTextCompanySelector.tsx`, na succesvolle insert, ook `onSelect?.(data)` aanroepen zodat de parent direct het nieuwe bedrijf ontvangt.
+### Oplossing
 
-### 2. Round-robin trigger: bedrijven om de beurt
+Een cron job aanmaken die elke 5 minuten de edge function `run-scheduled-alt-text` aanroept, identiek aan de bestaande SEO en Blog cron jobs.
 
-**Huidige situatie**: De edge function `run-scheduled-alt-text` verwerkt ALLE bedrijven tegelijk bij elke trigger.
+### Aanpassing
 
-**Nieuwe situatie**: Bij elke trigger wordt slechts 1 bedrijf verwerkt. Het systeem houdt bij welk bedrijf als laatste is verwerkt en pakt het volgende bedrijf in de lijst. Na het laatste bedrijf begint het weer bij het eerste.
+**Database (SQL via Run SQL)**:
 
-**Database**: Voeg een kolom `last_processed_company_id` (UUID, nullable) toe aan `alt_text_schedules` om bij te houden welk bedrijf het laatst is verwerkt.
-
-**Edge function logica**:
-1. Haal het schema op + `last_processed_company_id`
-2. Haal alle bedrijven op, gesorteerd op `created_at ASC`
-3. Zoek het volgende bedrijf na `last_processed_company_id` (of het eerste als het null is of het vorige bedrijf niet meer bestaat)
-4. Verwerk alleen dat ene bedrijf
-5. Sla het verwerkte `company_id` op in `last_processed_company_id`
-6. Werk `last_triggered_at` en `next_trigger_at` bij
-
-### 3. Start-knop: alleen geselecteerd bedrijf
-
-Dit werkt al correct -- de `handleStart` functie stuurt alleen de gegevens van `selectedCompany` naar de webhook.
-
-### Aanpassingen
-
-**Database migratie**:
 ```sql
-ALTER TABLE alt_text_schedules 
-  ADD COLUMN last_processed_company_id UUID;
+SELECT cron.schedule(
+  'run-scheduled-alt-text-job',
+  '*/5 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://audrvgrsuleruuspwnhf.supabase.co/functions/v1/run-scheduled-alt-text',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1ZHJ2Z3JzdWxlcnV1c3B3bmhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwMzY0OTYsImV4cCI6MjA3NjYxMjQ5Nn0.F5okgZ0WOMDbZ6Uv7bNbSiGnkhMBF4hlXR7tgbw42Hw'
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
 ```
 
-**`src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**:
-- In `handleConfirmAdd`: voeg `onSelect?.(data as AltTextCompany)` toe na succesvolle insert
+Dit zorgt ervoor dat elke 5 minuten wordt gecheckt of er een alt-tekst trigger "due" is. De edge function zelf controleert vervolgens of `next_trigger_at` is verstreken voordat hij daadwerkelijk een bedrijf verwerkt.
 
-**`supabase/functions/run-scheduled-alt-text/index.ts`**:
-- Haal bedrijven op gesorteerd op `created_at ASC`
-- Bepaal het volgende bedrijf op basis van `last_processed_company_id`
-- Verwerk alleen dat ene bedrijf
-- Update `last_processed_company_id` na verwerking
-
-### Technische details
-
-**Round-robin logica in de edge function:**
-```text
-companies = alle bedrijven gesorteerd op created_at ASC
-lastId = schedule.last_processed_company_id
-
-if lastId is null:
-  nextCompany = companies[0]
-else:
-  index = companies.findIndex(c => c.id === lastId)
-  nextCompany = companies[(index + 1) % companies.length]
-
-// Verwerk nextCompany
-// Update last_processed_company_id = nextCompany.id
-```
-
-Dit zorgt ervoor dat bij elke trigger-aanroep het volgende bedrijf in de rij aan de beurt is, en na het laatste bedrijf wordt weer begonnen bij het eerste.
+Daarnaast wordt de `next_trigger_at` geüpdatet naar een toekomstig tijdstip zodat de trigger alsnog correct afloopt bij de eerstvolgende check.
