@@ -49,17 +49,11 @@ const tileConfigMap: Record<string, TileConfig> = {
     variant: 'primary',
     n8nWorkflow: 'MEDIABIRDS monday planning',
   },
-  'zoekwoord-onderzoek': {
-    to: '/zoekwoord-onderzoek',
-    icon: Search,
-    variant: 'secondary',
-    statusKey: 'seo-research',
-  },
-  'blogs': {
-    to: '/blogs',
+  'seo-blog': {
+    to: '/seo-blog',
     icon: FileText,
     variant: 'accent',
-    statusKey: 'blogs',
+    statusKey: 'seo-blog',
   },
   'wordpress-alt-text': {
     to: '/wordpress-alt-text',
@@ -185,8 +179,7 @@ const Index = () => {
     const defaultTiles = [
       'saved-hours',
       'monday-planning',
-      'zoekwoord-onderzoek',
-      'blogs',
+      'seo-blog',
       'wordpress-alt-text',
       'chatbot',
     ];
