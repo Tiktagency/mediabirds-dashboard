@@ -661,7 +661,7 @@ export const EmailSignatureForm = ({
         <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="profile_photo_url" className="text-white">
-              Profielfoto (URL)
+              Profielfoto URL (PNG)
             </Label>
             <Input
               id="profile_photo_url"
@@ -683,7 +683,7 @@ export const EmailSignatureForm = ({
 
           <div className="space-y-2">
             <Label htmlFor="company_logo_url" className="text-white">
-              Bedrijfslogo (URL)
+              Bedrijfslogo URL (PNG)
             </Label>
             <Input
               id="company_logo_url"
