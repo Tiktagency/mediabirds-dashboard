@@ -9,7 +9,7 @@ import type { AltTextCompany } from '@/components/wordpress-alt-text/AltTextComp
 import AltTextAnimation from '@/components/wordpress-alt-text/AltTextAnimation';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useAltTextSchedule } from '@/hooks/useAltTextSchedule';
-import { Pencil, Loader2, Clock, Info } from 'lucide-react';
+import { Pencil, Loader2, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
