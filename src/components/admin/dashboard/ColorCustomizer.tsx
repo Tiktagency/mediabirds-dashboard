@@ -47,7 +47,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
               type="color"
               value={colors.high}
               onChange={(e) => onUpdate({ high: e.target.value })}
-              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+              className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
             />
             <Input
               value={colors.high}
@@ -71,7 +71,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
               type="color"
               value={colors.medium}
               onChange={(e) => onUpdate({ medium: e.target.value })}
-              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+              className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
             />
             <Input
               value={colors.medium}
@@ -95,7 +95,7 @@ export const ColorCustomizer = ({ colors, onUpdate }: ColorCustomizerProps) => {
               type="color"
               value={colors.low}
               onChange={(e) => onUpdate({ low: e.target.value })}
-              className="w-12 h-10 p-1 cursor-pointer shrink-0"
+              className="w-8 h-8 p-0.5 cursor-pointer shrink-0"
             />
             <Input
               value={colors.low}
