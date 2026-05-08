@@ -1,36 +1,46 @@
 
-# Plan: Tile Achtergrondkleur Aanpassen
+# Plan: Headers Toevoegen aan Formulieren
 
 ## Overzicht
-De achtergrondkleur van de inactieve arrow tiles wijzigen naar #212122.
+Headers toevoegen boven het "Bedrijf" veld in de Zoekwoord Onderzoek en Blog Generatie formulieren, vergelijkbaar met de bestaande header in het Pagina URL formulier.
 
 ---
 
-## Kleuranalyse
+## Huidige situatie
 
-| Element | Huidige waarde | Nieuwe waarde |
-|---------|----------------|---------------|
-| Inactieve tile achtergrond | `bg-white/5` | `bg-[#212122]` |
-| Hover state | `hover:bg-white/10` | `hover:bg-[#2a2a2b]` |
-| Tekst op inactieve tile | `text-white` | `text-white` (behouden) |
-
-**Contrast check:** #212122 (donkergrijs) met witte tekst geeft uitstekend contrast (ratio ~15:1), dus tekstkleur hoeft niet aangepast te worden.
+| Formulier | Header aanwezig? |
+|-----------|------------------|
+| Pagina URL | ✅ "Pagina URL Instellingen" |
+| Zoekwoord Onderzoek | ❌ Geen header |
+| Blog Generatie | ❌ Geen header |
 
 ---
 
-## Technische wijziging
+## Te implementeren
 
-**Bestand:** `src/pages/SeoBlog.tsx`
+### 1. KeywordResearchForm.tsx (regel 493)
 
-Drie locaties aanpassen (tiles 1, 2 en 3):
-
-```typescript
-// Van:
-"bg-white/5 hover:bg-white/10"
-
-// Naar:
-"bg-[#212122] hover:bg-[#2a2a2b]"
+Toevoegen na `<div className="space-y-6">`:
+```tsx
+<h2 className="text-xl font-semibold text-white mb-6">Zoekwoord onderzoek instellingen</h2>
 ```
+
+### 2. BlogGenerationForm.tsx (regel 575)
+
+Toevoegen na `<div className="space-y-6">`:
+```tsx
+<h2 className="text-xl font-semibold text-white mb-6">Blog generatie instellingen</h2>
+```
+
+---
+
+## Styling
+
+De headers gebruiken dezelfde styling als de bestaande header in PageUrlForm:
+- `text-xl` - grotere tekst
+- `font-semibold` - semi-vetgedrukt
+- `text-white` - witte kleur
+- `mb-6` - marge onder de header
 
 ---
 
@@ -38,4 +48,5 @@ Drie locaties aanpassen (tiles 1, 2 en 3):
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `src/pages/SeoBlog.tsx` | Achtergrondkleur van 3 inactieve tiles wijzigen naar #212122 |
+| `src/components/seo-blog/KeywordResearchForm.tsx` | Header "Zoekwoord onderzoek instellingen" toevoegen |
+| `src/components/seo-blog/BlogGenerationForm.tsx` | Header "Blog generatie instellingen" toevoegen |
