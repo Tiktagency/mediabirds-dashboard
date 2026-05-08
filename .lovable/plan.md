@@ -1,54 +1,31 @@
 
 
-# Links uitlijnen + Notities vakje op SEO pagina
+# Notities vak aanpassen
 
 ## Wat verandert er
 
-De titel ("SEO"), subtitel en "Beheerd door" dropdown worden naar links uitgelijnd. Rechts daarnaast komt een opvallend notitievak waar gebruikers aantekeningen kunnen achterlaten voor collega's.
+1. **Rode lijn weg** -- de `border-l-4 border-red-500` wordt verwijderd
+2. **Icoon weg** -- het AlertTriangle icoon voor "Notities" wordt verwijderd
+3. **Rode tekst** -- de tekst in het notitieveld wordt rood (`text-red-400`)
+4. **Opslaan knop weg** -- vervangen door hetzelfde bewerkingssysteem als bij "Bedrijfsomschrijving": klik om te expanderen, potlood-icoon om te bewerken, vinkje om op te slaan, kruisje om te annuleren
 
-## Layout
+## Bewerkingssysteem (3 staten)
 
-```text
-+------------------------------------------+-----------------------------+
-| SEO                                      | [!] Notities                |
-| Beheer je zoekwoord onderzoek en blog... |                             |
-| Beheerd door: [dropdown]                 | [textarea met notities]     |
-|                                          |                             |
-|                                          |           [Opslaan]         |
-+------------------------------------------+-----------------------------+
-```
+Hetzelfde patroon als `renderTextField` in KeywordResearchForm:
 
-## Wijzigingen
+1. **Ingeklapt**: eenregelig vak met afgekapte tekst, klikbaar om te expanderen
+2. **Uitgeklapt**: volledige tekst zichtbaar met een potlood-icoon (rechtsboven) om te bewerken
+3. **Bewerken**: textarea met een groen vinkje (opslaan) en rood kruisje (annuleren)
 
-### 1. Database: `notes` kolom toevoegen aan `companies`
-Een nieuwe nullable `text` kolom `notes` wordt toegevoegd aan de `companies` tabel, zodat notities per bedrijf worden opgeslagen.
-
-```sql
-ALTER TABLE companies ADD COLUMN notes text;
-```
-
-### 2. Layout aanpassen in `src/pages/SeoBlog.tsx`
-- De huidige `flex-col items-center text-center` container wordt een horizontale `flex` row met twee kolommen
-- Linkerkolom: titel, subtitel en "Beheerd door" -- allemaal `text-left` uitgelijnd
-- Rechterkolom: een notitievak met rode accenten (rode linkerborder en rood icoon)
-- Het notitievak bevat een `textarea` en een opslaan-knop
-- Notities worden geladen wanneer een bedrijf wordt geselecteerd en opgeslagen in `companies.notes`
-
-### 3. Notitievak ontwerp
-- Rode linkerborder (`border-l-4 border-red-500`)
-- Rood waarschuwingsicoon (AlertTriangle of MessageSquare in rood)
-- Donkere achtergrond consistent met de rest van de pagina (`bg-white/5`)
-- Textarea met placeholder "Laat hier notities achter voor je collega's..."
-- Compacte opslaan-knop onderaan
+De tekst in alle drie de staten wordt rood weergegeven.
 
 ## Technische Details
 
-**Bestanden die worden aangepast:**
-- `src/pages/SeoBlog.tsx` -- layout wijzigen, state + logica voor notities toevoegen
-- Database migratie -- `notes` kolom
+**Bestand:** `src/pages/SeoBlog.tsx`
 
-**State toevoegingen:**
-- `notes: string` -- huidige notitie-tekst
-- `handleSaveNotes` -- upsert naar `companies.notes`
-
-**Het notitievak is alleen zichtbaar wanneer een bedrijf is geselecteerd**, net als de "Beheerd door" dropdown.
+- Nieuwe state toevoegen: `notesEditMode` (`'collapsed' | 'expanded' | 'editing'`) en `notesDraft` (string voor bewerkingswaarde)
+- Het huidige notities-blok (regels 332-354) wordt vervangen door het nieuwe 3-statenpatroon
+- `handleSaveNotes` blijft bestaan maar wordt aangeroepen via het vinkje in plaats van de knop
+- `isSavingNotes` state blijft behouden
+- Importeer `Check`, `XCircle`, `Pencil` iconen (Check en XCircle al beschikbaar, Pencil toevoegen aan imports)
+- Verwijder `Save` en `AlertTriangle` uit imports als ze nergens anders meer gebruikt worden
