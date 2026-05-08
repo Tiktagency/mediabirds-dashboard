@@ -196,7 +196,7 @@ const Landingspagina = () => {
         </div>
       </div>
 
-      <div className="hero-gradient min-h-screen w-full flex flex-col items-center justify-start pt-16 px-4 sm:pt-20 sm:px-6 pb-8">
+      <div className="hero-gradient min-h-screen w-full flex flex-col items-center justify-start pt-24 px-4 sm:pt-28 sm:px-6 pb-8">
         <h1 className="hero-title text-2xl sm:text-4xl text-foreground mb-2 fade-in-up">Landingspagina</h1>
         <p className="text-sm sm:text-base text-muted-foreground text-center max-w-xl mb-3">
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
