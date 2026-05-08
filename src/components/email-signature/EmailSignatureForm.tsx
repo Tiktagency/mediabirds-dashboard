@@ -691,16 +691,23 @@ export const EmailSignatureForm = ({
         <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="profile_photo_url" className="text-white">
-              Profielfoto URL (PNG)
+              Profielfoto URL (PNG) *
             </Label>
             <Input
               id="profile_photo_url"
               type="url"
               value={profilePhotoUrl || ''}
-              onChange={(e) => setProfilePhotoUrl(e.target.value || null)}
+              onChange={(e) => {
+                const val = e.target.value || null;
+                setProfilePhotoUrl(val);
+                setValue('profile_photo_url', e.target.value, { shouldValidate: true });
+              }}
               className="bg-white/10 border-white/20 text-white"
-              placeholder="https://example.com/profielfoto.jpg"
+              placeholder="https://example.com/profielfoto.png"
             />
+            {errors.profile_photo_url && (
+              <p className="text-sm text-red-400">{errors.profile_photo_url.message}</p>
+            )}
             {profilePhotoUrl && (
               <img 
                 src={profilePhotoUrl} 
@@ -713,16 +720,23 @@ export const EmailSignatureForm = ({
 
           <div className="space-y-2">
             <Label htmlFor="company_logo_url" className="text-white">
-              Bedrijfslogo URL (PNG)
+              Bedrijfslogo URL (PNG) *
             </Label>
             <Input
               id="company_logo_url"
               type="url"
               value={companyLogoUrl || ''}
-              onChange={(e) => setCompanyLogoUrl(e.target.value || null)}
+              onChange={(e) => {
+                const val = e.target.value || null;
+                setCompanyLogoUrl(val);
+                setValue('company_logo_url', e.target.value, { shouldValidate: true });
+              }}
               className="bg-white/10 border-white/20 text-white"
               placeholder="https://example.com/logo.png"
             />
+            {errors.company_logo_url && (
+              <p className="text-sm text-red-400">{errors.company_logo_url.message}</p>
+            )}
             {companyLogoUrl && (
               <img 
                 src={companyLogoUrl} 
