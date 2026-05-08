@@ -52,6 +52,7 @@ export const BlogGenerationForm = ({
     hoofdaccent_gradient_1: '',
     hoofdaccent_gradient_2: '',
     folder_id: '',
+    used_folder_id: '',
     get_afbeelding_url: '',
     post_blog_url: '',
     status: 'draft',
@@ -116,6 +117,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
         folder_id: settings.folder_id || '',
+        used_folder_id: settings.used_folder_id || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
@@ -134,6 +136,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_1: '',
         hoofdaccent_gradient_2: '',
         folder_id: '',
+        used_folder_id: '',
         get_afbeelding_url: '',
         post_blog_url: '',
         status: 'draft',
@@ -230,6 +233,7 @@ export const BlogGenerationForm = ({
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
         folder_id: settings.folder_id || '',
+        used_folder_id: settings.used_folder_id || '',
         get_afbeelding_url: settings.get_afbeelding_url || '',
         post_blog_url: settings.post_blog_url || '',
         status: settings.status || 'draft',
@@ -267,6 +271,7 @@ export const BlogGenerationForm = ({
         achtergrond_kleur: formData.achtergrond_kleur,
         hoofdaccent_gradient: `${formData.hoofdaccent_gradient_1},${formData.hoofdaccent_gradient_2}`,
         folder_id: formData.folder_id,
+        used_folder_id: formData.used_folder_id,
         get_afbeelding_url: formData.get_afbeelding_url,
         post_blog_url: formData.post_blog_url,
         status: formData.status,
@@ -651,8 +656,9 @@ export const BlogGenerationForm = ({
           
           {/* Google Drive velden */}
           {formData.image_type === 'google_drive' && (
-            <div className="animate-in slide-in-from-top-2 duration-200">
-              {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
+            <div className="animate-in slide-in-from-top-2 duration-200 space-y-4">
+              {renderField('Foto map : Folder ID', 'folder_id', 'text', undefined, false)}
+              {renderField('Gebruikte foto map : Folder ID', 'used_folder_id', 'text', undefined, false)}
             </div>
           )}
         </div>
