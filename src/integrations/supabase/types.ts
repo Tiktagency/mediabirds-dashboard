@@ -317,6 +317,7 @@ export type Database = {
           id: string
           managed_by: string | null
           name: string
+          notes: string | null
           seo_research_n8n_name: string | null
           seo_research_webhook: string | null
           subkeywords_n8n_name: string | null
@@ -330,6 +331,7 @@ export type Database = {
           id?: string
           managed_by?: string | null
           name: string
+          notes?: string | null
           seo_research_n8n_name?: string | null
           seo_research_webhook?: string | null
           subkeywords_n8n_name?: string | null
@@ -343,6 +345,7 @@ export type Database = {
           id?: string
           managed_by?: string | null
           name?: string
+          notes?: string | null
           seo_research_n8n_name?: string | null
           seo_research_webhook?: string | null
           subkeywords_n8n_name?: string | null
