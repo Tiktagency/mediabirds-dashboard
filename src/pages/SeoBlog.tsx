@@ -361,7 +361,8 @@ const SeoBlog = () => {
                     value={notesDraft}
                     onChange={(e) => setNotesDraft(e.target.value)}
                     placeholder="Laat hier notities achter voor je collega's..."
-                    className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] max-h-[200px] overflow-y-auto resize-none"
+                    className="bg-white/5 border-white/10 text-red-400 placeholder:text-white/30 text-sm min-h-[80px] resize-none field-sizing-content"
+                    style={{ fieldSizing: 'content' } as React.CSSProperties}
                     autoFocus
                   onBlur={async () => {
                     setNotes(notesDraft);
