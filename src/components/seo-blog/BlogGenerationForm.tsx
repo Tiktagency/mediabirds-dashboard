@@ -587,7 +587,7 @@ export const BlogGenerationForm = ({
               className={cn(
                 "flex-1 transition-all duration-200",
                 formData.image_type === 'ai_image' 
-                  ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                  ? "bg-accent text-[#002C1F] border-accent hover:bg-accent/90" 
                   : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
               )}
             >
@@ -603,7 +603,7 @@ export const BlogGenerationForm = ({
               className={cn(
                 "flex-1 transition-all duration-200",
                 formData.image_type === 'google_drive' 
-                  ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                  ? "bg-accent text-[#002C1F] border-accent hover:bg-accent/90" 
                   : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
               )}
             >
