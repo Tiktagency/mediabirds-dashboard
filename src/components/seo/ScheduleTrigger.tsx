@@ -174,7 +174,7 @@ export const ScheduleTrigger = ({
     <div className="space-y-2">
       <Label className="text-white/70 text-sm">Automatische Trigger</Label>
       
-      <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-4">
+      <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-6">
         {/* Enable/Disable Toggle */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export const ScheduleTrigger = ({
                   <Clock className="h-3 w-3" />
                   Tijd
                 </Label>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   {/* Hours */}
                   <Select
                     value={hours}
