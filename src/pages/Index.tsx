@@ -6,6 +6,7 @@ import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Ima
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useN8nExecutionsBatch } from '@/hooks/useN8nExecutions';
 import { useAutomationStatus } from '@/hooks/useAutomationStatus';
 import { useDashboardSettings } from '@/hooks/useDashboardSettings';
