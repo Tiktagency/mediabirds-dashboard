@@ -1,54 +1,46 @@
 
-## Probleem analyse
+## Plan: Firecrawl vervangen door AI-gebaseerde kleurextractie
 
-De huidige mapping in `extract-brand-colors` heeft twee kernproblemen:
+### Aanpak
 
-1. **Hardcoded fallbacks met vreemde kleuren** — `secundaire_kleur` valt terug op `#1A2B5E` (willekeurig blauw) en `footer_achtergrond` gebruikt `colors.secondary || colors.primary` ook met fallback `#1A2B5E`. Als Firecrawl geen `secondary` teruggeeft, wordt dus een volledig willekeurige kleur ingevuld.
+In plaats van Firecrawl:
+1. De edge function haalt de HTML van de website op via een gewone `fetch`
+2. De HTML wordt doorgegeven aan Gemini (via de Lovable AI Gateway) met een gedetailleerde prompt
+3. De AI analyseert de HTML en extraheert de 10 kleurvelden als gestructureerde JSON via tool calling
+4. De Firecrawl connector wordt losgekoppeld van het project
 
-2. **Slechte mapping-logica** — De velden worden niet slim gemapt:
-   - `cta_tekst_kleur` heeft een kapotte expressie: `hex(colors.textPrimary ? '#FFFFFF' : colors.textPrimary, '#FFFFFF')` — dit geeft altijd `#FFFFFF` terug, ongeacht wat Firecrawl retourneert
-   - `footer_achtergrond` wordt gemapt op `secondary` maar dat klopt semantisch niet altijd
-   - `footer_tekst_kleur` heeft `hex(colors.textSecondary || '#E8EDF7', '#E8EDF7')` — maar `'#E8EDF7'` is een truthy string, dus `colors.textSecondary` wordt nooit gebruikt
+### Waarom dit beter werkt
 
-3. **Geen gebruik van button-component kleuren** — Firecrawl geeft ook `branding.components.buttonPrimary.background` en `buttonPrimary.textColor` terug, maar deze worden niet gebruikt. Terwijl de gebruiker expliciet aangeeft dat knoppen een andere tekstkleur hebben (wit).
+- Geen afhankelijkheid van externe betaalde API (Firecrawl)
+- AI begrijpt context: "dit is een knop", "dit is tekst", "dit is een achtergrond"
+- De AI kan de instructie "geen kleuren uit afbeeldingen" naleven
+- Tool calling geeft altijd gestructureerde, gevalideerde JSON terug
 
-### Betere mapping-strategie
+### Nieuwe edge function logica
 
-Firecrawl `branding` response bevat:
-- `colors.primary` → knopkleur / primaire accent
-- `colors.secondary` → kan ontbreken
-- `colors.background` → pagina-achtergrond
-- `colors.textPrimary` → hoofdtekst
-- `colors.textSecondary` → subtekst
-- `colors.accent` → accentkleur
-- `components.buttonPrimary.background` → knopachtergrond
-- `components.buttonPrimary.textColor` → knoptekst (bijna altijd wit)
-- `colorScheme` → 'light' / 'dark'
+```
+1. Fetch HTML van de website (plain fetch, geen scraping service)
+2. Strip zware tags (script, style inhoud verwijderen is niet nodig — CSS inline stijlen zijn juist nuttig)
+3. Stuur HTML naar Gemini met tool calling om de 10 kleuren te extraheren
+4. Valideer de teruggestuurde kleuren (toHex helper blijft behouden)
+5. Return de gekoppelde kleuren
+```
 
-### Nieuwe mapping
+### Prompt voor de AI
 
-| Veld | Bron (in volgorde van prioriteit) |
-|---|---|
-| `primaire_kleur` | `components.buttonPrimary.background` → `colors.primary` |
-| `secundaire_kleur` | `colors.secondary` (alleen als beschikbaar, anders `colors.primary` donkerder of zelfde als primair) |
-| `achtergrond_kleur` | `colors.background` |
-| `kaart_achtergrond` | lichtere variant van `colors.background` (surface) → `colors.background` |
-| `tekst_kleur` | `colors.textPrimary` |
-| `subtekst_kleur` | `colors.textSecondary` → lichter dan `tekst_kleur` |
-| `accent_kleur` | `colors.accent` → `colors.primary` |
-| `cta_tekst_kleur` | `components.buttonPrimary.textColor` → `#FFFFFF` |
-| `footer_achtergrond` | `colors.secondary` als beschikbaar, anders `colors.primary` |  
-| `footer_tekst_kleur` | als `footer_achtergrond` donker → `#FFFFFF`, anders `colors.textPrimary` |
+De prompt instrueert expliciet:
+- Analyseer alleen CSS-kleuren van achtergronden, tekst, knoppen en vaste vormen
+- **Geen kleuren van afbeeldingen of SVG-fills die afbeeldingen zijn**
+- Knoppen hebben bijna altijd witte tekst
+- Dezelfde kleur mag voor meerdere velden worden gebruikt
+- Return als tool call met de 10 velden
 
-### Aanvullende verbeteringen
-
-1. **Geen willekeurige fallbacks** — als een kleur niet beschikbaar is, gebruik een logische afleiding (bijv. `secondary` = `primary` als niet beschikbaar)
-2. **Log de volledige raw branding response** zodat we kunnen debuggen wat Firecrawl exact teruggeeft
-3. **Intelligente footer-tekstkleur** — bereken of de footer-achtergrond donker of licht is en kies automatisch witte of donkere tekst
-4. **`secondary` fallback** — als `colors.secondary` niet bestaat, gebruik `colors.primary` (niet een hardcoded blauw)
-
-### Bestand
+### Bestanden
 
 | Bestand | Aanpassing |
 |---|---|
-| `supabase/functions/extract-brand-colors/index.ts` | Mapping logica volledig herschrijven |
+| `supabase/functions/extract-brand-colors/index.ts` | Volledig herschrijven: Firecrawl → fetch HTML + Gemini AI |
+
+### Firecrawl connector
+
+Na de implementatie wordt de Firecrawl connector losgekoppeld via de connector settings. Dit is een actie die de gebruiker zelf uitvoert in Settings → Connectors.
