@@ -69,6 +69,26 @@ serve(async (req) => {
       }
     }
     
+    // Update automation_status if webhook was successful
+    if (result.ok) {
+      try {
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        );
+        await supabaseClient
+          .from('automation_status')
+          .upsert({
+            automation_name: 'email-handtekening',
+            status: 'active',
+            last_run: new Date().toISOString(),
+            last_updated: new Date().toISOString(),
+          }, { onConflict: 'automation_name' });
+      } catch (e) {
+        console.error('[trigger-email-signature] Failed to update automation_status:', e.message);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: result.ok,
@@ -79,7 +99,7 @@ serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200, // Always return 200 to frontend, success flag indicates actual result
+        status: 200,
       }
     );
   } catch (error) {
