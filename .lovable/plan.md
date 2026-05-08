@@ -1,46 +1,15 @@
 
-# Plan: HTML Preview Toevoegen boven HTML Code
+# Plan: HTML Preview met Proportionele Schaling
 
-## Overzicht
+## Probleem
 
-De rechterkolom op de Email Handtekening pagina wordt aangepast met twee secties:
-1. **HTML Preview (nieuw)** - Een live preview die de gegenereerde HTML rendert
-2. **HTML Code (bestaand)** - De ruwe HTML code om te kopiëren
+De email handtekening wordt momenteel samengeperst omdat de container smaller is dan de originele breedte. De gebruiker wil dat de handtekening kleiner wordt weergegeven, maar met behoud van de juiste verhoudingen.
 
 ---
 
-## Huidige Situatie
+## Oplossing
 
-De rechterkolom toont momenteel alleen een Card met de HTML code:
-
-```
-+------------------------------------------+
-| HTML Code                                |
-| Kopieer deze code naar je email programma|
-|------------------------------------------|
-| <pre>...HTML code...</pre>               |
-+------------------------------------------+
-```
-
----
-
-## Gewenste Situatie
-
-```
-+------------------------------------------+
-| Preview                                  |
-|------------------------------------------|
-| [Live rendered HTML signature]           |
-|                                          |
-+------------------------------------------+
-
-+------------------------------------------+
-| HTML Code                    [Kopieer]   |
-| Kopieer deze code naar je email programma|
-|------------------------------------------|
-| <pre>...HTML code...</pre>               |
-+------------------------------------------+
-```
+Gebruik CSS `transform: scale()` om de preview proportioneel te verkleinen zodat deze in de container past met behoud van de originele verhoudingen.
 
 ---
 
@@ -48,73 +17,43 @@ De rechterkolom toont momenteel alleen een Card met de HTML code:
 
 **Bestand: `src/pages/EmailSignature.tsx`**
 
-### 1. HTML Preview Card toevoegen
+### Preview container aanpassen (regel 86-100)
 
-Boven de bestaande HTML Code card komt een nieuwe Card met een `dangerouslySetInnerHTML` div die de gegenereerde HTML rendert:
-
+De huidige implementatie:
 ```tsx
-{/* HTML Preview */}
-<Card className="bg-white/5 border-white/10">
-  <CardHeader>
-    <CardTitle className="text-white text-lg">Preview</CardTitle>
-  </CardHeader>
-  <CardContent>
-    <div className="bg-white rounded-lg p-4 min-h-[200px]">
-      {isGenerating ? (
-        <div className="flex items-center gap-2 text-gray-500">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Preview laden...</span>
-        </div>
-      ) : generatedHtml ? (
-        <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
-      ) : (
-        <span className="text-gray-400">
-          Genereer een handtekening om de preview te zien.
-        </span>
-      )}
-    </div>
-  </CardContent>
-</Card>
-```
-
-### 2. HTML Code Card aanpassen
-
-De bestaande HTML Code card blijft grotendeels hetzelfde, maar met aangepaste hoogte:
-
-- `min-h-[300px]` wordt `min-h-[200px]`
-- `max-h-[500px]` wordt `max-h-[300px]`
-
----
-
-## Layout Structuur
-
-De rechterkolom krijgt een flex layout met twee cards:
-
-```tsx
-<div className="order-3 flex flex-col gap-4">
-  {/* Preview Card - bovenaan */}
-  <Card>...</Card>
-  
-  {/* HTML Code Card - onderaan */}
-  <Card>...</Card>
+<div className="bg-white rounded-lg p-4 min-h-[200px] overflow-auto">
+  {generatedHtml ? (
+    <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
+  ) : ...}
 </div>
 ```
 
----
+Wordt aangepast naar:
+```tsx
+<div className="bg-white rounded-lg p-4 min-h-[200px] overflow-hidden">
+  {generatedHtml ? (
+    <div 
+      className="origin-top-left scale-[0.65]"
+      style={{ width: '154%' }} 
+      dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+    />
+  ) : ...}
+</div>
+```
 
-## Technische Details
-
-| Aspect | Implementatie |
-|--------|---------------|
-| HTML Rendering | `dangerouslySetInnerHTML` met de `generatedHtml` state |
-| Achtergrond preview | Witte achtergrond (`bg-white`) voor realistische weergave |
-| Loading state | Dezelfde `isGenerating` state wordt hergebruikt |
-| Styling | Preview krijgt `overflow-auto` voor grote handtekeningen |
+### Uitleg:
+| CSS Property | Waarde | Functie |
+|--------------|--------|---------|
+| `scale-[0.65]` | 65% | Verkleint de handtekening proportioneel |
+| `origin-top-left` | - | Schaalt vanaf linksboven |
+| `width: 154%` | 100/0.65 ≈ 154% | Compenseert de schaling zodat de content de beschikbare ruimte benut |
+| `overflow-hidden` | - | Verbergt eventuele overflow |
 
 ---
 
 ## Resultaat
 
-- Gebruikers zien direct een visuele preview van hun email handtekening
-- De HTML code blijft beschikbaar om te kopiëren
-- Beide secties tonen een loading state tijdens het genereren
+- De email handtekening wordt ~65% kleiner weergegeven
+- Alle verhoudingen blijven exact gelijk
+- De preview past netjes in de beschikbare ruimte
+- Geen horizontale scrollbalk nodig
