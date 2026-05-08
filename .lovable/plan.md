@@ -1,54 +1,52 @@
 
 
-## Fix: verwijderd bedrijf blijft geselecteerd in dropdown
+## "Overzicht" knop toevoegen naast bedrijven dropdown
 
-### Probleem
+### Wat wordt er gebouwd
 
-Wanneer het geselecteerde bedrijf wordt verwijderd:
-1. `setSelectedCompany(null)` wordt aangeroepen, maar `onSelect?.(null)` wordt **niet** aangeroepen -- de parent component weet dus niet dat de selectie is gewist
-2. `fetchCompanies()` controleert `!selectedCompany`, maar die check gebruikt de **oude** waarde uit de closure (nog niet null), dus er wordt geen nieuw bedrijf automatisch geselecteerd
+Een "Overzicht" knop links naast de bedrijven-dropdown op de SEO-pagina. Wanneer je hierop klikt, opent een overzichtelijk dialoogvenster met een tabel van alle bedrijven en hun toegewezen beheerder.
 
-### Oplossing
+### Visueel ontwerp
 
-In `handleDeleteCompany` van beide bestanden:
-- Direct `onSelect?.(null)` aanroepen wanneer het geselecteerde bedrijf wordt verwijderd
-- Na het ophalen van de bijgewerkte lijst, automatisch het eerste beschikbare bedrijf selecteren
+```text
+[ Overzicht ]  [ Building2  Bedrijfsnaam  v ]  [ Handleiding ]  [ Notificaties ]
+```
+
+Het overzicht toont een schone tabel:
+
+```text
++---------------------------------------------+
+|  Bedrijfsoverzicht                      [X] |
+|---------------------------------------------|
+|  Bedrijf           | Beheerd door           |
+|---------------------|------------------------|
+|  Mediabirds         | lotte@mediabirds.nl    |
+|  Klant B            | joost@mediabirds.nl    |
+|  Klant C            | -                      |
++---------------------------------------------+
+```
+
+### Technische wijzigingen
+
+**1. Nieuw bestand: `src/components/seo/CompanyOverviewDialog.tsx`**
+
+- Een Dialog component dat alle bedrijven ophaalt uit de `companies` tabel (inclusief `managed_by`)
+- Per bedrijf de bijbehorende beheerder opzoekt uit de `profiles` tabel
+- Toont een gestileerde tabel met twee kolommen: Bedrijf en Beheerd door
+- Bedrijven zonder beheerder tonen een streepje of "Niet ingesteld"
+- Gebruikt bestaande UI-componenten: Dialog, Table, ScrollArea
+
+**2. Bestand: `src/pages/SeoBlog.tsx`**
+
+- Import van `CompanyOverviewDialog`
+- State toevoegen: `isOverviewOpen`
+- Een "Overzicht" knop toevoegen links naast de `CompanySelector` in de navigatiebalk
+- Het dialoogvenster renderen met open/close state
 
 ### Bestanden
 
-| Bestand | Aanpassing |
+| Bestand | Actie |
 |---|---|
-| `src/components/landing/LandingCompanySelector.tsx` | `onSelect?.(null)` toevoegen bij verwijdering + na fetch eerste bedrijf selecteren |
-| `src/components/wordpress-alt-text/AltTextCompanySelector.tsx` | Zelfde fix toepassen |
-
-### Technisch detail
-
-In `handleDeleteCompany` (regels 142-166 in Landing, vergelijkbaar in AltText):
-
-```ts
-// Was:
-if (selectedCompany?.id === companyToDelete.id) {
-  setSelectedCompany(null);
-}
-setCompanyToDelete(null);
-await fetchCompanies();
-
-// Wordt:
-const wasSelected = selectedCompany?.id === companyToDelete.id;
-setCompanyToDelete(null);
-// Fetch bijgewerkte lijst
-const { data } = await supabase
-  .from('landing_companies') // of 'alt_text_companies'
-  .select('*')
-  .order('created_at', { ascending: false });
-const list = (data || []) as LandingCompany[];
-setCompanies(list);
-if (wasSelected) {
-  const next = list.length > 0 ? list[0] : null;
-  setSelectedCompany(next);
-  onSelect?.(next);
-}
-```
-
-Dit zorgt ervoor dat na verwijdering direct het volgende bedrijf wordt geselecteerd, of de selector op "Selecteer bedrijf" valt als er geen bedrijven meer zijn.
+| `src/components/seo/CompanyOverviewDialog.tsx` | Nieuw - overzichtsdialoog met tabel |
+| `src/pages/SeoBlog.tsx` | Knop + state toevoegen in navigatiebalk |
 
