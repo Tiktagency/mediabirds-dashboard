@@ -30,7 +30,7 @@ const Landingspagina = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useLandingSchedule();
+  const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useLandingSchedule(selectedCompany?.id);
 
   const handleAnimationComplete = useCallback(() => {
     setIsAnimating(false);
@@ -200,20 +200,20 @@ const Landingspagina = () => {
           Genereer automatisch landingspagina's voor al je websites! Koppel je Google Sheet, selecteer een bedrijf en laat de magie beginnen.
         </p>
 
-        {/* Global Schedule Trigger */}
-        <div className="w-full max-w-2xl mb-3">
-          <ScheduleTrigger
-            companyId="global"
-            isAdmin={isAdmin}
-            schedule={schedule as any}
-            isLoading={scheduleLoading}
-            isSaving={isSaving}
-            updateSchedule={updateSchedule as any}
-            getNextTriggerDisplay={getNextTriggerDisplay}
-          />
-        </div>
-
         {selectedCompany ? (
+          <>
+          {/* Per-company Schedule Trigger */}
+          <div className="w-full max-w-2xl mb-3">
+            <ScheduleTrigger
+              companyId={selectedCompany.id}
+              isAdmin={isAdmin}
+              schedule={schedule as any}
+              isLoading={scheduleLoading}
+              isSaving={isSaving}
+              updateSchedule={updateSchedule as any}
+              getNextTriggerDisplay={getNextTriggerDisplay}
+            />
+          </div>
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 max-w-2xl w-full items-stretch">
             {/* Left: Company fields + Google Sheets + Start button */}
             <div className="flex-1 min-w-0 space-y-4">
@@ -331,6 +331,7 @@ const Landingspagina = () => {
               <AltTextAnimation isAnimating={isAnimating} onAnimationComplete={handleAnimationComplete} />
             </div>
           </div>
+          </>
         ) : (
           <p className="text-muted-foreground text-sm">Selecteer een bedrijf om de gegevens te zien</p>
         )}
