@@ -190,7 +190,7 @@ const SeoBlog = () => {
       
       <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6">
         <h1 className="hero-title text-white mb-4 fade-in-up text-center">
-          SEO Blog
+          SEO
         </h1>
         <p className="text-white/50 text-lg mb-12 text-center max-w-lg">
           Beheer je zoekwoord onderzoek en blog generatie op één plek
