@@ -23,7 +23,7 @@ export const TileColorCustomizer = ({
   onResetSavedHours 
 }: TileColorCustomizerProps) => {
   return (
-    <Card className="bg-card/50 border-border/30">
+    <Card className="bg-card/50 border-border/30 h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Palette className="w-4 h-4" />
@@ -33,7 +33,7 @@ export const TileColorCustomizer = ({
           Pas de kleuren aan van je dashboard tiles.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 flex flex-col space-y-4">
         {/* Side-by-side Previews */}
         <div className="grid grid-cols-2 gap-3">
           <div 
@@ -120,7 +120,7 @@ export const TileColorCustomizer = ({
         </div>
 
         {/* Reset Buttons */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-2 gap-3 mt-auto">
           <Button
             variant="outline"
             size="sm"
