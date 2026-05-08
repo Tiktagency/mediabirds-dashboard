@@ -6,7 +6,7 @@ import { EmailSignatureForm } from '@/components/email-signature/EmailSignatureF
 import { SignatureList } from '@/components/email-signature/SignatureList';
 import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Copy, Check } from 'lucide-react';
+import { Loader2, Copy, Check, Plus } from 'lucide-react';
 
 const EmailSignature = () => {
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
@@ -53,19 +53,34 @@ const EmailSignature = () => {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-[280px_1fr_1fr] gap-6">
-            {/* Left: Signature List */}
-            <div className="order-2 md:order-1">
-              <SignatureList
-                signatures={signatures}
-                selectedId={selectedSignature?.id || null}
-                onSelect={selectSignature}
-                onDelete={deleteSignature}
-                onCreateNew={createNewSignature}
-              />
+          <div className="w-full max-w-7xl space-y-6">
+            {/* Header above columns */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Mijn Handtekeningen</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={createNewSignature}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Nieuw
+              </Button>
             </div>
 
-            {/* Middle: Form */}
+            {/* Three columns aligned at top */}
+            <div className="grid grid-cols-1 md:grid-cols-[280px_1fr_1fr] gap-6 items-start">
+              {/* Left: Signature List */}
+              <div className="order-2 md:order-1">
+                <SignatureList
+                  signatures={signatures}
+                  selectedId={selectedSignature?.id || null}
+                  onSelect={selectSignature}
+                  onDelete={deleteSignature}
+                />
+              </div>
+
+              {/* Middle: Form */}
             <div className="order-1 md:order-2">
               <EmailSignatureForm
                 selectedSignature={selectedSignature}
@@ -160,6 +175,7 @@ const EmailSignature = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
             </div>
           </div>
         )}
