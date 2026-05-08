@@ -47,6 +47,7 @@ export const BlogGenerationForm = ({
     schrijfstijl: '',
     aantal_woorden: [500, 1500] as [number, number],
     taal: '',
+    image_type: 'ai_image' as 'ai_image' | 'google_drive',
     achtergrond_kleur: '',
     hoofdaccent_gradient_1: '',
     hoofdaccent_gradient_2: '',
@@ -110,6 +111,7 @@ export const BlogGenerationForm = ({
         schrijfstijl: settings.schrijfstijl || '',
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
+        image_type: (settings.image_type as 'ai_image' | 'google_drive') || 'ai_image',
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
@@ -127,6 +129,7 @@ export const BlogGenerationForm = ({
         schrijfstijl: '',
         aantal_woorden: [500, 1500],
         taal: '',
+        image_type: 'ai_image',
         achtergrond_kleur: '',
         hoofdaccent_gradient_1: '',
         hoofdaccent_gradient_2: '',
@@ -158,7 +161,16 @@ export const BlogGenerationForm = ({
     
     if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
     
-    // URL velden (get_afbeelding_url, post_blog_url) en afbeelding kleuren zijn optioneel
+    // Afbeelding velden afhankelijk van gekozen type
+    if (formData.image_type === 'ai_image') {
+      if (!formData.achtergrond_kleur || !formData.hoofdaccent_gradient_1 || !formData.hoofdaccent_gradient_2) {
+        return false;
+      }
+    } else if (formData.image_type === 'google_drive') {
+      if (!formData.folder_id) {
+        return false;
+      }
+    }
     
     return true;
   };
@@ -213,6 +225,7 @@ export const BlogGenerationForm = ({
         schrijfstijl: settings.schrijfstijl || '',
         aantal_woorden: parseRangeString(settings.aantal_woorden),
         taal: settings.taal || '',
+        image_type: (settings.image_type as 'ai_image' | 'google_drive') || 'ai_image',
         achtergrond_kleur: settings.achtergrond_kleur || '',
         hoofdaccent_gradient_1: gradient1,
         hoofdaccent_gradient_2: gradient2,
@@ -225,6 +238,10 @@ export const BlogGenerationForm = ({
       });
     }
     setEditingField(null);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleStartClick = async () => {
@@ -556,39 +573,87 @@ export const BlogGenerationForm = ({
       {/* Afbeelding section */}
       <div className="pt-6 border-t border-white/10 space-y-4">
         <h3 className="text-lg font-semibold text-white">Afbeelding</h3>
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
-          </div>
-          <div 
-            className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-            style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
-          />
+        
+        {/* Toggle knoppen */}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              handleInputChange('image_type', 'ai_image');
+              await saveSettings({ image_type: 'ai_image' });
+            }}
+            className={cn(
+              "flex-1 transition-all duration-200",
+              formData.image_type === 'ai_image' 
+                ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
+            )}
+          >
+            AI afbeelding
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              handleInputChange('image_type', 'google_drive');
+              await saveSettings({ image_type: 'google_drive' });
+            }}
+            className={cn(
+              "flex-1 transition-all duration-200",
+              formData.image_type === 'google_drive' 
+                ? "bg-accent text-white border-accent hover:bg-accent/90" 
+                : "bg-transparent border-white/20 text-white/70 hover:bg-white/5"
+            )}
+          >
+            Foto Google Drive
+          </Button>
         </div>
-        <div className="space-y-2">
-          <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
-          <div className="grid grid-cols-2 gap-4">
+        
+        {/* AI Afbeelding velden */}
+        {formData.image_type === 'ai_image' && (
+          <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
             <div className="flex items-end gap-3">
               <div className="flex-1">
-                {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+                {renderField('Achtergrond kleur', 'achtergrond_kleur', 'text', undefined, false)}
               </div>
               <div 
                 className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
+                style={{ backgroundColor: formData.achtergrond_kleur || 'transparent' }}
               />
             </div>
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+            <div className="space-y-2">
+              <Label className="text-white/70 text-sm">Hoofdaccent gradient</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    {renderField('Kleur 1', 'hoofdaccent_gradient_1', 'text', undefined, false)}
+                  </div>
+                  <div 
+                    className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                    style={{ backgroundColor: formData.hoofdaccent_gradient_1 || 'transparent' }}
+                  />
+                </div>
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    {renderField('Kleur 2', 'hoofdaccent_gradient_2', 'text', undefined, false)}
+                  </div>
+                  <div 
+                    className="w-10 h-10 rounded-md border border-white/20 shrink-0"
+                    style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
+                  />
+                </div>
               </div>
-              <div 
-                className="w-10 h-10 rounded-md border border-white/20 shrink-0"
-                style={{ backgroundColor: formData.hoofdaccent_gradient_2 || 'transparent' }}
-              />
             </div>
           </div>
-        </div>
-        {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
+        )}
+        
+        {/* Google Drive velden */}
+        {formData.image_type === 'google_drive' && (
+          <div className="animate-in slide-in-from-top-2 duration-200">
+            {renderField('Folder ID', 'folder_id', 'text', undefined, false)}
+          </div>
+        )}
       </div>
       
       {/* Status sectie */}
