@@ -1,32 +1,44 @@
 
-## Alle velden verplicht + layout omhoog schuiven
+## Responsive layout + tooltip z-index fix
 
-### Wijzigingen
+### Problemen
 
-**1. Pagina url ook verplicht maken voor de Start-knop (regel 287)**
+1. **Niet responsive**: Op mobiel stapelen de kolommen al (flex-col), maar de padding, spacing en het animatiepaneel zijn niet geoptimaliseerd voor kleine schermen.
+2. **Tooltip overlapt met achtergrond**: De TooltipContent bij "Pagina url" heeft geen hoge z-index, waardoor het achter andere elementen verdwijnt.
 
-Voeg `!editPageUrl.trim()` toe aan de `disabled` conditie van de Start-knop.
+### Oplossing
 
-**2. Validatie in handleStart bijwerken (regel 82)**
+**Bestand: `src/pages/Landingspagina.tsx`**
 
-Voeg `editPageUrl` toe aan de check zodat ook een toast verschijnt als het veld leeg is.
+**1. Tooltip z-index fixen (regel 276)**
+Voeg `z-50` toe aan de TooltipContent van Pagina url (en voor consistentie ook bij Applicatie wachtwoord op regel 219):
 
-**3. Layout omhoog schuiven -- geen scroll nodig**
+```
+// Was:
+<TooltipContent side="top" className="max-w-xs bg-card border-border text-white p-3">
 
-- **Regel 179**: `pt-32` verkleinen naar `pt-20` (minder ruimte boven de titel)
-- **Regel 181**: `mb-6` verkleinen naar `mb-3` (minder ruimte onder de beschrijving)
-- **Regel 186**: `mb-6` verkleinen naar `mb-3` (minder ruimte onder de ScheduleTrigger)
-- **Regel 202**: `p-6` verkleinen naar `p-4` en `space-y-4` naar `space-y-3` (compactere card)
-- **Regel 199**: `gap-6` verkleinen naar `gap-4` (minder ruimte tussen kolommen)
+// Wordt:
+<TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-3">
+```
+
+Doe hetzelfde voor de Applicatie wachtwoord tooltip (regel 219):
+```
+<TooltipContent side="top" className="z-50 max-w-xs bg-card border-border text-white p-4">
+```
+
+**2. Responsive aanpassingen**
+
+| Element | Regel | Wijziging |
+|---|---|---|
+| Header bar | 170 | `top-6 left-6 right-6` naar `top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6` |
+| Main container | 179 | `pt-20 px-6` naar `pt-16 px-4 sm:pt-20 sm:px-6` |
+| Titel | 180 | Voeg `text-2xl sm:text-4xl` toe (kleinere titel op mobiel) |
+| Beschrijving | 181 | Voeg `text-sm sm:text-base` toe |
+| Max-width wrapper | 186, 198 | `max-w-2xl` blijft (werkt goed op alle schermen) |
+| Flex gap | 199 | `gap-4` naar `gap-3 sm:gap-4` |
+| Animatiepaneel | 301 | `lg:w-72` naar `hidden lg:flex lg:w-72` -- verberg op mobiel (neemt te veel ruimte in) |
+| Start button | 288 | `py-3` naar `py-2 sm:py-3` |
 
 ### Technische details
 
-| Bestand | Regel | Wijziging |
-|---|---|---|
-| `src/pages/Landingspagina.tsx` | 82 | `editPageUrl.trim()` toevoegen aan validatie |
-| `src/pages/Landingspagina.tsx` | 287 | `!editPageUrl.trim()` toevoegen aan `disabled` |
-| `src/pages/Landingspagina.tsx` | 179 | `pt-32` → `pt-20` |
-| `src/pages/Landingspagina.tsx` | 181 | `mb-6` → `mb-3` |
-| `src/pages/Landingspagina.tsx` | 186 | `mb-6` → `mb-3` |
-| `src/pages/Landingspagina.tsx` | 199 | `gap-6` → `gap-4` |
-| `src/pages/Landingspagina.tsx` | 202 | `p-6 space-y-4` → `p-4 space-y-3` |
+Alle wijzigingen in een enkel bestand: `src/pages/Landingspagina.tsx`. Geen nieuwe dependencies of database wijzigingen nodig.
