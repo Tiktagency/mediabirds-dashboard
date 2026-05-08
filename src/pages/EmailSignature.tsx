@@ -79,11 +79,11 @@ const EmailSignature = () => {
             {/* Right: HTML Output */}
             <div className="order-3 flex flex-col gap-4">
               {/* HTML Preview */}
-              <Card className="bg-white/5 border-white/10">
+              <Card className="bg-white/5 border-white/10 flex-1 flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-white text-lg">Preview</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   <div className="bg-white rounded-lg p-4 min-h-[200px] overflow-hidden">
                     {isGenerating ? (
                       <div className="flex items-center gap-2 text-gray-500">
