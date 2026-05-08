@@ -1,59 +1,64 @@
 
-# Plan: HTML Preview met Proportionele Schaling
+# Plan: Fix Extra Velden Opslaan en Laden
 
 ## Probleem
 
-De email handtekening wordt momenteel samengeperst omdat de container smaller is dan de originele breedte. De gebruiker wil dat de handtekening kleiner wordt weergegeven, maar met behoud van de juiste verhoudingen.
+Wanneer een gebruiker een tweede email, telefoonnummer of plaatsnaam toevoegt en de pagina verlaat, verdwijnt het extra invulveld. Dit komt doordat:
+
+1. De data wordt opgeslagen als `JSON.stringify(array)` → een string in de database
+2. Bij ophalen checkt `parseJsonArray` alleen of de waarde een array is
+3. Als het een string is (de gestringified JSON), wordt een lege array teruggegeven
 
 ---
 
 ## Oplossing
 
-Gebruik CSS `transform: scale()` om de preview proportioneel te verkleinen zodat deze in de container past met behoud van de originele verhoudingen.
+Update de `parseJsonArray` functie in `useEmailSignatureSettings.ts` om zowel arrays als gestringified arrays te ondersteunen.
 
 ---
 
 ## Code Wijzigingen
 
-**Bestand: `src/pages/EmailSignature.tsx`**
+**Bestand: `src/hooks/useEmailSignatureSettings.ts`**
 
-### Preview container aanpassen (regel 86-100)
+### parseJsonArray functie uitbreiden (regel 51-54)
 
-De huidige implementatie:
-```tsx
-<div className="bg-white rounded-lg p-4 min-h-[200px] overflow-auto">
-  {generatedHtml ? (
-    <div dangerouslySetInnerHTML={{ __html: generatedHtml }} />
-  ) : ...}
-</div>
+**Huidige code:**
+```typescript
+const parseJsonArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  return [];
+};
 ```
 
-Wordt aangepast naar:
-```tsx
-<div className="bg-white rounded-lg p-4 min-h-[200px] overflow-hidden">
-  {generatedHtml ? (
-    <div 
-      className="origin-top-left scale-[0.65]"
-      style={{ width: '154%' }} 
-      dangerouslySetInnerHTML={{ __html: generatedHtml }} 
-    />
-  ) : ...}
-</div>
+**Nieuwe code:**
+```typescript
+const parseJsonArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 ```
 
-### Uitleg:
-| CSS Property | Waarde | Functie |
-|--------------|--------|---------|
-| `scale-[0.65]` | 65% | Verkleint de handtekening proportioneel |
-| `origin-top-left` | - | Schaalt vanaf linksboven |
-| `width: 154%` | 100/0.65 ≈ 154% | Compenseert de schaling zodat de content de beschikbare ruimte benut |
-| `overflow-hidden` | - | Verbergt eventuele overflow |
+---
+
+## Wat dit oplost
+
+| Scenario | Voorheen | Na fix |
+|----------|----------|--------|
+| Database retourneert `["a@b.nl", "c@d.nl"]` (array) | ✅ Werkt | ✅ Werkt |
+| Database retourneert `'["a@b.nl", "c@d.nl"]'` (string) | ❌ Lege array | ✅ Parsed correct |
 
 ---
 
 ## Resultaat
 
-- De email handtekening wordt ~65% kleiner weergegeven
-- Alle verhoudingen blijven exact gelijk
-- De preview past netjes in de beschikbare ruimte
-- Geen horizontale scrollbalk nodig
+- Extra emails, telefoonnummers en plaatsnamen blijven behouden na het verlaten van de pagina
+- De extra invulvelden worden correct weergegeven wanneer de handtekening opnieuw wordt geladen
