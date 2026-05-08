@@ -1,64 +1,80 @@
 
-# Plan: Fix Extra Velden Opslaan en Laden
+# Plan: HTML Code Uitlijnen met Afbeeldingen Sectie
 
 ## Probleem
 
-Wanneer een gebruiker een tweede email, telefoonnummer of plaatsnaam toevoegt en de pagina verlaat, verdwijnt het extra invulveld. Dit komt doordat:
+De rechterkolom heeft twee cards (Preview en HTML Code) die bovenaan de kolom beginnen, terwijl de "Afbeeldingen" sectie (profielfoto en bedrijfslogo) onderaan het formulier staat. De gebruiker wil dat de HTML Code card verticaal uitgelijnd is met de Afbeeldingen card.
 
-1. De data wordt opgeslagen als `JSON.stringify(array)` → een string in de database
-2. Bij ophalen checkt `parseJsonArray` alleen of de waarde een array is
-3. Als het een string is (de gestringified JSON), wordt een lege array teruggegeven
+---
+
+## Huidige Layout
+
+```
+Formulier (midden)          |  Rechterkolom
+----------------------------|------------------
+[Handtekening naam]         |  [Preview]
+[Persoonlijke info]         |  [HTML Code]
+[Social Links]              |
+[Kleuren]                   |
+[Afbeeldingen]              |  <-- niet uitgelijnd
+[Submit knop]               |
+```
+
+---
+
+## Gewenste Layout
+
+```
+Formulier (midden)          |  Rechterkolom
+----------------------------|------------------
+[Handtekening naam]         |  [Preview]
+[Persoonlijke info]         |  (neemt beschikbare
+[Social Links]              |   ruimte in)
+[Kleuren]                   |
+[Afbeeldingen]              |  [HTML Code] <-- uitgelijnd
+[Submit knop]               |
+```
 
 ---
 
 ## Oplossing
 
-Update de `parseJsonArray` functie in `useEmailSignatureSettings.ts` om zowel arrays als gestringified arrays te ondersteunen.
+De Preview card krijgt `flex-1` zodat deze alle beschikbare ruimte inneemt en de HTML Code card naar beneden duwt, zodat deze op dezelfde hoogte komt als de Afbeeldingen sectie.
 
 ---
 
 ## Code Wijzigingen
 
-**Bestand: `src/hooks/useEmailSignatureSettings.ts`**
+**Bestand: `src/pages/EmailSignature.tsx`**
 
-### parseJsonArray functie uitbreiden (regel 51-54)
+### Preview Card aanpassen (regel 82)
 
-**Huidige code:**
-```typescript
-const parseJsonArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  return [];
-};
+Van:
+```tsx
+<Card className="bg-white/5 border-white/10">
 ```
 
-**Nieuwe code:**
-```typescript
-const parseJsonArray = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
-    } catch {
-      return [];
-    }
-  }
-  return [];
-};
+Naar:
+```tsx
+<Card className="bg-white/5 border-white/10 flex-1 flex flex-col">
 ```
 
----
+### CardContent binnen Preview Card aanpassen (regel 86)
 
-## Wat dit oplost
+Van:
+```tsx
+<CardContent>
+```
 
-| Scenario | Voorheen | Na fix |
-|----------|----------|--------|
-| Database retourneert `["a@b.nl", "c@d.nl"]` (array) | ✅ Werkt | ✅ Werkt |
-| Database retourneert `'["a@b.nl", "c@d.nl"]'` (string) | ❌ Lege array | ✅ Parsed correct |
+Naar:
+```tsx
+<CardContent className="flex-1">
+```
 
 ---
 
 ## Resultaat
 
-- Extra emails, telefoonnummers en plaatsnamen blijven behouden na het verlaten van de pagina
-- De extra invulvelden worden correct weergegeven wanneer de handtekening opnieuw wordt geladen
+- De Preview card groeit om de beschikbare ruimte te vullen
+- De HTML Code card wordt naar beneden geduwd
+- De HTML Code card staat visueel op dezelfde hoogte als de Afbeeldingen sectie in het formulier
