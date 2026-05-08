@@ -112,13 +112,8 @@ serve(async (req) => {
 
     console.log("Calling webhook");
 
-    // Prepare request body based on action
-    let requestBody: string;
-    if (action === 'subkeywords') {
-      requestBody = JSON.stringify('GO');
-    } else {
-      requestBody = JSON.stringify(formData || {});
-    }
+    // Prepare request body - always send formData
+    const requestBody = JSON.stringify(formData || {});
 
     // Call webhook with optional authentication
     const headers: Record<string, string> = {
