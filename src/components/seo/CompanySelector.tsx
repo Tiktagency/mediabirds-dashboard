@@ -175,6 +175,11 @@ const CompanySelector = ({ selectedCompany, onCompanyChange }: CompanySelectorPr
 
       if (error) throw error;
 
+      // Fire-and-forget webhook call
+      supabase.functions.invoke('trigger-add-company-webhook', {
+        body: { companyName: newCompanyName.trim() },
+      }).catch((err) => console.error('Webhook call failed:', err));
+
       toast({
         title: 'Bedrijf toegevoegd',
         description: `${newCompanyName} is succesvol aangemaakt`,

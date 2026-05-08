@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.trigger-email-signature]
 verify_jwt = false
+
+[functions.trigger-add-company-webhook]
+verify_jwt = false
