@@ -131,8 +131,22 @@ const EmailSignature = () => {
                       <div 
                         className="origin-top-left scale-[0.65] [&_*]:!select-text [&_*]:!cursor-text select-text cursor-text"
                         style={{ width: '154%' }}
-                        dangerouslySetInnerHTML={{ __html: generatedHtml }} 
-                      />
+                      >
+                        <style>{`
+                          .email-signature-preview * {
+                            user-select: text !important;
+                            -webkit-user-select: text !important;
+                            -moz-user-select: text !important;
+                            -ms-user-select: text !important;
+                            cursor: text !important;
+                            pointer-events: auto !important;
+                          }
+                        `}</style>
+                        <div 
+                          className="email-signature-preview"
+                          dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+                        />
+                      </div>
                     ) : (
                       <span className="text-gray-400">
                         Genereer een handtekening om de preview te zien.
