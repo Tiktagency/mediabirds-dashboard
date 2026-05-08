@@ -306,6 +306,9 @@ const ZoekwoordOnderzoek = () => {
           webhookUrl: FIXED_SUBKEYWORDS_WEBHOOK_URL,
           authTokenSecretName: selectedCompany.auth_token_secret_name,
           action: 'subkeywords',
+          formData: {
+            bedrijfsnaam: selectedCompany.name,
+          },
         },
       });
 
