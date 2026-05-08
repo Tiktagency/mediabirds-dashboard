@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
           google_sheet_id: blogSettings.google_sheet_id || '',
           google_slides_id: blogSettings.google_slides_id || '',
           image_type: imageType,
+          image_style: imageType !== 'google_drive' ? (blogSettings.image_style || '') : '',
           folder_id: imageType === 'google_drive' ? (blogSettings.folder_id || '') : '',
           used_folder_id: imageType === 'google_drive' ? (blogSettings.used_folder_id || '') : '',
           page_url_spreadsheet_id: pageUrlSettings?.google_sheet_id || '',
