@@ -302,8 +302,8 @@ const SeoBlog = () => {
         </ScrollArea>
       </div>
       
-      <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6 max-w-5xl mx-auto">
-        <div className="flex w-full max-w-4xl gap-6 mb-12">
+      <div className="w-full flex flex-col items-center justify-start pt-24 pb-16 px-6 max-w-5xl 2xl:max-w-7xl mx-auto">
+        <div className="flex w-full max-w-4xl 2xl:max-w-6xl gap-6 mb-12">
           {/* Left column - title, subtitle, managed by */}
           <div className="flex-1 text-left">
             <h1 className="hero-title text-white mb-4 fade-in-up">
@@ -399,7 +399,7 @@ const SeoBlog = () => {
         </div>
         
         {/* Mini Dashboard - Arrow-shaped navigation */}
-        <div className="flex w-full max-w-4xl mb-12">
+        <div className="flex w-full max-w-4xl 2xl:max-w-6xl mb-12">
           {/* Tile 1: Pagina URL */}
           <button
             onClick={() => setActiveView('pageurl')}
@@ -531,7 +531,7 @@ const SeoBlog = () => {
         </div>
 
         {/* Form content area - beide forms altijd gemount om flikkering te voorkomen */}
-        <div className="w-full max-w-2xl mx-auto min-h-[400px]">
+        <div className="w-full max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto min-h-[400px]">
           {activeView === 'none' && (
             <div className="text-white/40 text-center py-8">
               <p>Selecteer hierboven een optie om te beginnen</p>
