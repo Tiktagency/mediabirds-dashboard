@@ -1,8 +1,19 @@
 
-## HTML Preview verwijderen van Nieuwsbrief pagina
+## Verwijder `secundaire_kleur` & `accent_kleur` uit de POST payload
 
-De volledige "HTML Preview" Card staat op regels 824–866 in `src/pages/Nieuwsbrief.tsx`. Dit is een losstaand blok direct na de twee-koloms grid, volledig te verwijderen inclusief de bijbehorende Download-knop logica.
+De twee kleuren worden nog op drie plekken meegestuurd:
 
-**Wijziging:** Verwijder regels 824–866 (de `{/* Preview full width */}` Card met iframe, download-knop en lege staat).
+1. **`src/pages/Nieuwsbrief.tsx`** — payload die naar de edge function wordt gestuurd (regels 395 en 400)
+2. **`supabase/functions/trigger-newsletter-webhook/index.ts`** — destructuring van body (regels 42-43) én de payload naar n8n (regels 60 en 65)
 
-Daarna kan ook de `handleDownload` functie en de `Download` lucide-import worden opgeschoond als die nergens anders gebruikt worden.
+### Wijzigingen
+
+**`src/pages/Nieuwsbrief.tsx`** — verwijder uit de POST body (regels 395 en 400):
+- `secundaire_kleur: localColors.secundaire_kleur,`
+- `accent_kleur: localColors.accent_kleur,`
+
+**`supabase/functions/trigger-newsletter-webhook/index.ts`**:
+- Regel 42-43: verwijder `secundaire_kleur` en `accent_kleur` uit de destructuring
+- Regels 60 en 65: verwijder `secundaire_kleur` en `accent_kleur` uit de payload naar n8n
+
+Geen database- of andere wijzigingen nodig.
