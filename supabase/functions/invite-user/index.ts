@@ -78,15 +78,14 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin
+    // Check if user is admin or super_admin
     const { data: adminCheck } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .in('role', ['admin', 'super_admin']);
 
-    if (!adminCheck) {
+    if (!adminCheck || adminCheck.length === 0) {
       return new Response(JSON.stringify({ error: 'Geen admin rechten' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
