@@ -14,12 +14,16 @@ const cleanHtmlForCopy = (html: string): string => {
   // Verwijder markdown code fences aan begin en einde
   cleaned = cleaned.replace(/^```html\s*/i, '');
   cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
-  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');  // Losse tekst zonder code fences
   cleaned = cleaned.replace(/```\s*$/g, '');
   
-  // Trim en verwijder nogmaals "E-mail signature" (voor het geval er whitespace voor stond)
+  // Trim eerst
   cleaned = cleaned.trim();
-  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');
+  
+  // Verwijder "E-mail signature" in HTML tags (p, div, span, etc.)
+  cleaned = cleaned.replace(/<(p|div|span)[^>]*>\s*E-mail signature\s*<\/\1>/gi, '');
+  
+  // Verwijder "E-mail signature" als losse tekst overal in de string
+  cleaned = cleaned.replace(/E-mail signature\s*\n?/gi, '');
   
   // Verwijder lege paragrafen en divs met alleen whitespace
   cleaned = cleaned.replace(/<p[^>]*>\s*(&nbsp;|\s)*\s*<\/p>/gi, '');
