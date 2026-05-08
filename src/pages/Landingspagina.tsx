@@ -185,7 +185,7 @@ const Landingspagina = () => {
 
   return (
     <div className="h-screen overflow-hidden relative">
-      <div className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 z-10 flex items-center justify-between">
+      <div className="fixed top-0 left-0 right-0 z-30 px-6 py-4 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-white/10">
         <Link to="/">
           <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
             Dashboard
