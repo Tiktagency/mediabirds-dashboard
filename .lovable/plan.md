@@ -1,43 +1,32 @@
 
-# Fix: "E-mail signature" verwijderen - Verbeterde Regex
+# Fix: Verwijder "E-mail signature" Overal in HTML
 
 ## Probleem
-De huidige regex `^E-mail signature\s*` werkt alleen als de tekst exact aan het begin van de string staat. Er staat waarschijnlijk witruimte of een newline ervoor.
+De huidige regex zoekt alleen aan het **begin** van de string (`^E-mail signature`). Maar de tekst staat waarschijnlijk:
+- Ergens in het midden van de HTML content
+- Gewrapt in HTML tags zoals `<p>E-mail signature</p>` of `<div>E-mail signature</div>`
 
 ## Oplossing
-Trim de string eerst, en voeg een extra regex toe die ook "E-mail signature" met voorafgaande witruimte/newlines verwijdert.
+Vervang de beperkte `^` regex door een globale regex die "E-mail signature" overal verwijdert, inclusief wanneer het in HTML tags staat.
 
 **Bestand:** `src/pages/EmailSignature.tsx`
 
-### Huidige code (regels 11-31):
+### Wijzigingen in `cleanHtmlForCopy`:
+
+Voeg deze regels toe:
 ```tsx
-const cleanHtmlForCopy = (html: string): string => {
-  let cleaned = html;
-  
-  // Verwijder markdown code fences aan begin en einde
-  cleaned = cleaned.replace(/^```html\s*/i, '');
-  cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
-  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');
-  cleaned = cleaned.replace(/```\s*$/g, '');
-  ...
+// Verwijder "E-mail signature" in HTML tags (p, div, span, etc.)
+cleaned = cleaned.replace(/<(p|div|span)[^>]*>\s*E-mail signature\s*<\/\1>/gi, '');
+
+// Verwijder "E-mail signature" als losse tekst overal in de string
+cleaned = cleaned.replace(/E-mail signature\s*\n?/gi, '');
 ```
 
-### Nieuwe code:
-```tsx
-const cleanHtmlForCopy = (html: string): string => {
-  let cleaned = html;
-  
-  // Verwijder markdown code fences aan begin en einde
-  cleaned = cleaned.replace(/^```html\s*/i, '');
-  cleaned = cleaned.replace(/^```\s*E-mail signature\s*/i, '');
-  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');
-  cleaned = cleaned.replace(/```\s*$/g, '');
-  
-  // Trim en verwijder nogmaals "E-mail signature" (voor het geval er whitespace voor stond)
-  cleaned = cleaned.trim();
-  cleaned = cleaned.replace(/^E-mail signature\s*/i, '');
-  ...
-```
+## Technische Details
+| Regex | Werking |
+|-------|---------|
+| `/<(p\|div\|span)[^>]*>\s*E-mail signature\s*<\/\1>/gi` | Verwijdert `<p>E-mail signature</p>`, `<div>E-mail signature</div>`, etc. |
+| `/E-mail signature\s*\n?/gi` | Verwijdert alle voorkomens van de tekst + eventuele whitespace/newline |
 
-## Wijziging
-Voeg een extra trim en regex toe halverwege de functie, zodat "E-mail signature" ook wordt gevangen wanneer er voorafgaande witruimte was.
+## Resultaat
+De tekst "E-mail signature" wordt volledig verwijderd, ongeacht waar deze in de HTML staat.
