@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Loader2, Info } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { usePageUrlSettings } from '@/hooks/usePageUrlSettings';
 import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PageUrlFormProps {
   selectedCompany: Company | null;
@@ -145,17 +144,7 @@ export const PageUrlForm = ({
 
       {/* Dynamic URL Fields */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Label className="text-white/70">Pagina URLs</Label>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
-            </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-[300px] bg-background border-white/20">
-              <p className="text-sm">De site moet een xml sitemap hebben om dit veld in te vullen. Aanwezig: pak de belangrijkste links waar de pagina's onder vallen waarvan je de info wilt documenteren, zodat de ai agent interne links kan leggen naar deze pagina's.</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        <Label className="text-white/70">Pagina URLs</Label>
         
         {urls.map((url, index) => (
           <div key={index} className="flex gap-2 items-center">
