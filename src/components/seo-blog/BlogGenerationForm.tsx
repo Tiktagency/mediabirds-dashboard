@@ -139,8 +139,15 @@ export const BlogGenerationForm = ({
   }, [settings]);
 
   const isFormComplete = () => {
-    const requiredStringFields = ['bedrijfsnaam', 'bedrijfsomschrijving', 'schrijfstijl', 'taal'];
-    const adminFields = ['get_afbeelding_url']; // post_blog_url is optional
+    const requiredStringFields = [
+      'bedrijfsnaam', 
+      'bedrijfsomschrijving', 
+      'schrijfstijl', 
+      'taal',
+      'status',
+      'google_sheet_id',
+      'google_slides_id'
+    ];
     
     for (const field of requiredStringFields) {
       if (!formData[field as keyof typeof formData]) return false;
@@ -148,11 +155,7 @@ export const BlogGenerationForm = ({
     
     if (!formData.aantal_woorden || formData.aantal_woorden.length !== 2) return false;
     
-    // Image fields (achtergrond_kleur, gradient colors) and post_blog_url are optional
-    
-    for (const field of adminFields) {
-      if (!formData[field as keyof typeof formData]) return false;
-    }
+    // URL velden (get_afbeelding_url, post_blog_url) en afbeelding kleuren zijn optioneel
     
     return true;
   };
@@ -587,6 +590,13 @@ export const BlogGenerationForm = ({
         {renderField('Status', 'status', 'select', ['draft', 'publish'])}
       </div>
       
+      {/* Google Document IDs - Verplicht voor alle gebruikers */}
+      <div className="pt-6 border-t border-white/10 space-y-4">
+        <h3 className="text-lg font-semibold text-white">Google Documenten</h3>
+        {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, false)}
+        {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, false)}
+      </div>
+      
       {/* Admin-only fields - Collapsible */}
       {isAdmin && (
         <Collapsible 
@@ -604,8 +614,6 @@ export const BlogGenerationForm = ({
           <CollapsibleContent className="space-y-6 pt-4">
             {renderField('POST afbeelding URL', 'get_afbeelding_url', 'text', undefined, true)}
             {renderField('POST blog URL', 'post_blog_url', 'text', undefined, true)}
-            {renderField('Google Sheet Document ID', 'google_sheet_id', 'text', undefined, true)}
-            {renderField('Google Slides ID', 'google_slides_id', 'text', undefined, true)}
             
             <CategoryManager 
               companyId={selectedCompany?.id || null}
