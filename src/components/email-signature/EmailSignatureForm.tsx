@@ -619,7 +619,7 @@ export const EmailSignatureForm = ({
       </Card>
 
       {/* Afbeeldingen */}
-      <Card className="bg-white/5 border-white/10 min-h-[320px]">
+      <Card className="bg-white/5 border-white/10">
         <CardContent className="pt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="profile_photo_url" className="text-white">
