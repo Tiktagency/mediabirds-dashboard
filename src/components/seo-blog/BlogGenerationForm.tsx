@@ -638,13 +638,13 @@ export const BlogGenerationForm = ({
         <p className="text-xs text-white/40">Deze velden worden beheerd via de Pagina URL pagina</p>
         <div className="space-y-2">
           <Label className="text-white/70 text-sm">Spreadsheet ID</Label>
-          <div className="px-3 py-2 rounded-md bg-white/5 border-2 border-transparent text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]">
+          <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis">
             {pageUrlSettings?.google_sheet_id || <span className="text-white/40 italic">Niet ingesteld</span>}
           </div>
         </div>
         <div className="space-y-2">
           <Label className="text-white/70 text-sm">Grid ID</Label>
-          <div className="px-3 py-2 rounded-md bg-white/5 border-2 border-transparent text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]">
+          <div className="px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 h-[40px] flex items-center overflow-hidden whitespace-nowrap text-ellipsis">
             {pageUrlSettings?.google_file_id || <span className="text-white/40 italic">Niet ingesteld</span>}
           </div>
         </div>
