@@ -44,9 +44,10 @@ serve(async (req) => {
     if (!workflowsResponse.ok) {
       const errorText = await workflowsResponse.text();
       console.error('Failed to fetch workflows:', errorText);
+      // Return graceful fallback instead of 500 when n8n is unreachable
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch workflows from n8n' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'n8n temporarily unavailable', lastRun: null, workflowId: null, workflowName: null, executionId: null }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
