@@ -769,8 +769,17 @@ const Nieuwsbrief = () => {
               </>
             ) : (
               <>
-                <Newspaper className="w-4 h-4" />
-                Genereer nieuwsbrief
+                {newsletterSchedule?.enabled ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    Automatische trigger actief
+                  </>
+                ) : (
+                  <>
+                    <Newspaper className="w-4 h-4" />
+                    Genereer nieuwsbrief
+                  </>
+                )}
               </>
             )}
           </Button>
