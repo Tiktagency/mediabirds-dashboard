@@ -1,145 +1,159 @@
 
-
-# Plan: Volledig Bewerkbare SEO Handleiding
+# Plan: Bewerkbare SEO Blog Handleiding Titel (Alleen Super Admin)
 
 ## Overzicht
-Het potloodicoon verplaatsen naar rechtsboven in het handleidingpaneel en de volledige tekst bewerkbaar maken voor Super Admins.
+Een potloodicoon toevoegen achter de "SEO blog handleiding" titel die:
+- Alleen zichtbaar is bij hover
+- Alleen zichtbaar is voor Super Admins
+- Tekst bewerkbaar maakt bij klik
+- Opslaanfunctie bevat om wijzigingen te persisteren
 
 ---
 
-## Aanpak
+## 1. Database Tabel Aanmaken
 
-De huidige handleiding bestaat uit hardcoded JSX met complexe opmaak. Om de volledige tekst bewerkbaar te maken, wordt de content opgeslagen in de database en gerenderd als Markdown.
-
----
-
-## 1. Database Aanpassing
-
-**Bestaande `app_settings` tabel gebruiken:**
-- Key `seo_guide_title` hernoemen naar `seo_guide_content`
-- Volledige handleiding opslaan als Markdown
+**Nieuwe tabel:** `app_settings`
 
 ```sql
-UPDATE public.app_settings 
-SET key = 'seo_guide_content', 
-    value = '# SEO blog handleiding
+CREATE TABLE public.app_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  key text UNIQUE NOT NULL,
+  value text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
 
-Volg deze stappen om het SEO-dashboard voor een nieuw bedrijf te configureren...
+-- RLS inschakelen
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
-## Belangrijk: ID''s ophalen uit URL
+-- Iedereen mag lezen
+CREATE POLICY "Anyone can read settings" ON public.app_settings
+  FOR SELECT TO authenticated USING (true);
 
-Voor de configuratie heb je verschillende ID''s nodig...
+-- Alleen super_admin mag schrijven
+CREATE POLICY "Super admins can update settings" ON public.app_settings
+  FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'super_admin'));
 
-### Spreadsheet ID & Grid ID
-...'
-WHERE key = 'seo_guide_title';
+-- Initiële waarde invoegen
+INSERT INTO public.app_settings (key, value) 
+VALUES ('seo_guide_title', 'SEO blog handleiding');
 ```
 
 ---
 
-## 2. Markdown Rendering Library
+## 2. Frontend Wijzigingen
 
-**Nieuwe dependency toevoegen:**
-```bash
-npm install react-markdown
-```
+### Bestand: `src/pages/SeoBlog.tsx`
 
-Dit maakt het mogelijk om opgeslagen Markdown om te zetten naar gestylde HTML.
-
----
-
-## 3. Frontend Wijzigingen (`src/pages/SeoBlog.tsx`)
-
-### State aanpassen:
+**Imports toevoegen:**
 ```typescript
-const [guideContent, setGuideContent] = useState('');
-const [isEditingGuide, setIsEditingGuide] = useState(false);
-const [editedContent, setEditedContent] = useState('');
+import { Pencil, Save } from 'lucide-react';
 ```
 
-### SheetContent structuur:
+**isSuperAdmin uit useAuth halen:**
+```typescript
+const { isLoading: authLoading, user, isAdmin, isSuperAdmin } = useAuth();
+```
 
-```tsx
-<SheetContent className="...">
-  {/* Header met titel en bewerkknop rechtsboven */}
-  <div className="flex items-center justify-between">
-    <SheetTitle className="text-white text-xl">
-      SEO blog handleiding
-    </SheetTitle>
+**Nieuwe state variabelen:**
+```typescript
+const [guideTitle, setGuideTitle] = useState('SEO blog handleiding');
+const [isEditingTitle, setIsEditingTitle] = useState(false);
+const [editedTitle, setEditedTitle] = useState('');
+const [isSavingTitle, setIsSavingTitle] = useState(false);
+```
+
+**Titel laden bij mount:**
+```typescript
+useEffect(() => {
+  const loadGuideTitle = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'seo_guide_title')
+      .single();
     
-    {isSuperAdmin && !isEditingGuide && (
-      <button
-        onClick={() => {
-          setEditedContent(guideContent);
-          setIsEditingGuide(true);
-        }}
-        className="p-2 rounded hover:bg-white/10"
-      >
-        <Pencil className="h-4 w-4 text-white/60" />
-      </button>
+    if (data?.value) {
+      setGuideTitle(data.value);
+    }
+  };
+  loadGuideTitle();
+}, []);
+```
+
+**Opslaan functie:**
+```typescript
+const handleSaveTitle = async () => {
+  if (!editedTitle.trim()) return;
+  
+  setIsSavingTitle(true);
+  const { error } = await supabase
+    .from('app_settings')
+    .update({ value: editedTitle.trim(), updated_at: new Date().toISOString() })
+    .eq('key', 'seo_guide_title');
+  
+  if (!error) {
+    setGuideTitle(editedTitle.trim());
+    setIsEditingTitle(false);
+  }
+  setIsSavingTitle(false);
+};
+```
+
+**SheetTitle vervangen (regel 403-405):**
+
+Van:
+```tsx
+<SheetHeader>
+  <SheetTitle className="text-white text-xl">SEO blog handleiding</SheetTitle>
+</SheetHeader>
+```
+
+Naar:
+```tsx
+<SheetHeader>
+  <SheetTitle className="text-white text-xl flex items-center gap-2 group">
+    {isEditingTitle ? (
+      <>
+        <input
+          type="text"
+          value={editedTitle}
+          onChange={(e) => setEditedTitle(e.target.value)}
+          className="bg-white/10 border border-white/20 rounded px-2 py-1 text-white focus:outline-none focus:border-white/40"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSaveTitle();
+            if (e.key === 'Escape') setIsEditingTitle(false);
+          }}
+        />
+        <button
+          onClick={handleSaveTitle}
+          disabled={isSavingTitle}
+          className="p-1 rounded hover:bg-white/10 text-green-400"
+          title="Opslaan"
+        >
+          <Save className="h-4 w-4" />
+        </button>
+      </>
+    ) : (
+      <>
+        {guideTitle}
+        {isSuperAdmin && (
+          <button
+            onClick={() => {
+              setEditedTitle(guideTitle);
+              setIsEditingTitle(true);
+            }}
+            className="p-1 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Bewerken"
+          >
+            <Pencil className="h-4 w-4 text-white/60" />
+          </button>
+        )}
+      </>
     )}
-  </div>
-
-  {/* Content gebied */}
-  {isEditingGuide ? (
-    <div className="mt-4 space-y-4">
-      <textarea
-        value={editedContent}
-        onChange={(e) => setEditedContent(e.target.value)}
-        className="w-full h-[500px] bg-white/10 border border-white/20 rounded p-4 text-white text-sm font-mono"
-      />
-      <div className="flex gap-2">
-        <Button onClick={handleSaveContent}>
-          <Save className="h-4 w-4 mr-2" /> Opslaan
-        </Button>
-        <Button variant="ghost" onClick={() => setIsEditingGuide(false)}>
-          Annuleren
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <div className="mt-6 prose prose-invert">
-      <ReactMarkdown>{guideContent}</ReactMarkdown>
-    </div>
-  )}
-</SheetContent>
-```
-
-### Styling voor Markdown:
-
-```css
-/* Toevoegen aan index.css of inline */
-.prose-invert h2 { @apply text-lg font-semibold text-white mt-6 mb-3; }
-.prose-invert h3 { @apply text-base font-medium text-white/90 mt-4 mb-2; }
-.prose-invert p { @apply text-sm text-white/70 mb-2; }
-.prose-invert ul { @apply list-disc pl-4 text-sm text-white/60; }
-.prose-invert code { @apply bg-white/10 px-1 rounded text-xs; }
-```
-
----
-
-## 4. Initiële Content Migratie
-
-De huidige hardcoded handleiding wordt omgezet naar Markdown en opgeslagen in de database:
-
-```markdown
-# SEO blog handleiding
-
-Volg deze stappen om het SEO-dashboard voor een nieuw bedrijf te configureren. Na configuratie voert het systeem automatisch zoekwoordonderzoek uit en worden er SEO-geoptimaliseerde blogs gegenereerd.
-
-## Belangrijk: ID's ophalen uit URL
-
-Voor de configuratie heb je verschillende ID's nodig die je rechtstreeks uit de adresbalk van je browser kopieert.
-
-### Spreadsheet ID & Grid ID
-
-Voorbeeld URL:
-`https://docs.google.com/spreadsheets/d/1u8Bm5XsTkAQBK4DYFgHjDMQMKLhbyeDVaG6JXcotLKk/edit?gid=0#gid=0`
-
-- **Spreadsheet ID**: De lange reeks tussen `/d/` en `/edit`
-- **Grid ID (gid)**: Het getal achter `gid=`
-
-...
+  </SheetTitle>
+</SheetHeader>
 ```
 
 ---
@@ -148,11 +162,11 @@ Voorbeeld URL:
 
 | Actie | Resultaat |
 |-------|-----------|
-| Open handleiding | Titel + content in Markdown-stijl |
-| Super Admin ziet | Potloodicoon rechtsboven |
-| Klik op potlood | Textarea met volledige Markdown |
-| Bewerk en klik Opslaan | Content wordt opgeslagen |
-| Annuleren | Terug naar leesmodus |
+| Hover over titel (niet super admin) | Geen verandering |
+| Hover over titel (super admin) | Potloodicoon verschijnt |
+| Klik op potlood | Invoerveld verschijnt met huidige tekst |
+| Druk op Enter of klik opslaan | Titel wordt opgeslagen in database |
+| Druk op Escape | Bewerkingsmodus geannuleerd |
 
 ---
 
@@ -160,8 +174,5 @@ Voorbeeld URL:
 
 | Bestand | Wijziging |
 |---------|-----------|
-| `package.json` | `react-markdown` dependency |
-| Database migratie | Content key update + initiële Markdown |
-| `src/pages/SeoBlog.tsx` | Nieuwe edit-modus + Markdown rendering |
-| `src/index.css` | Prose styling voor Markdown |
-
+| Database migratie | `app_settings` tabel aanmaken |
+| `src/pages/SeoBlog.tsx` | Bewerkbare titel met hover potlood |
