@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.run-scheduled-alt-text]
 verify_jwt = false
+
+[functions.trigger-leads-webhook]
+verify_jwt = false
