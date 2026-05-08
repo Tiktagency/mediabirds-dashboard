@@ -188,6 +188,7 @@ export type Database = {
           id: string
           post_blog_url: string | null
           schrijfstijl: string | null
+          status: string | null
           taal: string | null
           updated_at: string
         }
@@ -203,6 +204,7 @@ export type Database = {
           id?: string
           post_blog_url?: string | null
           schrijfstijl?: string | null
+          status?: string | null
           taal?: string | null
           updated_at?: string
         }
@@ -218,6 +220,7 @@ export type Database = {
           id?: string
           post_blog_url?: string | null
           schrijfstijl?: string | null
+          status?: string | null
           taal?: string | null
           updated_at?: string
         }
