@@ -181,10 +181,8 @@ const LandingCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
         .from('landing_companies')
         .insert({
           name: newCompanyName.trim(),
-          domain: newCompanyDomain.trim(),
-          app_password: newCompanyPassword.trim(),
-          spreadsheet_id: newSpreadsheetId.trim() || null,
-          grid_id: newGridId.trim() || null,
+          domain: newCompanyDomain.trim() || null,
+          app_password: newCompanyPassword.trim() || null,
         })
         .select()
         .single();
@@ -301,34 +299,6 @@ const LandingCompanySelector = ({ onSelect, selectedCompany: externalSelectedCom
                 value={newCompanyDomain}
                 onChange={(e) => setNewCompanyDomain(e.target.value)}
                 placeholder="bijv. mediabirds.nl"
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/70">Applicatie wachtwoord</Label>
-              <Input
-                type="password"
-                value={newCompanyPassword}
-                onChange={(e) => setNewCompanyPassword(e.target.value)}
-                placeholder="abcd efgh ijkl 1234"
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/70">Spreadsheet ID</Label>
-              <Input
-                value={newSpreadsheetId}
-                onChange={(e) => setNewSpreadsheetId(e.target.value)}
-                placeholder="Google Spreadsheet ID"
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/70">Grid ID</Label>
-              <Input
-                value={newGridId}
-                onChange={(e) => setNewGridId(e.target.value)}
-                placeholder="Google Grid ID"
                 className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
