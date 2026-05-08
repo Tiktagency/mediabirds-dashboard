@@ -119,6 +119,36 @@ const Index = () => {
     }
   }, [user]);
 
+  // Log new session visits (not refreshes) using sessionStorage
+  useEffect(() => {
+    if (!user || isLoading) return;
+
+    const alreadyLogged = sessionStorage.getItem('session_logged');
+    if (alreadyLogged) return;
+
+    const logVisit = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      const displayName = profile?.first_name
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+        : user.email;
+
+      await supabase.from('login_logs').insert({
+        user_id: user.id,
+        email: user.email,
+        display_name: displayName,
+      });
+
+      sessionStorage.setItem('session_logged', 'true');
+    };
+
+    logVisit();
+  }, [user, isLoading]);
+
 
   // Apply theme from settings
   useEffect(() => {
