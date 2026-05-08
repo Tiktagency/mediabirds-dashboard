@@ -1,39 +1,24 @@
 
-# Plan: HTML Code Card Uitlijnen met Functie-veld
+
+# Plan: HTML Code Card Hoogte Beperken tot Formulier
 
 ## Probleem
 
-De huidige layout heeft het Preview-paneel als `flex-1` waardoor deze alle ruimte inneemt. De gebruiker wil:
-- De HTML Code card hoger laten beginnen (op niveau van "Functie" veld)
-- De HTML Code card laten eindigen op het niveau van "Afbeeldingen" sectie
-- De Preview card alleen de ruimte gebruiken die nodig is
+De HTML Code card groeit onbeperkt naar beneden door `flex-1`. De gebruiker wil dat deze card eindigt op dezelfde hoogte als het formulier (bij de Afbeeldingen sectie), niet bij de submit-knop.
 
 ---
 
-## Huidige vs Gewenste Layout
+## Huidige Situatie
 
-```
-Formulier (midden)          |  Rechterkolom (huidig)    |  Rechterkolom (gewenst)
-----------------------------|---------------------------|---------------------------
-[Handtekening naam]         |                           |
-[Voornaam / Achternaam]     |  [Preview                 |  [Preview - klein]
-[Email]                     |   (flex-1, neemt          |
-[Functie]         <---------|   alle ruimte)]           |  [HTML Code    
-[Telefoonnummer]            |                           |   (flex-1, begint
-[Website]                   |                           |    bij Functie)]
-[Plaatsnaam]                |                           |
-[Social Links]              |                           |
-[Kleuren]                   |                           |
-[Afbeeldingen]    <---------|  [HTML Code]              |   eindigt hier]
-[Submit knop]               |                           |
-```
+De rechterkolom heeft `flex flex-col` met `flex-1` op de HTML Code card, waardoor deze onbeperkt groeit voorbij de hoogte van het middelste formulier.
 
 ---
 
 ## Oplossing
 
-1. Verwijder `flex-1` van de Preview card - deze neemt dan alleen zijn natuurlijke hoogte
-2. Voeg `flex-1` toe aan de HTML Code card zodat deze de resterende ruimte inneemt
+1. Voeg `overflow-hidden` toe aan de rechterkolom container zodat de inhoud wordt beperkt tot de grid cel hoogte
+2. Behoud `flex-1` op de HTML Code card zodat deze de resterende ruimte gebruikt
+3. De grid zorgt ervoor dat kolommen dezelfde hoogte hebben als de hoogste kolom
 
 ---
 
@@ -41,71 +26,36 @@ Formulier (midden)          |  Rechterkolom (huidig)    |  Rechterkolom (gewenst
 
 **Bestand: `src/pages/EmailSignature.tsx`**
 
-### Preview Card - verwijder flex-grow (regel 82)
+### Rechterkolom container aanpassen (regel 80)
 
 Van:
 ```tsx
-<Card className="bg-white/5 border-white/10 flex-1 flex flex-col">
+<div className="order-3 flex flex-col gap-4">
 ```
 
 Naar:
 ```tsx
-<Card className="bg-white/5 border-white/10">
+<div className="order-3 flex flex-col gap-4 overflow-hidden">
 ```
 
-### Preview CardContent - verwijder flex-1 (regel 86)
+### HTML Code inner container min-height toevoegen (regel 147)
 
 Van:
-```tsx
-<CardContent className="flex-1">
-```
-
-Naar:
-```tsx
-<CardContent>
-```
-
-### HTML Code Card - voeg flex-grow toe (regel 109)
-
-Van:
-```tsx
-<Card className="bg-white/5 border-white/10">
-```
-
-Naar:
-```tsx
-<Card className="bg-white/5 border-white/10 flex-1 flex flex-col">
-```
-
-### HTML Code CardContent - voeg flex-1 toe (regel 120)
-
-Van:
-```tsx
-<CardContent>
-```
-
-Naar:
-```tsx
-<CardContent className="flex-1 flex flex-col">
-```
-
-### HTML Code container - voeg flex-1 toe (regel 121)
-
-Van:
-```tsx
-<div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 min-h-[200px] max-h-[300px] overflow-auto">
-```
-
-Naar:
 ```tsx
 <div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 flex-1 overflow-auto">
+```
+
+Naar:
+```tsx
+<div className="bg-black/30 rounded-lg p-4 font-mono text-sm text-white/70 flex-1 overflow-auto min-h-0">
 ```
 
 ---
 
 ## Resultaat
 
-- Preview card blijft compact bovenaan
-- HTML Code card neemt de resterende ruimte in
-- HTML Code card begint visueel op het niveau van het Functie veld
-- HTML Code card eindigt op het niveau van de Afbeeldingen sectie
+- De rechterkolom wordt beperkt tot de hoogte van het formulier
+- De HTML Code card neemt de beschikbare ruimte in (na de Preview)
+- Als de HTML code te lang is, wordt het scrollbaar binnen de card
+- De submit-knop blijft onder het formulier, niet uitgelijnd met de HTML Code card
+
