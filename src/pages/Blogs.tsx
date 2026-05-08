@@ -432,7 +432,7 @@ const Blogs = () => {
               <div 
                 className={`flex-1 px-3 py-2 rounded-md text-white/80 h-[40px] overflow-hidden whitespace-nowrap text-ellipsis cursor-pointer hover:bg-white/10 transition-colors ${
                   field === 'bedrijfsnaam' 
-                    ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-transparent bg-clip-padding [background:linear-gradient(to_right,rgba(139,92,246,0.1),rgba(236,72,153,0.1))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
+                    ? 'bg-white/5 border-2 border-transparent [background:linear-gradient(hsl(var(--background)),hsl(var(--background)))_padding-box,linear-gradient(135deg,#8b5cf6,#ec4899,#8b5cf6)_border-box]' 
                     : 'bg-white/5 border border-white/10'
                 }`}
                 onClick={() => setExpandedField(field)}
