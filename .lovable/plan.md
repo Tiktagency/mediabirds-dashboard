@@ -1,46 +1,40 @@
 
-## Plan: Firecrawl vervangen door AI-gebaseerde kleurextractie
+## Plan: Nauwkeurigere kleurextractie voor subtekst, kaart achtergrond, secundaire kleur en achtergrond
 
-### Aanpak
+### Kernprobleem
+De AI krijgt te vage omschrijvingen voor de vier lastige velden. Hierdoor raadt de AI kleuren die niet overeenkomen met wat er visueel op de website staat. De oplossing zit volledig in betere prompt-instructies en tool descriptions.
 
-In plaats van Firecrawl:
-1. De edge function haalt de HTML van de website op via een gewone `fetch`
-2. De HTML wordt doorgegeven aan Gemini (via de Lovable AI Gateway) met een gedetailleerde prompt
-3. De AI analyseert de HTML en extraheert de 10 kleurvelden als gestructureerde JSON via tool calling
-4. De Firecrawl connector wordt losgekoppeld van het project
+### Verbeterde beschrijvingen per veld
 
-### Waarom dit beter werkt
+**`achtergrond_kleur`** — Huidige beschrijving is te generiek. Verbetering: expliciet instrueren dat dit de `background-color` van `<body>`, `html` of de buitenste wrapper `<div>` is. CSS-variabelen zoals `--background`, `--bg-color`, `--body-bg` zijn goede bronnen. Moet de kleur zijn die je ziet als je naar de lege pagina kijkt vóór enige content.
 
-- Geen afhankelijkheid van externe betaalde API (Firecrawl)
-- AI begrijpt context: "dit is een knop", "dit is tekst", "dit is een achtergrond"
-- De AI kan de instructie "geen kleuren uit afbeeldingen" naleven
-- Tool calling geeft altijd gestructureerde, gevalideerde JSON terug
+**`kaart_achtergrond`** — AI interpreteert dit te breed. Verbetering: expliciete instructie dat dit de achtergrond is van herhalende content-blokken (`.card`, `.block`, `section` met een eigen achtergrond). Als de kaartachtergrond gelijk is aan de pagina-achtergrond, mag de pagina-achtergrond worden gebruikt. Mag dezelfde kleur zijn als `achtergrond_kleur`.
 
-### Nieuwe edge function logica
+**`secundaire_kleur`** — AI verzint een kleur als die niet duidelijk aanwezig is. Verbetering: instructie dat als er geen duidelijke secundaire merkkleur is, dezelfde kleur als `primaire_kleur` of een donkere/lichte variant van de primaire kleur moet worden gebruikt — nooit een willekeurige kleur.
 
-```
-1. Fetch HTML van de website (plain fetch, geen scraping service)
-2. Strip zware tags (script, style inhoud verwijderen is niet nodig — CSS inline stijlen zijn juist nuttig)
-3. Stuur HTML naar Gemini met tool calling om de 10 kleuren te extraheren
-4. Valideer de teruggestuurde kleuren (toHex helper blijft behouden)
-5. Return de gekoppelde kleuren
-```
+**`subtekst_kleur`** — AI gebruikt soms de hoofdtekstkleur. Verbetering: expliciete instructie te zoeken naar `color` van `.subtitle`, `.meta`, `.caption`, `p.secondary`, `span.muted`, of CSS-variabelen zoals `--text-secondary`, `--muted`, `--text-muted`. Als geen subtekstkleur bestaat, mag een lichter grijstint van de `tekst_kleur` worden gebruikt (bijv. als `tekst_kleur` donkergrijs is, gebruik dan `#6B7280` of vergelijkbaar).
 
-### Prompt voor de AI
+### Aanpak: Twee-staps analyse
 
-De prompt instrueert expliciet:
-- Analyseer alleen CSS-kleuren van achtergronden, tekst, knoppen en vaste vormen
-- **Geen kleuren van afbeeldingen of SVG-fills die afbeeldingen zijn**
-- Knoppen hebben bijna altijd witte tekst
-- Dezelfde kleur mag voor meerdere velden worden gebruikt
-- Return als tool call met de 10 velden
+In plaats van alles in één prompt te vragen, voeg ik aan de system prompt een **expliciete analysevolgorde** toe:
+1. Eerst: zoek CSS-variabelen in `<style>` tags (meest betrouwbare bron)
+2. Dan: zoek inline styles op herkenbare elementen
+3. Dan: zoek Tailwind/Bootstrap klassen
+4. Voor de vier probleemvelden: schrijf expliciet welke HTML-elementen en CSS-properties relevant zijn
 
-### Bestanden
+### Aanvullend: CSS-variabelen pre-extractie
+
+De HTML wordt tot 80.000 tekens ingekort, maar `<style>` tags met CSS-variabelen staan bovenaan. Ik voeg een **pre-extractiestap** toe die alle CSS `<style>` tag inhoud en inline CSS-variabelen bovenaan de prompt plaatst, zodat de AI de meest relevante CSS altijd ziet — ook als de body HTML afgekapt wordt.
+
+### Bestand
 
 | Bestand | Aanpassing |
 |---|---|
-| `supabase/functions/extract-brand-colors/index.ts` | Volledig herschrijven: Firecrawl → fetch HTML + Gemini AI |
+| `supabase/functions/extract-brand-colors/index.ts` | System prompt verfijnen, tool descriptions verbeteren, CSS pre-extractie toevoegen |
 
-### Firecrawl connector
+### Concrete wijzigingen
 
-Na de implementatie wordt de Firecrawl connector losgekoppeld via de connector settings. Dit is een actie die de gebruiker zelf uitvoert in Settings → Connectors.
+1. **Pre-extractie van `<style>` tags**: alle `<style>` blokken apart extracten en bovenaan de prompt zetten
+2. **Verbeterde tool descriptions** met concrete voorbeelden van HTML/CSS-selectors per veld
+3. **Strengere system prompt** met expliciete instructies voor de vier probleemvelden
+4. **`toHex` stricter maken**: 3-karakter hex expanden naar 6 tekens (`#F0A` → `#FF00AA`)
