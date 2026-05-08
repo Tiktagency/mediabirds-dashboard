@@ -1,120 +1,134 @@
 
-# Plan: Knopkleuren Toepassen in Hele Applicatie
+# Plan: Knopkleuren Toepassen op Alle Primaire Knoppen
 
-## Probleem
+## Overzicht
 
-De knopkleuren die in het Admin Panel worden ingesteld, werken alleen in de preview binnen het admin panel zelf. Knoppen zoals "Emailhandtekening genereren" op andere pagina's gebruiken nog steeds de standaard `bg-primary` kleur.
-
----
-
-## Oplossing
-
-Pas de opgeslagen knopkleuren toe via CSS variabelen die globaal worden ingesteld. Dit zorgt ervoor dat alle primaire knoppen in de applicatie automatisch de aangepaste kleuren gebruiken.
+De `primaryCustom` button variant toepassen op alle hoofdacties in de applicatie, zodat de in het Admin Panel ingestelde knopkleuren overal worden gebruikt.
 
 ---
 
-## Technische Aanpak
+## Te Wijzigen Bestanden
 
-### 1. Nieuwe hook: `useApplyButtonColors`
+### 1. Monday Planning (`src/pages/MondayPlanning.tsx`)
 
-Maak een hook die de knopkleuren uit dashboard settings haalt en als CSS variabelen toepast:
-
-```typescript
-// src/hooks/useApplyButtonColors.ts
-export const useApplyButtonColors = () => {
-  const { settings } = useDashboardSettings();
-  
-  useEffect(() => {
-    const root = document.documentElement;
-    const colors = settings?.button_colors;
-    
-    if (colors?.background) {
-      root.style.setProperty('--button-primary-bg', colors.background);
-    }
-    if (colors?.text) {
-      root.style.setProperty('--button-primary-text', colors.text);
-    }
-  }, [settings?.button_colors]);
-};
-```
-
-### 2. Hook toepassen in App.tsx
-
-Wrap de applicatie met een component dat de hook aanroept:
-
-```typescript
-const AppContent = () => {
-  useApplyButtonColors();
-  return (
-    <Routes>
-      {/* ... routes */}
-    </Routes>
-  );
-};
-```
-
-### 3. CSS variabelen toevoegen aan index.css
-
-Voeg default waarden en een custom class toe:
-
-```css
-:root {
-  --button-primary-bg: #cfddd0;
-  --button-primary-text: #002C1F;
-}
-
-.btn-primary-custom {
-  background-color: var(--button-primary-bg) !important;
-  color: var(--button-primary-text) !important;
-}
-
-.btn-primary-custom:hover {
-  opacity: 0.9;
-}
-```
-
-### 4. Button variant toevoegen
-
-Voeg een "primaryCustom" variant toe aan de Button component die de CSS variabelen gebruikt:
-
-```typescript
-// In buttonVariants
-primaryCustom: "bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:opacity-90",
-```
-
-### 5. Knoppen updaten
-
-Pas de belangrijkste primaire knoppen aan om de custom variant te gebruiken:
-
-**EmailSignatureForm.tsx:**
+**Regel 230-243** - "Start" knop:
 ```tsx
+// Van:
 <Button
-  type="submit"
-  variant="primaryCustom"  // Was: className="bg-primary hover:bg-primary/90"
-  disabled={isSending || !isValid}
+  onClick={handleSubmit}
+  disabled={!isFormValid || isSubmitting}
+  className="w-full mt-4"
+>
+
+// Naar:
+<Button
+  onClick={handleSubmit}
+  disabled={!isFormValid || isSubmitting}
+  variant="primaryCustom"
+  className="w-full mt-4"
+>
+```
+
+---
+
+### 2. Copyright Branding (`src/components/copyright-branding/CopyrightBrandingForm.tsx`)
+
+**Regel 225-241** - "Genereer tekst" knop:
+```tsx
+// Van:
+<Button
+  onClick={handleSubmit}
+  disabled={isLoading}
+  className="w-full"
+>
+
+// Naar:
+<Button
+  onClick={handleSubmit}
+  disabled={isLoading}
+  variant="primaryCustom"
   className="w-full"
 >
 ```
 
-Andere pagina's met primaire actieknoppen worden ook bijgewerkt.
+**Regel 327-343** - "Herschrijf tekst" knop:
+```tsx
+// Van:
+<Button
+  onClick={handleSubmit}
+  disabled={isLoading}
+  className="w-full"
+>
+
+// Naar:
+<Button
+  onClick={handleSubmit}
+  disabled={isLoading}
+  variant="primaryCustom"
+  className="w-full"
+>
+```
 
 ---
 
-## Bestanden
+### 3. SEO Zoekwoord Onderzoek (`src/components/seo-blog/KeywordResearchForm.tsx`)
 
-| Bestand | Actie |
-|---------|-------|
-| `src/hooks/useApplyButtonColors.ts` | Nieuw - hook voor CSS variabelen |
-| `src/App.tsx` | Hook integreren |
-| `src/index.css` | CSS variabelen toevoegen |
-| `src/components/ui/button.tsx` | `primaryCustom` variant toevoegen |
-| `src/components/email-signature/EmailSignatureForm.tsx` | Button variant updaten |
-| Andere pagina's met primaire knoppen | Button variant updaten |
+**Regel 563-584** - "Start SEO onderzoek" knop:
+```tsx
+// Van:
+<Button
+  onClick={handleStartResearch}
+  disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+  className="w-full seo-button-primary gap-2"
+>
+
+// Naar:
+<Button
+  onClick={handleStartResearch}
+  disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+  variant="primaryCustom"
+  className="w-full gap-2"
+>
+```
+
+---
+
+### 4. SEO Blog Generatie (`src/components/seo-blog/BlogGenerationForm.tsx`)
+
+**Regel 728-744** - "Start" knop:
+```tsx
+// Van:
+<Button 
+  size="lg" 
+  className="w-full py-6 text-lg h-auto"
+  onClick={handleStartClick}
+  disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+>
+
+// Naar:
+<Button 
+  size="lg"
+  variant="primaryCustom"
+  className="w-full py-6 text-lg h-auto"
+  onClick={handleStartClick}
+  disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+>
+```
+
+---
+
+## Samenvatting
+
+| Bestand | Knop | Actie |
+|---------|------|-------|
+| `MondayPlanning.tsx` | "Start" | `variant="primaryCustom"` toevoegen |
+| `CopyrightBrandingForm.tsx` | "Genereer tekst" | `variant="primaryCustom"` toevoegen |
+| `CopyrightBrandingForm.tsx` | "Herschrijf tekst" | `variant="primaryCustom"` toevoegen |
+| `KeywordResearchForm.tsx` | "Start SEO onderzoek" | `variant="primaryCustom"` + `seo-button-primary` verwijderen |
+| `BlogGenerationForm.tsx` | "Start" | `variant="primaryCustom"` toevoegen |
 
 ---
 
 ## Resultaat
 
-- Knopkleuren ingesteld in Admin Panel worden direct toegepast op alle primaire knoppen
-- "Emailhandtekening genereren" en vergelijkbare knoppen krijgen automatisch de ingestelde kleuren
-- Fallback naar default sage green (#cfddd0) als er geen custom kleuren zijn ingesteld
+Na deze wijzigingen gebruiken alle primaire actieknoppen in de applicatie de kleuren die in het Admin Panel zijn ingesteld via de "Knopkleuren" customizer.
