@@ -137,7 +137,7 @@ export const PageUrlForm = ({
         bedrijfsnaam: selectedCompany.name,
         spreadsheet_id: googleSheetId,
         grid_id: googleFileId,
-        page_urls: pageUrls,
+        page_urls: urls.filter(url => url.trim()).map(url => url.trim()),
       };
 
       const response = await fetch(WEBHOOK_URL, {
