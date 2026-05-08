@@ -68,15 +68,32 @@ serve(async (req) => {
       settings_id: settingsId || null,
     };
 
-    // Await the webhook response directly
-    const webhookResponse = await fetch(NEWSLETTER_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { 'Authorization': authToken } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
+    // Await the webhook response directly — 4 minuten timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 240_000);
+
+    let webhookResponse: Response;
+    try {
+      webhookResponse = await fetch(NEWSLETTER_WEBHOOK_URL, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': authToken } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        return new Response(JSON.stringify({ error: 'Timeout: nieuwsbrief generatie duurde langer dan 4 minuten' }), {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
 
     if (!webhookResponse.ok) {
       const errorText = await webhookResponse.text();
