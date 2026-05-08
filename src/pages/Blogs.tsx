@@ -314,12 +314,14 @@ const Blogs = () => {
     field: 'bedrijfsnaam' | 'bedrijfsomschrijving' | 'schrijfstijl' | 'taal' | 'afbeelding_prompt' | 'get_afbeelding_url' | 'post_blog_url',
     label: string,
     type: 'text' | 'textarea' | 'select' = 'text',
-    adminOnly: boolean = false
+    adminOnly: boolean = false,
+    largeSize: boolean = false
   ) => {
     const isEditing = editingField === field;
     const value = formData[field];
     const canEdit = adminOnly ? isAdmin : isAdmin; // Admin fields only editable by admins
     const isLargeTextField = type === 'textarea';
+    const fieldHeight = largeSize ? 'h-[120px]' : 'h-[80px]';
 
     return (
       <div className="space-y-2">
@@ -336,7 +338,7 @@ const Blogs = () => {
               <Textarea
                 value={value}
                 onChange={(e) => setFormData(prev => ({ ...prev, [field]: e.target.value }))}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-[80px] resize-none"
+                className={`flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 ${fieldHeight} resize-none`}
               />
             ) : type === 'select' ? (
               <Select
@@ -381,7 +383,7 @@ const Blogs = () => {
         ) : (
           <div className="flex items-start gap-2">
             <div className={`flex-1 px-3 py-2 rounded-md bg-white/5 border border-white/10 text-white/80 ${
-              isLargeTextField ? 'h-[80px] overflow-y-auto whitespace-pre-wrap' : 'min-h-[40px] flex items-center'
+              isLargeTextField ? `${fieldHeight} overflow-y-auto whitespace-pre-wrap` : 'min-h-[40px] flex items-center'
             }`}>
               {value || <span className="text-white/40 italic">Niet ingesteld</span>}
             </div>
@@ -524,15 +526,15 @@ const Blogs = () => {
           <div className="w-full max-w-2xl space-y-6">
             {/* Regular fields */}
             {renderField('bedrijfsnaam', 'Bedrijfsnaam')}
-            {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea')}
+            {renderField('bedrijfsomschrijving', 'Bedrijfsomschrijving', 'textarea', false, true)}
             {renderField('schrijfstijl', 'Schrijfstijl')}
             {renderRangeField()}
             {renderField('taal', 'Taal', 'select')}
             
             {/* Admin-only fields - visible to all, editable by admins only */}
-            <div className="pt-4 border-t border-white/10">
-              <p className="text-sm text-yellow-400/80 mb-4">Admin instellingen</p>
-              {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true)}
+            <div className="pt-6 border-t border-white/10 space-y-6">
+              <p className="text-sm text-yellow-400/80">Admin instellingen</p>
+              {renderField('afbeelding_prompt', 'Afbeelding prompt', 'textarea', true, true)}
               {renderField('get_afbeelding_url', 'POST afbeelding URL', 'text', true)}
               {renderField('post_blog_url', 'POST blog URL', 'text', true)}
             </div>
