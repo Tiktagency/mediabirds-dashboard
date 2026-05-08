@@ -127,8 +127,10 @@ Deno.serve(async (req) => {
           get_afbeelding_url: blogSettings.get_afbeelding_url || '',
           post_blog_url: blogSettings.post_blog_url || '',
           status: blogSettings.status || 'draft',
-          google_sheet_id: blogSettings.google_sheet_id || '',
-          google_slides_id: blogSettings.google_slides_id || '',
+          hoofd_google_sheet_id: blogSettings.hoofd_google_sheet_id || '',
+          hoofd_google_slides_id: blogSettings.hoofd_google_slides_id || '',
+          nieuw_google_sheet_id: blogSettings.nieuw_google_sheet_id || '',
+          nieuw_google_slides_id: blogSettings.nieuw_google_slides_id || '',
           Category: (blogCategories || []).reduce((acc: Record<string, string>, cat: { label: string; value: string }) => {
             acc[cat.label] = cat.value;
             return acc;
