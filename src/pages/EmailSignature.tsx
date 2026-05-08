@@ -7,6 +7,7 @@ import { SignatureList } from '@/components/email-signature/SignatureList';
 import { useEmailSignatureSettings } from '@/hooks/useEmailSignatureSettings';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Copy, Check, Plus } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const cleanHtmlForCopy = (html: string): string => {
   let cleaned = html;
@@ -200,7 +201,7 @@ const EmailSignature = () => {
                     ref={previewRef}
                     className="origin-top-left scale-[0.65] select-text cursor-text"
                     style={{ width: '154%' }}
-                    dangerouslySetInnerHTML={{ __html: generatedHtml }} 
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generatedHtml, { USE_PROFILES: { html: true } }) }} 
                   />
                     ) : (
                       <span className="text-gray-400">
