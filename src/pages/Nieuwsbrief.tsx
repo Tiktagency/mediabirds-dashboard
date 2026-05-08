@@ -709,21 +709,21 @@ const Nieuwsbrief = () => {
                     </div>
 
                     {/* Sectie 6 — Footer */}
-                    <div style={{ padding: '20px 28px', backgroundColor: localColors.achtergrond_kleur, textAlign: 'center' }}>
-                      <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.tekst_kleur, margin: '0 0 2px 0' }}>
+                    <div style={{ padding: '20px 28px', backgroundColor: localColors.footer_achtergrond, textAlign: 'center' }}>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: localColors.footer_tekst_kleur, margin: '0 0 2px 0' }}>
                         {localData.bedrijfsnaam || 'Bedrijfsnaam'}
                       </p>
-                      <p style={{ fontSize: '11px', color: localColors.tekst_kleur, margin: '0 0 4px 0' }}>
+                      <p style={{ fontSize: '11px', color: localColors.footer_tekst_kleur, margin: '0 0 4px 0' }}>
                         {localData.tagline || 'Jouw tagline hier'}
                       </p>
                       <a href="#" style={{ fontSize: '11px', color: localColors.primaire_kleur, textDecoration: 'none' }}>
                         {localData.website || 'www.jouwwebsite.nl'}
                       </a>
-                      <div style={{ height: '1px', backgroundColor: localColors.subtekst_kleur, opacity: 0.2, margin: '12px 0' }} />
-                      <p style={{ fontSize: '10px', color: localColors.subtekst_kleur, margin: '0 0 2px 0' }}>
+                      <div style={{ height: '1px', backgroundColor: localColors.footer_tekst_kleur, opacity: 0.2, margin: '12px 0' }} />
+                      <p style={{ fontSize: '10px', color: localColors.footer_tekst_kleur, margin: '0 0 2px 0' }}>
                         Afmelden van deze nieuwsbrief
                       </p>
-                      <p style={{ fontSize: '10px', color: localColors.subtekst_kleur, margin: 0 }}>
+                      <p style={{ fontSize: '10px', color: localColors.footer_tekst_kleur, margin: 0 }}>
                         © {new Date().getFullYear()} {localData.bedrijfsnaam || 'Bedrijfsnaam'}. Alle rechten voorbehouden.
                       </p>
                     </div>
