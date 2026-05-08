@@ -21,6 +21,7 @@ export interface DashboardSettings {
   };
   tile_colors: TileColors;
   saved_hours_colors: TileColors;
+  button_colors: TileColors;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +36,11 @@ const DEFAULT_SAVED_HOURS_COLORS: TileColors = {
   text: '#412700',
 };
 
+const DEFAULT_BUTTON_COLORS: TileColors = {
+  background: '#cfddd0',
+  text: '#002C1F',
+};
+
 const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
   tile_order: ['saved-hours', 'monday-planning', 'seo-blog', 'wordpress-alt-text', 'chatbot', 'copyright-branding'],
   custom_labels: {},
@@ -47,6 +53,7 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   },
   tile_colors: DEFAULT_TILE_COLORS,
   saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
+  button_colors: DEFAULT_BUTTON_COLORS,
 };
 
 export const useDashboardSettings = () => {
@@ -77,6 +84,7 @@ export const useDashboardSettings = () => {
           impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
           tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
           saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
+          button_colors: (dashboardColors?.button_colors as TileColors) || DEFAULT_BUTTON_COLORS,
         } as DashboardSettings);
       } else {
         // Create default settings for this user
@@ -174,6 +182,20 @@ export const useDashboardSettings = () => {
     });
   };
 
+  const updateButtonColors = async (colors: { background?: string; text?: string }) => {
+    const newColors = { ...settings?.button_colors, ...colors };
+    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    await supabase
+      .from('user_dashboard_settings')
+      .update({ dashboard_colors: { ...currentDashboardColors, button_colors: newColors } })
+      .eq('id', settings?.id);
+    setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
+    toast({
+      title: 'Opgeslagen',
+      description: 'Knopkleuren bijgewerkt',
+    });
+  };
+
   const updateTheme = async (theme: 'dark' | 'light') => {
     await updateSettings({ theme });
   };
@@ -191,6 +213,7 @@ export const useDashboardSettings = () => {
     updateImpactColors,
     updateTileColors,
     updateSavedHoursColors,
+    updateButtonColors,
     updateTheme,
     refetch: fetchSettings,
   };
