@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardButton } from '@/components/dashboard/DashboardButton';
 import { SavedHoursTile } from '@/components/dashboard/SavedHoursTile';
 import NewsTicker from '@/components/NewsTicker';
-import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, LucideIcon } from 'lucide-react';
+import { CalendarDays, Search, FileText, BarChart3, Settings, Users, LogOut, Image, MessageCircle, User, Sparkles, Mail, LucideIcon } from 'lucide-react';
 import bannerImage from '@/assets/mountain-banner.png';
 import { useAuth } from '@/hooks/useAuth';
 import { useN8nExecutions } from '@/hooks/useN8nExecutions';
@@ -72,6 +72,12 @@ const tileConfigMap: Record<string, TileConfig> = {
     icon: Sparkles,
     variant: 'accent',
     statusKey: 'copyright-branding',
+  },
+  'email-handtekening': {
+    to: '/email-signature',
+    icon: Mail,
+    variant: 'secondary',
+    statusKey: 'email-handtekening',
   },
 };
 
@@ -183,6 +189,7 @@ const Index = () => {
       'seo-blog',
       'wordpress-alt-text',
       'chatbot',
+      'email-handtekening',
     ];
     while (defaultTiles.length < GRID_SIZE) {
       defaultTiles.push(`__empty_${defaultTiles.length}`);
