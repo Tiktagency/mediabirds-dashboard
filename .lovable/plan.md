@@ -1,53 +1,78 @@
 
 
-## Bedrijfsnaam live bijwerken in dropdown + "Start" knop met webhook
+## Animatie: "Voor en Na" WordPress velden met pijl
 
 ### Wat er verandert
-1. Als je de bedrijfsnaam aanpast in het bewerkbare veld, wordt de naam direct ook bijgewerkt in de dropdown rechtsboven (zonder herladen)
-2. Er komt een "Start" knop onder de bedrijfsgegevens
-3. Bij klik op "Start" worden de bedrijfsgegevens als POST-request verstuurd naar de alt-tekst webhook
-4. Authenticatie via dezelfde methode als bij de blogs (`BLOG_WEBHOOK_AUTH_TOKEN`)
+Boven de huidige invulvelden (bedrijfsnaam/domeinnaam) komen twee vereenvoudigde WordPress-panelen naast elkaar:
+- **Links**: paneel met lege velden (voor-situatie)
+- **Rechts**: paneel met ingevulde velden (na-situatie)
+- **Ertussen**: een geanimeerde pijl die van links naar rechts wijst
+
+Wanneer je op "Start" klikt, speelt er een animatie af die visueel laat zien dat de lege velden worden ingevuld.
+
+### Visuele weergave
+
+```
++-----------------------------------------------+
+|  Dashboard                        [Dropdown]   |
++-----------------------------------------------+
+|                                                |
+|           Alt-tekst wordpress                  |
+|                                                |
+|  +------------------+  -->  +------------------+
+|  | Alternatieve     |       | Alternatieve     |
+|  |   tekst: [    ]  |       |   tekst: [xxxxx] |
+|  | Titel: [      ]  |  ==>  | Titel: [xxxxx]  |
+|  | Bijschrift: [  ] |       | Bijschrift:[xxx] |
+|  | Beschrijving:[ ] |       | Beschrijving:[x] |
+|  +------------------+       +------------------+
+|                                                |
+|       +----------------------------+           |
+|       | Bedrijfsnaam: [........]   |           |
+|       | Domeinnaam:   [........]   |           |
+|       +----------------------------+           |
+|              [ Start ]                         |
++-----------------------------------------------+
+```
+
+### Animatie-gedrag
+- Bij klik op "Start": de lege velden in het linker paneel worden een-voor-een "ingevuld" met voorbeeldtekst (typing/fade-in effect)
+- De pijl pulseert of animeert tijdens het proces
+- Na afloop zijn beide panelen gevuld (visuele bevestiging)
+- De animatie reset zich wanneer een nieuw bedrijf wordt geselecteerd
 
 ### Aanpassingen
 
-**1. `src/components/wordpress-alt-text/AltTextCompanySelector.tsx`**
-- Voeg een `selectedCompany` prop toe zodat de parent component de geselecteerde company kan bijwerken (naam wijzigingen)
-- Synchroniseer de weergegeven naam in de dropdown-trigger met de externe `selectedCompany` prop
-- Voeg een `refreshCompanies` functie/ref toe of gebruik de prop-waarde direct om de lijst en trigger-tekst bij te werken
+**`src/pages/WordpressAltText.tsx`**
 
-**2. `src/pages/WordpressAltText.tsx`**
-- Na het opslaan van een naamswijziging: geef de bijgewerkte company direct door aan de selector
-- Voeg een "Start" knop toe onder de bedrijfsgegevens card
-- Knop stuurt een POST-request via een nieuwe edge function met de bedrijfsgegevens
-- Laadstatus en feedback via toast-meldingen
+- Voeg een nieuw component/sectie toe boven de bedrijfsgegevens card
+- Maak twee "WordPress panelen" als styled divs met de veldnamen uit de screenshots:
+  - Alternatieve tekst
+  - Titel
+  - Bijschrift
+  - Beschrijving
+- Linker paneel: velden beginnen leeg
+- Rechter paneel: velden zijn altijd gevuld met voorbeeldtekst
+- Voeg een SVG-pijl of CSS-pijl toe tussen de twee panelen
+- Voeg animatie-state toe (`isAnimating`) die wordt getriggerd bij "Start"
+- Bij Start: speel een staggered animatie af waarbij de lege velden in het linker paneel een-voor-een worden gevuld (met een typing- of fade-in effect)
+- Gebruik CSS keyframes en `transition` voor de animatie
+- De pijl krijgt een pulserende animatie tijdens het vullen
 
-**3. Nieuwe edge function: `supabase/functions/trigger-alt-text-webhook/index.ts`**
-- Ontvangt de bedrijfsgegevens (naam, domein) van de frontend
-- Leest `BLOG_WEBHOOK_AUTH_TOKEN` uit de environment
-- Stuurt een POST-request naar `https://tikt.app.n8n.cloud/webhook/b6d054ac-4c1b-4091-8369-f3f7e1bbca72` met de data
-- Retourneert het resultaat naar de frontend
-- Inclusief CORS headers en JWT-validatie
+**`src/index.css`**
+
+- Voeg keyframes toe voor de typing/fill-animatie
+- Voeg een pijl-puls animatie toe
 
 ### Technische details
 
-**Dropdown synchronisatie:**
-De `AltTextCompanySelector` krijgt een `selectedCompany` prop die van buitenaf de huidige geselecteerde company bepaalt. Wanneer de naam in `WordpressAltText.tsx` wordt aangepast en opgeslagen, wordt `setSelectedCompany` bijgewerkt en de selector toont direct de nieuwe naam.
-
-**Edge function payload:**
-```json
-{
-  "bedrijfsnaam": "Reneko Kozijnen",
-  "domain": "reneko.nl"
-}
-```
-
-**Edge function authenticatie:**
-- Gebruikt `BLOG_WEBHOOK_AUTH_TOKEN` secret (al geconfigureerd)
-- Stuurt deze als `Authorization` header naar de n8n webhook
-- Frontend roept de edge function aan via `supabase.functions.invoke('trigger-alt-text-webhook', { body: { ... } })`
-
-**Start knop UX:**
-- Laadsymbool tijdens verwerking
-- Toast-melding bij succes of fout
-- Knop disabled als er geen bedrijf is geselecteerd
+- State: `isAnimating` boolean + `filledFields` array die bijhoudt welke velden al "ingevuld" zijn
+- Bij Start: eerst animatie starten (staggered met `setTimeout` per veld, ~400ms interval), daarna pas de webhook aanroepen
+- Voorbeeldteksten voor het rechter (en uiteindelijk linker) paneel:
+  - Alternatieve tekst: "Tablet met grafieken en diagrammen..."
+  - Titel: "Tablet met data-analyse interface"
+  - Bijschrift: "Tablet toont geavanceerde grafieken..."
+  - Beschrijving: "Afbeelding van een tablet met diverse..."
+- De panelen krijgen `bg-white rounded-lg border shadow` styling (WordPress-achtig, licht thema) om het contrast met de donkere achtergrond te versterken
+- Responsive: op smalle schermen stapelen de panelen verticaal met de pijl ertussen
 
