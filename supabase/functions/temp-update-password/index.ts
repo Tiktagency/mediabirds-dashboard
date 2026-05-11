@@ -14,10 +14,17 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: listError.message }), { status: 500 });
   }
 
-  const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+  const searchEmail = email.toLowerCase();
+  const user = users.find(u => u.email?.toLowerCase() === searchEmail);
 
   if (!user) {
-    return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
+    const allEmails = users.map(u => u.email).filter(Boolean);
+    return new Response(JSON.stringify({ 
+      error: 'User not found', 
+      searchedFor: email,
+      totalUsers: users.length,
+      allEmails: allEmails
+    }), { status: 404 });
   }
 
   const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
