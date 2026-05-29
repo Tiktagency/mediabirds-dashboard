@@ -12,6 +12,7 @@ import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuw
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 const MAX_RSS_FEEDS = 5;
 
@@ -76,6 +77,7 @@ const COLOR_FIELDS: { key: string; label: string }[] = [
 const Nieuwsbrief = () => {
   const { toast } = useToast();
   const { isAdmin } = useAdminAuth();
+  const { isDemo } = useIsDemoUser();
   const colorDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<NewsletterCompany | null>(null);
   const {
@@ -720,7 +722,8 @@ const Nieuwsbrief = () => {
               <Button
                 className="w-full gap-2 h-11"
                 onClick={handleGenerate}
-                disabled={isGenerating || !!newsletterSchedule?.enabled}
+                disabled={isGenerating || !!newsletterSchedule?.enabled || isDemo}
+                title={isDemo ? DEMO_TOOLTIP : undefined}
               >
                 {isGenerating ? (
                   <>

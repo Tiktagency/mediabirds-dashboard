@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Users, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
 
 const LeadsGenerator = () => {
   const { toast } = useToast();
+  const { isDemo } = useIsDemoUser();
   const [plaatsnaam, setPlaatsnaam] = useState(
     () => localStorage.getItem('leads-generator-plaatsnaam') || ''
   );
@@ -237,11 +239,14 @@ const LeadsGenerator = () => {
 
           <Button
             onClick={handleStart}
-            disabled={!isValid || isStarting}
+            disabled={!isValid || isStarting || isDemo}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
+            title={isDemo ? DEMO_TOOLTIP : undefined}
           >
             {isStarting ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
+            ) : isDemo ? (
+              'Start (demo - uitgeschakeld)'
             ) : (
               'Start'
             )}

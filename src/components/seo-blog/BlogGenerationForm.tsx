@@ -15,6 +15,7 @@ import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import styleIsometricFlat from '@/assets/style-isometric-flat.png';
@@ -49,6 +50,7 @@ export const BlogGenerationForm = ({
   pageUrlSettings,
 }: BlogGenerationFormProps) => {
   const { toast } = useToast();
+  const { isDemo } = useIsDemoUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
@@ -867,14 +869,17 @@ export const BlogGenerationForm = ({
           variant="primaryCustom"
           className="w-full py-6 text-lg h-auto"
           onClick={handleStartClick}
-          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled || isDemo}
+          title={isDemo ? DEMO_TOOLTIP : undefined}
         >
           {isScheduleEnabled ? (
             <>
               <Clock className="h-5 w-5 mr-2" />
               Automatische trigger actief
             </>
-          ) : isSubmitting ? 'Bezig...' : (
+          ) : isSubmitting ? 'Bezig...' : isDemo ? (
+            'Start (demo - uitgeschakeld)'
+          ) : (
             <>
               Start <span className="text-sm font-normal opacity-70 ml-2">- {selectedCompany.name}</span>
             </>
