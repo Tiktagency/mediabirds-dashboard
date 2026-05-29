@@ -65,6 +65,8 @@ serve(async (req) => {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+  let callerUserId: string | null = null;
+  let callerEmail: string | null = null;
   {
     const sUrl = Deno.env.get('SUPABASE_URL')!;
     const sKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -74,6 +76,66 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+    callerUserId = user.id;
+    callerEmail = (user.email || '').toLowerCase();
+  }
+
+  // ========================================
+  // DEMO ACCOUNT: return fixed mock data (75.2 hours)
+  // ========================================
+  {
+    const sUrl = Deno.env.get('SUPABASE_URL')!;
+    const svcKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const svc = createClient(sUrl, svcKey);
+    const { data: profile } = await svc
+      .from('profiles')
+      .select('is_demo')
+      .eq('id', callerUserId)
+      .maybeSingle();
+    const isDemo = callerEmail === 'luc.degraag@student.hu.nl' || !!profile?.is_demo;
+    if (isDemo) {
+      const periodEnd = new Date();
+      const periodStart = new Date();
+      periodStart.setDate(periodStart.getDate() - 30);
+
+      const breakdownByCompany = {
+        'Mediabirds': {
+          totalMinutes: 3000,
+          totalHours: 50.0,
+          workflows: {
+            'SEO Blog':         { executions: 40, minutesSaved: 1200 },
+            'SEO Zoekwoorden':  { executions: 30, minutesSaved: 900 },
+            'Monday Planning':  { executions: 16, minutesSaved: 720 },
+            'Alt-text':         { executions: 60, minutesSaved: 180 },
+          },
+        },
+        'Demo Bakkerij': {
+          totalMinutes: 900,
+          totalHours: 15.0,
+          workflows: {
+            'SEO Blog':  { executions: 20, minutesSaved: 600 },
+            'Alt-text':  { executions: 100, minutesSaved: 300 },
+          },
+        },
+        'Demo Webshop': {
+          totalMinutes: 612,
+          totalHours: 10.2,
+          workflows: {
+            'SEO Blog':  { executions: 18, minutesSaved: 540 },
+            'Alt-text':  { executions: 24, minutesSaved: 72 },
+          },
+        },
+      };
+
+      return new Response(JSON.stringify({
+        totalHours: 75.2,
+        totalMinutes: 4512,
+        executionCount: 308,
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
+        breakdownByCompany,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
   }
 
