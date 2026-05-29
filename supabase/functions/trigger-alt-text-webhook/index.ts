@@ -45,6 +45,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const userId = (claimsData.claims as any).sub;
+    const { data: isDemo } = await supabaseAdmin.rpc('is_demo_user', { _user_id: userId });
+    if (isDemo) {
+      return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     let app_password: string | null = null;
     if (company_id) {
       const { data: company } = await supabaseAdmin

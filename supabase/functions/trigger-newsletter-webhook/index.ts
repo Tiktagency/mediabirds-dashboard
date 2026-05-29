@@ -35,6 +35,14 @@ serve(async (req) => {
       });
     }
 
+    const { data: isDemo } = await supabase.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     const body = await req.json();
     const {
       bedrijfsnaam, tagline, bedrijfsomschrijving, doelgroep, toon,

@@ -73,6 +73,15 @@ serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     const signatureData = await req.json();
     
     // Get optional auth token from environment
