@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database, Json } from '@/integrations/supabase/types';
 
 function hexToHsl(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -47,6 +48,16 @@ export interface DashboardSettings {
   updated_at: string;
 }
 
+type DashboardSettingsRow = Database['public']['Tables']['user_dashboard_settings']['Row'];
+type DashboardSettingsInsert = Database['public']['Tables']['user_dashboard_settings']['Insert'];
+type DashboardSettingsUpdate = Database['public']['Tables']['user_dashboard_settings']['Update'];
+type DashboardColorsPayload = {
+  tile_colors: TileColors;
+  saved_hours_colors: TileColors;
+  button_colors: TileColors;
+  background_color: string;
+};
+
 const DEFAULT_TILE_COLORS: TileColors = {
   background: '#cfddd0',
   text: '#002C1F',
@@ -78,6 +89,95 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
   button_colors: DEFAULT_BUTTON_COLORS,
   background_color: DEFAULT_BACKGROUND_COLOR,
+};
+
+const isJsonObject = (value: Json | null | undefined): value is { [key: string]: Json | undefined } => {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+};
+
+const getTileColors = (value: Json | undefined, fallback: TileColors): TileColors => {
+  if (!isJsonObject(value)) return fallback;
+
+  return {
+    background: typeof value.background === 'string' ? value.background : fallback.background,
+    text: typeof value.text === 'string' ? value.text : fallback.text,
+  };
+};
+
+const getStringRecord = (value: Json | null | undefined): Record<string, string> => {
+  if (!isJsonObject(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entryValue]) => typeof entryValue === 'string') as Array<[string, string]>
+  );
+};
+
+const getImpactColors = (value: Json | null | undefined) => {
+  if (!isJsonObject(value)) return DEFAULT_SETTINGS.impact_colors;
+
+  return {
+    high: typeof value.high === 'string' ? value.high : DEFAULT_SETTINGS.impact_colors.high,
+    medium: typeof value.medium === 'string' ? value.medium : DEFAULT_SETTINGS.impact_colors.medium,
+    low: typeof value.low === 'string' ? value.low : DEFAULT_SETTINGS.impact_colors.low,
+  };
+};
+
+const getTileOrder = (value: Json | null | undefined): string[] => {
+  if (!Array.isArray(value)) return DEFAULT_SETTINGS.tile_order;
+  return value.filter((entry): entry is string => typeof entry === 'string');
+};
+
+const getDashboardColors = (value: Json | null | undefined): DashboardColorsPayload => {
+  if (!isJsonObject(value)) {
+    return {
+      tile_colors: DEFAULT_TILE_COLORS,
+      saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
+      button_colors: DEFAULT_BUTTON_COLORS,
+      background_color: DEFAULT_BACKGROUND_COLOR,
+    };
+  }
+
+  return {
+    tile_colors: getTileColors(value.tile_colors, DEFAULT_TILE_COLORS),
+    saved_hours_colors: getTileColors(value.saved_hours_colors, DEFAULT_SAVED_HOURS_COLORS),
+    button_colors: getTileColors(value.button_colors, DEFAULT_BUTTON_COLORS),
+    background_color: typeof value.background_color === 'string' ? value.background_color : DEFAULT_BACKGROUND_COLOR,
+  };
+};
+
+const buildDashboardColorsPayload = (settings?: Partial<DashboardSettings> | null): DashboardColorsPayload => ({
+  tile_colors: {
+    background: settings?.tile_colors?.background || DEFAULT_TILE_COLORS.background,
+    text: settings?.tile_colors?.text || DEFAULT_TILE_COLORS.text,
+  },
+  saved_hours_colors: {
+    background: settings?.saved_hours_colors?.background || DEFAULT_SAVED_HOURS_COLORS.background,
+    text: settings?.saved_hours_colors?.text || DEFAULT_SAVED_HOURS_COLORS.text,
+  },
+  button_colors: {
+    background: settings?.button_colors?.background || DEFAULT_BUTTON_COLORS.background,
+    text: settings?.button_colors?.text || DEFAULT_BUTTON_COLORS.text,
+  },
+  background_color: settings?.background_color || DEFAULT_BACKGROUND_COLOR,
+});
+
+const toJson = <T,>(value: T): Json => value as unknown as Json;
+
+const mapRowToDashboardSettings = (data: DashboardSettingsRow): DashboardSettings => {
+  const dashboardColors = getDashboardColors(data.dashboard_colors);
+
+  return {
+    ...data,
+    tile_order: getTileOrder(data.tile_order),
+    custom_labels: getStringRecord(data.custom_labels),
+    theme: data.theme === 'light' ? 'light' : 'dark',
+    custom_tooltips: getStringRecord(data.custom_tooltips),
+    impact_colors: getImpactColors(data.impact_colors),
+    tile_colors: dashboardColors.tile_colors,
+    saved_hours_colors: dashboardColors.saved_hours_colors,
+    button_colors: dashboardColors.button_colors,
+    background_color: dashboardColors.background_color,
+  };
 };
 
 // Sync updates to all other users via edge function
@@ -118,30 +218,26 @@ export const useDashboardSettings = (userId?: string) => {
       if (error) throw error;
 
       if (data) {
-        const dashboardColors = data.dashboard_colors as Record<string, unknown> | null;
-        setSettings({
-          ...data,
-          tile_order: Array.isArray(data.tile_order) ? data.tile_order : DEFAULT_SETTINGS.tile_order,
-          custom_labels: data.custom_labels || DEFAULT_SETTINGS.custom_labels,
-          custom_tooltips: data.custom_tooltips || DEFAULT_SETTINGS.custom_tooltips,
-          impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
-          tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
-          saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
-          button_colors: (dashboardColors?.button_colors as TileColors) || DEFAULT_BUTTON_COLORS,
-          background_color: (dashboardColors?.background_color as string) || DEFAULT_BACKGROUND_COLOR,
-        } as DashboardSettings);
+        setSettings(mapRowToDashboardSettings(data as unknown as DashboardSettingsRow));
       } else {
+        const insertPayload: DashboardSettingsInsert = {
+          user_id: user.id,
+          tile_order: toJson(DEFAULT_SETTINGS.tile_order),
+          custom_labels: toJson(DEFAULT_SETTINGS.custom_labels),
+          theme: DEFAULT_SETTINGS.theme,
+          custom_tooltips: toJson(DEFAULT_SETTINGS.custom_tooltips),
+          impact_colors: toJson(DEFAULT_SETTINGS.impact_colors),
+          dashboard_colors: toJson(buildDashboardColorsPayload(DEFAULT_SETTINGS)),
+        };
+
         const { data: newSettings, error: insertError } = await supabase
           .from('user_dashboard_settings')
-          .insert({
-            user_id: user.id,
-            ...DEFAULT_SETTINGS,
-          })
+          .insert(insertPayload)
           .select()
           .single();
 
         if (insertError) throw insertError;
-        setSettings(newSettings as unknown as DashboardSettings);
+        setSettings(mapRowToDashboardSettings(newSettings as unknown as DashboardSettingsRow));
       }
     } catch (error) {
       console.error('Error fetching dashboard settings:', error);
@@ -154,9 +250,10 @@ export const useDashboardSettings = (userId?: string) => {
     if (!settings?.id) return;
 
     try {
+      const dbUpdates: DashboardSettingsUpdate = updates as unknown as DashboardSettingsUpdate;
       const { error } = await supabase
         .from('user_dashboard_settings')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', settings.id);
 
       if (error) throw error;
@@ -203,11 +300,11 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateTileColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.tile_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, tile_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, tile_colors: newColors } : null);
     await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
@@ -216,11 +313,11 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateSavedHoursColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.saved_hours_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, saved_hours_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, saved_hours_colors: newColors } : null);
     await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
@@ -229,11 +326,11 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateButtonColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.button_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, button_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
     if (newColors.background) {
@@ -247,11 +344,11 @@ export const useDashboardSettings = (userId?: string) => {
   };
 
   const updateBackgroundColor = async (color: string) => {
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, background_color: color };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, background_color: color } : null);
     if (/^#[0-9a-fA-F]{6}$/.test(color)) {
