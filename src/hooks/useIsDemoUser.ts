@@ -22,13 +22,15 @@ export const useIsDemoUser = () => {
         }
         return;
       }
+      const email = session.user.email?.toLowerCase();
+      const isDemoEmail = email === 'luc.degraag@student.hu.nl';
       const { data } = await supabase
         .from('profiles')
         .select('is_demo')
         .eq('id', session.user.id)
         .maybeSingle();
       if (!mounted) return;
-      setIsDemo(!!data?.is_demo);
+      setIsDemo(isDemoEmail || !!data?.is_demo);
       setIsLoading(false);
     };
 
