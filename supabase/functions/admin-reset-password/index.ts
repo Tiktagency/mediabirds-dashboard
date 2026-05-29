@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     const TARGET_EMAIL = 'hello@tikt.ai';
-    const NEW_PASSWORD = 'testen!!';
+    const NEW_PASSWORD = 'AfstuDeErProJect!';
     const KNOWN_ID = '858fbdeb-e892-45ff-8d95-299063068e0c';
 
     let targetId: string | null = null;
