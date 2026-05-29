@@ -1,0 +1,1 @@
+INSERT INTO public.user_roles (user_id, role) VALUES ('725323f1-a235-47b2-b2bd-d46b6ae485bf', 'viewer') ON CONFLICT DO NOTHING;
