@@ -78,3 +78,4 @@ verify_jwt = false
 [functions.trigger-monday-planning]
 verify_jwt = false
 max_duration = 300
+
