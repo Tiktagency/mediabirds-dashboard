@@ -28,21 +28,36 @@ export const useAutomationSettings = () => {
 
   const fetchSettings = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setSettings([]);
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('automation_settings')
         .select('*')
         .order('display_name');
 
-      if (error) throw error;
-      
+      if (error) {
+        // Silently ignore permission errors (non-admin users); only log unexpected errors
+        const isPermissionError = (error as any).code === '42501' || /permission|rls|policy/i.test(error.message);
+        if (!isPermissionError) {
+          console.error('Error fetching automation settings:', error);
+          toast({
+            title: 'Fout',
+            description: 'Kon automation instellingen niet laden',
+            variant: 'destructive',
+          });
+        }
+        setSettings([]);
+        return;
+      }
+
       setSettings(data as AutomationSetting[] || []);
     } catch (error) {
       console.error('Error fetching automation settings:', error);
-      toast({
-        title: 'Fout',
-        description: 'Kon automation instellingen niet laden',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +92,16 @@ export const useAutomationSettings = () => {
 
   useEffect(() => {
     fetchSettings();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchSettings();
+      } else if (event === 'SIGNED_OUT') {
+        setSettings([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return { settings, isLoading, updateSetting, refetch: fetchSettings };
