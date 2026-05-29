@@ -304,7 +304,7 @@ export const useDashboardSettings = (userId?: string) => {
     const newDashboardColors = { ...currentDashboardColors, tile_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, tile_colors: newColors } : null);
     await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
@@ -317,7 +317,7 @@ export const useDashboardSettings = (userId?: string) => {
     const newDashboardColors = { ...currentDashboardColors, saved_hours_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, saved_hours_colors: newColors } : null);
     await syncToAllUsers({ dashboard_colors: newDashboardColors }, settings?.user_id);
@@ -330,7 +330,7 @@ export const useDashboardSettings = (userId?: string) => {
     const newDashboardColors = { ...currentDashboardColors, button_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, button_colors: newColors } : null);
     if (newColors.background) {
@@ -348,7 +348,7 @@ export const useDashboardSettings = (userId?: string) => {
     const newDashboardColors = { ...currentDashboardColors, background_color: color };
     await supabase
       .from('user_dashboard_settings')
-      .update({ dashboard_colors: newDashboardColors })
+      .update({ dashboard_colors: toJson(newDashboardColors) })
       .eq('id', settings?.id);
     setSettings(prev => prev ? { ...prev, background_color: color } : null);
     if (/^#[0-9a-fA-F]{6}$/.test(color)) {
