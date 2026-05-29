@@ -12,11 +12,13 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
 
 
 const MondayPlanning = () => {
   const { isLoading: authLoading, user } = useAdminAuth();
+  const { isDemo } = useIsDemoUser();
   const { toast } = useToast();
   
   const [bedrijfsnaam, setBedrijfsnaam] = useState('');
