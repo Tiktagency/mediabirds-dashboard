@@ -161,6 +161,8 @@ const buildDashboardColorsPayload = (settings?: Partial<DashboardSettings> | nul
   background_color: settings?.background_color || DEFAULT_BACKGROUND_COLOR,
 });
 
+const toJson = <T,>(value: T): Json => value as unknown as Json;
+
 const mapRowToDashboardSettings = (data: DashboardSettingsRow): DashboardSettings => {
   const dashboardColors = getDashboardColors(data.dashboard_colors);
 
@@ -168,6 +170,7 @@ const mapRowToDashboardSettings = (data: DashboardSettingsRow): DashboardSetting
     ...data,
     tile_order: getTileOrder(data.tile_order),
     custom_labels: getStringRecord(data.custom_labels),
+    theme: data.theme === 'light' ? 'light' : 'dark',
     custom_tooltips: getStringRecord(data.custom_tooltips),
     impact_colors: getImpactColors(data.impact_colors),
     tile_colors: dashboardColors.tile_colors,
@@ -219,12 +222,12 @@ export const useDashboardSettings = (userId?: string) => {
       } else {
         const insertPayload: DashboardSettingsInsert = {
           user_id: user.id,
-          tile_order: DEFAULT_SETTINGS.tile_order,
-          custom_labels: DEFAULT_SETTINGS.custom_labels,
+          tile_order: toJson(DEFAULT_SETTINGS.tile_order),
+          custom_labels: toJson(DEFAULT_SETTINGS.custom_labels),
           theme: DEFAULT_SETTINGS.theme,
-          custom_tooltips: DEFAULT_SETTINGS.custom_tooltips,
-          impact_colors: DEFAULT_SETTINGS.impact_colors,
-          dashboard_colors: buildDashboardColorsPayload(DEFAULT_SETTINGS) as Json,
+          custom_tooltips: toJson(DEFAULT_SETTINGS.custom_tooltips),
+          impact_colors: toJson(DEFAULT_SETTINGS.impact_colors),
+          dashboard_colors: toJson(buildDashboardColorsPayload(DEFAULT_SETTINGS)),
         };
 
         const { data: newSettings, error: insertError } = await supabase
