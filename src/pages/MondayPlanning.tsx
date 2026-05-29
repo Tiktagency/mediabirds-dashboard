@@ -220,15 +220,18 @@ const MondayPlanning = () => {
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
+              disabled={!isFormValid || isSubmitting || isDemo}
               variant="primaryCustom"
               className="w-full mt-4"
+              title={isDemo ? DEMO_TOOLTIP : undefined}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Verzenden...
                 </>
+              ) : isDemo ? (
+                'Start (demo - uitgeschakeld)'
               ) : (
                 'Start'
               )}
