@@ -35,6 +35,15 @@ serve(async (req) => {
       });
     }
 
+    const adminClient0 = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: isDemo } = await adminClient0.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ success: false, error: 'Demo-account: actie niet toegestaan' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { bedrijfsnaam, folderId } = await req.json();
 
     if (!bedrijfsnaam) {
