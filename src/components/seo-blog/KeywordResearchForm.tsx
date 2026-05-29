@@ -12,6 +12,7 @@ import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -31,6 +32,7 @@ export const KeywordResearchForm = ({
   saveNotification,
 }: KeywordResearchFormProps) => {
   const { toast } = useToast();
+  const { isDemo } = useIsDemoUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
@@ -579,9 +581,10 @@ export const KeywordResearchForm = ({
       <div className="pt-6 border-t border-white/10">
         <Button
           onClick={handleStartResearch}
-          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled || isDemo}
           variant="primaryCustom"
           className="w-full gap-2"
+          title={isDemo ? DEMO_TOOLTIP : undefined}
         >
           {isSubmitting ? (
             <>
@@ -593,6 +596,8 @@ export const KeywordResearchForm = ({
               <Clock className="w-4 h-4" />
               Automatische trigger actief
             </>
+          ) : isDemo ? (
+            'Start SEO onderzoek (demo - uitgeschakeld)'
           ) : (
             <>
               <Sparkles className="w-4 h-4" />

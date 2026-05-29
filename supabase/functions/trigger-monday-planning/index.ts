@@ -32,6 +32,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: userData.user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ success: false, error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     const apiKey = Deno.env.get('MONDAY_PLANNING_API_KEY') ?? Deno.env.get('TIKT_WEBHOOK_AUTH_TOKEN');
     if (!apiKey) {
       return new Response(JSON.stringify({ success: false, error: 'Webhook key not configured' }), {

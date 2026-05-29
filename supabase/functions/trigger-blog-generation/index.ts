@@ -85,6 +85,14 @@ serve(async (req) => {
     }
     
     const userId = user.id;
+
+    // Block demo accounts from triggering automations
+    const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: userId });
+    if (isDemo) {
+      return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     // Parse request body to get dynamic webhook URL, auth token secret name, and blog data
     let webhookUrl: string | null = null;

@@ -84,6 +84,12 @@ serve(async (req) => {
       }
       
       userId = user.id;
+      const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: userId });
+      if (isDemo) {
+        return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
     
     // Parse request body

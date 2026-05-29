@@ -11,6 +11,7 @@ import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSet
 import { Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { DynamicFieldGroup } from './DynamicFieldGroup';
 import {
   Select,
@@ -69,6 +70,7 @@ export const EmailSignatureForm = ({
   onGeneratingChange,
 }: EmailSignatureFormProps) => {
   const { toast } = useToast();
+  const { isDemo } = useIsDemoUser();
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
@@ -757,14 +759,17 @@ export const EmailSignatureForm = ({
       <Button
         type="submit"
         variant="primaryCustom"
-        disabled={isSending || !isValid}
+        disabled={isSending || !isValid || isDemo}
         className="w-full"
+        title={isDemo ? DEMO_TOOLTIP : undefined}
       >
         {isSending ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Genereren...
           </>
+        ) : isDemo ? (
+          'Handtekening genereren (demo - uitgeschakeld)'
         ) : (
           'Handtekening genereren'
         )}

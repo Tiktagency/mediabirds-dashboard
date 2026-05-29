@@ -35,6 +35,15 @@ serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ success: false, error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     const { Plaatsnaam, Country, searchStringsArray } = await req.json();
 
     if (!Plaatsnaam || !Country || !Array.isArray(searchStringsArray) || searchStringsArray.length === 0) {

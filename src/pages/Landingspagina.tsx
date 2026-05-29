@@ -14,9 +14,11 @@ import { Pencil, Loader2, Clock, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 const Landingspagina = () => {
   const { isLoading, isAdmin } = useAdminAuth();
+  const { isDemo } = useIsDemoUser();
   const { toast } = useToast();
   const [selectedCompany, setSelectedCompany] = useState<LandingCompany | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
@@ -324,13 +326,16 @@ const Landingspagina = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
+                disabled={isStarting || schedule?.enabled === true || isDemo || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-2 sm:py-3"
+                title={isDemo ? DEMO_TOOLTIP : undefined}
               >
                 {schedule?.enabled === true ? (
                   <><Clock className="w-4 h-4 mr-2" />Automatische trigger actief</>
                 ) : isStarting ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
+                ) : isDemo ? (
+                  'Start (demo - uitgeschakeld)'
                 ) : (
                   'Start'
                 )}

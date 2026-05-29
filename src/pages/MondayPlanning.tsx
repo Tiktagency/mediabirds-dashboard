@@ -12,11 +12,13 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
 
 
 const MondayPlanning = () => {
   const { isLoading: authLoading, user } = useAdminAuth();
+  const { isDemo } = useIsDemoUser();
   const { toast } = useToast();
   
   const [bedrijfsnaam, setBedrijfsnaam] = useState('');
@@ -220,15 +222,18 @@ const MondayPlanning = () => {
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
+              disabled={!isFormValid || isSubmitting || isDemo}
               variant="primaryCustom"
               className="w-full mt-4"
+              title={isDemo ? DEMO_TOOLTIP : undefined}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Verzenden...
                 </>
+              ) : isDemo ? (
+                'Start (demo - uitgeschakeld)'
               ) : (
                 'Start'
               )}

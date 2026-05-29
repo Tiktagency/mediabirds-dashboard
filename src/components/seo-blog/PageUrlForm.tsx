@@ -12,6 +12,7 @@ import {
 import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
 
@@ -46,6 +47,8 @@ export const PageUrlForm = ({
   savePageUrlSettings: saveSettings,
 }: PageUrlFormProps) => {
   const { toast } = useToast();
+  const { isDemo } = useIsDemoUser();
+
 
   const [googleSheetId, setGoogleSheetId] = useState('');
   const [googleFileId, setGoogleFileId] = useState('');
@@ -424,15 +427,18 @@ export const PageUrlForm = ({
       {isAdmin && (
         <Button
           onClick={handleTriggerWebhook}
-          disabled={!hasValidUrl || isSubmitting}
+          disabled={!hasValidUrl || isSubmitting || isDemo}
           variant="primaryCustom"
           className="w-full"
+          title={isDemo ? DEMO_TOOLTIP : undefined}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Bezig...
             </>
+          ) : isDemo ? (
+            "URL's documenteren (demo - uitgeschakeld)"
           ) : (
             "URL's documenteren"
           )}

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 const PERSONALITY_TYPES = [
   { id: 'professioneel', label: 'Professioneel' },
@@ -36,6 +37,7 @@ const POST_TYPES = [
 ];
 
 export const CopyrightBrandingForm = () => {
+  const { isDemo } = useIsDemoUser();
   const [selectedPersonalities, setSelectedPersonalities] = useState<string[]>([]);
   const [postType, setPostType] = useState('');
   const [subject, setSubject] = useState('');
@@ -327,15 +329,18 @@ export const CopyrightBrandingForm = () => {
 
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading}
+                disabled={isLoading || isDemo}
                 variant="primaryCustom"
                 className="w-full"
+                title={isDemo ? DEMO_TOOLTIP : undefined}
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Herschrijven...
                   </>
+                ) : isDemo ? (
+                  'Herschrijf tekst (demo - uitgeschakeld)'
                 ) : (
                   <>
                     <ArrowRight className="w-4 h-4 mr-2" />

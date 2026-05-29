@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Clock, Calendar, CalendarDays } from 'lucide-react';
+import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 
 interface SeoSchedule {
   id: string;
@@ -92,9 +93,11 @@ export const ScheduleTrigger = ({
   updateSchedule, 
   getNextTriggerDisplay 
 }: ScheduleTriggerProps) => {
+  const { isDemo } = useIsDemoUser();
   // Optimistic override for enabled – only active between toggle click and DB response
   const [enabledOverride, setEnabledOverride] = useState<boolean | null>(null);
   const enabled = enabledOverride ?? schedule?.enabled ?? false;
+  const lockControls = !isAdmin || isSaving || isDemo;
 
   // Local state for form controls (non-enabled fields)
   const [intervalValue, setIntervalValue] = useState(schedule?.interval_value ?? 1);
