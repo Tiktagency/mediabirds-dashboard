@@ -79,7 +79,5 @@ verify_jwt = false
 verify_jwt = false
 max_duration = 300
 
-[functions.admin-ensure-luc-user]
-verify_jwt = false
 
 
