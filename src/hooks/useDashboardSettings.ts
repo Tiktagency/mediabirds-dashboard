@@ -47,6 +47,23 @@ export interface DashboardSettings {
   updated_at: string;
 }
 
+type DashboardSettingsRow = {
+  id: string;
+  user_id: string;
+  tile_order: string[] | null;
+  custom_labels: Record<string, string> | null;
+  theme: 'dark' | 'light';
+  custom_tooltips: Record<string, string> | null;
+  impact_colors: {
+    high: string;
+    medium: string;
+    low: string;
+  } | null;
+  dashboard_colors: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
 const DEFAULT_TILE_COLORS: TileColors = {
   background: '#cfddd0',
   text: '#002C1F',
@@ -78,6 +95,29 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   saved_hours_colors: DEFAULT_SAVED_HOURS_COLORS,
   button_colors: DEFAULT_BUTTON_COLORS,
   background_color: DEFAULT_BACKGROUND_COLOR,
+};
+
+const buildDashboardColorsPayload = (settings?: Partial<DashboardSettings> | null) => ({
+  tile_colors: settings?.tile_colors || DEFAULT_TILE_COLORS,
+  saved_hours_colors: settings?.saved_hours_colors || DEFAULT_SAVED_HOURS_COLORS,
+  button_colors: settings?.button_colors || DEFAULT_BUTTON_COLORS,
+  background_color: settings?.background_color || DEFAULT_BACKGROUND_COLOR,
+});
+
+const mapRowToDashboardSettings = (data: DashboardSettingsRow): DashboardSettings => {
+  const dashboardColors = data.dashboard_colors;
+
+  return {
+    ...data,
+    tile_order: Array.isArray(data.tile_order) ? data.tile_order : DEFAULT_SETTINGS.tile_order,
+    custom_labels: data.custom_labels || DEFAULT_SETTINGS.custom_labels,
+    custom_tooltips: data.custom_tooltips || DEFAULT_SETTINGS.custom_tooltips,
+    impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
+    tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
+    saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
+    button_colors: (dashboardColors?.button_colors as TileColors) || DEFAULT_BUTTON_COLORS,
+    background_color: (dashboardColors?.background_color as string) || DEFAULT_BACKGROUND_COLOR,
+  };
 };
 
 // Sync updates to all other users via edge function
@@ -118,30 +158,24 @@ export const useDashboardSettings = (userId?: string) => {
       if (error) throw error;
 
       if (data) {
-        const dashboardColors = data.dashboard_colors as Record<string, unknown> | null;
-        setSettings({
-          ...data,
-          tile_order: Array.isArray(data.tile_order) ? data.tile_order : DEFAULT_SETTINGS.tile_order,
-          custom_labels: data.custom_labels || DEFAULT_SETTINGS.custom_labels,
-          custom_tooltips: data.custom_tooltips || DEFAULT_SETTINGS.custom_tooltips,
-          impact_colors: data.impact_colors || DEFAULT_SETTINGS.impact_colors,
-          tile_colors: (dashboardColors?.tile_colors as TileColors) || DEFAULT_TILE_COLORS,
-          saved_hours_colors: (dashboardColors?.saved_hours_colors as TileColors) || DEFAULT_SAVED_HOURS_COLORS,
-          button_colors: (dashboardColors?.button_colors as TileColors) || DEFAULT_BUTTON_COLORS,
-          background_color: (dashboardColors?.background_color as string) || DEFAULT_BACKGROUND_COLOR,
-        } as DashboardSettings);
+        setSettings(mapRowToDashboardSettings(data as unknown as DashboardSettingsRow));
       } else {
         const { data: newSettings, error: insertError } = await supabase
           .from('user_dashboard_settings')
           .insert({
             user_id: user.id,
-            ...DEFAULT_SETTINGS,
+            tile_order: DEFAULT_SETTINGS.tile_order,
+            custom_labels: DEFAULT_SETTINGS.custom_labels,
+            theme: DEFAULT_SETTINGS.theme,
+            custom_tooltips: DEFAULT_SETTINGS.custom_tooltips,
+            impact_colors: DEFAULT_SETTINGS.impact_colors,
+            dashboard_colors: buildDashboardColorsPayload(DEFAULT_SETTINGS),
           })
           .select()
           .single();
 
         if (insertError) throw insertError;
-        setSettings(newSettings as unknown as DashboardSettings);
+        setSettings(mapRowToDashboardSettings(newSettings as unknown as DashboardSettingsRow));
       }
     } catch (error) {
       console.error('Error fetching dashboard settings:', error);
@@ -203,7 +237,7 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateTileColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.tile_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, tile_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
@@ -216,7 +250,7 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateSavedHoursColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.saved_hours_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, saved_hours_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
@@ -229,7 +263,7 @@ export const useDashboardSettings = (userId?: string) => {
 
   const updateButtonColors = async (colors: { background?: string; text?: string }) => {
     const newColors = { ...settings?.button_colors, ...colors };
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, button_colors: newColors };
     await supabase
       .from('user_dashboard_settings')
@@ -247,7 +281,7 @@ export const useDashboardSettings = (userId?: string) => {
   };
 
   const updateBackgroundColor = async (color: string) => {
-    const currentDashboardColors = (settings as any)?.dashboard_colors || {};
+    const currentDashboardColors = buildDashboardColorsPayload(settings);
     const newDashboardColors = { ...currentDashboardColors, background_color: color };
     await supabase
       .from('user_dashboard_settings')
