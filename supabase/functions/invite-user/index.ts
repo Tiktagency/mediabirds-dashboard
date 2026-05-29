@@ -92,6 +92,14 @@ serve(async (req) => {
       });
     }
 
+    const { data: isDemo } = await supabaseAdmin.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemo) {
+      return new Response(JSON.stringify({ error: 'Demo-account: actie niet toegestaan' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Parse and validate input
     const body = await req.json();
     const email = validateEmail(body.email);
