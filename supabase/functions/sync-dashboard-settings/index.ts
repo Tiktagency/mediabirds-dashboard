@@ -50,6 +50,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Demo users may save their own dashboard settings but must NOT sync globally
+    const { data: isDemoResult } = await adminClient.rpc('is_demo_user', { _user_id: user.id });
+    if (isDemoResult === true) {
+      return new Response(JSON.stringify({ success: true, updated: 0, demo: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const body = await req.json();
     const { updates, exclude_user_id } = body;
 
