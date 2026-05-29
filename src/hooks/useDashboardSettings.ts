@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database, Json } from '@/integrations/supabase/types';
 
 function hexToHsl(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -47,22 +48,9 @@ export interface DashboardSettings {
   updated_at: string;
 }
 
-type DashboardSettingsRow = {
-  id: string;
-  user_id: string;
-  tile_order: string[] | null;
-  custom_labels: Record<string, string> | null;
-  theme: 'dark' | 'light';
-  custom_tooltips: Record<string, string> | null;
-  impact_colors: {
-    high: string;
-    medium: string;
-    low: string;
-  } | null;
-  dashboard_colors: Record<string, unknown> | null;
-  created_at: string;
-  updated_at: string;
-};
+type DashboardSettingsRow = Database['public']['Tables']['user_dashboard_settings']['Row'];
+type DashboardSettingsInsert = Database['public']['Tables']['user_dashboard_settings']['Insert'];
+type DashboardSettingsUpdate = Database['public']['Tables']['user_dashboard_settings']['Update'];
 
 const DEFAULT_TILE_COLORS: TileColors = {
   background: '#cfddd0',
@@ -97,10 +85,19 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, 'id' | 'user_id' | 'created_at' 
   background_color: DEFAULT_BACKGROUND_COLOR,
 };
 
-const buildDashboardColorsPayload = (settings?: Partial<DashboardSettings> | null) => ({
-  tile_colors: settings?.tile_colors || DEFAULT_TILE_COLORS,
-  saved_hours_colors: settings?.saved_hours_colors || DEFAULT_SAVED_HOURS_COLORS,
-  button_colors: settings?.button_colors || DEFAULT_BUTTON_COLORS,
+const buildDashboardColorsPayload = (settings?: Partial<DashboardSettings> | null): Json => ({
+  tile_colors: {
+    background: settings?.tile_colors?.background || DEFAULT_TILE_COLORS.background,
+    text: settings?.tile_colors?.text || DEFAULT_TILE_COLORS.text,
+  },
+  saved_hours_colors: {
+    background: settings?.saved_hours_colors?.background || DEFAULT_SAVED_HOURS_COLORS.background,
+    text: settings?.saved_hours_colors?.text || DEFAULT_SAVED_HOURS_COLORS.text,
+  },
+  button_colors: {
+    background: settings?.button_colors?.background || DEFAULT_BUTTON_COLORS.background,
+    text: settings?.button_colors?.text || DEFAULT_BUTTON_COLORS.text,
+  },
   background_color: settings?.background_color || DEFAULT_BACKGROUND_COLOR,
 });
 
