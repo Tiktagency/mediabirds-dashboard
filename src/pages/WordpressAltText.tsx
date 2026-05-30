@@ -218,7 +218,7 @@ const WordpressAltText = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim()}
+                disabled={isStarting || schedule?.enabled === true || (!isDemo && (!editName.trim() || !editDomain.trim()))}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
               >
                 {schedule?.enabled === true ? (
