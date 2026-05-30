@@ -767,21 +767,19 @@ export const EmailSignatureForm = ({
       <Button
         type="submit"
         variant="primaryCustom"
-        disabled={isSending || !isValid || isDemo}
+        disabled={isSending || !isValid}
         className="w-full"
-        title={isDemo ? DEMO_TOOLTIP : undefined}
       >
         {isSending ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Genereren...
           </>
-        ) : isDemo ? (
-          'Handtekening genereren (demo - uitgeschakeld)'
         ) : (
           'Handtekening genereren'
         )}
       </Button>
+
       <AutomationProgressBar
         progress={progressBar.progress}
         status={progressBar.status}

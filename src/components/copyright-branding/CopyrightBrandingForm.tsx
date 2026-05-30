@@ -341,18 +341,15 @@ export const CopyrightBrandingForm = () => {
 
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading || isDemo}
+                disabled={isLoading}
                 variant="primaryCustom"
                 className="w-full"
-                title={isDemo ? DEMO_TOOLTIP : undefined}
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Herschrijven...
                   </>
-                ) : isDemo ? (
-                  'Herschrijf tekst (demo - uitgeschakeld)'
                 ) : (
                   <>
                     <ArrowRight className="w-4 h-4 mr-2" />
@@ -360,6 +357,7 @@ export const CopyrightBrandingForm = () => {
                   </>
                 )}
               </Button>
+
             </TabsContent>
           </Tabs>
         </CardContent>
