@@ -16,6 +16,8 @@ import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { CategoryManager } from '@/components/seo-blog/CategoryManager';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import styleIsometricFlat from '@/assets/style-isometric-flat.png';
