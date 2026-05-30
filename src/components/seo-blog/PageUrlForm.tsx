@@ -446,7 +446,7 @@ export const PageUrlForm = ({
       {isAdmin && (
         <Button
           onClick={handleTriggerWebhook}
-          disabled={!hasValidUrl || isSubmitting}
+          disabled={(!isDemo && !hasValidUrl) || isSubmitting}
           variant="primaryCustom"
           className="w-full"
         >
