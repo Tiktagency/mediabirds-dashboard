@@ -599,7 +599,7 @@ export const KeywordResearchForm = ({
       <div className="pt-6 border-t border-white/10">
         <Button
           onClick={handleStartResearch}
-          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
+          disabled={isSubmitting || (!isDemo && !isFormComplete()) || isScheduleEnabled}
           variant="primaryCustom"
           className="w-full gap-2"
         >

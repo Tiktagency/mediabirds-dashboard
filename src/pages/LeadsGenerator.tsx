@@ -237,7 +237,7 @@ const LeadsGenerator = () => {
 
           <Button
             onClick={handleStart}
-            disabled={!isValid || isStarting}
+            disabled={(!isDemo && !isValid) || isStarting}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
           >
             {isStarting ? (

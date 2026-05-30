@@ -244,7 +244,7 @@ const MondayPlanning = () => {
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
+              disabled={(!isDemo && !isFormValid) || isSubmitting}
               variant="primaryCustom"
               className="w-full mt-4"
             >

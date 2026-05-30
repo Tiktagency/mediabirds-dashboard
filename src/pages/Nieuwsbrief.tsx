@@ -621,7 +621,7 @@ const Nieuwsbrief = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleFetchCompanyInfo}
-                  disabled={isFetchingCompanyInfo || !localData.website}
+                  disabled={isFetchingCompanyInfo || (!isDemo && !localData.website)}
                   className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-1.5"
                 >
                   {isFetchingCompanyInfo ? (
@@ -721,7 +721,7 @@ const Nieuwsbrief = () => {
                       )}
                       <Button
                         onClick={handleFetchColors}
-                        disabled={isFetchingColors || !localData.website}
+                        disabled={isFetchingColors || (!isDemo && !localData.website)}
                         className="w-full gap-2"
                         variant="outline"
                       >
