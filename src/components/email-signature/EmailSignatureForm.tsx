@@ -78,6 +78,7 @@ export const EmailSignatureForm = ({
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const progressBar = useAutomationProgress();
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Extra velden state (max 1 extra per type = 2 totaal)
@@ -334,6 +335,7 @@ export const EmailSignatureForm = ({
     // Alleen naar webhook sturen via edge function, niet opslaan
     setIsSending(true);
     onGeneratingChange?.(true);
+    progressBar.start(AUTOMATION_DURATIONS.emailSignature);
     try {
       const response = await supabase.functions.invoke('trigger-email-signature', {
         body: signatureData,
