@@ -66,12 +66,6 @@ const LeadsGenerator = () => {
     saveZoektermen(zoektermen.filter((_, i) => i !== index));
   };
 
-  const stopProgress = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
 
   const handleStart = async () => {
     if (!isValid) return;
@@ -159,11 +153,14 @@ const LeadsGenerator = () => {
           Genereer automatisch leads op basis van locatie en zoektermen. Vul de gegevens in en start de zoektocht.
         </p>
 
-        {isRunning && (
-          <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl mb-4">
-            <Progress value={progress} className="h-2 bg-white/10 [&>div]:bg-primary" />
-          </div>
-        )}
+        <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl mb-4">
+          <AutomationProgressBar
+            progress={progressBar.progress}
+            status={progressBar.status}
+            elapsed={progressBar.elapsed}
+            expected={progressBar.expected}
+          />
+        </div>
 
         <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl space-y-4">
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">
