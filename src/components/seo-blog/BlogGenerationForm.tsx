@@ -893,7 +893,6 @@ export const BlogGenerationForm = ({
           )}
         </Button>
         
-        </Button>
 
         <div className="mt-4">
           <AutomationProgressBar
