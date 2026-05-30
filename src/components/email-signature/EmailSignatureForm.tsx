@@ -782,6 +782,12 @@ export const EmailSignatureForm = ({
           'Handtekening genereren'
         )}
       </Button>
+      <AutomationProgressBar
+        progress={progressBar.progress}
+        status={progressBar.status}
+        elapsed={progressBar.elapsed}
+        expected={progressBar.expected}
+      />
     </form>
   );
 };
