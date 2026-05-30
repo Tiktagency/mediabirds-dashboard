@@ -605,6 +605,12 @@ const Nieuwsbrief = () => {
                 </Button>
               </CardHeader>
               <CardContent className="p-6 pt-2 space-y-4">
+                <AutomationProgressBar
+                  progress={companyInfoProgress.progress}
+                  status={companyInfoProgress.status}
+                  elapsed={companyInfoProgress.elapsed}
+                  expected={companyInfoProgress.expected}
+                />
                 {TEXT_FIELDS.slice(0, 4).map(({ key, label, type, placeholder }) =>
                   renderTextField(key, label, type, placeholder)
                 )}
@@ -703,6 +709,12 @@ const Nieuwsbrief = () => {
                           </>
                         )}
                       </Button>
+                      <AutomationProgressBar
+                        progress={brandColorsProgress.progress}
+                        status={brandColorsProgress.status}
+                        elapsed={brandColorsProgress.elapsed}
+                        expected={brandColorsProgress.expected}
+                      />
                     </div>
                   )}
 
@@ -762,6 +774,12 @@ const Nieuwsbrief = () => {
                   </>
                 )}
               </Button>
+              <AutomationProgressBar
+                progress={generateProgress.progress}
+                status={generateProgress.status}
+                elapsed={generateProgress.elapsed}
+                expected={generateProgress.expected}
+              />
 
             </div>{/* einde linkerkolom */}
 
