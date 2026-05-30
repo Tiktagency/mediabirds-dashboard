@@ -15,6 +15,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 const MAX_RSS_FEEDS = 5;
 
@@ -210,7 +212,15 @@ const Nieuwsbrief = () => {
     }
     setIsFetchingColors(true);
     brandColorsProgress.start(AUTOMATION_DURATIONS.newsletterBrandColors);
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.newsletterBrandColors);
+      brandColorsProgress.complete();
+      toast({ title: 'Kleuren opgehaald! (demo)', description: 'Demo-modus: kleuren niet daadwerkelijk gewijzigd.' });
+      setIsFetchingColors(false);
+      return;
+    }
     try {
+
       const { data, error } = await supabase.functions.invoke('extract-brand-colors', {
         body: { website: localData.website },
       });
@@ -402,6 +412,16 @@ const Nieuwsbrief = () => {
     setGeneratedHtmlLocal(null);
     generateProgress.start(AUTOMATION_DURATIONS.newsletterGenerate);
 
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.newsletterGenerate);
+      generateProgress.complete();
+      toast({ title: '✅ Nieuwsbrief gegenereerd! (demo)', description: 'Demo-modus: geen echte nieuwsbrief gegenereerd.' });
+      setIsGenerating(false);
+      return;
+    }
+
+
+
     try {
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
         body: {
@@ -507,7 +527,15 @@ const Nieuwsbrief = () => {
     }
     setIsFetchingCompanyInfo(true);
     companyInfoProgress.start(AUTOMATION_DURATIONS.newsletterCompanyInfo);
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.newsletterCompanyInfo);
+      companyInfoProgress.complete();
+      toast({ title: 'Bedrijfsinfo ingevuld! (demo)', description: 'Demo-modus: velden niet daadwerkelijk gewijzigd.' });
+      setIsFetchingCompanyInfo(false);
+      return;
+    }
     try {
+
       const { data, error } = await supabase.functions.invoke('extract-company-info', {
         body: { website: localData.website },
       });
@@ -750,9 +778,9 @@ const Nieuwsbrief = () => {
               <Button
                 className="w-full gap-2 h-11"
                 onClick={handleGenerate}
-                disabled={isGenerating || !!newsletterSchedule?.enabled || isDemo}
-                title={isDemo ? DEMO_TOOLTIP : undefined}
+                disabled={isGenerating || !!newsletterSchedule?.enabled}
               >
+
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
