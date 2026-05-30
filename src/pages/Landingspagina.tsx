@@ -15,6 +15,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const Landingspagina = () => {
   const { isLoading, isAdmin } = useAdminAuth();
@@ -31,6 +33,7 @@ const Landingspagina = () => {
   const [editPageUrl, setEditPageUrl] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const progressBar = useAutomationProgress();
 
   const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useLandingSchedule(selectedCompany?.id);
 
@@ -88,6 +91,7 @@ const Landingspagina = () => {
     }
     setIsStarting(true);
     setIsAnimating(true);
+    progressBar.start(AUTOMATION_DURATIONS.landingspagina);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-landing-webhook', {
         body: {
@@ -100,7 +104,7 @@ const Landingspagina = () => {
       });
       if (error) throw error;
 
-      let message = 'Landingspagina verwerking is gestart';
+      let message = 'Landingspagina verwerking voltooid';
       try {
         const parsed = JSON.parse(data?.data || '{}');
         message = parsed.message || parsed.Output || data?.data || message;
@@ -108,9 +112,11 @@ const Landingspagina = () => {
         message = data?.data || message;
       }
 
+      progressBar.complete();
       toast({ title: 'Resultaat', description: message, duration: 5000 });
     } catch (error) {
       console.error('Error triggering webhook:', error);
+      progressBar.fail();
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
     } finally {
       setIsStarting(false);
@@ -340,6 +346,12 @@ const Landingspagina = () => {
                   'Start'
                 )}
               </Button>
+              <AutomationProgressBar
+                progress={progressBar.progress}
+                status={progressBar.status}
+                elapsed={progressBar.elapsed}
+                expected={progressBar.expected}
+              />
             </div>
 
             {/* Right: Animation panel */}
