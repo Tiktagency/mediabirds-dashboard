@@ -767,7 +767,7 @@ export const EmailSignatureForm = ({
       <Button
         type="submit"
         variant="primaryCustom"
-        disabled={isSending || !isValid}
+        disabled={isSending}
         className="w-full"
       >
         {isSending ? (
