@@ -342,6 +342,7 @@ export const EmailSignatureForm = ({
       });
 
       if (response.error) {
+        progressBar.fail();
         toast({
           title: 'Fout',
           description: response.error.message,
@@ -354,6 +355,7 @@ export const EmailSignatureForm = ({
       console.log('Webhook response:', responseData);
 
       if (!responseData?.success) {
+        progressBar.fail();
         toast({
           title: `Webhook fout (${responseData?.status || 'onbekend'})`,
           description: responseData?.rawText || 'Geen response ontvangen',
@@ -405,12 +407,14 @@ export const EmailSignatureForm = ({
         setHasNonFormChanges(false);
       }
 
+      progressBar.complete();
       toast({
         title: 'Handtekening gegenereerd',
         description: 'De HTML code is klaar',
       });
     } catch (error) {
       console.error('Error calling webhook:', error);
+      progressBar.fail();
       toast({
         title: 'Fout',
         description: error instanceof Error ? error.message : 'Onbekende fout',
