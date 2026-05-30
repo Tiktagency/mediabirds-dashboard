@@ -1,0 +1,914 @@
+{
+  "name": "MEDIABIRDS monday planning",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "31605fee-d222-4693-accb-69e6ca4cdffd",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -624,
+        -160
+      ],
+      "id": "a33d9152-0172-4e4d-b6bd-8716efda539e",
+      "name": "Webhook",
+      "webhookId": "31605fee-d222-4693-accb-69e6ca4cdffd"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0OTg5NzYzMywiYWFpIjoxMSwidWlkIjozMjE5MjYyMiwiaWFkIjoiMjAyNS0wOC0xM1QxMToyMTo0NC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTI4MjQyNjAsInJnbiI6InVzZTEifQ.m7n-fBsclikfTfpiToXzm-Ql4VY-c5WB-t5Vohdd3Qw"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation { duplicate_board(board_id: {{ $('Board id').item.json['board id'] }}, duplicate_type: duplicate_board_with_pulses, board_name: \\\"Nieuwe Planning\\\") { board { id } } }\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        496,
+        -416
+      ],
+      "id": "0b79c440-653e-4d4b-98af-062ec41ff12f",
+      "name": "Duplicate"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0OTg5NzYzMywiYWFpIjoxMSwidWlkIjozMjE5MjYyMiwiaWFkIjoiMjAyNS0wOC0xM1QxMToyMTo0NC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTI4MjQyNjAsInJnbiI6InVzZTEifQ.m7n-fBsclikfTfpiToXzm-Ql4VY-c5WB-t5Vohdd3Qw"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation { update_board (board_id: {{ $('Duplicate').item.json.data.duplicate_board.board.id }}, board_attribute: name, new_value: \\\"Planning {{ $('Webhook').item.json.body.bedrijfsnaam }} - Pakket {{ $('Webhook').item.json.body.pakket }}\\\") }\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        848,
+        -416
+      ],
+      "id": "d763367d-8971-4bc3-b23f-09835ecd8040",
+      "name": "Titel aanpassen"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Startdatum:{{ $json.body.startDatum }}\n\nTijd referentie: {{ $now }}",
+              "role": "assistant"
+            },
+            {
+              "content": "=Schrijf de datum in het format: YYYY-MM-DD\n\nIn de output geef je een startdatum en einddatum door.\nDe eindatum moet precies 6 dagen later zijn dan de startdatum. \n\nOutput format:\n{\n  \"Startdatum\": \"YYYY-MM-DD\",\n  \"Einddatum\": \"YYYY-MM-DD\"\n}"
+            },
+            {
+              "role": "assistant"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxToolsIterations": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -448,
+        -160
+      ],
+      "id": "6b3b3f79-669d-4ef6-bd4a-08409194fa82",
+      "name": "Extractor",
+      "credentials": {
+        "openAiApi": {
+          "id": "OVQ82Dh9luQQ2D4Q",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.pakket }}",
+                    "rightValue": "A",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "19a93808-e0e7-49ed-9cd2-2acca33b546d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pakket A"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "231f5d72-551e-457f-81f8-40c054bb2d81",
+                    "leftValue": "={{ $('Webhook').item.json.body.pakket }}",
+                    "rightValue": "B",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pakket B"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fdb8c130-be4b-4fff-b0b5-d8621363317c",
+                    "leftValue": "={{ $('Webhook').item.json.body.pakket }}",
+                    "rightValue": "C",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pakket C"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1f803898-9779-44f6-9c79-df74d0482f37",
+                    "leftValue": "={{ $('Webhook').item.json.body.pakket }}",
+                    "rightValue": "D",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Pakket D"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -192
+      ],
+      "id": "fb95d06f-946b-4d27-ac0a-f373b0b6f591",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "operation": "getAll",
+        "boardId": "={{ $('Duplicate').item.json.data.duplicate_board.board.id }}",
+        "groupId": "topics",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -416
+      ],
+      "id": "561b9309-0140-4b50-aa3c-2bd9d7f972a1",
+      "name": "Kick-off",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "boardId": "18390586771"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -416
+      ],
+      "id": "d0939809-ca47-4982-a401-6de0bd889cab",
+      "name": "Pakket A",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "boardId": "18390586410"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -256
+      ],
+      "id": "d0baa53f-1d6f-44ba-9842-1bcf3f4d0652",
+      "name": "Pakket B",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "boardId": "18390587179"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -96
+      ],
+      "id": "0d3a12a9-1888-42e3-881e-e1163e17b347",
+      "name": "Pakket C",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "boardId": "18390603594"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        96,
+        64
+      ],
+      "id": "a3e36f2d-c58b-4844-9f7e-e5287ab6e550",
+      "name": "Pakket D",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e153d95-908d-41b8-bf54-47182f192fe9",
+              "name": "board id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        -416
+      ],
+      "id": "daedd3da-05c5-4934-96b5-86ba8c77eb2c",
+      "name": "Board id"
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "operation": "changeColumnValue",
+        "boardId": "={{ $('Duplicate').item.json.data.duplicate_board.board.id }}",
+        "itemId": "={{ $('Kick-off').item.json.id }}",
+        "columnId": "tijdlijn",
+        "value": "={\n  \"from\": \"{{ $('Extractor').item.json.message.content.Startdatum }}\",\n  \"to\": \"{{ $('Extractor').item.json.message.content.Einddatum }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -416
+      ],
+      "id": "0b70c783-5908-4c92-ad19-a0d2fcbce393",
+      "name": "Datum updaten1",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -416
+      ],
+      "id": "e2aa7c0b-9fb5-425a-b8fe-06ba0bee8314",
+      "name": "Wait1",
+      "webhookId": "fb3c4601-d797-4cc2-a3e4-79fb0d253f3b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0OTg5NzYzMywiYWFpIjoxMSwidWlkIjozMjE5MjYyMiwiaWFkIjoiMjAyNS0wOC0xM1QxMToyMTo0NC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTI4MjQyNjAsInJnbiI6InVzZTEifQ.m7n-fBsclikfTfpiToXzm-Ql4VY-c5WB-t5Vohdd3Qw"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation { duplicate_board(board_id: {{ $('Board id1').item.json['board id'] }}, duplicate_type: duplicate_board_with_pulses, board_name: \\\"Nieuwe Planning\\\") { board { id } } }\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "20e18e0c-0536-49f2-88ca-12ab70d9f1a9",
+      "name": "Duplicate1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.monday.com/v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjU0OTg5NzYzMywiYWFpIjoxMSwidWlkIjozMjE5MjYyMiwiaWFkIjoiMjAyNS0wOC0xM1QxMToyMTo0NC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTI4MjQyNjAsInJnbiI6InVzZTEifQ.m7n-fBsclikfTfpiToXzm-Ql4VY-c5WB-t5Vohdd3Qw"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation { update_board (board_id: {{ $('Duplicate1').item.json.data.duplicate_board.board.id }}, board_attribute: name, new_value: \\\"Planning {{ $('Webhook').item.json.body.bedrijfsnaam }} - Pakket {{ $('Webhook').item.json.body.pakket }}\\\") }\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        848,
+        -256
+      ],
+      "id": "ab439212-8a2c-41f6-a434-a4ec25f44a19",
+      "name": "Titel aanpassen1"
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "operation": "getAll",
+        "boardId": "={{ $('Duplicate1').item.json.data.duplicate_board.board.id }}",
+        "groupId": "topics",
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -256
+      ],
+      "id": "b5d81fae-a9fc-43ce-a7bf-9f2a3c50691a",
+      "name": "Kick-off1",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e153d95-908d-41b8-bf54-47182f192fe9",
+              "name": "board id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        -256
+      ],
+      "id": "d0055c42-1aea-442a-b2cc-0a0f1fda6f45",
+      "name": "Board id1"
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "operation": "changeColumnValue",
+        "boardId": "={{ $('Duplicate1').item.json.data.duplicate_board.board.id }}",
+        "itemId": "={{ $('Kick-off1').item.json.id }}",
+        "columnId": "tijdlijn",
+        "value": "={\n  \"from\": \"{{ $('Extractor').item.json.message.content.Startdatum }}\",\n  \"to\": \"{{ $('Extractor').item.json.message.content.Einddatum }}\"\n}"
+      },
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -256
+      ],
+      "id": "cd201969-58dc-421a-98b6-6a17be80f42b",
+      "name": "Datum updaten",
+      "credentials": {
+        "mondayComApi": {
+          "id": "A3N8Go4h4wOQBjYg",
+          "name": "Monday.com account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -256
+      ],
+      "id": "321777da-c948-40f9-a97d-a86173c53841",
+      "name": "Wait",
+      "webhookId": "fb3c4601-d797-4cc2-a3e4-79fb0d253f3b"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1568,
+        -416
+      ],
+      "id": "6c48db6f-3747-4365-92dc-3db134b19ae4",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fd4a9128-f766-4ff9-ae4d-97fb60e18881",
+              "name": "Antwoord",
+              "value": "De monday planning is succesvol aangemaakt in Monday!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1392,
+        -416
+      ],
+      "id": "3cf4d8ff-d9ea-43e4-ab8b-af180ab59d1a",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "tikt.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "content-length": "322",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "149.143.25.114",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "NL",
+            "cf-ray": "9abb5a0aa1400b68-AMS",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://228ced43-b7cc-4f02-9079-11aecfd3507a.lovableproject.com",
+            "priority": "u=1, i",
+            "referer": "https://228ced43-b7cc-4f02-9079-11aecfd3507a.lovableproject.com/",
+            "sec-ch-ua": "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-api-key": "JGMhfDirhe73J5DvjeG6dJ8",
+            "x-forwarded-for": "149.143.25.114, 172.71.98.120",
+            "x-forwarded-host": "tikt.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-89-8567ddc79c-gsljl",
+            "x-is-trusted": "yes",
+            "x-real-ip": "149.143.25.114"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": "Nodige gegeven:\nTikt, Pakket A, 19-12-2025\n\nFases:\nKickoff, Development, Testen & feedback, Marketing, Livegang",
+            "timestamp": "2025-12-10T08:25:27.295Z",
+            "sender": "user",
+            "bedrijfsnaam": "Tikt",
+            "pakket": "B",
+            "startDatum": "2026-3-4",
+            "fases": [
+              "Kickoff",
+              "Development",
+              "Testen & feedback",
+              "Marketing",
+              "Livegang"
+            ]
+          },
+          "webhookUrl": "https://tikt.app.n8n.cloud/webhook/31605fee-d222-4693-accb-69e6ca4cdffd",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Titel aanpassen": {
+      "main": [
+        [
+          {
+            "node": "Kick-off",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extractor": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Pakket A",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pakket B",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pakket C",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pakket D",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kick-off": {
+      "main": [
+        [
+          {
+            "node": "Datum updaten1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pakket A": {
+      "main": [
+        [
+          {
+            "node": "Board id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pakket B": {
+      "main": [
+        [
+          {
+            "node": "Board id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pakket C": {
+      "main": [
+        [
+          {
+            "node": "Board id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pakket D": {
+      "main": [
+        [
+          {
+            "node": "Board id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Board id": {
+      "main": [
+        [
+          {
+            "node": "Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Titel aanpassen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Titel aanpassen1": {
+      "main": [
+        [
+          {
+            "node": "Kick-off1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kick-off1": {
+      "main": [
+        [
+          {
+            "node": "Datum updaten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Board id1": {
+      "main": [
+        [
+          {
+            "node": "Duplicate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Titel aanpassen1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datum updaten1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datum updaten": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedPerExecution": 45
+  },
+  "versionId": "e9320239-8cd0-4ff6-b6b5-293cefec5b72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8a03e95d7c8df73727445c383fb3cd28d1b7353623d0190a6ee0f43d207dd963"
+  },
+  "id": "GNB6QvGc3MTGTBHT",
+  "tags": [
+    {
+      "updatedAt": "2025-10-21T14:14:48.143Z",
+      "createdAt": "2025-10-21T14:14:48.143Z",
+      "id": "3WNWWVsBN9VOhFRY",
+      "name": "Mediabirds"
+    }
+  ]
+}
