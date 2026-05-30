@@ -12,7 +12,7 @@ import NewsletterCompanySelector, { NewsletterCompany } from '@/components/nieuw
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useIsDemoUser } from '@/hooks/useIsDemoUser';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 import { simulateAutomation } from '@/lib/demoSimulation';
