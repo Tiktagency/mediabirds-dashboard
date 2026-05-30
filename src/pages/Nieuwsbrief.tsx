@@ -400,6 +400,7 @@ const Nieuwsbrief = () => {
     if (!selectedCompany) return;
     setIsGenerating(true);
     setGeneratedHtmlLocal(null);
+    generateProgress.start(AUTOMATION_DURATIONS.newsletterGenerate);
 
     try {
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
@@ -461,6 +462,7 @@ const Nieuwsbrief = () => {
           }
         }
 
+        generateProgress.fail();
         toast({ title: '❌ Genereren mislukt', description, variant: 'destructive' });
         return;
       }
@@ -468,8 +470,10 @@ const Nieuwsbrief = () => {
       const html = response.data?.html;
       if (html) {
         setGeneratedHtmlLocal(html);
+        generateProgress.complete();
         toast({ title: '✅ Nieuwsbrief gegenereerd!', description: 'De preview is direct beschikbaar.' });
       } else {
+        generateProgress.fail();
         toast({
           title: 'Geen HTML ontvangen',
           description: 'De webhook heeft geen inhoud teruggegeven.',
@@ -477,6 +481,7 @@ const Nieuwsbrief = () => {
         });
       }
     } catch (err: any) {
+      generateProgress.fail();
       // Fallback catch for unexpected JS errors
       let description = 'Er is iets misgegaan. Probeer het opnieuw.';
       const raw: string = err?.message || String(err);
