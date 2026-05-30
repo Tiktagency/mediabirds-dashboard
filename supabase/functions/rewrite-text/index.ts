@@ -31,13 +31,9 @@ serve(async (req) => {
       });
     }
 
-    const adminClient = createClient(supabaseUrl!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: isDemo } = await adminClient.rpc('is_demo_user', { _user_id: userData.user.id });
-    if (isDemo) {
-      return new Response(JSON.stringify({ error: 'Demo-account: automatiseringen starten is uitgeschakeld.' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Copyright branding is toegestaan voor demo-accounts.
+
+
 
 
     const { personalities, postType, subject, wordCount, extraDescription, oldText, mode } = await req.json();
