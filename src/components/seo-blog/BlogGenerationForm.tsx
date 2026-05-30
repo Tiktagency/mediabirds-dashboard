@@ -54,6 +54,7 @@ export const BlogGenerationForm = ({
   const { toast } = useToast();
   const { isDemo } = useIsDemoUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const progressBar = useAutomationProgress();
 
 
   // Form state
@@ -299,6 +300,7 @@ export const BlogGenerationForm = ({
     }
 
     setIsSubmitting(true);
+    progressBar.start(AUTOMATION_DURATIONS.seoBlogGeneration);
 
     try {
       const payload = {
@@ -344,6 +346,7 @@ export const BlogGenerationForm = ({
 
       if (data.success) {
         const message = data.message || "Blog generatie succesvol gestart";
+        progressBar.complete();
         toast({
           title: "Succes!",
           description: message,
@@ -352,6 +355,7 @@ export const BlogGenerationForm = ({
         await saveNotification(message, 'success');
       } else {
         const message = data.error || "Er is iets misgegaan";
+        progressBar.fail();
         toast({
           title: "Fout",
           description: message,
@@ -362,6 +366,7 @@ export const BlogGenerationForm = ({
       }
     } catch (error) {
       console.error("Error calling Edge Function:", error);
+      progressBar.fail();
       const errorMessage = "Er is iets misgegaan. Probeer het opnieuw.";
       toast({
         title: "Fout",
@@ -888,6 +893,17 @@ export const BlogGenerationForm = ({
           )}
         </Button>
         
+        </Button>
+
+        <div className="mt-4">
+          <AutomationProgressBar
+            progress={progressBar.progress}
+            status={progressBar.status}
+            elapsed={progressBar.elapsed}
+            expected={progressBar.expected}
+          />
+        </div>
+
         {!isFormComplete() && !isScheduleEnabled && (
           <p className="text-center text-white/50 text-sm mt-2">
             Alle velden moeten ingevuld zijn om te starten
