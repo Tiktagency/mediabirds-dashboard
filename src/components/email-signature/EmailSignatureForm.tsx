@@ -11,7 +11,7 @@ import { SocialLink, EmailSignatureSettings } from '@/hooks/useEmailSignatureSet
 import { Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 import { DynamicFieldGroup } from './DynamicFieldGroup';
@@ -72,7 +72,7 @@ export const EmailSignatureForm = ({
   onGeneratingChange,
 }: EmailSignatureFormProps) => {
   const { toast } = useToast();
-  const { isDemo } = useIsDemoUser();
+  
   const [socials, setSocials] = useState<SocialLink[]>([]);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
