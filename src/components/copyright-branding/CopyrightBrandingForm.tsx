@@ -12,6 +12,8 @@ import { Loader2, Sparkles, Copy, Check, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const PERSONALITY_TYPES = [
   { id: 'professioneel', label: 'Professioneel' },
@@ -48,6 +50,7 @@ export const CopyrightBrandingForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<'generate' | 'rewrite'>('generate');
+  const progressBar = useAutomationProgress();
 
   const handlePersonalityToggle = (id: string) => {
     setSelectedPersonalities(prev => {
@@ -82,6 +85,7 @@ export const CopyrightBrandingForm = () => {
 
     setIsLoading(true);
     setNewText('');
+    progressBar.start(AUTOMATION_DURATIONS.copyrightBranding);
 
     try {
       const response = await supabase.functions.invoke('rewrite-text', {
@@ -101,9 +105,11 @@ export const CopyrightBrandingForm = () => {
       }
 
       setNewText(response.data.text);
+      progressBar.complete();
       toast.success('Tekst succesvol gegenereerd!');
     } catch (error) {
       console.error('Error generating text:', error);
+      progressBar.fail();
       toast.error('Er ging iets mis bij het genereren van de tekst');
     } finally {
       setIsLoading(false);
