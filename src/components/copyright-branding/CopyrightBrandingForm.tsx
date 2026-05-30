@@ -222,7 +222,13 @@ export const CopyrightBrandingForm = () => {
 
       {/* Mode Tabs */}
       <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
+          <AutomationProgressBar
+            progress={progressBar.progress}
+            status={progressBar.status}
+            elapsed={progressBar.elapsed}
+            expected={progressBar.expected}
+          />
           <Tabs value={mode} onValueChange={(v) => setMode(v as 'generate' | 'rewrite')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="generate">Genereer nieuwe tekst</TabsTrigger>
