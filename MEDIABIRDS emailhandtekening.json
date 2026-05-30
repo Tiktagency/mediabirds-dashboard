@@ -1,0 +1,652 @@
+{
+  "name": "MEDIABIRDS emailhandtekening",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0d19dda2-8df2-4952-a93a-5c9c49b4edd8",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -528,
+        0
+      ],
+      "id": "dda6ff0c-da6e-4a0e-bb4c-509df169de29",
+      "name": "Webhook",
+      "webhookId": "0d19dda2-8df2-4952-a93a-5c9c49b4edd8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20792e6b-9432-46c9-a0b8-a092984240da",
+              "name": "Naam",
+              "value": "={{ $json.body.first_name }} {{ $json.body.last_name }}",
+              "type": "string"
+            },
+            {
+              "id": "00d195f0-9fe1-4bd8-850f-39bf73e93fa5",
+              "name": "Email",
+              "value": "={{ $json.body.emails }}",
+              "type": "string"
+            },
+            {
+              "id": "636acf29-8797-40a5-894f-4f73ddf00243",
+              "name": "Functie",
+              "value": "={{ $json.body.job_title }}",
+              "type": "string"
+            },
+            {
+              "id": "653ca4b6-7491-4af7-b954-726aedfe90c4",
+              "name": "Website url",
+              "value": "={{ $json.body.website }}",
+              "type": "string"
+            },
+            {
+              "id": "be8bd5cc-074d-4623-8d55-f849e460772b",
+              "name": "Achtergrond kleur",
+              "value": "={{ $json.body.background_color }} - {{ $json.body.gradient_end_color }}",
+              "type": "string"
+            },
+            {
+              "id": "81c05420-184a-4215-a2da-694a5cae3f8d",
+              "name": "Tekst kleur",
+              "value": "={{ $json.body.text_color }}",
+              "type": "string"
+            },
+            {
+              "id": "f4abd9f6-8038-4edc-b449-764fba0fde07",
+              "name": "Profielfoto URL",
+              "value": "={{ $json.body.profile_photo_url }}",
+              "type": "string"
+            },
+            {
+              "id": "22b5fa4d-eded-4a9f-89f5-160bc3413a3f",
+              "name": "Socials",
+              "value": "={{ $json.body.socials }}",
+              "type": "array"
+            },
+            {
+              "id": "16d52f09-2329-433d-9560-5d8ebe14a6fa",
+              "name": "Logo URL",
+              "value": "={{ $json.body.company_logo_url }}",
+              "type": "string"
+            },
+            {
+              "id": "686d974d-d8e1-4027-82b0-9cd5dca4874b",
+              "name": "Telefoonnummer",
+              "value": "={{ $json.body.phone_numbers }}",
+              "type": "string"
+            },
+            {
+              "id": "eacf6fa9-fe4e-4d3e-b9eb-8662ae4c4b2a",
+              "name": "body.location",
+              "value": "={{ $json.body.locations }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        0
+      ],
+      "id": "0b084705-86c9-4a44-90a2-423f1838991c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3db5fa6-6090-4b93-b6f6-bdc7fa613bbf",
+              "name": "html",
+              "value": "<!doctype html> <html lang=\"nl\"> <head>   <meta charset=\"utf-8\" />   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />   <title>E-mail signature</title>   <style>     table {       font-family: 'Inter', Arial, sans-serif;       font-size: 12px;       border-collapse: collapse;     }     a, td {       color: #000000;       text-decoration: none;     }   </style> </head>  <body>   <table role=\"presentation\">     <tr>       <td style=\"padding-bottom: 16px;\">         Met vriendelijke groet, Kind Regards<br><br>       </td>     </tr>   </table>    <table role=\"presentation\">     <tr>       <td>         <img src=\"https://mediabirds.nl/wp-content/uploads/2024/01/nielsteunissen.png\"              alt=\"Niels Teunissen, Digital Lead\"><br><br>       </td>     </tr>   </table>    <table role=\"presentation\" style=\"line-height: 20px;\">     <tr>       <td style=\"width: 30px;\">M:</td>       <td>         <a href=\"tel:+31629913888\">+ 31 (6) 299 13 888</a>       </td>     </tr>     <tr>       <td style=\"width: 30px;\">E:</td>       <td>         <a href=\"mailto:niels.teunissen@mediabirds.nl\">niels.teunissen@mediabirds.nl</a>       </td>     </tr>   </table>    <table role=\"presentation\">     <tr>       <td>         <br><br>         <img src=\"https://mediabirds.nl/wp-content/uploads/2024/01/logo.png\"              alt=\"Logo Mediabirds\"><br><br>       </td>     </tr>   </table>    <table role=\"presentation\" style=\"line-height: 20px;\">     <tr>       <td>         <a href=\"https://www.google.com/maps/place/Mediabirds+-+Webdesign+Bureau+Amsterdam/@52.3654317,4.8864403,15z/data=!4m6!3m5!1s0x47c609258afd2ed1:0x8de5dd15b3762d9b!8m2!3d52.3654317!4d4.8864403!16s%2Fg%2F11nmt3gkhw?entry=ttu\">Amsterdam</a>         <span style=\"padding: 0 5px;\">|</span>         <a href=\"https://www.google.com/maps/place/Mediabirds+-+Webdesign+Bureau+Ede/@52.0335891,5.6073683,15z/data=!4m2!3m1!1s0x0:0x3e07a57c6295619?sa=X&ved=2ahUKEwjV6Le7gpmDAxXf4AIHHfXSBQwQ_BJ6BAhLEAA\">Ede</a>         <br><br>       </td>     </tr>   </table>    <table role=\"presentation\" style=\"line-height: 20px;\">     <tr>       <td style=\"width: 30px;\">T:</td>       <td><a href=\"tel:0202445304\">020 244 53 04</a></td>     </tr>     <tr>       <td style=\"width: 30px;\">E:</td>       <td><a href=\"mailto:hello@mediabirds.nl\">hello@mediabirds.nl</a></td>     </tr>     <tr>       <td style=\"width: 30px;\">W:</td>       <td><a href=\"https://www.mediabirds.nl\">www.mediabirds.nl</a></td>     </tr>   </table>    <table role=\"presentation\">     <tr>       <td style=\"padding-right: 5px;\">         <a href=\"https://nl.linkedin.com/company/mediabirds-nl\">           <br>           <img src=\"https://mediabirds.nl/wp-content/uploads/2024/01/linkedin.png\" alt=\"Linkedin\">         </a>       </td>       <td style=\"padding-right: 5px;\">         <a href=\"https://www.instagram.com/mediabirds.nl/\">           <br>           <img src=\"https://mediabirds.nl/wp-content/uploads/2024/01/instagram.png\" alt=\"Instagram\">         </a>       </td>       <td style=\"padding-right: 5px;\">         <a href=\"https://m.facebook.com/mediabirdsnl-104851165087050\">           <br>           <img src=\"https://mediabirds.nl/wp-content/uploads/2024/01/facebook.png\" alt=\"Facebook\">         </a>       </td>     </tr>   </table> </body> </html>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "825b9674-5c72-4ae3-a902-6406c65b482e",
+      "name": "Voorbeeld handtekening"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please update the following HTML signature based on these requirements:\n\n--- HTML TEMPLATE ---\n{{ $json.html }}\n\n--- NEW DATA ---\nName: {{ $('Edit Fields').item.json.Naam }}\nEmail: {{ $('Edit Fields').item.json.Email }}\nJob Title: {{ $('Edit Fields').item.json.Functie }}\nWebsite: {{ $('Edit Fields').item.json['Website url'] }}\nProfile Photo: {{ $('HTTP Request1').item.json.guid.raw }}\nTelefoonnummer: {{ $('Edit Fields').item.json.Telefoonnummer }}\nLocatie: Location: {{ $('Edit Fields').item.json.body.location }}\n\n--- STYLING ---\nBackground Color/gradient: {{ $('Edit Fields').item.json['Achtergrond kleur'] }}\nText Color: {{ $('Edit Fields').item.json['Tekst kleur'] }}\n\n--- SOCIALS ---\n{{ $('Edit Fields').item.json.Socials.toJsonString() }}\n\n--- LOGO ---\n{{ $('Edit Fields').item.json['Logo URL'] }}",
+        "options": {
+          "systemMessage": "=### ROLE\nYou are an expert HTML Email Signature Generator.\nYour goal is to RECONSTRUCT an HTML signature using NEW user data. You must strictly follow a specific vertical sequence.\n\n### 1. THE STRICT SEQUENCE (CRITICAL)\nYou must output the HTML tables in EXACTLY this order (Top to Bottom):\n1.  **Salutation Table:** (\"Met vriendelijke groet...\")\n2.  **Profile Section Table:** (Photo + Spacer + Name Box)\n3.  **Primary Contact Table:** (The 1st Phone & 1st Email) -> ABOVE Logo.\n4.  **Logo Table:** (Company Logo)\n5.  **Location Table:** (City names) -> BELOW Logo.\n6.  **Compact Bottom Table:** (2nd Phone + 2nd Email + Website) -> **MERGED IN ONE TABLE**.\n7.  **Social Media Table:** (Icons)\n\n---\n\n### 2. DETAILED INSTRUCTIONS PER SECTION\n\n#### SECTION 2: PROFILE (The 12px Gap Logic)\n- **Structure:** ONE row (`<tr>`) with **THREE** cells (`<td>`).\n- **Cell 1 (Left):** Profile Photo. Replace `src`. **FORCE:** `width=\"120\" style=\"width: 120px; max-width: 120px; height: auto; display: block; object-fit: cover;\"`.\n- **Cell 2 (The Spacer):** Insert `<td width=\"12\" style=\"width: 12px; min-width: 12px;\">&nbsp;</td>`\n- **Cell 3 (Right - Name Box):**\n  - **Style:** `background-color`: [Achtergrond kleur]; `width`: 280px; `padding`: 20px; `vertical-align`: middle;\n  - **Content:**\n    - **NAME:** `font-family: Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 800; line-height: 1.2; color: #ffffff;`.\n    - **JOB:** `font-size: 14px; font-weight: 400; color: #ffffff;`.\n    - **THE BULLET (BIGGER):** You MUST insert a large bullet inside a span immediately before the job title.\n      - Code: `<span style=\"font-size: 20px; line-height: 1; vertical-align: middle; color: #ffffff;\">&#8226;</span>&nbsp;`\n\n#### SECTION 3: PRIMARY CONTACT (ABOVE LOGO)\n- **Logic:** Take ONLY the **FIRST** phone number and **FIRST** email provided.\n- **Row 1:** Label **MUST** be `T:` | Value: 1st Phone Number.\n- **Row 2:** Label **MUST** be `E:` | Value: 1st Email Address.\n\n#### SECTION 4: LOGO\n- Insert the Company Logo `<img>`.\n- **FORCE:** `width=\"150\" style=\"width: 150px; max-width: 150px; height: auto; display: block;\"`.\n- **SPACING:** Insert exactly **ONE** `<br>` element AFTER this table to create separation from the Location.\n\n#### SECTION 5: LOCATIONS\n- **Logic:** If input contains a list (e.g., \"Deventer, Utrecht\"), join ALL values with ` | `.\n- **Output:** `City 1 | City 2`.\n- **SPACING:** Insert exactly **ONE** `<br>` element AFTER this table. This is MANDATORY regardless of subsequent data.\n\n#### SECTION 6: COMPACT BOTTOM BLOCK (STRICT NO-GAP LOGIC)\n- **Structure:** Create **ONE SINGLE TABLE** (`cellspacing=\"0\" cellpadding=\"0\"`) for the following items.\n- **Logic (Read Carefully):**\n  1.  **Check 2nd Phone:** IF (and ONLY IF) a 2nd number exists -> Add a row (Label: `T:`). **IF EMPTY: DO NOT CREATE THE ROW.**\n  2.  **Check 2nd Email:** IF (and ONLY IF) a 2nd email exists -> Add a row (Label: `E:`). **IF EMPTY: DO NOT CREATE THE ROW.**\n  3.  **Website (Always):** Add a row. Label: `W:`.\n      - **CRITICAL:** Visible text must be the **FULL URL**.\n- **Result:** If there is NO extra phone and NO extra email, this table should contain ONLY the Website row, directly under the location spacing. No extra gaps.\n\n#### SECTION 7: SOCIALS\n- Update `href` for Linkedin, Instagram, Facebook.\n- **Twitter/X:** If input has Twitter, create a new `<td>` with icon: `https://cdn-icons-png.flaticon.com/512/5969/5969020.png` (width 24px).\n- **Sizing:** All icons must be `width=\"24\" style=\"width: 24px;\"`.\n\n---\n\n### 3. GENERAL RULES\n- **Global Background:** Force `<body>` background to `#ffffff` (White).\n- **Cleanup:** Remove any `\\n` characters from text inputs.\n\n### OUTPUT FORMAT\n- Return **ONLY RAW HTML**.\n- NO markdown blocks.\n- NO JSON formatting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "6a56bfd2-0e28-4232-829d-2b40ffb57773",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        272
+      ],
+      "id": "c6280057-65fb-4dad-8e4a-ece6e2b5b5ca",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JZVraAaFTHy6KSgS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        0
+      ],
+      "id": "7baf3858-8029-4893-92ba-36495742ff99",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        256
+      ],
+      "id": "d54275c4-be00-4daf-8b2c-ffdf5afcd00b",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "GtbKcchKryu0hjM3",
+          "name": "Mediabirds"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "113b909a-be81-4b85-aad1-abac5986e703",
+              "name": "Emailhandtekening",
+              "value": "={{ $json.output.replace(/\\\\\"/g, '\"').replace(/^\"|\"$/g, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        0
+      ],
+      "id": "75bdc06f-a354-43ab-aef6-145f3be19912",
+      "name": "HTML handtekening"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json['Profielfoto URL'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "f0742dae-8e09-43fe-9f5a-ef3b18e783a8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "width": 1200,
+        "height": 800,
+        "resizeOption": "onlyIfLarger",
+        "options": {
+          "format": "png"
+        }
+      },
+      "type": "n8n-nodes-base.editImage",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a16f7d71-a0a2-4f88-874d-a4ac837e0af6",
+      "name": "Edit Image1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://mediabirds.nl/wp-json/wp/v2/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "={{ 'attachment; filename=' + $binary.data.fileName.replace('=', '') + '.' + $binary.data.fileExtension }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        192,
+        0
+      ],
+      "id": "2b447b36-fee2-47c2-8ac5-6d641ea7d745",
+      "name": "HTTP Request1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "xb6nMMMn6NIIit4C",
+          "name": "MEDIABIRDS wordpress"
+        },
+        "wordpressApi": {
+          "id": "2Urn96LUnjRSt7Ct",
+          "name": "Mediabirds"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Emailhandtekening\n12 uur",
+        "height": 672,
+        "width": 2048
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -192
+      ],
+      "id": "6473d3be-1884-4764-98a6-a39ac74d3be4",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "tikt.app.n8n.cloud",
+            "user-agent": "Deno/2.1.4 (variant; SupabaseEdgeRuntime/1.70.0)",
+            "content-length": "879",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "authorization": "Bearer FHejvnieujs873HJHCue763rnjkFCJHeji8",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "2a05:d014:61b:2708:2a38:7296:8bc7:33dc",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "DE",
+            "cf-ray": "9c60a382c24bfa24-FRA",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "2a05:d014:61b:2708:2a38:7296:8bc7:33dc, 172.70.248.148",
+            "x-forwarded-host": "tikt.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-89-8567ddc79c-fh6gl",
+            "x-is-trusted": "yes",
+            "x-real-ip": "2a05:d014:61b:2708:2a38:7296:8bc7:33dc"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "name": "Luc de Graag",
+            "first_name": "Luc",
+            "last_name": "de Graag",
+            "email": "luc.degraag@tikt.ai",
+            "emails": [
+              "luc.degraag@tikt.ai",
+              "lol@gmaik.com"
+            ],
+            "job_title": "mede-eigenaar",
+            "phone_number": "0682706226",
+            "phone_numbers": [
+              "0682706226",
+              "0318389446"
+            ],
+            "website": "https://Utrecht.nl/",
+            "location": "Ede",
+            "locations": [
+              "Ede"
+            ],
+            "background_type": "solid",
+            "background_color": "#00ffee",
+            "gradient_end_color": null,
+            "text_color": "#000000",
+            "socials": [
+              {
+                "url": "https://www.instagram.com/tikt.ai/",
+                "platform": "instagram"
+              },
+              {
+                "url": "https://www.instagram.com/tikt.ai/",
+                "platform": "linkedin"
+              },
+              {
+                "url": "https://www.instagram.com/tikt.ai/",
+                "platform": "facebook"
+              },
+              {
+                "url": "https://www.instagram.com/tikt.ai/",
+                "platform": "twitter"
+              }
+            ],
+            "profile_photo_url": "https://tikt.ai/wp-content/uploads/2025/12/MB-LUC-2_result-150x150.avif",
+            "company_logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Media_Markt_logo.svg"
+          },
+          "webhookUrl": "https://tikt.app.n8n.cloud/webhook/0d19dda2-8df2-4952-a93a-5c9c49b4edd8",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "HTTP Request1": [
+      {
+        "json": {
+          "id": 4732,
+          "date": "2026-01-29T15:47:09",
+          "date_gmt": "2026-01-29T15:47:09",
+          "guid": {
+            "rendered": "https://mediabirds.nl/wp-content/uploads/2026/01/MB-LUC-2_result-150x150-2.png-2.png",
+            "raw": "https://mediabirds.nl/wp-content/uploads/2026/01/MB-LUC-2_result-150x150-2.png-2.png"
+          },
+          "modified": "2026-01-29T15:47:09",
+          "modified_gmt": "2026-01-29T15:47:09",
+          "slug": "mb-luc-2_result-150x150-2-png-2",
+          "status": "inherit",
+          "type": "attachment",
+          "link": "https://mediabirds.nl/mb-luc-2_result-150x150-2-png-2/",
+          "title": {
+            "raw": "MB-LUC-2_result-150x150-2.png-2",
+            "rendered": "MB-LUC-2_result-150&#215;150-2.png-2"
+          },
+          "author": 1,
+          "featured_media": 0,
+          "comment_status": "",
+          "ping_status": "closed",
+          "template": "",
+          "meta": {
+            "_acf_changed": false
+          },
+          "permalink_template": "https://mediabirds.nl/?attachment_id=4732",
+          "generated_slug": "mb-luc-2_result-150x150-2-png-2",
+          "class_list": [
+            "post-4732",
+            "attachment",
+            "type-attachment",
+            "status-inherit",
+            "hentry"
+          ],
+          "acf": [],
+          "description": {
+            "raw": "",
+            "rendered": "<p class=\"attachment\"><a href='https://mediabirds.nl/wp-content/uploads/2026/01/MB-LUC-2_result-150x150-2.png-2.webp'><img loading=\"lazy\" decoding=\"async\" width=\"150\" height=\"150\" src=\"https://mediabirds.nl/wp-content/uploads/2026/01/MB-LUC-2_result-150x150-2.png-2.webp\" class=\"attachment-medium size-medium\" alt=\"\" /></a></p>\n"
+          },
+          "caption": {
+            "raw": "",
+            "rendered": ""
+          },
+          "alt_text": "",
+          "media_type": "image",
+          "mime_type": "image/png",
+          "media_details": {
+            "width": 150,
+            "height": 150,
+            "file": "2026/01/MB-LUC-2_result-150x150-2.png-2.webp",
+            "filesize": 5770,
+            "sizes": {},
+            "image_meta": {
+              "aperture": "0",
+              "credit": "",
+              "camera": "",
+              "caption": "",
+              "created_timestamp": "0",
+              "copyright": "",
+              "focal_length": "0",
+              "iso": "0",
+              "shutter_speed": "0",
+              "title": "",
+              "orientation": "0",
+              "keywords": []
+            },
+            "original_image": "MB-LUC-2_result-150x150-2.png-2.png"
+          },
+          "post": null,
+          "source_url": "https://mediabirds.nl/wp-content/uploads/2026/01/MB-LUC-2_result-150x150-2.png-2.webp",
+          "missing_image_sizes": [],
+          "_links": {
+            "self": [
+              {
+                "href": "https://mediabirds.nl/wp-json/wp/v2/media/4732",
+                "targetHints": {
+                  "allow": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE"
+                  ]
+                }
+              }
+            ],
+            "collection": [
+              {
+                "href": "https://mediabirds.nl/wp-json/wp/v2/media"
+              }
+            ],
+            "about": [
+              {
+                "href": "https://mediabirds.nl/wp-json/wp/v2/types/attachment"
+              }
+            ],
+            "author": [
+              {
+                "embeddable": true,
+                "href": "https://mediabirds.nl/wp-json/wp/v2/users/1"
+              }
+            ],
+            "replies": [
+              {
+                "embeddable": true,
+                "href": "https://mediabirds.nl/wp-json/wp/v2/comments?post=4732"
+              }
+            ],
+            "wp:action-unfiltered-html": [
+              {
+                "href": "https://mediabirds.nl/wp-json/wp/v2/media/4732"
+              }
+            ],
+            "wp:action-assign-author": [
+              {
+                "href": "https://mediabirds.nl/wp-json/wp/v2/media/4732"
+              }
+            ],
+            "curies": [
+              {
+                "name": "wp",
+                "href": "https://api.w.org/{rel}",
+                "templated": true
+              }
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voorbeeld handtekening": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTML handtekening",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML handtekening": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Image1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Voorbeeld handtekening",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a071bb91-2a38-4acd-9d90-426f924a8568",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8a03e95d7c8df73727445c383fb3cd28d1b7353623d0190a6ee0f43d207dd963"
+  },
+  "id": "V1a9cNqiBEcsa0ALPtMdA",
+  "tags": []
+}
