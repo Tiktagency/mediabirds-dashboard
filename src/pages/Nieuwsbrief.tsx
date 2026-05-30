@@ -209,6 +209,7 @@ const Nieuwsbrief = () => {
       return;
     }
     setIsFetchingColors(true);
+    brandColorsProgress.start(AUTOMATION_DURATIONS.newsletterBrandColors);
     try {
       const { data, error } = await supabase.functions.invoke('extract-brand-colors', {
         body: { website: localData.website },
@@ -221,8 +222,10 @@ const Nieuwsbrief = () => {
       if (selectedCompany) {
         await saveToCompany(colors);
       }
+      brandColorsProgress.complete();
       toast({ title: 'Kleuren opgehaald!', description: 'Huisstijlkleuren zijn automatisch ingevuld.' });
     } catch (err: any) {
+      brandColorsProgress.fail();
       toast({
         title: 'Fout bij ophalen kleuren',
         description: err?.message || 'Er is iets misgegaan.',
