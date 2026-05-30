@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 const Landingspagina = () => {
   const { isLoading, isAdmin } = useAdminAuth();
@@ -92,6 +94,17 @@ const Landingspagina = () => {
     setIsStarting(true);
     setIsAnimating(true);
     progressBar.start(AUTOMATION_DURATIONS.landingspagina);
+
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.landingspagina);
+      progressBar.complete();
+      toast({ title: 'Resultaat', description: 'Landingspagina verwerking voltooid (demo)', duration: 5000 });
+      setIsStarting(false);
+      setIsAnimating(false);
+      return;
+    }
+
+
     try {
       const { data, error } = await supabase.functions.invoke('trigger-landing-webhook', {
         body: {
@@ -332,20 +345,18 @@ const Landingspagina = () => {
               </div>
               <Button
                 onClick={handleStart}
-                disabled={isStarting || schedule?.enabled === true || isDemo || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
+                disabled={isStarting || schedule?.enabled === true || !editName.trim() || !editDomain.trim() || !editPassword.trim() || !editSheetId.trim() || !editGridId.trim() || !editPageUrl.trim()}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-2 sm:py-3"
-                title={isDemo ? DEMO_TOOLTIP : undefined}
               >
                 {schedule?.enabled === true ? (
                   <><Clock className="w-4 h-4 mr-2" />Automatische trigger actief</>
                 ) : isStarting ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
-                ) : isDemo ? (
-                  'Start (demo - uitgeschakeld)'
                 ) : (
                   'Start'
                 )}
               </Button>
+
               <AutomationProgressBar
                 progress={progressBar.progress}
                 status={progressBar.status}
