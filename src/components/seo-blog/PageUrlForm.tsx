@@ -12,9 +12,11 @@ import {
 import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
-import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useIsDemoUser } from '@/hooks/useIsDemoUser';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
 
@@ -221,7 +223,17 @@ export const PageUrlForm = ({
 
     setSubmittingCompanies(prev => ({ ...prev, [companyId]: true }));
     progressBar.start(AUTOMATION_DURATIONS.seoPageUrl);
+
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.seoPageUrl);
+      progressBar.complete();
+      toast({ title: 'Succes', description: `[${companyName}] URL documentatie voltooid (demo)`, duration: 5000 });
+      setSubmittingCompanies(prev => ({ ...prev, [companyId]: false }));
+      return;
+    }
+
     try {
+
       // First save all current data
       const pageUrls: Record<string, string> = {};
       urls.forEach((url, index) => {
@@ -434,22 +446,20 @@ export const PageUrlForm = ({
       {isAdmin && (
         <Button
           onClick={handleTriggerWebhook}
-          disabled={!hasValidUrl || isSubmitting || isDemo}
+          disabled={!hasValidUrl || isSubmitting}
           variant="primaryCustom"
           className="w-full"
-          title={isDemo ? DEMO_TOOLTIP : undefined}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Bezig...
             </>
-          ) : isDemo ? (
-            "URL's documenteren (demo - uitgeschakeld)"
           ) : (
             "URL's documenteren"
           )}
         </Button>
+
       )}
       <AutomationProgressBar
         progress={progressBar.progress}
