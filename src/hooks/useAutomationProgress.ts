@@ -93,13 +93,13 @@ export function useAutomationProgress() {
 
 /** Default expected durations (seconds) per automation. */
 export const AUTOMATION_DURATIONS = {
-  mondayPlanning: 30,
-  seoKeywordResearch: 60,
-  seoBlogGeneration: 240,
+  mondayPlanning: 15,
+  seoKeywordResearch: 600,
+  seoBlogGeneration: 90,
   seoPageUrl: 300,
-  wpAltText: 120,
+  wpAltText: 15,
   copyrightBranding: 30,
-  emailSignature: 45,
+  emailSignature: 15,
   landingspagina: 180,
   newsletterGenerate: 180,
   newsletterBrandColors: 20,
