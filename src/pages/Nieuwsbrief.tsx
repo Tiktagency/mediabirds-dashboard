@@ -13,6 +13,8 @@ import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const MAX_RSS_FEEDS = 5;
 
@@ -105,6 +107,9 @@ const Nieuwsbrief = () => {
   const [generatedHtml, setGeneratedHtmlLocal] = useState<string | null>(null);
   const [colorMode, setColorMode] = useState<'custom' | 'auto'>('custom');
   const [isFetchingColors, setIsFetchingColors] = useState(false);
+  const generateProgress = useAutomationProgress();
+  const brandColorsProgress = useAutomationProgress();
+  const companyInfoProgress = useAutomationProgress();
 
   // Load data from selected company
   useEffect(() => {
@@ -204,6 +209,7 @@ const Nieuwsbrief = () => {
       return;
     }
     setIsFetchingColors(true);
+    brandColorsProgress.start(AUTOMATION_DURATIONS.newsletterBrandColors);
     try {
       const { data, error } = await supabase.functions.invoke('extract-brand-colors', {
         body: { website: localData.website },
@@ -216,8 +222,10 @@ const Nieuwsbrief = () => {
       if (selectedCompany) {
         await saveToCompany(colors);
       }
+      brandColorsProgress.complete();
       toast({ title: 'Kleuren opgehaald!', description: 'Huisstijlkleuren zijn automatisch ingevuld.' });
     } catch (err: any) {
+      brandColorsProgress.fail();
       toast({
         title: 'Fout bij ophalen kleuren',
         description: err?.message || 'Er is iets misgegaan.',
@@ -392,6 +400,7 @@ const Nieuwsbrief = () => {
     if (!selectedCompany) return;
     setIsGenerating(true);
     setGeneratedHtmlLocal(null);
+    generateProgress.start(AUTOMATION_DURATIONS.newsletterGenerate);
 
     try {
       const response = await supabase.functions.invoke('trigger-newsletter-webhook', {
@@ -453,6 +462,7 @@ const Nieuwsbrief = () => {
           }
         }
 
+        generateProgress.fail();
         toast({ title: '❌ Genereren mislukt', description, variant: 'destructive' });
         return;
       }
@@ -460,8 +470,10 @@ const Nieuwsbrief = () => {
       const html = response.data?.html;
       if (html) {
         setGeneratedHtmlLocal(html);
+        generateProgress.complete();
         toast({ title: '✅ Nieuwsbrief gegenereerd!', description: 'De preview is direct beschikbaar.' });
       } else {
+        generateProgress.fail();
         toast({
           title: 'Geen HTML ontvangen',
           description: 'De webhook heeft geen inhoud teruggegeven.',
@@ -469,6 +481,7 @@ const Nieuwsbrief = () => {
         });
       }
     } catch (err: any) {
+      generateProgress.fail();
       // Fallback catch for unexpected JS errors
       let description = 'Er is iets misgegaan. Probeer het opnieuw.';
       const raw: string = err?.message || String(err);
@@ -493,6 +506,7 @@ const Nieuwsbrief = () => {
       return;
     }
     setIsFetchingCompanyInfo(true);
+    companyInfoProgress.start(AUTOMATION_DURATIONS.newsletterCompanyInfo);
     try {
       const { data, error } = await supabase.functions.invoke('extract-company-info', {
         body: { website: localData.website },
@@ -515,8 +529,10 @@ const Nieuwsbrief = () => {
       if (selectedCompany && Object.keys(dbPatch).length > 0) {
         await saveToCompany(dbPatch);
       }
+      companyInfoProgress.complete();
       toast({ title: 'Bedrijfsinfo ingevuld!', description: 'De velden zijn automatisch ingevuld op basis van de website.' });
     } catch (err: any) {
+      companyInfoProgress.fail();
       toast({
         title: 'Fout bij ophalen bedrijfsinfo',
         description: err?.message || 'Er is iets misgegaan.',
@@ -589,6 +605,12 @@ const Nieuwsbrief = () => {
                 </Button>
               </CardHeader>
               <CardContent className="p-6 pt-2 space-y-4">
+                <AutomationProgressBar
+                  progress={companyInfoProgress.progress}
+                  status={companyInfoProgress.status}
+                  elapsed={companyInfoProgress.elapsed}
+                  expected={companyInfoProgress.expected}
+                />
                 {TEXT_FIELDS.slice(0, 4).map(({ key, label, type, placeholder }) =>
                   renderTextField(key, label, type, placeholder)
                 )}
@@ -687,6 +709,12 @@ const Nieuwsbrief = () => {
                           </>
                         )}
                       </Button>
+                      <AutomationProgressBar
+                        progress={brandColorsProgress.progress}
+                        status={brandColorsProgress.status}
+                        elapsed={brandColorsProgress.elapsed}
+                        expected={brandColorsProgress.expected}
+                      />
                     </div>
                   )}
 
@@ -746,6 +774,12 @@ const Nieuwsbrief = () => {
                   </>
                 )}
               </Button>
+              <AutomationProgressBar
+                progress={generateProgress.progress}
+                status={generateProgress.status}
+                elapsed={generateProgress.elapsed}
+                expected={generateProgress.expected}
+              />
 
             </div>{/* einde linkerkolom */}
 

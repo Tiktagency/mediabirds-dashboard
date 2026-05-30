@@ -13,6 +13,8 @@ import { Company } from '@/components/seo/CompanySelector';
 import { User } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const WEBHOOK_URL = 'https://tikt.app.n8n.cloud/webhook/ce22d18b-67ef-4e24-aa76-a9f94ec69986';
 
@@ -56,6 +58,7 @@ export const PageUrlForm = ({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [expandedField, setExpandedField] = useState<string | null>(null);
   const [submittingCompanies, setSubmittingCompanies] = useState<Record<string, boolean>>({});
+  const progressBar = useAutomationProgress();
 
   // Click outside handler to collapse expanded field
   useEffect(() => {
@@ -217,6 +220,7 @@ export const PageUrlForm = ({
     const companyName = selectedCompany.name;
 
     setSubmittingCompanies(prev => ({ ...prev, [companyId]: true }));
+    progressBar.start(AUTOMATION_DURATIONS.seoPageUrl);
     try {
       // First save all current data
       const pageUrls: Record<string, string> = {};
@@ -275,15 +279,18 @@ export const PageUrlForm = ({
 
       if (response.ok) {
         const successMsg = `[${companyName}] ${message || 'URL documentatie gestart (geen response body)'}`;
+        progressBar.complete();
         await saveNotification(successMsg, 'success');
         toast({ title: 'Succes', description: successMsg, duration: 5000 });
       } else {
         const errorMsg = `[${companyName}] Fout: ${message}`;
+        progressBar.fail();
         await saveNotification(errorMsg, 'error');
         toast({ title: 'Fout', description: errorMsg, variant: 'destructive', duration: 5000 });
       }
     } catch (error) {
       console.error('Webhook error:', error);
+      progressBar.fail();
       const isTimeout = error instanceof DOMException && error.name === 'AbortError';
       const catchMsg = isTimeout
         ? `[${companyName}] Timeout: geen antwoord ontvangen na 10 minuten`
@@ -444,6 +451,12 @@ export const PageUrlForm = ({
           )}
         </Button>
       )}
+      <AutomationProgressBar
+        progress={progressBar.progress}
+        status={progressBar.status}
+        elapsed={progressBar.elapsed}
+        expected={progressBar.expected}
+      />
     </div>
   );
 };

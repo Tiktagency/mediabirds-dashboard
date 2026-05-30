@@ -13,6 +13,8 @@ import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -34,6 +36,7 @@ export const KeywordResearchForm = ({
   const { toast } = useToast();
   const { isDemo } = useIsDemoUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const progressBar = useAutomationProgress();
 
 
   // Form state
@@ -198,6 +201,7 @@ export const KeywordResearchForm = ({
     }
 
     setIsSubmitting(true);
+    progressBar.start(AUTOMATION_DURATIONS.seoKeywordResearch);
 
     try {
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
@@ -223,15 +227,18 @@ export const KeywordResearchForm = ({
 
       if (data.success) {
         const message = data.message || "SEO onderzoek succesvol gestart";
+        progressBar.complete();
         toast({
           title: 'SEO Onderzoek voltooid',
           description: message,
           duration: 7000,
         });
       } else {
+        progressBar.fail();
         throw new Error(data.error || 'Webhook request failed');
       }
     } catch (error) {
+      progressBar.fail();
       console.error('Error submitting SEO research:', error);
       toast({
         title: 'Er is iets misgegaan',
@@ -605,6 +612,14 @@ export const KeywordResearchForm = ({
             </>
           )}
         </Button>
+        <div className="mt-4">
+          <AutomationProgressBar
+            progress={progressBar.progress}
+            status={progressBar.status}
+            elapsed={progressBar.elapsed}
+            expected={progressBar.expected}
+          />
+        </div>
       </div>
     </div>
   );

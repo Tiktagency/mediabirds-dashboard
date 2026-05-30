@@ -14,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 
 const MondayPlanning = () => {
@@ -25,6 +27,7 @@ const MondayPlanning = () => {
   const [pakket, setPakket] = useState('');
   const [startDatum, setStartDatum] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const progressBar = useAutomationProgress();
 
   const isFormValid = bedrijfsnaam.trim() !== '' && 
                       pakket !== '' && 
@@ -58,6 +61,7 @@ const MondayPlanning = () => {
     if (!isFormValid) return;
     
     setIsSubmitting(true);
+    progressBar.start(AUTOMATION_DURATIONS.mondayPlanning);
     await updateAutomationStatus('running');
 
     const messageContent = `Nodige gegeven:\n${bedrijfsnaam}, Pakket ${pakket}, ${format(startDatum!, 'dd-MM-yyyy', { locale: nl })}`;
@@ -93,6 +97,7 @@ const MondayPlanning = () => {
           }
         }
 
+        progressBar.complete();
         toast({
           title: "Succes!",
           description: responseMessage,
@@ -105,6 +110,7 @@ const MondayPlanning = () => {
         setPakket('');
         setStartDatum(undefined);
       } else {
+        progressBar.fail();
         const errorMessage = responseText || invokeError?.message || 'Er is iets misgegaan bij het verzenden';
         toast({
           title: "Fout",
@@ -117,6 +123,7 @@ const MondayPlanning = () => {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+      progressBar.fail();
       const errorMessage = 'Kon geen verbinding maken met de server';
       toast({
         title: "Fout",
@@ -238,6 +245,13 @@ const MondayPlanning = () => {
                 'Start'
               )}
             </Button>
+
+            <AutomationProgressBar
+              progress={progressBar.progress}
+              status={progressBar.status}
+              elapsed={progressBar.elapsed}
+              expected={progressBar.expected}
+            />
           </div>
         </div>
       </div>

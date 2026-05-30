@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const WordpressAltText = () => {
   const { isLoading, isAdmin } = useAdminAuth();
@@ -26,6 +28,7 @@ const WordpressAltText = () => {
   const [editDomain, setEditDomain] = useState('');
   const [isStarting, setIsStarting] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const progressBar = useAutomationProgress();
 
   const { schedule, isLoading: scheduleLoading, isSaving, updateSchedule, getNextTriggerDisplay } = useAltTextSchedule();
 
@@ -74,13 +77,14 @@ const WordpressAltText = () => {
     }
     setIsStarting(true);
     setIsAnimating(true);
+    progressBar.start(AUTOMATION_DURATIONS.wpAltText);
     try {
       const { data, error } = await supabase.functions.invoke('trigger-alt-text-webhook', {
         body: { company_id: selectedCompany.id, bedrijfsnaam: selectedCompany.name, domain: selectedCompany.domain },
       });
       if (error) throw error;
 
-      let message = 'Alt-tekst verwerking is gestart';
+      let message = 'Alt-tekst verwerking voltooid';
       try {
         const parsed = JSON.parse(data?.data || '{}');
         message = parsed.message || parsed.Output || data?.data || message;
@@ -88,9 +92,11 @@ const WordpressAltText = () => {
         message = data?.data || message;
       }
 
-      toast({ title: 'Gestart', description: message });
+      progressBar.complete();
+      toast({ title: 'Voltooid', description: message, duration: 5000 });
     } catch (error) {
       console.error('Error triggering alt text webhook:', error);
+      progressBar.fail();
       toast({ title: 'Fout', description: 'Er ging iets mis bij het starten', variant: 'destructive' });
     } finally {
       setIsStarting(false);
@@ -213,6 +219,12 @@ const WordpressAltText = () => {
                   'Start'
                 )}
               </Button>
+              <AutomationProgressBar
+                progress={progressBar.progress}
+                status={progressBar.status}
+                elapsed={progressBar.elapsed}
+                expected={progressBar.expected}
+              />
             </div>
 
             {/* Right: Animation panel */}

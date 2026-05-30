@@ -1,13 +1,14 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Loader2, Users, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const LeadsGenerator = () => {
   const { toast } = useToast();
@@ -25,9 +26,7 @@ const LeadsGenerator = () => {
     } catch { return ['']; }
   });
   const [isStarting, setIsStarting] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressBar = useAutomationProgress();
 
   const isValid = plaatsnaam.trim() && country.trim() && zoektermen.some(z => z.trim());
 
@@ -67,23 +66,11 @@ const LeadsGenerator = () => {
     saveZoektermen(zoektermen.filter((_, i) => i !== index));
   };
 
-  const stopProgress = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
 
   const handleStart = async () => {
     if (!isValid) return;
     setIsStarting(true);
-    setIsRunning(true);
-    setProgress(0);
-
-    // Progress: 0→100 over 300s
-    intervalRef.current = setInterval(() => {
-      setProgress(prev => Math.min(prev + 100 / 300, 99.9));
-    }, 1000);
+    progressBar.start(AUTOMATION_DURATIONS.leadsGenerator);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 300_000); // 5 min
@@ -96,9 +83,8 @@ const LeadsGenerator = () => {
 
       if (error) throw error;
 
-      // Check if the response indicates failure
       if (!data?.success) {
-        stopProgress();
+        progressBar.fail();
         toast({
           title: 'ERROR',
           description: data?.error || 'De webhook heeft geen resultaat teruggestuurd',
@@ -108,10 +94,6 @@ const LeadsGenerator = () => {
         return;
       }
 
-      stopProgress();
-      setProgress(100);
-
-      // Parse response message
       let message = '';
       try {
         if (data?.data) {
@@ -122,6 +104,7 @@ const LeadsGenerator = () => {
       } catch { /* use default */ }
 
       if (!message) {
+        progressBar.fail();
         toast({
           title: 'ERROR',
           description: 'De webhook heeft geen bruikbaar resultaat teruggestuurd',
@@ -131,12 +114,13 @@ const LeadsGenerator = () => {
         return;
       }
 
+      progressBar.complete();
       localStorage.removeItem('leads-generator-plaatsnaam');
       localStorage.removeItem('leads-generator-country');
       localStorage.removeItem('leads-generator-zoektermen');
       toast({ title: 'Resultaat', description: message, duration: 5000 });
     } catch (error: any) {
-      stopProgress();
+      progressBar.fail();
       const isTimeout = error?.name === 'AbortError' || error?.message?.includes('aborted');
       toast({
         title: 'ERROR',
@@ -147,7 +131,6 @@ const LeadsGenerator = () => {
     } finally {
       clearTimeout(timeout);
       setIsStarting(false);
-      setTimeout(() => { setIsRunning(false); setProgress(0); }, 1000);
     }
   };
 
@@ -170,11 +153,14 @@ const LeadsGenerator = () => {
           Genereer automatisch leads op basis van locatie en zoektermen. Vul de gegevens in en start de zoektocht.
         </p>
 
-        {isRunning && (
-          <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl mb-4">
-            <Progress value={progress} className="h-2 bg-white/10 [&>div]:bg-primary" />
-          </div>
-        )}
+        <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl mb-4">
+          <AutomationProgressBar
+            progress={progressBar.progress}
+            status={progressBar.status}
+            elapsed={progressBar.elapsed}
+            expected={progressBar.expected}
+          />
+        </div>
 
         <div className="w-full max-w-lg xl:max-w-xl 2xl:max-w-2xl space-y-4">
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 space-y-4">

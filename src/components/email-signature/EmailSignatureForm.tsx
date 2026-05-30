@@ -12,6 +12,8 @@ import { Plus, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 import { DynamicFieldGroup } from './DynamicFieldGroup';
 import {
   Select,
@@ -76,6 +78,7 @@ export const EmailSignatureForm = ({
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const progressBar = useAutomationProgress();
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Extra velden state (max 1 extra per type = 2 totaal)
@@ -332,12 +335,14 @@ export const EmailSignatureForm = ({
     // Alleen naar webhook sturen via edge function, niet opslaan
     setIsSending(true);
     onGeneratingChange?.(true);
+    progressBar.start(AUTOMATION_DURATIONS.emailSignature);
     try {
       const response = await supabase.functions.invoke('trigger-email-signature', {
         body: signatureData,
       });
 
       if (response.error) {
+        progressBar.fail();
         toast({
           title: 'Fout',
           description: response.error.message,
@@ -350,6 +355,7 @@ export const EmailSignatureForm = ({
       console.log('Webhook response:', responseData);
 
       if (!responseData?.success) {
+        progressBar.fail();
         toast({
           title: `Webhook fout (${responseData?.status || 'onbekend'})`,
           description: responseData?.rawText || 'Geen response ontvangen',
@@ -401,12 +407,14 @@ export const EmailSignatureForm = ({
         setHasNonFormChanges(false);
       }
 
+      progressBar.complete();
       toast({
         title: 'Handtekening gegenereerd',
         description: 'De HTML code is klaar',
       });
     } catch (error) {
       console.error('Error calling webhook:', error);
+      progressBar.fail();
       toast({
         title: 'Fout',
         description: error instanceof Error ? error.message : 'Onbekende fout',
@@ -774,6 +782,12 @@ export const EmailSignatureForm = ({
           'Handtekening genereren'
         )}
       </Button>
+      <AutomationProgressBar
+        progress={progressBar.progress}
+        status={progressBar.status}
+        elapsed={progressBar.elapsed}
+        expected={progressBar.expected}
+      />
     </form>
   );
 };
