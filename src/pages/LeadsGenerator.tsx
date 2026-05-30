@@ -9,6 +9,8 @@ import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 const LeadsGenerator = () => {
   const { toast } = useToast();
@@ -72,8 +74,18 @@ const LeadsGenerator = () => {
     setIsStarting(true);
     progressBar.start(AUTOMATION_DURATIONS.leadsGenerator);
 
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.leadsGenerator);
+      progressBar.complete();
+      toast({ title: 'Resultaat', description: 'Leads succesvol gegenereerd (demo)', duration: 5000 });
+      setIsStarting(false);
+      return;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 300_000); // 5 min
+
+
 
     try {
       const searchStringsArray = zoektermen.filter(z => z.trim());
@@ -225,18 +237,16 @@ const LeadsGenerator = () => {
 
           <Button
             onClick={handleStart}
-            disabled={!isValid || isStarting || isDemo}
+            disabled={!isValid || isStarting}
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
-            title={isDemo ? DEMO_TOOLTIP : undefined}
           >
             {isStarting ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Bezig met starten...</>
-            ) : isDemo ? (
-              'Start (demo - uitgeschakeld)'
             ) : (
               'Start'
             )}
           </Button>
+
         </div>
       </div>
     </div>
