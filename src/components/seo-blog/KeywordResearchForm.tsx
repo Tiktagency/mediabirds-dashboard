@@ -12,9 +12,11 @@ import { useSeoSchedule } from '@/hooks/useSeoSchedule';
 import { syncGoogleDocIds } from '@/hooks/useGoogleDocSync';
 import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useIsDemoUser } from '@/hooks/useIsDemoUser';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 interface KeywordResearchFormProps {
   selectedCompany: Company | null;
@@ -203,7 +205,16 @@ export const KeywordResearchForm = ({
     setIsSubmitting(true);
     progressBar.start(AUTOMATION_DURATIONS.seoKeywordResearch);
 
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.seoKeywordResearch);
+      progressBar.complete();
+      toast({ title: 'SEO Onderzoek voltooid (demo)', description: 'Demo-modus: geen webhook aangeroepen.', duration: 7000 });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
+
       const { data, error } = await supabase.functions.invoke('trigger-seo-webhook', {
         body: {
           webhookUrl: FIXED_SEO_WEBHOOK_URL,
@@ -588,10 +599,9 @@ export const KeywordResearchForm = ({
       <div className="pt-6 border-t border-white/10">
         <Button
           onClick={handleStartResearch}
-          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled || isDemo}
+          disabled={isSubmitting || !isFormComplete() || isScheduleEnabled}
           variant="primaryCustom"
           className="w-full gap-2"
-          title={isDemo ? DEMO_TOOLTIP : undefined}
         >
           {isSubmitting ? (
             <>
@@ -603,8 +613,6 @@ export const KeywordResearchForm = ({
               <Clock className="w-4 h-4" />
               Automatische trigger actief
             </>
-          ) : isDemo ? (
-            'Start SEO onderzoek (demo - uitgeschakeld)'
           ) : (
             <>
               <Sparkles className="w-4 h-4" />
@@ -613,6 +621,7 @@ export const KeywordResearchForm = ({
           )}
         </Button>
         <div className="mt-4">
+
           <AutomationProgressBar
             progress={progressBar.progress}
             status={progressBar.status}
