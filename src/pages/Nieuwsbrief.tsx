@@ -721,7 +721,7 @@ const Nieuwsbrief = () => {
                       )}
                       <Button
                         onClick={handleFetchColors}
-                        disabled={isFetchingColors || !localData.website}
+                        disabled={isFetchingColors || (!isDemo && !localData.website)}
                         className="w-full gap-2"
                         variant="outline"
                       >
