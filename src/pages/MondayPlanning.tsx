@@ -12,10 +12,12 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useIsDemoUser } from '@/hooks/useIsDemoUser';
 import { supabase } from '@/integrations/supabase/client';
 import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
 import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
+import { simulateAutomation } from '@/lib/demoSimulation';
+
 
 
 const MondayPlanning = () => {
@@ -59,12 +61,25 @@ const MondayPlanning = () => {
 
   const handleSubmit = async () => {
     if (!isFormValid) return;
-    
+
     setIsSubmitting(true);
     progressBar.start(AUTOMATION_DURATIONS.mondayPlanning);
+
+    if (isDemo) {
+      await simulateAutomation(AUTOMATION_DURATIONS.mondayPlanning);
+      progressBar.complete();
+      toast({ title: 'Succes!', description: 'Planning succesvol verzonden! (demo)', duration: 7000 });
+      setBedrijfsnaam('');
+      setPakket('');
+      setStartDatum(undefined);
+      setIsSubmitting(false);
+      return;
+    }
+
     await updateAutomationStatus('running');
 
     const messageContent = `Nodige gegeven:\n${bedrijfsnaam}, Pakket ${pakket}, ${format(startDatum!, 'dd-MM-yyyy', { locale: nl })}`;
+
 
     try {
       const { data: invokeData, error: invokeError } = await supabase.functions.invoke('trigger-monday-planning', {
@@ -229,22 +244,20 @@ const MondayPlanning = () => {
             {/* Submit Button */}
             <Button
               onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting || isDemo}
+              disabled={!isFormValid || isSubmitting}
               variant="primaryCustom"
               className="w-full mt-4"
-              title={isDemo ? DEMO_TOOLTIP : undefined}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Verzenden...
                 </>
-              ) : isDemo ? (
-                'Start (demo - uitgeschakeld)'
               ) : (
                 'Start'
               )}
             </Button>
+
 
             <AutomationProgressBar
               progress={progressBar.progress}
