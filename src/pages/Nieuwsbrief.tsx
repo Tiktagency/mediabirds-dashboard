@@ -506,6 +506,7 @@ const Nieuwsbrief = () => {
       return;
     }
     setIsFetchingCompanyInfo(true);
+    companyInfoProgress.start(AUTOMATION_DURATIONS.newsletterCompanyInfo);
     try {
       const { data, error } = await supabase.functions.invoke('extract-company-info', {
         body: { website: localData.website },
@@ -528,8 +529,10 @@ const Nieuwsbrief = () => {
       if (selectedCompany && Object.keys(dbPatch).length > 0) {
         await saveToCompany(dbPatch);
       }
+      companyInfoProgress.complete();
       toast({ title: 'Bedrijfsinfo ingevuld!', description: 'De velden zijn automatisch ingevuld op basis van de website.' });
     } catch (err: any) {
+      companyInfoProgress.fail();
       toast({
         title: 'Fout bij ophalen bedrijfsinfo',
         description: err?.message || 'Er is iets misgegaan.',
