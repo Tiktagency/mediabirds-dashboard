@@ -13,6 +13,8 @@ import { ScheduleTrigger } from '@/components/seo/ScheduleTrigger';
 import { useNewsletterSchedule } from '@/hooks/useNewsletterSchedule';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useIsDemoUser, DEMO_TOOLTIP } from '@/hooks/useIsDemoUser';
+import { useAutomationProgress, AUTOMATION_DURATIONS } from '@/hooks/useAutomationProgress';
+import { AutomationProgressBar } from '@/components/automation/AutomationProgressBar';
 
 const MAX_RSS_FEEDS = 5;
 
@@ -105,6 +107,9 @@ const Nieuwsbrief = () => {
   const [generatedHtml, setGeneratedHtmlLocal] = useState<string | null>(null);
   const [colorMode, setColorMode] = useState<'custom' | 'auto'>('custom');
   const [isFetchingColors, setIsFetchingColors] = useState(false);
+  const generateProgress = useAutomationProgress();
+  const brandColorsProgress = useAutomationProgress();
+  const companyInfoProgress = useAutomationProgress();
 
   // Load data from selected company
   useEffect(() => {
