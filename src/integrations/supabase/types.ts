@@ -944,6 +944,7 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          is_demo: boolean
           last_name: string | null
           updated_at: string
         }
@@ -952,6 +953,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id: string
+          is_demo?: boolean
           last_name?: string | null
           updated_at?: string
         }
@@ -960,6 +962,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          is_demo?: boolean
           last_name?: string | null
           updated_at?: string
         }
@@ -1241,6 +1244,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_demo_user: { Args: { _user_id: string }; Returns: boolean }
       log_user_visit: {
         Args: { p_display_name: string; p_email: string; p_user_id: string }
         Returns: boolean
